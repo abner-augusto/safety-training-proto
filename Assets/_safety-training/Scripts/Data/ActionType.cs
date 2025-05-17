@@ -1,9 +1,9 @@
-// Defines the types of actions the player can perform or is expected to perform
 public enum ActionType
 {
-    None,
+    None, // Default or unassigned
     AttachGuardrail,
     CheckValve,
-    TightenBolt,
-    // Add more action types as needed
+    PutOnHelmet,
+    GrabTool
+    // Add more as needed
 }
