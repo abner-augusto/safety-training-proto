@@ -15,9 +15,7 @@ MonoBehaviour:
   taskName: Put On Glove
   taskDescription: Put on the glove in hands
   expectedAction: 3
-  timeLimit: 600
-  isSequential: 1
   successPoints: 100
-  failurePenalty: 50
-  ppePenalty: 25
-  requiredPPE: 02000000
+  failurePenalty: 25
+  ppePenalty: 0
+  requiredPPE: 

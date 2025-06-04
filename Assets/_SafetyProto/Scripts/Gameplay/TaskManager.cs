@@ -47,6 +47,16 @@ public class TaskManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Public accessor so TimerSystem can find out which group is active.
+    /// </summary>
+    public TaskGroup GetCurrentGroup()
+    {
+        if (_currentGroupIndex >= 0 && _currentGroupIndex < taskGroups.Count)
+            return taskGroups[_currentGroupIndex];
+        return null;
+    }
+
     private void StartNextGroup()
     {
         _currentGroupIndex++;
@@ -63,10 +73,14 @@ public class TaskManager : MonoBehaviour
                 continue;
             }
 
+            // Reset per‐group state
             _currentTaskIndex = -1;
             _currentTask = null;
             _isTaskActive = false;
             _remainingFreeTasks.Clear();
+
+            // Raise “group started” HERE:
+            eventBus.RaiseGroupStarted(new TaskGroupEventArgs(group));
 
             if (group.executionMode == TaskExecutionMode.Sequential)
             {
@@ -74,15 +88,28 @@ public class TaskManager : MonoBehaviour
             }
             else
             {
+                // Free‐order: just fill the list; each task will fire TaskStarted only when matched
                 _remainingFreeTasks = new List<SafetyTask>(group.tasks);
-                Debug.Log($"TaskManager: Starting free-order group '{group.groupName}' with {_remainingFreeTasks.Count} tasks.");
+                Debug.Log($"TaskManager: Starting free‐order group '{group.groupName}' with {_remainingFreeTasks.Count} tasks.");
             }
 
             return;
         }
 
         Debug.Log("TaskManager: All task groups completed!");
-        eventBus.RaiseAllTasksCompleted();
+
+        // Fetch timer values from TimerSystem if needed (optional)
+        float totalTime = FindFirstObjectByType<TimerSystem>()?.GetElapsedTime() ?? 0f;
+        int totalScore = FindFirstObjectByType<ScoreManager>()?.GetCurrentScore() ?? 0;
+
+        var completedArgs = new SessionCompletedEventArgs(
+            totalElapsedTime: totalTime,
+            totalScore: totalScore,
+            tasksCompleted: _completedTasks.Count
+        );
+
+        eventBus.RaiseSessionCompleted(completedArgs);
+
     }
 
     private void StartNextSequentialTask(TaskGroup group)
@@ -96,6 +123,8 @@ public class TaskManager : MonoBehaviour
         }
         else
         {
+            // Sequential group is now done → raise “group completed” → then proceed to next group
+            eventBus.RaiseGroupCompleted(new TaskGroupEventArgs(group));
             _completedGroups.Add(group);
             StartNextGroup();
         }
@@ -103,6 +132,7 @@ public class TaskManager : MonoBehaviour
 
     private void HandleActionAttempt(ActionAttemptEventArgs args)
     {
+        // ─── Sequential Mode ─────────────────────────────────────────────────────────
         if (_isTaskActive && _currentTask != null)
         {
             if (args.ActionType == _currentTask.expectedAction)
@@ -112,6 +142,7 @@ public class TaskManager : MonoBehaviour
             return;
         }
 
+        // ─── Free‐Order Mode ──────────────────────────────────────────────────────────
         if (_remainingFreeTasks.Count > 0)
         {
             var availableTasks = _remainingFreeTasks
@@ -121,14 +152,19 @@ public class TaskManager : MonoBehaviour
             SafetyTask matchedTask = availableTasks.FirstOrDefault(t => t.expectedAction == args.ActionType);
             if (matchedTask != null)
             {
+                // Mark that one as “started” and “completed” at once (free‐order logic)
                 _remainingFreeTasks.Remove(matchedTask);
                 _completedTasks.Add(matchedTask);
+
                 eventBus.RaiseTaskStarted(new TaskEventArgs(matchedTask));
                 eventBus.RaiseTaskCompleted(new TaskEventArgs(matchedTask));
 
                 if (_remainingFreeTasks.Count == 0)
                 {
-                    _completedGroups.Add(taskGroups[_currentGroupIndex]);
+                    // Free‐order group is done → raise “group completed” → next group
+                    var finishedGroup = taskGroups[_currentGroupIndex];
+                    eventBus.RaiseGroupCompleted(new TaskGroupEventArgs(finishedGroup));
+                    _completedGroups.Add(finishedGroup);
                     StartNextGroup();
                 }
             }
@@ -165,4 +201,4 @@ public class TaskManager : MonoBehaviour
     }
 
     public SafetyTask GetCurrentTask() => _currentTask;
-} 
+}

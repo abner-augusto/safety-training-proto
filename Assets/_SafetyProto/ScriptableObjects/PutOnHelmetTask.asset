@@ -15,9 +15,7 @@ MonoBehaviour:
   taskName: Head Gear
   taskDescription: Put on Helmet
   expectedAction: 3
-  timeLimit: 600
-  isSequential: 1
   successPoints: 100
-  failurePenalty: 50
-  ppePenalty: 25
-  requiredPPE: 01000000
+  failurePenalty: 25
+  ppePenalty: 0
+  requiredPPE: 

@@ -10,11 +10,12 @@ public class EventGameObjectToggleListener : MonoBehaviour
         SessionEnded,
         TaskStarted,
         TaskCompleted,
-        AllTasksCompleted,
         TaskTimeout,
         ScoreChanged,
         PpeStateChanged,
-        ActionAttempt
+        ActionAttempt,
+        TasksCompleted,
+        
     }
 
     [Header("Configuration")]
@@ -64,8 +65,8 @@ public class EventGameObjectToggleListener : MonoBehaviour
             case EventType.ActionAttempt:
                 eventBus.onActionAttempt.AddListener(_ => Toggle());
                 break;
-            case EventType.AllTasksCompleted:
-                eventBus.onAllTasksCompleted.AddListener(Toggle);
+            case EventType.TasksCompleted:
+                eventBus.onSessionCompleted.AddListener(_ => Toggle());
                 break;
         }
     }

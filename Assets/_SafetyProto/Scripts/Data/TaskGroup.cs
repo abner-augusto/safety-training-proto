@@ -14,6 +14,10 @@ public class TaskGroup : ScriptableObject
     public string groupName = "New Task Group";
     public TaskExecutionMode executionMode = TaskExecutionMode.Sequential;
 
+    [Header("Group Time Limit (seconds)")]
+    [Tooltip("Total time allowed for this entire group.")]
+    public float timeLimit = 120f; 
+
     [Header("Tasks In This Group")]
     public List<SafetyTask> tasks = new List<SafetyTask>();
 

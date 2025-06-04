@@ -1,9 +1,6 @@
 using UnityEngine;
-using System.Collections.Generic; // For List in SafetyTaskArgs
 
 // Forward declare SafetyTask if it's in another file and you need it here
-// Or define it later and then come back to reference it
-// For now, we'll assume SafetyTask will be defined elsewhere.
 
 [System.Serializable]
 public struct ActionAttemptEventArgs
@@ -33,8 +30,6 @@ public struct PPEStateChangedEventArgs
     }
 }
 
-// We need SafetyTask defined before this, so let's placeholder it
-// Or define SafetyTask SO first. For now, let's use a placeholder name.
 [System.Serializable]
 public struct TaskEventArgs // Used for TaskStarted, TaskCompleted, TaskTimeout
 {
@@ -43,6 +38,17 @@ public struct TaskEventArgs // Used for TaskStarted, TaskCompleted, TaskTimeout
     public TaskEventArgs(SafetyTask task)
     {
         Task = task;
+    }
+}
+
+[System.Serializable]
+public struct TaskGroupEventArgs // for group‐started / group‐completed
+{
+    public TaskGroup Group;
+
+    public TaskGroupEventArgs(TaskGroup group)
+    {
+        Group = group;
     }
 }
 
@@ -56,6 +62,21 @@ public struct ScoreChangedEventArgs
     {
         TotalScore = totalScore;
         Delta = delta;
+    }
+}
+
+[System.Serializable]
+public struct SessionCompletedEventArgs
+{
+    public float totalElapsedTime;
+    public int totalScore;
+    public int tasksCompleted;
+
+    public SessionCompletedEventArgs(float totalElapsedTime, int totalScore, int tasksCompleted)
+    {
+        this.totalElapsedTime = totalElapsedTime;
+        this.totalScore = totalScore;
+        this.tasksCompleted = tasksCompleted;
     }
 }
 

@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   groupName: PPE Check
   executionMode: 1
+  timeLimit: 240
   tasks:
   - {fileID: 11400000, guid: 4de7b39adc4ff954da1454fb40e22b9a, type: 2}
   - {fileID: 11400000, guid: 52e35bf20d5cd684f9cf1b1bc32eded0, type: 2}

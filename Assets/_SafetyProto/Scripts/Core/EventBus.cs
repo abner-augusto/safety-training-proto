@@ -42,6 +42,8 @@ public class EventBus : ScriptableObject
     public static event Action<TaskEventArgs> OnTaskCompletedCSharp;
     public static event Action<TaskEventArgs> OnTaskTimeoutCSharp;
     public static event Action<ScoreChangedEventArgs> OnScoreChangedCSharp;
+    public static event Action<TaskGroupEventArgs> OnGroupStartedCSharp;
+    public static event Action<TaskGroupEventArgs> OnGroupCompletedCSharp;
 
     // --- UnityEvents (for Inspector assignment) ---
     [Header("Session Events")]
@@ -55,10 +57,16 @@ public class EventBus : ScriptableObject
     public UnityEvent<PPEStateChangedEventArgs> onPpeStateChanged;
     public UnityEvent<TaskEventArgs> onTaskStarted;
     public UnityEvent<TaskEventArgs> onTaskCompleted;
-    public UnityEvent onAllTasksCompleted;
     public UnityEvent<TaskEventArgs> onTaskTimeout; // TaskEventArgs will contain the timed-out task
     public UnityEvent<ScoreChangedEventArgs> onScoreChanged;
 
+    [Header("Group Events")] // NEW
+    public UnityEvent<TaskGroupEventArgs> onGroupStarted;
+    public UnityEvent<TaskGroupEventArgs> onGroupCompleted;
+    
+    [Header("End of Session")]
+    public UnityEvent<SessionCompletedEventArgs> onSessionCompleted;
+    
     private void OnEnable()
     {
         // If we want a single instance accessible via static Instance property
@@ -74,7 +82,6 @@ public class EventBus : ScriptableObject
             // Debug.LogWarning($"Multiple EventBus instances. Using the first one loaded: {_instance.name}. Ignoring: {this.name}");
         }
     }
-
 
     // --- Methods to Raise Events ---
     public void RaiseSessionStarted(SessionStartedEventArgs args = new SessionStartedEventArgs())
@@ -147,9 +154,24 @@ public class EventBus : ScriptableObject
         onScoreChanged?.Invoke(args);
     }
     
-    public void RaiseAllTasksCompleted()
+    public void RaiseGroupStarted(TaskGroupEventArgs args)
     {
-        if (verboseLogging) Debug.Log("[EventBus] AllTasksCompleted");
-        onAllTasksCompleted?.Invoke();
+        if (verboseLogging) Debug.Log($"[EventBus] GroupStarted: {args.Group.groupName}");
+        OnGroupStartedCSharp?.Invoke(args);
+        onGroupStarted?.Invoke(args);
     }
+
+    public void RaiseGroupCompleted(TaskGroupEventArgs args)
+    {
+        if (verboseLogging) Debug.Log($"[EventBus] GroupCompleted: {args.Group.groupName}");
+        OnGroupCompletedCSharp?.Invoke(args);
+        onGroupCompleted?.Invoke(args);
+    }
+    
+    public void RaiseSessionCompleted(SessionCompletedEventArgs args)
+    {
+        if (verboseLogging) Debug.Log($"[EventBus] SessionCompleted: {args.tasksCompleted} tasks, {args.totalElapsedTime:F2}s, Score: {args.totalScore}");
+        onSessionCompleted?.Invoke(args);
+    }
+
 }

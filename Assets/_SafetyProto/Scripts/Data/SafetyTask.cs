@@ -11,11 +11,10 @@ public class SafetyTask : ScriptableObject
 
     [Header("Task Logic")]
     public ActionType expectedAction = ActionType.None;
-    public float timeLimit = 60f; // in seconds
     
     [Header("Scoring")]
     public int successPoints = 100;
-    public int failurePenalty = 50; // Penalty for wrong action or timeout
+    public int failurePenalty; // Penalty for wrong action or timeout
     public int ppePenalty = 25;    // Additional penalty if PPE is missing during an action
 
     [Header("Requirements")]

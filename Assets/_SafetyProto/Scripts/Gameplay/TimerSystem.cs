@@ -7,33 +7,47 @@ public class TimerSystem : MonoBehaviour
     [Tooltip("Assign your EventBus ScriptableObject asset here.")]
     public EventBus eventBus;
 
+    [Tooltip("Assign your TaskManager here so we can tell which group is active.")]
+    public TaskManager taskManager;
+
     [Header("Events")]
-    public UnityEvent<float> onTimeUpdated = new UnityEvent<float>();
-    public UnityEvent<float> onTimerCompleted = new UnityEvent<float>();  // Pass elapsed time
+    public UnityEvent<float> onTimeUpdated = new UnityEvent<float>();  // (remaining time)
+    public UnityEvent<float> onTimerCompleted = new UnityEvent<float>(); // (elapsed time)
     public UnityEvent onTimerTimeout = new UnityEvent();
 
     private Coroutine _currentTimerCoroutine;
-    private SafetyTask _timedTask;
+    private TaskGroup _timedGroup;
     private float _timeRemaining;
     private float _elapsedTime;
     private bool _isPaused;
 
     void Start()
     {
-        Debug.Log($"TimerSystem: Subscribing to eventBus={eventBus?.name}");
         if (eventBus == null)
         {
-            Debug.LogError("EventBus not assigned to TimerSystem!", this);
+            Debug.LogError("TimerSystem: EventBus not assigned!", this);
             enabled = false;
             return;
         }
-        eventBus.onTaskStarted.AddListener(StartTimerForTask);
-        // Add debug here to check listener count
-        Debug.Log($"TimerSystem: Now listening to onTaskStarted. Listeners: {eventBus.onTaskStarted.GetPersistentEventCount()}");
 
-        eventBus.onTaskStarted.AddListener(StartTimerForTask);
-        eventBus.onTaskCompleted.AddListener(StopTimerForTask); // Early finish
-        eventBus.onTaskTimeout.AddListener(StopTimerForTask);   // Timeout finish
+        if (taskManager == null)
+        {
+            taskManager = FindFirstObjectByType<TaskManager>(); 
+            if (taskManager == null)
+            {
+                Debug.LogError("TimerSystem: No TaskManager found in scene!", this);
+                enabled = false;
+                return;
+            }
+        }
+
+        // Listen for group‐started / group‐completed
+        eventBus.onGroupStarted.AddListener(OnGroupStarted);
+        eventBus.onGroupCompleted.AddListener(OnGroupCompleted);
+
+        // Also listen to onTaskStarted so that a FREE‐ORDER group only actually begins its timer
+        // once the very first task in that group has fired onTaskStarted.
+        eventBus.onTaskStarted.AddListener(OnTaskStartedForFreeOrder);
         eventBus.onSessionPaused.AddListener(PauseTimer);
         eventBus.onSessionResumed.AddListener(ResumeTimer);
     }
@@ -42,52 +56,102 @@ public class TimerSystem : MonoBehaviour
     {
         if (eventBus != null)
         {
-            eventBus.onTaskStarted.RemoveListener(StartTimerForTask);
-            eventBus.onTaskCompleted.RemoveListener(StopTimerForTask);
-            eventBus.onTaskTimeout.RemoveListener(StopTimerForTask);
+            eventBus.onGroupStarted.RemoveListener(OnGroupStarted);
+            eventBus.onGroupCompleted.RemoveListener(OnGroupCompleted);
+            eventBus.onTaskStarted.RemoveListener(OnTaskStartedForFreeOrder);
             eventBus.onSessionPaused.RemoveListener(PauseTimer);
             eventBus.onSessionResumed.RemoveListener(ResumeTimer);
         }
         StopCurrentTimer();
     }
 
-    private void StartTimerForTask(TaskEventArgs args)
+    // Called when ANY task starts. We only care if it's the FIRST task in a FREE‐ORDER group.
+    private void OnTaskStartedForFreeOrder(TaskEventArgs args)
     {
-        Debug.Log($"TimerSystem: Received onTaskStarted for '{args.Task.taskName}', timeLimit={args.Task.timeLimit}");
-        StopCurrentTimer(); // Stop any existing timer
+        // If no group is currently being timed, but we're inside a FreeOrder group, kick off the timer:
+        if (_timedGroup == null)
+        {
+            TaskGroup current = taskManager.GetCurrentGroup();
+            if (current != null &&
+                current.executionMode == TaskExecutionMode.FreeOrder &&
+                current.tasks.Contains(args.Task))
+            {
+                StartTimerForGroup(new TaskGroupEventArgs(current));
+            }
+        }
+    }
 
-        _timedTask = args.Task;
-        _timeRemaining = _timedTask.timeLimit;
+    // Called when a new group begins (sequential or free order) → possibly start its timer immediately (if sequential)
+    private void OnGroupStarted(TaskGroupEventArgs args)
+    {
+        var group = args.Group;
+        if (group == null) return;
+
+        // If it's SEQUENTIAL, start immediately:
+        if (group.executionMode == TaskExecutionMode.Sequential)
+        {
+            StartTimerForGroup(args);
+        }
+        else
+        {
+            // Free‐order: delay starting until first TaskStartedForFreeOrder
+            // i.e. do nothing here except record that _timedGroup should be started later.
+            // But we still store it in case OnTaskStartedForFreeOrder triggers:
+            // (we actually do that inside OnTaskStartedForFreeOrder logic).
+        }
+    }
+
+    // Called when *that* group finishes (either sequential or free‐order).
+    private void OnGroupCompleted(TaskGroupEventArgs args)
+    {
+        var group = args.Group;
+        if (group == null) return;
+
+        // If this is the group we are timing, stop it now.
+        if (_timedGroup == group)
+        {
+            StopCurrentTimer();
+            _timedGroup = null;
+        }
+    }
+
+    // Actually begins the countdown for a given TaskGroup
+    private void StartTimerForGroup(TaskGroupEventArgs args)
+    {
+        // If some other group was already being timed, stop it first (shouldn't normally happen).
+        if (_currentTimerCoroutine != null)
+        {
+            StopCurrentTimer();
+        }
+
+        _timedGroup = args.Group;
+        _timeRemaining = _timedGroup.timeLimit;
         _elapsedTime = 0f;
         _isPaused = false;
 
-        if (_timedTask.timeLimit > 0)
+        if (_timedGroup.timeLimit > 0)
         {
-            _currentTimerCoroutine = StartCoroutine(TaskCountdownRoutine(_timedTask.timeLimit));
-            onTimeUpdated.Invoke(_timedTask.timeLimit); // Initial update
-            Debug.Log($"TimerSystem: Started timer for task '{_timedTask.taskName}' ({_timedTask.timeLimit}s).");
+            _currentTimerCoroutine = StartCoroutine(GroupCountdownRoutine(_timedGroup.timeLimit));
+            onTimeUpdated.Invoke(_timedGroup.timeLimit); // initial UI update
+            Debug.Log($"TimerSystem: Started timer for group '{_timedGroup.groupName}' ({_timedGroup.timeLimit}s).");
         }
         else
         {
             onTimeUpdated.Invoke(0);
-            Debug.Log($"TimerSystem: Task '{_timedTask.taskName}' has no time limit.");
+            Debug.Log($"TimerSystem: Group '{_timedGroup.groupName}' has no time limit.");
         }
     }
 
-    private void StopTimerForTask(TaskEventArgs args)
+    private void StopCurrentTimer()
     {
-        if (_timedTask != null && args.Task == _timedTask)
+        if (_currentTimerCoroutine != null)
         {
-            StopCurrentTimer();
-            if (_timeRemaining > 0) // Completed before timeout
-            {
-                onTimerCompleted.Invoke(_elapsedTime);
-            }
-            _timedTask = null;
+            StopCoroutine(_currentTimerCoroutine);
+            _currentTimerCoroutine = null;
         }
     }
 
-    private IEnumerator TaskCountdownRoutine(float duration)
+    private IEnumerator GroupCountdownRoutine(float duration)
     {
         _timeRemaining = duration;
         _elapsedTime = 0f;
@@ -102,22 +166,20 @@ public class TimerSystem : MonoBehaviour
             }
             yield return null;
         }
+
         onTimeUpdated.Invoke(0);
         _currentTimerCoroutine = null;
-        Debug.Log("TimerSystem: Timer reached zero, task timed out.");
-        if (eventBus != null && _timedTask != null)
-            eventBus.RaiseTaskTimeout(new TaskEventArgs(_timedTask));
-        onTimerTimeout.Invoke();
-        _timedTask = null;
-    }
-
-    private void StopCurrentTimer()
-    {
-        if (_currentTimerCoroutine != null)
+        Debug.Log("TimerSystem: Group timer reached zero → timing out.");
+        if (eventBus != null && _timedGroup != null)
         {
-            StopCoroutine(_currentTimerCoroutine);
-            _currentTimerCoroutine = null;
+            // Fire a timeout event (the group has timed out; you can hook this to UI or score penalty)
+            onTimerTimeout.Invoke();
         }
+
+        // We do NOT automatically advance the group here—TaskManager is already responsible for advancing
+        // when tasks finish or timeouts occur on individual tasks. If you want a full‐group timeout to force
+        // group completion, you’d call eventBus.RaiseGroupCompleted(_timedGroup) here as well.
+        // e.g.: eventBus.RaiseGroupCompleted(new TaskGroupEventArgs(_timedGroup));
     }
 
     private void PauseTimer(SessionPausedEventArgs _)
