@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbe1302c1d9c48145badab00570b2fb7, type: 3}
+  m_Name: MainEventBus
+  m_EditorClassIdentifier: 
+  verboseLogging: 1
+  onSessionStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onSessionPaused:
+    m_PersistentCalls:
+      m_Calls: []
+  onSessionResumed:
+    m_PersistentCalls:
+      m_Calls: []
+  onSessionEnded:
+    m_PersistentCalls:
+      m_Calls: []
+  onActionAttempt:
+    m_PersistentCalls:
+      m_Calls: []
+  onPpeStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onTaskStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onTaskCompleted:
+    m_PersistentCalls:
+      m_Calls: []
+  onAllTasksCompleted:
+    m_PersistentCalls:
+      m_Calls: []
+  onTaskTimeout:
+    m_PersistentCalls:
+      m_Calls: []
+  onScoreChanged:
+    m_PersistentCalls:
+      m_Calls: []

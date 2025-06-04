@@ -103,3 +103,7 @@ BuildCache/
 *.backup
 *.tmp
 *.utmp
+repomix-output.txt
+/Assets/Dark UI
+/Assets/TextMesh Pro
+/Assets/TutorialInfo

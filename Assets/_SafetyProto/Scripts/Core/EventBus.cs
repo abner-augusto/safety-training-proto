@@ -1,0 +1,155 @@
+using UnityEngine;
+using UnityEngine.Events;
+using System; // For C# Action
+
+[CreateAssetMenu(fileName = "EventBus", menuName = "VRSafetyTraining/EventBus", order = 0)]
+public class EventBus : ScriptableObject
+{
+    private static EventBus _instance;
+    public static EventBus Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                // Attempt to load from Resources first if you place it there.
+                // _instance = Resources.Load<EventBus>("EventBus"); // Convention: place in Resources/EventBus.asset
+                // If not found, it means it needs to be assigned manually or a different loading strategy.
+                // For this project, we'll rely on manual assignment and a FindObjectOfType fallback for editor convenience
+                // or a dedicated loader. For now, let's assume it's assigned.
+                // If you have multiple EventBus assets, this singleton pattern needs refinement.
+                // The spec says "Serialized in Inspector", so direct assignment is key.
+                // This static instance is more for C# event access if needed, but primarily UnityEvents will be used.
+                Debug.LogError("EventBus instance is null. Ensure an EventBus asset is created and assigned.");
+            }
+            return _instance;
+        }
+        // Allow setting instance from a loader or manager if needed.
+        set => _instance = value;
+    }
+
+    [Header("Debug")]
+    public bool verboseLogging;
+
+    // --- C# Events (optional, but good for non-MonoBehaviour systems) ---
+    public static event Action<SessionStartedEventArgs> OnSessionStartedCSharp;
+    public static event Action<SessionPausedEventArgs> OnSessionPausedCSharp;
+    public static event Action<SessionResumedEventArgs> OnSessionResumedCSharp;
+    public static event Action<SessionEndedEventArgs> OnSessionEndedCSharp;
+    public static event Action<ActionAttemptEventArgs> OnActionAttemptCSharp;
+    public static event Action<PPEStateChangedEventArgs> OnPpeStateChangedCSharp;
+    public static event Action<TaskEventArgs> OnTaskStartedCSharp;
+    public static event Action<TaskEventArgs> OnTaskCompletedCSharp;
+    public static event Action<TaskEventArgs> OnTaskTimeoutCSharp;
+    public static event Action<ScoreChangedEventArgs> OnScoreChangedCSharp;
+
+    // --- UnityEvents (for Inspector assignment) ---
+    [Header("Session Events")]
+    public UnityEvent<SessionStartedEventArgs> onSessionStarted;
+    public UnityEvent<SessionPausedEventArgs> onSessionPaused;
+    public UnityEvent<SessionResumedEventArgs> onSessionResumed;
+    public UnityEvent<SessionEndedEventArgs> onSessionEnded;
+
+    [Header("Gameplay Events")]
+    public UnityEvent<ActionAttemptEventArgs> onActionAttempt;
+    public UnityEvent<PPEStateChangedEventArgs> onPpeStateChanged;
+    public UnityEvent<TaskEventArgs> onTaskStarted;
+    public UnityEvent<TaskEventArgs> onTaskCompleted;
+    public UnityEvent onAllTasksCompleted;
+    public UnityEvent<TaskEventArgs> onTaskTimeout; // TaskEventArgs will contain the timed-out task
+    public UnityEvent<ScoreChangedEventArgs> onScoreChanged;
+
+    private void OnEnable()
+    {
+        // If we want a single instance accessible via static Instance property
+        // This ensures that the first loaded EventBus SO becomes the static instance.
+        // However, this is tricky with SOs as their lifecycle is different.
+        // Better to have a manager load/assign it.
+        // For now, we'll just ensure _instance is set if it's null.
+        if (_instance == null) _instance = this;
+        else if (_instance != this)
+        {
+            // This can happen if you have multiple EventBus assets loaded or accidentally duplicate one.
+            // Decide on a strategy: log error, overwrite, or ignore.
+            // Debug.LogWarning($"Multiple EventBus instances. Using the first one loaded: {_instance.name}. Ignoring: {this.name}");
+        }
+    }
+
+
+    // --- Methods to Raise Events ---
+    public void RaiseSessionStarted(SessionStartedEventArgs args = new SessionStartedEventArgs())
+    {
+        if (verboseLogging) Debug.Log($"[EventBus] SessionStarted");
+        OnSessionStartedCSharp?.Invoke(args);
+        onSessionStarted?.Invoke(args);
+    }
+
+    public void RaiseSessionPaused(SessionPausedEventArgs args = new SessionPausedEventArgs())
+    {
+        if (verboseLogging) Debug.Log($"[EventBus] SessionPaused");
+        OnSessionPausedCSharp?.Invoke(args);
+        onSessionPaused?.Invoke(args);
+    }
+
+    public void RaiseSessionResumed(SessionResumedEventArgs args = new SessionResumedEventArgs())
+    {
+        if (verboseLogging) Debug.Log($"[EventBus] SessionResumed");
+        OnSessionResumedCSharp?.Invoke(args);
+        onSessionResumed?.Invoke(args);
+    }
+
+    public void RaiseSessionEnded(SessionEndedEventArgs args = new SessionEndedEventArgs())
+    {
+        if (verboseLogging) Debug.Log($"[EventBus] SessionEnded");
+        OnSessionEndedCSharp?.Invoke(args);
+        onSessionEnded?.Invoke(args);
+    }
+
+    public void RaiseActionAttempt(ActionAttemptEventArgs args)
+    {
+        if (verboseLogging) Debug.Log($"[EventBus] ActionAttempt: {args.ActionType}, Interactor: {args.InteractorId}, Pos: {args.WorldPosition}");
+        OnActionAttemptCSharp?.Invoke(args);
+        onActionAttempt?.Invoke(args);
+    }
+
+    public void RaisePpeStateChanged(PPEStateChangedEventArgs args)
+    {
+        if (verboseLogging) Debug.Log($"[EventBus] PPEStateChanged: {args.PpeType}, Wearing: {args.IsWearing}");
+        OnPpeStateChangedCSharp?.Invoke(args);
+        onPpeStateChanged?.Invoke(args);
+    }
+
+    public void RaiseTaskStarted(TaskEventArgs args)
+    {
+        if (verboseLogging) Debug.Log($"[EventBus] TaskStarted: {args.Task.taskName}");
+        OnTaskStartedCSharp?.Invoke(args);
+        onTaskStarted?.Invoke(args);
+    }
+
+    public void RaiseTaskCompleted(TaskEventArgs args)
+    {
+        if (verboseLogging) Debug.Log($"[EventBus] TaskCompleted: {args.Task.taskName}");
+        OnTaskCompletedCSharp?.Invoke(args);
+        onTaskCompleted?.Invoke(args);
+    }
+
+    public void RaiseTaskTimeout(TaskEventArgs args)
+    {
+        if (verboseLogging) Debug.Log($"[EventBus] TaskTimeout: {args.Task.taskName}");
+        OnTaskTimeoutCSharp?.Invoke(args);
+        onTaskTimeout?.Invoke(args);
+    }
+
+    public void RaiseScoreChanged(ScoreChangedEventArgs args)
+    {
+        if (verboseLogging) Debug.Log($"[EventBus] ScoreChanged: Total {args.TotalScore}, Delta {args.Delta}");
+        OnScoreChangedCSharp?.Invoke(args);
+        onScoreChanged?.Invoke(args);
+    }
+    
+    public void RaiseAllTasksCompleted()
+    {
+        if (verboseLogging) Debug.Log("[EventBus] AllTasksCompleted");
+        onAllTasksCompleted?.Invoke();
+    }
+}

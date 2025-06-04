@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   boolProperties:
     keys:
-    - Meta.XR.SDK.UsageSettings.UsesBuildingBlocks
     - Meta.XR.SDK.UsageSettings.UsesProjectSetupTool
-    - Meta.XR.SDK.UsageSettings.UsesXRSimulator
+    - Meta.XR.SDK.UsageSettings.UsesBuildingBlocks
+    - Meta.XR.SDK.UsageSettings.UsesImmersiveDebugger
     values: 010101
   intProperties:
     keys: []
