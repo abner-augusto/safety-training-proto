@@ -489,9 +489,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   eventBus: {fileID: 11400000, guid: c126452765d65734fbb97600168d0eec, type: 2}
-  timeText: {fileID: 0}
-  scoreText: {fileID: 0}
-  taskSummaryText: {fileID: 0}
+  timeText: {fileID: 875214789}
+  scoreText: {fileID: 330618944}
+  taskSummaryText: {fileID: 1901658065}
 --- !u!1 &4329454
 GameObject:
   m_ObjectHideFlags: 0
@@ -18456,6 +18456,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 050d34fb4bf07fb4f80891b9dea5fb0f, type: 2}
   startTasksAutomatically: 1
   delayBetweenTasks: 2
+  scoreServiceAsset: {fileID: 0}
 --- !u!1 &591899619
 GameObject:
   m_ObjectHideFlags: 0
@@ -26991,7 +26992,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 45880897ba0a3b748bbf8e0b50994f4a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  eventBus: {fileID: 11400000, guid: c126452765d65734fbb97600168d0eec, type: 2}
+  scoreServiceAsset: {fileID: 11400000, guid: 1fdaac493842392498f1e485c6aba38b, type: 2}
 --- !u!114 &884052991
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -30230,11 +30231,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 969453658}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cfe0a0e883d7b6c47b7c212abd68f16a, type: 3}
+  m_Script: {fileID: 11500000, guid: 4a9760bebbbf58c4d84a34f6ae0bb094, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  scoreServiceAsset: {fileID: 0}
   eventBus: {fileID: 11400000, guid: c126452765d65734fbb97600168d0eec, type: 2}
-  ppeManager: {fileID: 666742475}
 --- !u!1 &969665735
 GameObject:
   m_ObjectHideFlags: 0
