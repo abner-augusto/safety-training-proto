@@ -20,6 +20,8 @@ public class ActionTrigger : MonoBehaviour
     // This method will be called by other scripts (e.g., XR Grab Interactable events, collision scripts)
     public void TriggerAction()
     {
+        Debug.Log($"[TriggerAction] {actionTypeToTrigger} TRIGGERED on {gameObject.name}");
+        
         if (eventBus == null)
         {
             Debug.LogWarning($"ActionTrigger on {gameObject.name} cannot fire event: EventBus not assigned.");

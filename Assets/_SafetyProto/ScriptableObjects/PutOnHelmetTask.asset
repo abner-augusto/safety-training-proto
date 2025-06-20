@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   taskName: Head Gear
   taskDescription: Put on Helmet
-  expectedAction: 3
+  expectedAction: 2
   successPoints: 100
   failurePenalty: 25
   ppePenalty: 0

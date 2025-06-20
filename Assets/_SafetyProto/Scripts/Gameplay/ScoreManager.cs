@@ -80,14 +80,24 @@ public class ScoreManager : MonoBehaviour
     private void HandleTaskCompleted(TaskEventArgs args)
     {
         if (args.Task == null) return;
-        Debug.Log($"ScoreManager: Task '{args.Task.taskName}' completed. Score processing for this event is currently minimal as ActionAttempt handles points.");
+
+        Debug.Log($"ScoreManager: Task '{args.Task.taskName}' completed. Clearing current scoring task to prevent duplicate points.");
+
+        // If we're still tracking this task for scoring, null it out so no more points can be awarded
+        if (_currentTaskForScoring == args.Task)
+            _currentTaskForScoring = null;
     }
 
     private void HandleTaskTimeout(TaskEventArgs args)
     {
         if (args.Task == null) return;
         Debug.Log($"ScoreManager: Task '{args.Task.taskName}' timed out. Applying penalty.");
+
         ApplyScoreChange(-args.Task.failurePenalty, "Task Timeout");
+
+        // Prevent any further penalties for this task
+        if (_currentTaskForScoring == args.Task)
+            _currentTaskForScoring = null;
     }
 
     private void HandleActionAttempt(ActionAttemptEventArgs actionArgs)

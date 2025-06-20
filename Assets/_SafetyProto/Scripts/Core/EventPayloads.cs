@@ -71,12 +71,14 @@ public struct SessionCompletedEventArgs
     public float totalElapsedTime;
     public int totalScore;
     public int tasksCompleted;
+    public int totalTasks;
 
-    public SessionCompletedEventArgs(float totalElapsedTime, int totalScore, int tasksCompleted)
+    public SessionCompletedEventArgs(float totalElapsedTime, int totalScore, int tasksCompleted, int totalTasks)
     {
         this.totalElapsedTime = totalElapsedTime;
         this.totalScore = totalScore;
         this.tasksCompleted = tasksCompleted;
+        this.totalTasks = totalTasks;
     }
 }
 
