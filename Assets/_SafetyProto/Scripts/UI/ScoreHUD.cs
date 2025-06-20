@@ -1,54 +1,73 @@
 using UnityEngine;
-using TMPro; // For TextMeshPro
+using TMPro;
 
 [RequireComponent(typeof(TextMeshProUGUI))]
 public class ScoreHUD : MonoBehaviour
 {
-    [Tooltip("Assign your EventBus ScriptableObject asset here. Can be auto-found if only one.")]
-    public EventBus eventBus;
-    private TextMeshProUGUI _scoreText;
+    [Tooltip("Link the ScoreService ScriptableObject.")]
+    public ScoreServiceSO scoreServiceAsset;
 
-    void Start()
+    private TextMeshProUGUI _scoreText;
+    private IScoreService _scoreService;
+
+    public static ScoreHUD Instance { get; private set; }
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+    }
+
+    private void Start()
     {
         _scoreText = GetComponent<TextMeshProUGUI>();
-        if (eventBus == null)
+
+        if (scoreServiceAsset == null)
         {
-            // Attempt to find it if not assigned - assumes a single EventBus SO is loaded and assigned as EventBus.Instance
-            eventBus = EventBus.Instance; // This relies on EventBus.Instance being set correctly
-            if (eventBus == null)
-            {
-                Debug.LogError("EventBus not assigned or found for ScoreHUD!", this);
-                enabled = false;
-                return;
-            }
+            Debug.LogError("ScoreHUD: ScoreService asset not assigned.", this);
+            enabled = false;
+            return;
         }
 
-        eventBus.onScoreChanged.AddListener(UpdateScoreDisplay);
-        // Initialize display, e.g. get current score if ScoreManager exists
-        ScoreManager sm = ScoreManager.Instance; // Assumes ScoreManager is a singleton
-        if (sm != null)
-        {
-            UpdateScoreDisplay(new ScoreChangedEventArgs(sm.GetCurrentScore(), 0));
-        }
-        else
-        {
-            _scoreText.text = "Score: 0";
-        }
+        _scoreService = scoreServiceAsset.Service;
+        _scoreService.ScoreChanged += OnScoreChanged;
+
+        // Set initial score
+        UpdateScoreDisplay(_scoreService.CurrentScore);
     }
 
     private void OnDestroy()
     {
-        if (eventBus != null)
+        if (_scoreService != null)
         {
-            eventBus.onScoreChanged.RemoveListener(UpdateScoreDisplay);
+            _scoreService.ScoreChanged -= OnScoreChanged;
         }
     }
 
-    private void UpdateScoreDisplay(ScoreChangedEventArgs args)
+    private void OnScoreChanged(int newScore, int delta, string reason)
+    {
+        UpdateScoreDisplay(newScore);
+    }
+
+    private void UpdateScoreDisplay(int score)
     {
         if (_scoreText != null)
         {
-            _scoreText.text = $"Score: {args.TotalScore}";
+            _scoreText.text = $"Score: {score}";
         }
+    }
+
+    /// <summary>
+    /// Call this from ScoreManagerAdapter to show score deltas visually if needed.
+    /// </summary>
+    public void ShowDelta(int delta, string reason, int totalScore)
+    {
+        Debug.Log($"[HUD] {reason}: {(delta >= 0 ? "+" : "")}{delta} → Total: {totalScore}");
+        UpdateScoreDisplay(totalScore);
+        // Optional: Trigger floating text or animation here
     }
 }

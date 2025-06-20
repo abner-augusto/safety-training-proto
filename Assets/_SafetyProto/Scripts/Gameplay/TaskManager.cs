@@ -12,6 +12,9 @@ public class TaskManager : MonoBehaviour
     public bool startTasksAutomatically = true;
     public float delayBetweenTasks = 2.0f;
 
+    [Header("Scoring")]
+    public ScoreServiceSO scoreServiceAsset;
+
     private int _currentGroupIndex = -1;
     private int _currentTaskIndex = -1;
     private SafetyTask _currentTask;
@@ -19,6 +22,8 @@ public class TaskManager : MonoBehaviour
     private List<SafetyTask> _remainingFreeTasks = new();
     private HashSet<SafetyTask> _completedTasks = new();
     private HashSet<TaskGroup> _completedGroups = new();
+
+    private IScoreService _scoreService;
 
     void Start()
     {
@@ -28,6 +33,15 @@ public class TaskManager : MonoBehaviour
             enabled = false;
             return;
         }
+
+        if (scoreServiceAsset == null)
+        {
+            Debug.LogError("ScoreService asset not assigned to TaskManager!", this);
+            enabled = false;
+            return;
+        }
+
+        _scoreService = scoreServiceAsset.Service;
 
         eventBus.onActionAttempt.AddListener(HandleActionAttempt);
         eventBus.onTaskTimeout.AddListener(HandleTaskTimeout);
@@ -98,7 +112,7 @@ public class TaskManager : MonoBehaviour
         Debug.Log("TaskManager: All task groups completed!");
 
         float totalTime = FindFirstObjectByType<TimerSystem>()?.GetElapsedTime() ?? 0f;
-        int totalScore = FindFirstObjectByType<ScoreManager>()?.GetCurrentScore() ?? 0;
+        int totalScore = _scoreService?.CurrentScore ?? 0;
 
         var completedArgs = new SessionCompletedEventArgs(
             totalElapsedTime: totalTime,
