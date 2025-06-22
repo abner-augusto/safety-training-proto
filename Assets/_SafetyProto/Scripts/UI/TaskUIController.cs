@@ -3,8 +3,7 @@ using UnityEngine;
 using TMPro;
 
 /// <summary>
-/// Controls the population and state updates of the task UI.
-/// Instantiates all TaskEntry prefabs and updates their visual state based on game events.
+/// Displays the list of tasks and the current task details,
 /// </summary>
 public class TaskUIController : MonoBehaviour
 {
@@ -19,14 +18,13 @@ public class TaskUIController : MonoBehaviour
     [SerializeField] private TMP_Text currentTaskNameText;
     [SerializeField] private TMP_Text currentTaskDescriptionText;
 
-    // Maps each SafetyTask ScriptableObject to its instantiated UI component.
     private readonly Dictionary<SafetyTask, TaskEntryUI> _taskToEntryUI = new Dictionary<SafetyTask, TaskEntryUI>();
 
-    private void Start()
+    void Start()
     {
         if (taskManager == null || eventBus == null || taskListContainer == null || taskEntryPrefab == null)
         {
-            Debug.LogError("TaskUIController is missing required references.", this);
+            Debug.LogError("TaskUIController is missing references.", this);
             enabled = false;
             return;
         }
@@ -36,16 +34,13 @@ public class TaskUIController : MonoBehaviour
         eventBus.onTaskStarted.AddListener(OnTaskStarted);
         eventBus.onTaskCompleted.AddListener(OnTaskCompleted);
         eventBus.onTaskTimeout.AddListener(OnTaskTimeout);
-        
-        // Handle case where a task is already running at startup
-        var initialTask = taskManager.GetCurrentTaskData();
-        if (initialTask != null)
-        {
-            OnTaskStarted(new TaskEventArgs(initialTask));
-        }
+
+        // in case a task was already running when we came up
+        var initial = taskManager.GetCurrentTaskData();
+        if (initial != null) OnTaskStarted(new TaskEventArgs(initial));
     }
-    
-    private void OnDestroy()
+
+    void OnDestroy()
     {
         if (eventBus != null)
         {
@@ -57,19 +52,16 @@ public class TaskUIController : MonoBehaviour
 
     private void PopulateTaskList()
     {
-        int globalOrder = 1;
+        int order = 1;
         foreach (var group in taskManager.taskGroups)
         {
             foreach (var task in group.tasks)
             {
                 var go = Instantiate(taskEntryPrefab, taskListContainer);
-                var entryUI = go.GetComponent<TaskEntryUI>();
-                if (entryUI != null)
-                {
-                    entryUI.Setup(globalOrder, task.taskName);
-                    _taskToEntryUI[task] = entryUI;
-                    globalOrder++;
-                }
+                var entry = go.GetComponent<TaskEntryUI>();
+                entry.Setup(order, task.taskName);
+                _taskToEntryUI[task] = entry;
+                order++;
             }
         }
     }
@@ -77,41 +69,33 @@ public class TaskUIController : MonoBehaviour
     private void OnTaskStarted(TaskEventArgs args)
     {
         if (args.Task == null) return;
-        
-        // Update the new task's UI to "InProgress"
-        if (_taskToEntryUI.TryGetValue(args.Task, out var newEntry))
-        {
-            newEntry.UpdateState(TaskState.InProgress);
-        }
-        
-        // Update the detail panel
-        UpdateCurrentTaskDetails(args.Task);
+        if (_taskToEntryUI.TryGetValue(args.Task, out var entryUI))
+            entryUI.UpdateState(TaskState.InProgress);
+
+        UpdateCurrentTaskPanel(args.Task);
     }
 
     private void OnTaskCompleted(TaskEventArgs args)
     {
         if (args.Task == null) return;
-
         if (_taskToEntryUI.TryGetValue(args.Task, out var entryUI))
-        {
             entryUI.UpdateState(TaskState.CompletedSuccess);
-        }
     }
 
     private void OnTaskTimeout(TaskEventArgs args)
     {
         if (args.Task == null) return;
-
         if (_taskToEntryUI.TryGetValue(args.Task, out var entryUI))
-        {
             entryUI.UpdateState(TaskState.CompletedFailure);
-        }
     }
-    
-    private void UpdateCurrentTaskDetails(SafetyTask task)
+
+    private void UpdateCurrentTaskPanel(SafetyTask task)
     {
-        // This logic can be simplified if you track the current task index elsewhere,
-        // but for now, it remains functional.
+        // purely display; index is provided by TaskManager
+        int idx = taskManager.CurrentTaskIndex;
+        currentTaskOrderText.text = (idx >= 0)
+            ? $"{idx + 1}."
+            : "";
         currentTaskNameText.text = task.taskName;
         currentTaskDescriptionText.text = task.taskDescription;
     }

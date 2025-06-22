@@ -36,7 +36,7 @@ public class SessionLogger : MonoBehaviour
         [UsedImplicitly] public SessionSummary summary;
     }
 
-    private SessionLog _sessionLog = new SessionLog();
+    private readonly SessionLog _sessionLog = new SessionLog();
     private void Start()
     {
         if (!this.IsEventBusReady())
