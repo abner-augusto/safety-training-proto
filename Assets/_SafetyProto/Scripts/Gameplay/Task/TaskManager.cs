@@ -12,27 +12,27 @@ public class TaskManager : MonoBehaviour
     [Header("Scoring")]
     public ScoreServiceSO scoreServiceAsset;
 
-    private int _currentGroupIndex = -1;
-    private int _currentTaskIndex = -1;
-    private SafetyTask _currentTask;
-    private bool _isTaskActive;
-    private List<SafetyTask> _remainingFreeTasks = new List<SafetyTask>();
-    private readonly HashSet<SafetyTask> _completedTasks = new HashSet<SafetyTask>();
-    private readonly HashSet<TaskGroup> _completedGroups = new HashSet<TaskGroup>();
+    // The single source of truth for all task states during the session.
+    private readonly List<RuntimeSafetyTask> _sessionTasks = new List<RuntimeSafetyTask>();
+    private RuntimeSafetyTask _currentTask;
 
+    private int _currentGroupIndex = -1;
     private IScoreService _scoreService;
+    private readonly HashSet<TaskGroup> _completedGroups = new HashSet<TaskGroup>();
 
     void Start()
     {
         if (!this.IsEventBusReady()) return;
 
-        if (scoreServiceAsset == null)
+        _scoreService = scoreServiceAsset?.Service;
+        if (_scoreService == null)
         {
-            Debug.LogError("ScoreService asset not assigned to TaskManager!", this);
+            Debug.LogError("TaskManager requires a ScoreService asset.", this);
             enabled = false;
             return;
         }
-        _scoreService = scoreServiceAsset.Service;
+
+        InitializeRuntimeTasks();
 
         EventBus.Instance.onTaskCompleted.AddListener(HandleTaskCompletion);
         EventBus.Instance.onTaskTimeout.AddListener(HandleTaskTimeout);
@@ -51,129 +51,137 @@ public class TaskManager : MonoBehaviour
             EventBus.Instance.onTaskTimeout.RemoveListener(HandleTaskTimeout);
         }
     }
+    
+    private void InitializeRuntimeTasks()
+    {
+        _sessionTasks.Clear();
+        foreach (var group in taskGroups)
+        {
+            foreach (var taskData in group.tasks)
+            {
+                _sessionTasks.Add(new RuntimeSafetyTask(taskData));
+            }
+        }
+    }
 
-    /// <summary>
-    /// Advances the session state when a task is completed.
-    /// This is now the primary way the TaskManager progresses.
-    /// </summary>
     private void HandleTaskCompletion(TaskEventArgs args)
     {
-        // Mark the task internally as completed.
-        _completedTasks.Add(args.Task);
-
-        if (_isTaskActive && _currentTask == args.Task)
+        var completedTask = _sessionTasks.FirstOrDefault(t => t.TaskData == args.Task);
+        if (completedTask != null && completedTask.State == TaskState.InProgress)
         {
-            // Sequential mode task was completed.
-            _isTaskActive = false;
-            Invoke(nameof(AdvanceSequential), delayBetweenTasks);
-        }
-        else if (_remainingFreeTasks.Contains(args.Task))
-        {
-            // Free-order mode task was completed.
-            _remainingFreeTasks.Remove(args.Task);
-            if (_remainingFreeTasks.Count == 0)
-            {
-                var finishedGroup = GetCurrentGroup();
-                if(finishedGroup != null)
-                {
-                    EventBus.Instance.RaiseGroupCompleted(new TaskGroupEventArgs(finishedGroup));
-                    _completedGroups.Add(finishedGroup);
-                }
-                StartNextGroup();
-            }
+            completedTask.State = TaskState.CompletedSuccess;
+            _currentTask = null; // No task is active during the delay
+            
+            // Check if this completes a group before advancing
+            CheckGroupCompletion();
+            Invoke(nameof(StartNextTask), delayBetweenTasks);
         }
     }
 
     public void HandleTaskTimeout(TaskEventArgs args)
     {
-        if (_isTaskActive && _currentTask == args.Task)
+        var timedOutTask = _sessionTasks.FirstOrDefault(t => t.TaskData == args.Task);
+        if (timedOutTask != null && timedOutTask.State == TaskState.InProgress)
         {
-            _isTaskActive = false;
-            // Also mark as complete to prevent re-completion
-            _completedTasks.Add(args.Task); 
-            Invoke(nameof(AdvanceSequential), delayBetweenTasks);
-        }
-    }
-    
-    private void AdvanceSequential()
-    {
-        StartNextSequentialTask(GetCurrentGroup());
-    }
+            timedOutTask.State = TaskState.CompletedFailure;
+            _currentTask = null;
 
-    private void StartNextSequentialTask(TaskGroup group)
-    {
-        if (group == null) return;
-        
-        _currentTaskIndex++;
-        if (_currentTaskIndex < group.tasks.Count)
-        {
-            _currentTask = group.tasks[_currentTaskIndex];
-            _isTaskActive = true;
-            EventBus.Instance.RaiseTaskStarted(new TaskEventArgs(_currentTask));
+            CheckGroupCompletion();
+            Invoke(nameof(StartNextTask), delayBetweenTasks);
         }
-        else
-        {
-            EventBus.Instance.RaiseGroupCompleted(new TaskGroupEventArgs(group));
-            _completedGroups.Add(group);
-            StartNextGroup();
-        }
-    }
-
-    public TaskGroup GetCurrentGroup()
-    {
-        if (_currentGroupIndex >= 0 && _currentGroupIndex < taskGroups.Count)
-            return taskGroups[_currentGroupIndex];
-        return null;
     }
 
     private void StartNextGroup()
     {
-        _currentGroupIndex++;
-        while (_currentGroupIndex < taskGroups.Count)
+        var nextGroupIndex = _currentGroupIndex + 1;
+        
+        while (nextGroupIndex < taskGroups.Count)
         {
-            var group = taskGroups[_currentGroupIndex];
-            if (group.prerequisites.All(p => _completedGroups.Contains(p)))
+            var group = taskGroups[nextGroupIndex];
+            bool canStart = group.prerequisites.All(p => _completedGroups.Contains(p));
+            if (canStart)
             {
-                _currentTaskIndex = -1;
-                _currentTask = null;
-                _isTaskActive = false;
-                _remainingFreeTasks.Clear();
-
+                _currentGroupIndex = nextGroupIndex;
                 EventBus.Instance.RaiseGroupStarted(new TaskGroupEventArgs(group));
-
-                if (group.executionMode == TaskExecutionMode.Sequential)
-                {
-                    StartNextSequentialTask(group);
-                }
-                else
-                {
-                    _remainingFreeTasks = new List<SafetyTask>(group.tasks);
-                    Debug.Log($"TaskManager: Starting free-order group '{group.groupName}' with {_remainingFreeTasks.Count} tasks.");
-                }
+                StartNextTask();
                 return;
             }
             
             Debug.LogWarning($"TaskManager: Skipping group '{group.groupName}' (unmet prerequisites)");
-            _currentGroupIndex++;
+            nextGroupIndex++;
         }
+
+        // No more groups to start, end the session.
         EndSession();
+    }
+
+    private void StartNextTask()
+    {
+        TaskGroup currentGroup = GetCurrentGroup();
+        if (currentGroup == null)
+        {
+            EndSession(); // Should be handled by StartNextGroup, but as a safeguard.
+            return;
+        }
+
+        // Find the next task within the current group that has not been started.
+        _currentTask = _sessionTasks.FirstOrDefault(t => 
+            t.State == TaskState.NotStarted && currentGroup.tasks.Contains(t.TaskData));
+
+        if (_currentTask != null)
+        {
+            _currentTask.State = TaskState.InProgress;
+            EventBus.Instance.RaiseTaskStarted(new TaskEventArgs(_currentTask.TaskData));
+        }
+        else
+        {
+            // No more tasks to start in this group, try to start the next group.
+            StartNextGroup();
+        }
+    }
+
+    private void CheckGroupCompletion()
+    {
+        TaskGroup currentGroup = GetCurrentGroup();
+        if (currentGroup == null || _completedGroups.Contains(currentGroup)) return;
+
+        // Are all tasks belonging to this group now completed?
+        bool allTasksDone = _sessionTasks
+            .Where(t => currentGroup.tasks.Contains(t.TaskData))
+            .All(t => t.State == TaskState.CompletedSuccess || t.State == TaskState.CompletedFailure);
+
+        if (allTasksDone)
+        {
+            EventBus.Instance.RaiseGroupCompleted(new TaskGroupEventArgs(currentGroup));
+            _completedGroups.Add(currentGroup);
+        }
     }
 
     private void EndSession()
     {
+        if (_currentTask == null) // Prevent multiple session end calls
+        { 
+            _currentTask = new RuntimeSafetyTask(ScriptableObject.CreateInstance<SafetyTask>()); // Dummy task to stop further actions
+        }
+        else
+        {
+            return;
+        }
+
         Debug.Log("TaskManager: All task groups completed!");
         float totalTime = FindFirstObjectByType<TimerSystem>()?.GetElapsedTime() ?? 0f;
-        int totalScore = _scoreService?.CurrentScore ?? 0;
+        int totalScore = _scoreService.CurrentScore;
+        
         var completedArgs = new SessionCompletedEventArgs(
             totalElapsedTime: totalTime,
             totalScore: totalScore,
-            tasksCompleted: _completedTasks.Count,
-            totalTasks: taskGroups.SelectMany(g => g.tasks).Count()
+            tasksCompleted: _sessionTasks.Count(t => t.State == TaskState.CompletedSuccess),
+            totalTasks: _sessionTasks.Count
         );
-        Debug.Log("TaskManager: Raising SessionCompleted event with stats: " +
-                  $"Time={totalTime}, Score={totalScore}, Completed={completedArgs.tasksCompleted}/{completedArgs.totalTasks}");
+        
         EventBus.Instance.RaiseSessionCompleted(completedArgs);
     }
     
-    public SafetyTask GetCurrentTask() => _currentTask;
+    public SafetyTask GetCurrentTaskData() => _currentTask?.TaskData;
+    private TaskGroup GetCurrentGroup() => (_currentGroupIndex >= 0 && _currentGroupIndex < taskGroups.Count) ? taskGroups[_currentGroupIndex] : null;
 }

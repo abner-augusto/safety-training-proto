@@ -1,9 +1,5 @@
 using UnityEngine;
-using System.Collections.Generic;
 
-/// <summary>
-/// MonoBehaviour that bridges Unity gameplay events to a decoupled <see cref="IScoreService"/>.
-/// </summary>
 public class ScoreManagerAdapter : MonoBehaviour
 {
     [Header("References")]
@@ -13,8 +9,7 @@ public class ScoreManagerAdapter : MonoBehaviour
     [SerializeField] private PPEManager ppeManager;
 
     private IScoreService _scoreService;
-    private readonly HashSet<SafetyTask> _completedTasks = new();
-    private SafetyTask _currentTask;
+    private SafetyTask _currentTaskData; // Just holds a reference to the current task's data
 
     private void Awake()
     {
@@ -32,21 +27,19 @@ public class ScoreManagerAdapter : MonoBehaviour
         if (!this.IsEventBusReady()) return;
 
         EventBus.Instance.onTaskStarted.AddListener(HandleTaskStarted);
-        EventBus.Instance.onTaskCompleted.AddListener(HandleTaskCompletedScore);
-        EventBus.Instance.onActionAttempt.AddListener(HandleActionAttempt);
+        EventBus.Instance.onTaskCompleted.AddListener(HandleTaskCompleted);
         EventBus.Instance.onTaskTimeout.AddListener(HandleTaskTimeout);
-
+        EventBus.Instance.onActionAttempt.AddListener(HandleActionAttempt);
         _scoreService.ScoreChanged += HandleScoreChanged;
     }
 
     private void OnDisable()
     {
         if (EventBus.Instance == null) return;
-
         EventBus.Instance.onTaskStarted.RemoveListener(HandleTaskStarted);
-        EventBus.Instance.onTaskCompleted.RemoveListener(HandleTaskCompletedScore);
-        EventBus.Instance.onActionAttempt.RemoveListener(HandleActionAttempt);
+        EventBus.Instance.onTaskCompleted.RemoveListener(HandleTaskCompleted);
         EventBus.Instance.onTaskTimeout.RemoveListener(HandleTaskTimeout);
+        EventBus.Instance.onActionAttempt.RemoveListener(HandleActionAttempt);
 
         if (_scoreService != null)
             _scoreService.ScoreChanged -= HandleScoreChanged;
@@ -54,85 +47,56 @@ public class ScoreManagerAdapter : MonoBehaviour
 
     private void HandleTaskStarted(TaskEventArgs args)
     {
-        if (args.Task == null) return;
-        _currentTask = args.Task;
+        _currentTaskData = args.Task;
     }
 
-    /// <summary>
-    /// This is the new central handler for all user actions.
-    /// </summary>
+    // Handles scoring for a successfully completed task
+    private void HandleTaskCompleted(TaskEventArgs args)
+    {
+        if (args.Task != null)
+        {
+            _scoreService.AddPoints(args.Task.successPoints, $"Task '{args.Task.taskName}' completed");
+        }
+        _currentTaskData = null; // The task is done, clear the reference.
+    }
+
+    // Handles scoring for a timed-out task
+    private void HandleTaskTimeout(TaskEventArgs args)
+    {
+        if (args.Task != null)
+        {
+            _scoreService.SubtractPoints(args.Task.failurePenalty, $"Task '{args.Task.taskName}' timed out");
+        }
+        _currentTaskData = null;
+    }
+
     private void HandleActionAttempt(ActionAttemptEventArgs args)
     {
-        if (_currentTask == null || _completedTasks.Contains(_currentTask))
+        if (_currentTaskData == null)
         {
             Debug.Log($"Ignoring action '{args.ActionType}' as no task is currently active.");
             return;
         }
 
-        bool isActionCorrect = (args.ActionType == _currentTask.expectedAction);
-        bool arePpeRequirementsMet = ppeManager.AreAllRequiredPPEWorn(_currentTask.requiredPPE);
-
+        bool isActionCorrect = (args.ActionType == _currentTaskData.expectedAction);
         if (isActionCorrect)
         {
-            ProcessCorrectAction(arePpeRequirementsMet);
+            bool arePpeRequirementsMet = ppeManager.AreAllRequiredPPEWorn(_currentTaskData.requiredPPE);
+            if (arePpeRequirementsMet)
+            {
+                // Action is perfect. Announce task completion.
+                // TaskManager will hear this and change the state.
+                EventBus.Instance.RaiseTaskCompleted(new TaskEventArgs(_currentTaskData));
+            }
+            else
+            {
+                _scoreService.SubtractPoints(_currentTaskData.ppePenalty, "Action correct, but required PPE was missing");
+            }
         }
         else
         {
-            ProcessIncorrectAction();
+            _scoreService.SubtractPoints(_currentTaskData.failurePenalty, $"Incorrect action for task '{_currentTaskData.taskName}'");
         }
-    }
-
-    /// <summary>
-    /// Handles the scoring and completion logic when the user performs the correct action.
-    /// </summary>
-    private void ProcessCorrectAction(bool ppeMet)
-    {
-        if (ppeMet)
-        {
-            // PERFECT: Correct action with correct PPE. Task is complete.
-            Debug.Log($"Task '{_currentTask.taskName}' completed successfully.");
-            
-            // Announce that the task is complete. TaskManager will hear this.
-            EventBus.Instance.RaiseTaskCompleted(new TaskEventArgs(_currentTask));
-        }
-        else
-        {
-            // GOOD ACTION, WRONG PPE: Apply PPE penalty, but do not complete the task.
-            _scoreService.SubtractPoints(_currentTask.ppePenalty, "Action correct, but required PPE was missing");
-        }
-    }
-
-    /// <summary>
-    /// Handles the scoring when the user performs the wrong action.
-    /// </summary>
-    private void ProcessIncorrectAction()
-    {
-        _scoreService.SubtractPoints(_currentTask.failurePenalty, $"Incorrect action for task '{_currentTask.taskName}'");
-    }
-    
-    /// <summary>
-    /// Applies score AFTER the task has been marked completed.
-    /// </summary>
-    private void HandleTaskCompletedScore(TaskEventArgs args)
-    {
-        if (args.Task == null || _completedTasks.Contains(args.Task)) return;
-
-        _completedTasks.Add(args.Task);
-        _scoreService.AddPoints(args.Task.successPoints, $"Task '{args.Task.taskName}' completed");
-        
-        if (_currentTask == args.Task)
-            _currentTask = null;
-    }
-
-    private void HandleTaskTimeout(TaskEventArgs args)
-    {
-        if (args.Task == null || _completedTasks.Contains(args.Task)) return;
-
-        _scoreService.SubtractPoints(args.Task.failurePenalty, $"Task '{args.Task.taskName}' timed out");
-        _completedTasks.Add(args.Task);
-
-        if (_currentTask == args.Task)
-            _currentTask = null;
     }
 
     private void HandleScoreChanged(int newScore, int delta, string reason)
