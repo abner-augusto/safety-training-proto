@@ -10,9 +10,6 @@ public class ScoreManagerAdapter : MonoBehaviour
     [Tooltip("ScriptableObject holding the shared scoring service.")]
     public ScoreServiceSO scoreServiceAsset;
 
-    [Tooltip("EventBus instance that publishes gameplay events.")]
-    public EventBus eventBus;
-
     private IScoreService _scoreService;
     private readonly HashSet<string> _completedTaskIds = new();
     private SafetyTask _currentTask;
@@ -30,28 +27,28 @@ public class ScoreManagerAdapter : MonoBehaviour
 
     private void OnEnable()
     {
-        if (eventBus == null)
+        if (EventBus.Instance == null)
         {
-            Debug.LogError("EventBus reference missing", this);
+            Debug.LogError("EventBus instance missing", this);
             return;
         }
 
-        eventBus.onTaskStarted.AddListener(HandleTaskStarted);
-        eventBus.onTaskCompleted.AddListener(HandleTaskCompleted);
-        eventBus.onActionAttempt.AddListener(HandleActionAttempt);
-        eventBus.onTaskTimeout.AddListener(HandleTaskTimeout);
+        EventBus.Instance.onTaskStarted.AddListener(HandleTaskStarted);
+        EventBus.Instance.onTaskCompleted.AddListener(HandleTaskCompleted);
+        EventBus.Instance.onActionAttempt.AddListener(HandleActionAttempt);
+        EventBus.Instance.onTaskTimeout.AddListener(HandleTaskTimeout);
 
         _scoreService.ScoreChanged += HandleScoreChanged;
     }
 
     private void OnDisable()
     {
-        if (eventBus != null)
+        if (EventBus.Instance != null)
         {
-            eventBus.onTaskStarted.RemoveListener(HandleTaskStarted);
-            eventBus.onTaskCompleted.RemoveListener(HandleTaskCompleted);
-            eventBus.onActionAttempt.RemoveListener(HandleActionAttempt);
-            eventBus.onTaskTimeout.RemoveListener(HandleTaskTimeout);
+            EventBus.Instance.onTaskStarted.RemoveListener(HandleTaskStarted);
+            EventBus.Instance.onTaskCompleted.RemoveListener(HandleTaskCompleted);
+            EventBus.Instance.onActionAttempt.RemoveListener(HandleActionAttempt);
+            EventBus.Instance.onTaskTimeout.RemoveListener(HandleTaskTimeout);
         }
 
         if (_scoreService != null)
@@ -67,7 +64,6 @@ public class ScoreManagerAdapter : MonoBehaviour
     private void HandleTaskCompleted(TaskEventArgs args)
     {
         if (args.Task == null) return;
-
         string taskId = args.Task.taskName;
         if (_completedTaskIds.Contains(taskId))
         {
@@ -77,7 +73,6 @@ public class ScoreManagerAdapter : MonoBehaviour
 
         _completedTaskIds.Add(taskId);
         _scoreService.AddPoints(args.Task.successPoints, $"Task '{taskId}' completed");
-
         if (_currentTask == args.Task)
             _currentTask = null;
     }
@@ -85,7 +80,6 @@ public class ScoreManagerAdapter : MonoBehaviour
     private void HandleTaskTimeout(TaskEventArgs args)
     {
         if (args.Task == null) return;
-
         string taskId = args.Task.taskName;
         if (_completedTaskIds.Contains(taskId))
         {
@@ -95,7 +89,6 @@ public class ScoreManagerAdapter : MonoBehaviour
 
         _scoreService.SubtractPoints(args.Task.failurePenalty, $"Task '{taskId}' timed out");
         _completedTaskIds.Add(taskId);
-
         if (_currentTask == args.Task)
             _currentTask = null;
     }
@@ -119,10 +112,6 @@ public class ScoreManagerAdapter : MonoBehaviour
     private void HandleScoreChanged(int newScore, int delta, string reason)
     {
         Debug.Log($"[Score] {reason}: {(delta >= 0 ? "+" : "")}{delta} (Total: {newScore})");
-        /*if (ScoreHUD.Instance != null)
-        {
-            ScoreHUD.Instance.ShowDelta(delta, reason, newScore);
-        }*/
     }
 
     /// <summary>

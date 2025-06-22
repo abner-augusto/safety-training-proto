@@ -3,9 +3,6 @@ using TMPro;
 
 public class SessionCompleteUI : MonoBehaviour
 {
-    [Header("Event Bus")]
-    public EventBus eventBus;
-
     [Header("UI Elements")]
     public TextMeshProUGUI timeText;
     public TextMeshProUGUI scoreText;
@@ -13,14 +10,14 @@ public class SessionCompleteUI : MonoBehaviour
 
     void Start()
     {
-        if (eventBus == null)
+        if (EventBus.Instance == null)
         {
-            Debug.LogError("SessionCompleteUI: EventBus not assigned.", this);
+            Debug.LogError("SessionCompleteUI: EventBus not available.", this);
             enabled = false;
             return;
         }
 
-        eventBus.onSessionCompleted.AddListener(HandleSessionCompleted);
+        EventBus.Instance.onSessionCompleted.AddListener(HandleSessionCompleted);
         gameObject.SetActive(false); // Hide initially
     }
 
@@ -36,5 +33,4 @@ public class SessionCompleteUI : MonoBehaviour
 
         gameObject.SetActive(true);
     }
-
 }

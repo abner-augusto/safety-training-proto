@@ -11,22 +11,16 @@ public class TaskUIController : MonoBehaviour
     [Header("References (assign in Inspector)")]
     [Tooltip("Drag in your TaskManager GameObject (with TaskManager component).")]
     [SerializeField] private TaskManager taskManager;
-
-    [Tooltip("Drag in your EventBus ScriptableObject here.")]
-    [SerializeField] private EventBus eventBus;
-
     [Tooltip("Parent transform under which TaskEntry prefabs will be instantiated.")]
     [SerializeField] private Transform taskListContainer;
-
     [Tooltip("The TaskEntry prefab (point to your TaskEntryUI prefab).")]
     [SerializeField] private GameObject taskEntryPrefab;
 
     [Header("Current Task Detail Panel")]
-    [SerializeField] private TMP_Text currentTaskOrderText;       // e.g. "Task 3 of 7"
-    [SerializeField] private TMP_Text currentTaskNameText;        // e.g. "Put On Helmet"
-    [SerializeField] private TMP_Text currentTaskDescriptionText; // e.g. "Approach the helmet rack…"
+    [SerializeField] private TMP_Text currentTaskOrderText;
+    [SerializeField] private TMP_Text currentTaskNameText;
+    [SerializeField] private TMP_Text currentTaskDescriptionText;
 
-    // Maps each SafetyTask to its TaskEntryUI component
     private Dictionary<SafetyTask, TaskEntryUI> _taskToEntryUI = new Dictionary<SafetyTask, TaskEntryUI>();
     private SafetyTask _previousTask;
 
@@ -39,9 +33,9 @@ public class TaskUIController : MonoBehaviour
             return;
         }
 
-        if (eventBus == null)
+        if (EventBus.Instance == null)
         {
-            Debug.LogError("TaskUIController: EventBus not assigned.");
+            Debug.LogError("TaskUIController: EventBus not available.");
             enabled = false;
             return;
         }
@@ -53,15 +47,12 @@ public class TaskUIController : MonoBehaviour
             return;
         }
 
-        // 1) Build the entire list of tasks in the UI
         PopulateTaskList();
-
-        // 2) Subscribe to Task-Related Events
-        eventBus.onTaskStarted.AddListener(OnTaskStarted);
-        eventBus.onTaskCompleted.AddListener(OnTaskCompleted);
-        eventBus.onTaskTimeout.AddListener(OnTaskTimeout);
-
-        // 3) If there's already a running task at startup, show it
+        
+        EventBus.Instance.onTaskStarted.AddListener(OnTaskStarted);
+        EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
+        EventBus.Instance.onTaskTimeout.AddListener(OnTaskTimeout);
+        
         SafetyTask already = taskManager.GetCurrentTask();
         if (already != null)
         {
@@ -81,11 +72,11 @@ public class TaskUIController : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (eventBus != null)
+        if (EventBus.Instance != null)
         {
-            eventBus.onTaskStarted.RemoveListener(OnTaskStarted);
-            eventBus.onTaskCompleted.RemoveListener(OnTaskCompleted);
-            eventBus.onTaskTimeout.RemoveListener(OnTaskTimeout);
+            EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStarted);
+            EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
+            EventBus.Instance.onTaskTimeout.RemoveListener(OnTaskTimeout);
         }
     }
 

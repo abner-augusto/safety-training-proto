@@ -1,62 +1,55 @@
 using UnityEngine;
-
 public class XRSessionManager : MonoBehaviour
 {
-    [Tooltip("Assign your EventBus ScriptableObject asset here.")]
-    public EventBus eventBus;
-
-    private bool _isPaused = false;
+    private bool _isPaused;
 
     void Start()
     {
-        if (eventBus == null)
+        // Access the singleton instance directly
+        if (EventBus.Instance == null)
         {
-            Debug.LogError("EventBus not assigned to XRSessionManager!", this);
+            Debug.LogError("XRSessionManager requires an EventBus, but the instance is not available.", this);
             return;
         }
-        // Make this EventBus the globally accessible one if using the static Instance property strategy
-        // EventBus.Instance = eventBus; // This makes the assigned bus the one for static access
 
-        eventBus.RaiseSessionStarted();
+        EventBus.Instance.RaiseSessionStarted();
         Debug.Log("XRSessionManager: Session Started event raised.");
     }
 
     void OnApplicationPause(bool pauseStatus)
     {
-        if (eventBus == null) return;
-
+        if (EventBus.Instance == null) return;
         if (pauseStatus && !_isPaused)
         {
             _isPaused = true;
-            eventBus.RaiseSessionPaused();
+            EventBus.Instance.RaiseSessionPaused();
             Debug.Log("XRSessionManager: Session Paused event raised.");
         }
-        // Note: OnApplicationFocus is often better for VR resume
     }
 
     void OnApplicationFocus(bool hasFocus)
     {
-        if (eventBus == null) return;
-
-        // This handles VR headset putting on/taking off (HMD mounted/unmounted)
+        if (EventBus.Instance == null) return;
         if (hasFocus && _isPaused)
         {
             _isPaused = false;
-            eventBus.RaiseSessionResumed();
+            EventBus.Instance.RaiseSessionResumed();
             Debug.Log("XRSessionManager: Session Resumed event raised.");
         }
-        else if (!hasFocus && !_isPaused) // Check if not already paused by OnApplicationPause
+        else if (!hasFocus && !_isPaused)
         {
-            _isPaused = true; // Set paused state
-            eventBus.RaiseSessionPaused(); // Raise paused if focus is lost and not already paused
+            _isPaused = true;
+            EventBus.Instance.RaiseSessionPaused();
             Debug.Log("XRSessionManager: Session Paused (due to focus loss) event raised.");
         }
     }
 
     void OnDestroy()
     {
-        if (eventBus == null) return;
-        eventBus.RaiseSessionEnded();
-        Debug.Log("XRSessionManager: Session Ended event raised.");
+        if (EventBus.Instance != null)
+        {
+            EventBus.Instance.RaiseSessionEnded();
+            Debug.Log("XRSessionManager: Session Ended event raised.");
+        }
     }
 }

@@ -1,5 +1,4 @@
 using UnityEngine;
-
 public class EventGameObjectToggleListener : MonoBehaviour
 {
     public enum EventType
@@ -15,58 +14,63 @@ public class EventGameObjectToggleListener : MonoBehaviour
         PpeStateChanged,
         ActionAttempt,
         TasksCompleted,
-        
     }
 
     [Header("Configuration")]
-    public EventBus eventBus;
     public EventType eventTypeToListen;
     public GameObject target;
     public bool enableOnEvent = true;
 
     void Start()
     {
-        if (eventBus == null || target == null)
+        if (target == null)
         {
-            Debug.LogError("Missing references in EventGameObjectToggleListener", this);
+            Debug.LogError("Missing target reference in EventGameObjectToggleListener", this);
             enabled = false;
             return;
+        }
+
+        if (EventBus.Instance == null)
+        {
+             Debug.LogError("EventBus instance not found. Cannot listen for events.", this);
+             enabled = false;
+             return;
         }
 
         switch (eventTypeToListen)
         {
             case EventType.SessionStarted:
-                eventBus.onSessionStarted.AddListener(_ => Toggle());
+                EventBus.Instance.onSessionStarted.AddListener(_ => Toggle());
                 break;
             case EventType.SessionPaused:
-                eventBus.onSessionPaused.AddListener(_ => Toggle());
+                EventBus.Instance.onSessionPaused.AddListener(_ => Toggle());
                 break;
             case EventType.SessionResumed:
-                eventBus.onSessionResumed.AddListener(_ => Toggle());
+                EventBus.Instance.onSessionResumed.AddListener(_ => Toggle());
                 break;
             case EventType.SessionEnded:
-                eventBus.onSessionEnded.AddListener(_ => Toggle());
+                EventBus.Instance.onSessionEnded.AddListener(_ => Toggle());
                 break;
             case EventType.TaskStarted:
-                eventBus.onTaskStarted.AddListener(_ => Toggle());
+                EventBus.Instance.onTaskStarted.AddListener(_ => Toggle());
                 break;
             case EventType.TaskCompleted:
-                eventBus.onTaskCompleted.AddListener(_ => Toggle());
+                EventBus.Instance.onTaskCompleted.AddListener(_ => Toggle());
                 break;
             case EventType.TaskTimeout:
-                eventBus.onTaskTimeout.AddListener(_ => Toggle());
+                EventBus.Instance.onTaskTimeout.AddListener(_ => Toggle());
                 break;
             case EventType.ScoreChanged:
-                eventBus.onScoreChanged.AddListener(_ => Toggle());
+                EventBus.Instance.onScoreChanged.AddListener(_ => Toggle());
                 break;
             case EventType.PpeStateChanged:
-                eventBus.onPpeStateChanged.AddListener(_ => Toggle());
+                EventBus.Instance.onPpeStateChanged.AddListener(_ => Toggle());
                 break;
             case EventType.ActionAttempt:
-                eventBus.onActionAttempt.AddListener(_ => Toggle());
+                EventBus.Instance.onActionAttempt.AddListener(_ => Toggle());
                 break;
             case EventType.TasksCompleted:
-                eventBus.onSessionCompleted.AddListener(_ => Toggle());
+                EventBus.Instance.onSessionCompleted.AddListener(_ => Toggle());
                 break;
         }
     }
@@ -75,5 +79,4 @@ public class EventGameObjectToggleListener : MonoBehaviour
     {
         target.SetActive(enableOnEvent);
     }
-    
 }

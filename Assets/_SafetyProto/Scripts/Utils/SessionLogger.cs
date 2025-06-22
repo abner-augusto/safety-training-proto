@@ -11,10 +11,6 @@ using JetBrains.Annotations; // Added for Rider warning suppression
 
 public class SessionLogger : MonoBehaviour
 {
-    [Tooltip("Assign your EventBus ScriptableObject asset here.")]
-    public EventBus eventBus;
-
-    // Internal log entry
     [Serializable]
     private class LogEntry
     {
@@ -41,50 +37,46 @@ public class SessionLogger : MonoBehaviour
     }
 
     private SessionLog _sessionLog = new SessionLog();
-
     private void Start()
     {
-        if (eventBus == null)
+        if (EventBus.Instance == null)
         {
-            Debug.LogError("ComprehensiveSessionLogger: EventBus not assigned.", this);
+            Debug.LogError("ComprehensiveSessionLogger: EventBus not available.", this);
             enabled = false;
             return;
         }
 
         // Subscribe to all events
-        eventBus.onSessionStarted.AddListener(OnSessionStarted);
-        eventBus.onSessionPaused.AddListener(OnSessionPaused);
-        eventBus.onSessionResumed.AddListener(OnSessionResumed);
-        eventBus.onSessionCompleted.AddListener(OnSessionCompleted);
-
-        eventBus.onActionAttempt.AddListener(OnActionAttempt);
-        eventBus.onPpeStateChanged.AddListener(OnPpeStateChanged);
-        eventBus.onTaskStarted.AddListener(OnTaskStarted);
-        eventBus.onTaskCompleted.AddListener(OnTaskCompleted);
-        eventBus.onTaskTimeout.AddListener(OnTaskTimeout);
-        eventBus.onScoreChanged.AddListener(OnScoreChanged);
-        eventBus.onGroupStarted.AddListener(OnGroupStarted);
-        eventBus.onGroupCompleted.AddListener(OnGroupCompleted);
+        EventBus.Instance.onSessionStarted.AddListener(OnSessionStarted);
+        EventBus.Instance.onSessionPaused.AddListener(OnSessionPaused);
+        EventBus.Instance.onSessionResumed.AddListener(OnSessionResumed);
+        EventBus.Instance.onSessionCompleted.AddListener(OnSessionCompleted);
+        EventBus.Instance.onActionAttempt.AddListener(OnActionAttempt);
+        EventBus.Instance.onPpeStateChanged.AddListener(OnPpeStateChanged);
+        EventBus.Instance.onTaskStarted.AddListener(OnTaskStarted);
+        EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
+        EventBus.Instance.onTaskTimeout.AddListener(OnTaskTimeout);
+        EventBus.Instance.onScoreChanged.AddListener(OnScoreChanged);
+        EventBus.Instance.onGroupStarted.AddListener(OnGroupStarted);
+        EventBus.Instance.onGroupCompleted.AddListener(OnGroupCompleted);
     }
 
     private void OnDestroy()
     {
-        if (eventBus == null) return;
+        if (EventBus.Instance == null) return;
 
-        // Unsubscribe
-        eventBus.onSessionStarted.RemoveListener(OnSessionStarted);
-        eventBus.onSessionPaused.RemoveListener(OnSessionPaused);
-        eventBus.onSessionResumed.RemoveListener(OnSessionResumed);
-        eventBus.onSessionCompleted.RemoveListener(OnSessionCompleted);
-
-        eventBus.onActionAttempt.RemoveListener(OnActionAttempt);
-        eventBus.onPpeStateChanged.RemoveListener(OnPpeStateChanged);
-        eventBus.onTaskStarted.RemoveListener(OnTaskStarted);
-        eventBus.onTaskCompleted.RemoveListener(OnTaskCompleted);
-        eventBus.onTaskTimeout.RemoveListener(OnTaskTimeout);
-        eventBus.onScoreChanged.RemoveListener(OnScoreChanged);
-        eventBus.onGroupStarted.RemoveListener(OnGroupStarted);
-        eventBus.onGroupCompleted.RemoveListener(OnGroupCompleted);
+        EventBus.Instance.onSessionStarted.RemoveListener(OnSessionStarted);
+        EventBus.Instance.onSessionPaused.RemoveListener(OnSessionPaused);
+        EventBus.Instance.onSessionResumed.RemoveListener(OnSessionResumed);
+        EventBus.Instance.onSessionCompleted.RemoveListener(OnSessionCompleted);
+        EventBus.Instance.onActionAttempt.RemoveListener(OnActionAttempt);
+        EventBus.Instance.onPpeStateChanged.RemoveListener(OnPpeStateChanged);
+        EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStarted);
+        EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
+        EventBus.Instance.onTaskTimeout.RemoveListener(OnTaskTimeout);
+        EventBus.Instance.onScoreChanged.RemoveListener(OnScoreChanged);
+        EventBus.Instance.onGroupStarted.RemoveListener(OnGroupStarted);
+        EventBus.Instance.onGroupCompleted.RemoveListener(OnGroupCompleted);
     }
 
     // Event handlers
@@ -95,7 +87,6 @@ public class SessionLogger : MonoBehaviour
     {
         LogEvent("SessionCompleted",
             $"Time={args.totalElapsedTime}, Score={args.totalScore}, Completed={args.tasksCompleted}/{args.totalTasks}");
-
         _sessionLog.summary = new SessionSummary
         {
             totalElapsedTime = args.totalElapsedTime,
@@ -103,34 +94,25 @@ public class SessionLogger : MonoBehaviour
             tasksCompleted = args.tasksCompleted,
             totalTasks = args.totalTasks
         };
-
         WriteLogToFile();
     }
 
     private void OnActionAttempt(ActionAttemptEventArgs args)
         => LogEvent("ActionAttempt", args.ActionType.ToString());
-
     private void OnPpeStateChanged(PPEStateChangedEventArgs args)
         => LogEvent("PpeStateChanged", $"PPE={args.PpeType}, Wearing={args.IsWearing}");
-
     private void OnTaskStarted(TaskEventArgs args)
         => LogEvent("TaskStarted", args.Task.taskName);
-
     private void OnTaskCompleted(TaskEventArgs args)
         => LogEvent("TaskCompleted", args.Task.taskName);
-
     private void OnTaskTimeout(TaskEventArgs args)
         => LogEvent("TaskTimeout", args.Task.taskName);
-
     private void OnScoreChanged(ScoreChangedEventArgs args)
         => LogEvent("ScoreChanged", $"Delta={args.Delta}, Total={args.TotalScore}");
-
     private void OnGroupStarted(TaskGroupEventArgs args)
         => LogEvent("GroupStarted", args.Group.groupName);
-
     private void OnGroupCompleted(TaskGroupEventArgs args)
         => LogEvent("GroupCompleted", args.Group.groupName);
-
     // Helper to add an entry
     private void LogEvent(string eventName, string details)
     {

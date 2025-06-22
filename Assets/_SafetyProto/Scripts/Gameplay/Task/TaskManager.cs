@@ -1,12 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
-
 public class TaskManager : MonoBehaviour
 {
-    [Tooltip("Assign your EventBus ScriptableObject asset here.")]
-    public EventBus eventBus;
-
     [Header("Task Configuration")]
     public List<TaskGroup> taskGroups = new List<TaskGroup>();
     public bool startTasksAutomatically = true;
@@ -24,12 +20,11 @@ public class TaskManager : MonoBehaviour
     private HashSet<TaskGroup> _completedGroups = new();
 
     private IScoreService _scoreService;
-
     void Start()
     {
-        if (eventBus == null)
+        if (EventBus.Instance == null)
         {
-            Debug.LogError("EventBus not assigned to TaskManager!", this);
+            Debug.LogError("EventBus not available for TaskManager!", this);
             enabled = false;
             return;
         }
@@ -43,9 +38,8 @@ public class TaskManager : MonoBehaviour
 
         _scoreService = scoreServiceAsset.Service;
 
-        eventBus.onActionAttempt.AddListener(HandleActionAttempt);
-        eventBus.onTaskTimeout.AddListener(HandleTaskTimeout);
-
+        EventBus.Instance.onActionAttempt.AddListener(HandleActionAttempt);
+        EventBus.Instance.onTaskTimeout.AddListener(HandleTaskTimeout);
         if (startTasksAutomatically)
         {
             StartNextGroup();
@@ -54,10 +48,10 @@ public class TaskManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (eventBus != null)
+        if (EventBus.Instance != null)
         {
-            eventBus.onActionAttempt.RemoveListener(HandleActionAttempt);
-            eventBus.onTaskTimeout.RemoveListener(HandleTaskTimeout);
+            EventBus.Instance.onActionAttempt.RemoveListener(HandleActionAttempt);
+            EventBus.Instance.onTaskTimeout.RemoveListener(HandleTaskTimeout);
         }
     }
 
@@ -71,11 +65,9 @@ public class TaskManager : MonoBehaviour
     private void StartNextGroup()
     {
         _currentGroupIndex++;
-
         while (_currentGroupIndex < taskGroups.Count)
         {
             var group = taskGroups[_currentGroupIndex];
-
             bool canStart = group.prerequisites.All(p => _completedGroups.Contains(p));
             if (!canStart)
             {
@@ -89,7 +81,7 @@ public class TaskManager : MonoBehaviour
             _isTaskActive = false;
             _remainingFreeTasks.Clear();
 
-            eventBus.RaiseGroupStarted(new TaskGroupEventArgs(group));
+            EventBus.Instance.RaiseGroupStarted(new TaskGroupEventArgs(group));
 
             if (group.executionMode == TaskExecutionMode.Sequential)
             {
@@ -110,21 +102,17 @@ public class TaskManager : MonoBehaviour
     private void EndSession()
     {
         Debug.Log("TaskManager: All task groups completed!");
-
         float totalTime = FindFirstObjectByType<TimerSystem>()?.GetElapsedTime() ?? 0f;
         int totalScore = _scoreService?.CurrentScore ?? 0;
-
         var completedArgs = new SessionCompletedEventArgs(
             totalElapsedTime: totalTime,
             totalScore: totalScore,
             tasksCompleted: _completedTasks.Count,
             totalTasks: taskGroups.Sum(g => g.tasks.Count)
         );
-
         Debug.Log("TaskManager: Raising SessionCompleted event with stats: " +
                   $"Time={totalTime}, Score={totalScore}, Completed={completedArgs.tasksCompleted}/{completedArgs.totalTasks}");
-
-        eventBus.RaiseSessionCompleted(completedArgs);
+        EventBus.Instance.RaiseSessionCompleted(completedArgs);
     }
 
     public void AbortSessionManually()
@@ -140,11 +128,11 @@ public class TaskManager : MonoBehaviour
         {
             _currentTask = group.tasks[_currentTaskIndex];
             _isTaskActive = true;
-            eventBus.RaiseTaskStarted(new TaskEventArgs(_currentTask));
+            EventBus.Instance.RaiseTaskStarted(new TaskEventArgs(_currentTask));
         }
         else
         {
-            eventBus.RaiseGroupCompleted(new TaskGroupEventArgs(group));
+            EventBus.Instance.RaiseGroupCompleted(new TaskGroupEventArgs(group));
             _completedGroups.Add(group);
             StartNextGroup();
         }
@@ -170,13 +158,13 @@ public class TaskManager : MonoBehaviour
                 _remainingFreeTasks.Remove(matchedTask);
                 _completedTasks.Add(matchedTask);
 
-                eventBus.RaiseTaskStarted(new TaskEventArgs(matchedTask));
-                eventBus.RaiseTaskCompleted(new TaskEventArgs(matchedTask));
+                EventBus.Instance.RaiseTaskStarted(new TaskEventArgs(matchedTask));
+                EventBus.Instance.RaiseTaskCompleted(new TaskEventArgs(matchedTask));
 
                 if (_remainingFreeTasks.Count == 0)
                 {
                     var finishedGroup = taskGroups[_currentGroupIndex];
-                    eventBus.RaiseGroupCompleted(new TaskGroupEventArgs(finishedGroup));
+                    EventBus.Instance.RaiseGroupCompleted(new TaskGroupEventArgs(finishedGroup));
                     _completedGroups.Add(finishedGroup);
                     StartNextGroup();
                 }
@@ -186,7 +174,7 @@ public class TaskManager : MonoBehaviour
 
     private void CompleteCurrentTask()
     {
-        eventBus.RaiseTaskCompleted(new TaskEventArgs(_currentTask));
+        EventBus.Instance.RaiseTaskCompleted(new TaskEventArgs(_currentTask));
         _completedTasks.Add(_currentTask);
         _isTaskActive = false;
 

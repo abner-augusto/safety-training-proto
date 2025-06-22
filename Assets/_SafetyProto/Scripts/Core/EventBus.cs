@@ -1,7 +1,9 @@
 using UnityEngine;
 using UnityEngine.Events;
-using System; // For C# Action
+using System;
 
+// The CreateAssetMenu attribute is still useful for initial creation,
+// but the singleton pattern will enforce a single instance loaded from Resources.
 [CreateAssetMenu(fileName = "EventBus", menuName = "VRSafetyTraining/EventBus", order = 0)]
 public class EventBus : ScriptableObject
 {
@@ -12,25 +14,22 @@ public class EventBus : ScriptableObject
         {
             if (_instance == null)
             {
-                // Attempt to load from Resources first if you place it there.
-                // _instance = Resources.Load<EventBus>("EventBus"); // Convention: place in Resources/EventBus.asset
-                // If not found, it means it needs to be assigned manually or a different loading strategy.
-                // For this project, we'll rely on manual assignment and a FindObjectOfType fallback for editor convenience
-                // or a dedicated loader. For now, let's assume it's assigned.
-                // If you have multiple EventBus assets, this singleton pattern needs refinement.
-                // The spec says "Serialized in Inspector", so direct assignment is key.
-                // This static instance is more for C# event access if needed, but primarily UnityEvents will be used.
-                Debug.LogError("EventBus instance is null. Ensure an EventBus asset is created and assigned.");
+                // The single EventBus asset must be placed in a "Resources" folder.
+                _instance = Resources.Load<EventBus>("EventBus");
+
+                if (_instance == null)
+                {
+                    Debug.LogError("EventBus instance not found in Resources. " +
+                                   "Please create an EventBus asset via the Assets menu and place it in a 'Resources' folder.");
+                }
             }
             return _instance;
         }
-        // Allow setting instance from a loader or manager if needed.
-        set => _instance = value;
     }
 
     [Header("Debug")]
     public bool verboseLogging;
-
+    
     // --- C# Events (optional, but good for non-MonoBehaviour systems) ---
     public static event Action<SessionStartedEventArgs> OnSessionStartedCSharp;
     public static event Action<SessionPausedEventArgs> OnSessionPausedCSharp;
@@ -44,7 +43,7 @@ public class EventBus : ScriptableObject
     public static event Action<ScoreChangedEventArgs> OnScoreChangedCSharp;
     public static event Action<TaskGroupEventArgs> OnGroupStartedCSharp;
     public static event Action<TaskGroupEventArgs> OnGroupCompletedCSharp;
-
+    
     // --- UnityEvents (for Inspector assignment) ---
     [Header("Session Events")]
     public UnityEvent<SessionStartedEventArgs> onSessionStarted;
@@ -59,29 +58,13 @@ public class EventBus : ScriptableObject
     public UnityEvent<TaskEventArgs> onTaskCompleted;
     public UnityEvent<TaskEventArgs> onTaskTimeout; // TaskEventArgs will contain the timed-out task
     public UnityEvent<ScoreChangedEventArgs> onScoreChanged;
-
+    
     [Header("Group Events")] // NEW
     public UnityEvent<TaskGroupEventArgs> onGroupStarted;
     public UnityEvent<TaskGroupEventArgs> onGroupCompleted;
     
     [Header("End of Session")]
     public UnityEvent<SessionCompletedEventArgs> onSessionCompleted;
-    
-    private void OnEnable()
-    {
-        // If we want a single instance accessible via static Instance property
-        // This ensures that the first loaded EventBus SO becomes the static instance.
-        // However, this is tricky with SOs as their lifecycle is different.
-        // Better to have a manager load/assign it.
-        // For now, we'll just ensure _instance is set if it's null.
-        if (_instance == null) _instance = this;
-        else if (_instance != this)
-        {
-            // This can happen if you have multiple EventBus assets loaded or accidentally duplicate one.
-            // Decide on a strategy: log error, overwrite, or ignore.
-            // Debug.LogWarning($"Multiple EventBus instances. Using the first one loaded: {_instance.name}. Ignoring: {this.name}");
-        }
-    }
 
     // --- Methods to Raise Events ---
     public void RaiseSessionStarted(SessionStartedEventArgs args = new SessionStartedEventArgs())
@@ -173,5 +156,4 @@ public class EventBus : ScriptableObject
         if (verboseLogging) Debug.Log($"[EventBus] SessionCompleted: {args.tasksCompleted} tasks, {args.totalElapsedTime:F2}s, Score: {args.totalScore}");
         onSessionCompleted?.Invoke(args);
     }
-
 }

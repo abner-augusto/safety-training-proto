@@ -3,35 +3,21 @@ using System.Collections.Generic;
 
 public class PPEManager : MonoBehaviour
 {
-    [Tooltip("Assign your EventBus ScriptableObject asset here.")]
-    public EventBus eventBus;
-
     // Tracks which PPEType is currently considered "worn" and by which GameObject
     private Dictionary<PPEType, GameObject> _wornPPE = new Dictionary<PPEType, GameObject>();
-
-    void Start()
-    {
-        if (eventBus == null)
-        {
-            Debug.LogError("EventBus not assigned to PPEManager!", this);
-            enabled = false;
-        }
-    }
 
     // Called by PPEZone scripts
     public void ReportPPEStateChange(PPEType ppeType, bool isNowInsideZone, GameObject ppeObject)
     {
-        if (eventBus == null) return;
-
+        if (EventBus.Instance == null) return;
         bool previouslyWorn = _wornPPE.ContainsKey(ppeType);
         GameObject currentWornObject = previouslyWorn ? _wornPPE[ppeType] : null;
-
         if (isNowInsideZone)
         {
             if (!previouslyWorn || currentWornObject != ppeObject) // New item or different item for this type
             {
                 _wornPPE[ppeType] = ppeObject; // Register this specific object as worn
-                eventBus.RaisePpeStateChanged(new PPEStateChangedEventArgs(ppeType, true));
+                EventBus.Instance.RaisePpeStateChanged(new PPEStateChangedEventArgs(ppeType, true));
                 Debug.Log($"PPEManager: {ppeType} is now WORN (Item: {ppeObject.name}).");
             }
         }
@@ -41,7 +27,7 @@ public class PPEManager : MonoBehaviour
             if (previouslyWorn && currentWornObject == ppeObject)
             {
                 _wornPPE.Remove(ppeType);
-                eventBus.RaisePpeStateChanged(new PPEStateChangedEventArgs(ppeType, false));
+                EventBus.Instance.RaisePpeStateChanged(new PPEStateChangedEventArgs(ppeType, false));
                 Debug.Log($"PPEManager: {ppeType} is now NOT WORN (Item: {ppeObject.name} exited).");
             }
         }
