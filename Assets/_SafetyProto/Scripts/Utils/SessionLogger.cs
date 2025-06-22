@@ -39,10 +39,8 @@ public class SessionLogger : MonoBehaviour
     private SessionLog _sessionLog = new SessionLog();
     private void Start()
     {
-        if (EventBus.Instance == null)
+        if (!this.IsEventBusReady())
         {
-            Debug.LogError("ComprehensiveSessionLogger: EventBus not available.", this);
-            enabled = false;
             return;
         }
 
@@ -63,20 +61,22 @@ public class SessionLogger : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (EventBus.Instance == null) return;
-
-        EventBus.Instance.onSessionStarted.RemoveListener(OnSessionStarted);
-        EventBus.Instance.onSessionPaused.RemoveListener(OnSessionPaused);
-        EventBus.Instance.onSessionResumed.RemoveListener(OnSessionResumed);
-        EventBus.Instance.onSessionCompleted.RemoveListener(OnSessionCompleted);
-        EventBus.Instance.onActionAttempt.RemoveListener(OnActionAttempt);
-        EventBus.Instance.onPpeStateChanged.RemoveListener(OnPpeStateChanged);
-        EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStarted);
-        EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
-        EventBus.Instance.onTaskTimeout.RemoveListener(OnTaskTimeout);
-        EventBus.Instance.onScoreChanged.RemoveListener(OnScoreChanged);
-        EventBus.Instance.onGroupStarted.RemoveListener(OnGroupStarted);
-        EventBus.Instance.onGroupCompleted.RemoveListener(OnGroupCompleted);
+        if (EventBus.Instance != null)
+        {
+            // Unsubscribe from all events
+            EventBus.Instance.onSessionStarted.RemoveListener(OnSessionStarted);
+            EventBus.Instance.onSessionPaused.RemoveListener(OnSessionPaused);
+            EventBus.Instance.onSessionResumed.RemoveListener(OnSessionResumed);
+            EventBus.Instance.onSessionCompleted.RemoveListener(OnSessionCompleted);
+            EventBus.Instance.onActionAttempt.RemoveListener(OnActionAttempt);
+            EventBus.Instance.onPpeStateChanged.RemoveListener(OnPpeStateChanged);
+            EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStarted);
+            EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
+            EventBus.Instance.onTaskTimeout.RemoveListener(OnTaskTimeout);
+            EventBus.Instance.onScoreChanged.RemoveListener(OnScoreChanged);
+            EventBus.Instance.onGroupStarted.RemoveListener(OnGroupStarted);
+            EventBus.Instance.onGroupCompleted.RemoveListener(OnGroupCompleted);
+        }
     }
 
     // Event handlers

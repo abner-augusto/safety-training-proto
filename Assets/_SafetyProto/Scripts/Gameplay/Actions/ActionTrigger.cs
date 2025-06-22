@@ -8,23 +8,25 @@ public class ActionTrigger : MonoBehaviour
     // This method will be called by other scripts (e.g., XR Grab Interactable events, collision scripts)
     public void TriggerAction()
     {
-        Debug.Log($"[TriggerAction] {actionTypeToTrigger} TRIGGERED on {gameObject.name}");
-        if (EventBus.Instance == null)
+        if (!this.IsEventBusReady())
         {
-            Debug.LogWarning($"ActionTrigger on {gameObject.name} cannot fire event: EventBus instance is missing.");
             return;
         }
+        
+        Debug.Log($"[TriggerAction] {actionTypeToTrigger} TRIGGERED on {gameObject.name}");
+
         if (actionTypeToTrigger == ActionType.None)
         {
             Debug.LogWarning($"ActionTrigger on {gameObject.name} has ActionType set to None. No event fired.", this);
             return;
         }
 
-        ActionAttemptEventArgs args = new ActionAttemptEventArgs(
+        var args = new ActionAttemptEventArgs(
             actionTypeToTrigger,
             interactorId,
-            transform.position // Or the position of the interaction point
+            transform.position
         );
+
         EventBus.Instance.RaiseActionAttempt(args);
         Debug.Log($"ActionTrigger on {gameObject.name} Fired Action: {actionTypeToTrigger}");
     }

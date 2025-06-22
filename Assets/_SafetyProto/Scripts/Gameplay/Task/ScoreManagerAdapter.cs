@@ -27,9 +27,8 @@ public class ScoreManagerAdapter : MonoBehaviour
 
     private void OnEnable()
     {
-        if (EventBus.Instance == null)
+        if (!this.IsEventBusReady())
         {
-            Debug.LogError("EventBus instance missing", this);
             return;
         }
 

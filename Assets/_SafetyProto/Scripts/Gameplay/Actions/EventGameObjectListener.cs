@@ -30,11 +30,9 @@ public class EventGameObjectToggleListener : MonoBehaviour
             return;
         }
 
-        if (EventBus.Instance == null)
+        if (!this.IsEventBusReady())
         {
-             Debug.LogError("EventBus instance not found. Cannot listen for events.", this);
-             enabled = false;
-             return;
+            return;
         }
 
         switch (eventTypeToListen)

@@ -19,10 +19,8 @@ public class TimerSystem : MonoBehaviour
 
     void Start()
     {
-        if (EventBus.Instance == null)
+        if (!this.IsEventBusReady())
         {
-            Debug.LogError("TimerSystem: EventBus not assigned!", this);
-            enabled = false;
             return;
         }
 

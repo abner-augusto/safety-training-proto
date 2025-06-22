@@ -33,10 +33,8 @@ public class TaskUIController : MonoBehaviour
             return;
         }
 
-        if (EventBus.Instance == null)
+        if (!this.IsEventBusReady())
         {
-            Debug.LogError("TaskUIController: EventBus not available.");
-            enabled = false;
             return;
         }
 

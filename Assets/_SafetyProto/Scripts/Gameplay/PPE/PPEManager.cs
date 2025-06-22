@@ -4,14 +4,21 @@ using System.Collections.Generic;
 public class PPEManager : MonoBehaviour
 {
     // Tracks which PPEType is currently considered "worn" and by which GameObject
-    private Dictionary<PPEType, GameObject> _wornPPE = new Dictionary<PPEType, GameObject>();
+    private readonly Dictionary<PPEType, GameObject> _wornPPE = new Dictionary<PPEType, GameObject>();
+
+    void Start()
+    {
+        // Use the helper to validate the EventBus at startup.
+        // If it fails, this component will be disabled.
+        this.IsEventBusReady();
+    }
 
     // Called by PPEZone scripts
     public void ReportPPEStateChange(PPEType ppeType, bool isNowInsideZone, GameObject ppeObject)
     {
-        if (EventBus.Instance == null) return;
         bool previouslyWorn = _wornPPE.ContainsKey(ppeType);
         GameObject currentWornObject = previouslyWorn ? _wornPPE[ppeType] : null;
+
         if (isNowInsideZone)
         {
             if (!previouslyWorn || currentWornObject != ppeObject) // New item or different item for this type

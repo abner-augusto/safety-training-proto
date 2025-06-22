@@ -10,10 +10,8 @@ public class SessionCompleteUI : MonoBehaviour
 
     void Start()
     {
-        if (EventBus.Instance == null)
+        if (!this.IsEventBusReady())
         {
-            Debug.LogError("SessionCompleteUI: EventBus not available.", this);
-            enabled = false;
             return;
         }
 

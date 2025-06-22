@@ -22,10 +22,8 @@ public class TaskManager : MonoBehaviour
     private IScoreService _scoreService;
     void Start()
     {
-        if (EventBus.Instance == null)
+        if (!this.IsEventBusReady())
         {
-            Debug.LogError("EventBus not available for TaskManager!", this);
-            enabled = false;
             return;
         }
 

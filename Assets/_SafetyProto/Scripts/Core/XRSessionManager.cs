@@ -5,10 +5,8 @@ public class XRSessionManager : MonoBehaviour
 
     void Start()
     {
-        // Access the singleton instance directly
-        if (EventBus.Instance == null)
+        if (!this.IsEventBusReady())
         {
-            Debug.LogError("XRSessionManager requires an EventBus, but the instance is not available.", this);
             return;
         }
 
@@ -18,7 +16,6 @@ public class XRSessionManager : MonoBehaviour
 
     void OnApplicationPause(bool pauseStatus)
     {
-        if (EventBus.Instance == null) return;
         if (pauseStatus && !_isPaused)
         {
             _isPaused = true;
@@ -29,7 +26,6 @@ public class XRSessionManager : MonoBehaviour
 
     void OnApplicationFocus(bool hasFocus)
     {
-        if (EventBus.Instance == null) return;
         if (hasFocus && _isPaused)
         {
             _isPaused = false;
