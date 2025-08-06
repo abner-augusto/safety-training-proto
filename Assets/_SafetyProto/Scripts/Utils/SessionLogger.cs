@@ -2,14 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-using JetBrains.Annotations; // Added for Rider warning suppression
+using JetBrains.Annotations;
+using SafetyProto.Core.Interfaces; // Added for Rider warning suppression
 
 /// <summary>
 /// Logs all relevant session events with timestamps and details,
 /// then writes a comprehensive JSON diary at session end.
 /// </summary>
 
-public class SessionLogger : MonoBehaviour
+public class SessionLogger : MonoBehaviour, ISessionResettable
 {
     [Serializable]
     private class LogEntry
@@ -139,4 +140,18 @@ public class SessionLogger : MonoBehaviour
             Debug.LogError($"ComprehensiveSessionLogger: Failed to write log. {ex.Message}");
         }
     }
+    
+    public void ResetSession()
+    {
+        // 1. Log that a session reset was triggered
+        LogEvent("SessionReset", "User manually triggered session reset");
+
+        // 2. Optional: save the current log before wiping it
+        WriteLogToFile();
+
+        // 3. Clear session data
+        _sessionLog.entries.Clear();
+        _sessionLog.summary = null;
+    }
+
 }

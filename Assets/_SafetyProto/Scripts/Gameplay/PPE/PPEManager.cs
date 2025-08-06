@@ -1,7 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
+using SafetyProto.Core.Interfaces;
 
-public class PPEManager : MonoBehaviour
+public class PPEManager : MonoBehaviour, ISessionResettable
 {
     // Tracks which PPEType is currently considered "worn" and by which GameObject
     private readonly Dictionary<PPEType, GameObject> _wornPPE = new Dictionary<PPEType, GameObject>();
@@ -60,5 +61,10 @@ public class PPEManager : MonoBehaviour
             }
         }
         return true; // All required PPE are worn
+    }
+
+    public void ResetSession()
+    {
+        _wornPPE.Clear();
     }
 }

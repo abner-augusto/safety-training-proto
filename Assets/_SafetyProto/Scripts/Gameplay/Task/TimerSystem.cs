@@ -1,8 +1,9 @@
 using UnityEngine;
 using UnityEngine.Events;
 using System.Collections;
+using SafetyProto.Core.Interfaces;
 
-public class TimerSystem : MonoBehaviour
+public class TimerSystem : MonoBehaviour, ISessionResettable
 {
     [Tooltip("Assign your TaskManager here so we can tell which group is active.")]
     public TaskManager taskManager;
@@ -163,4 +164,13 @@ public class TimerSystem : MonoBehaviour
 
     public float GetTimeRemaining() => _timeRemaining;
     public float GetElapsedTime() => _elapsedTime;
+
+    public void ResetSession()
+    {
+        StopCurrentTimer();
+        _timedGroup = null;
+        _timeRemaining = 0f;
+        _elapsedTime = 0f;
+        onTimeUpdated.Invoke(0f);
+    }
 }

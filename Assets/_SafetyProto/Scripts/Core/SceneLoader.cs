@@ -1,15 +1,17 @@
+using SafetyProto.Core.Interfaces;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
-public class SceneLoader : MonoBehaviour
+public class SceneLoader : MonoBehaviour, ISessionResettable
 {
     [System.Serializable]
     public class StringEvent : UnityEvent<string> { }
 
     [Header("Events")]
-    public StringEvent onLoadScene;   // Drag this in inspector or call from code to load a specific scene
-    public UnityEvent onReloadScene;  // Drag this or call from code to reload the current scene
+    public StringEvent onLoadScene;
+    public UnityEvent onReloadScene;
 
     /// <summary>
     /// Loads a scene by its name.
@@ -24,11 +26,35 @@ public class SceneLoader : MonoBehaviour
     /// </summary>
     public void ReloadCurrentScene()
     {
-        Scene currentScene = SceneManager.GetActiveScene();
+        var currentScene = SceneManager.GetActiveScene();
         SceneManager.LoadScene(currentScene.name);
     }
 
-    // Optional: Setup default listeners when you add the component in the Editor
+    /// <summary>
+    /// Resets all ISessionResettable managers in the current scene, excluding this loader.
+    /// </summary>
+    private void ResetManagers()
+    {
+        foreach (var resettable in Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
+                     .OfType<ISessionResettable>())
+        {
+            // Avoid calling ResetSession on self
+            if ((SceneLoader)resettable != this)
+            {
+                resettable.ResetSession();
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Full session reset + scene reload. Call this to restart everything.
+    /// </summary>
+    public void ResetSession()
+    {
+        ResetManagers();
+        ReloadCurrentScene();
+    }
+    
     private void Reset()
     {
         onLoadScene ??= new StringEvent();

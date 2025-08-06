@@ -1,8 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using SafetyProto.Core.Interfaces;
 
-public class TaskManager : MonoBehaviour
+public class TaskManager : MonoBehaviour, ISessionResettable
 {
     [Header("Task Configuration")]
     public List<TaskGroup> taskGroups = new List<TaskGroup>();
@@ -179,4 +180,20 @@ public class TaskManager : MonoBehaviour
         (_currentGroupIndex >= 0 && _currentGroupIndex < taskGroups.Count)
             ? taskGroups[_currentGroupIndex]
             : null;
+
+    /// <summary>Resets tasks and indexes for a new training session.</summary>
+    public void ResetSession()
+    {
+        // If its in execution, cancel all pending callbacks
+        CancelInvoke(nameof(StartNextTask));
+
+        // Resets group states and tasks
+        _completedGroups.Clear();
+        _lastSessionSummary = null;
+        _currentGroupIndex = -1;
+        _currentTaskIndex = -1;
+        _currentTask = null;
+        InitializeRuntimeTasks();
+    }
+    
 }

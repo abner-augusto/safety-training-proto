@@ -1,10 +1,11 @@
 using System;
+using SafetyProto.Core.Interfaces;
 
 /// <summary>
 /// Pure C# implementation of <see cref="IScoreService"/>.
 /// No UnityEngine references so it runs in headless tests.
 /// </summary>
-public sealed class ScoreService : IScoreService
+public sealed class ScoreService : IScoreService, ISessionResettable
 {
     public int CurrentScore { get; private set; }
 
@@ -26,5 +27,12 @@ public sealed class ScoreService : IScoreService
     {
         CurrentScore += delta;
         ScoreChanged.Invoke(CurrentScore, delta, reason);
+    }
+
+    public void ResetSession()
+    {
+        var old = CurrentScore;
+        CurrentScore = 0;
+        ScoreChanged.Invoke(0, -old, "Point reset");
     }
 }
