@@ -488,7 +488,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 50c479139af257643bd28a89fb1e3beb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  eventBus: {fileID: 11400000, guid: c126452765d65734fbb97600168d0eec, type: 2}
   timeText: {fileID: 875214789}
   scoreText: {fileID: 330618944}
   taskSummaryText: {fileID: 1901658065}
@@ -851,10 +850,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 3159839825100900288, guid: 323cb65d2594c79499a11a99ff0fb347, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 0}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 323cb65d2594c79499a11a99ff0fb347, type: 3}
 --- !u!4 &17478809 stripped
 Transform:
@@ -8980,7 +8976,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afd1a68e958de424a9ccbac5853c1b15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  eventBus: {fileID: 11400000, guid: c126452765d65734fbb97600168d0eec, type: 2}
   actionTypeToTrigger: 2
   interactorId: 0
 --- !u!1 &268168575
@@ -11124,10 +11119,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 3147465}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 15}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 50.774998, y: -23.94333}
+  m_SizeDelta: {x: 101.549995, y: 15}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &330618944
 MonoBehaviour:
@@ -18450,13 +18445,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 261ce1bca3294354488ffe0250d02dba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  eventBus: {fileID: 11400000, guid: c126452765d65734fbb97600168d0eec, type: 2}
   taskGroups:
   - {fileID: 11400000, guid: 0dacfa45dfa4cd3439fac204b8d724c2, type: 2}
   - {fileID: 11400000, guid: 050d34fb4bf07fb4f80891b9dea5fb0f, type: 2}
   startTasksAutomatically: 1
   delayBetweenTasks: 2
-  scoreServiceAsset: {fileID: 0}
+  scoreServiceAsset: {fileID: 11400000, guid: 1fdaac493842392498f1e485c6aba38b, type: 2}
 --- !u!1 &591899619
 GameObject:
   m_ObjectHideFlags: 0
@@ -19402,7 +19396,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &622997896
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19410,7 +19404,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 622997895}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 85589845d6421a540836f22e40176e49, type: 3}
   m_Name: 
@@ -20502,7 +20496,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f947cfa9e9451a7439ca6747f237e152, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  eventBus: {fileID: 11400000, guid: c126452765d65734fbb97600168d0eec, type: 2}
 --- !u!4 &666742476
 Transform:
   m_ObjectHideFlags: 0
@@ -23084,8 +23077,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 740363574}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.3275373, z: -0, w: 0.9448383}
-  m_LocalPosition: {x: 0.33, y: 1.138, z: 0.806}
+  m_LocalRotation: {x: -0, y: 0.13125932, z: -0, w: 0.99134815}
+  m_LocalPosition: {x: 0.369, y: 1.138, z: 0.682}
   m_LocalScale: {x: 0.34, y: 0.34, z: 0.34}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -23093,7 +23086,7 @@ Transform:
   - {fileID: 310072542}
   - {fileID: 2079680420}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 38.239, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 15.085, z: 0}
 --- !u!1 &740998306
 GameObject:
   m_ObjectHideFlags: 0
@@ -23239,8 +23232,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 910840a3deac17b46977e835a2a03bdf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  eventBus: {fileID: 11400000, guid: c126452765d65734fbb97600168d0eec, type: 2}
-  taskManager: {fileID: 0}
+  taskManager: {fileID: 588787366}
   onTimeUpdated:
     m_PersistentCalls:
       m_Calls: []
@@ -26323,10 +26315,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 3147465}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 15}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 50.774998, y: -7.5}
+  m_SizeDelta: {x: 101.549995, y: 15}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &875214789
 MonoBehaviour:
@@ -27406,7 +27398,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afd1a68e958de424a9ccbac5853c1b15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  eventBus: {fileID: 11400000, guid: c126452765d65734fbb97600168d0eec, type: 2}
   actionTypeToTrigger: 3
   interactorId: 0
 --- !u!114 &895078456
@@ -30234,8 +30225,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a9760bebbbf58c4d84a34f6ae0bb094, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  scoreServiceAsset: {fileID: 0}
-  eventBus: {fileID: 11400000, guid: c126452765d65734fbb97600168d0eec, type: 2}
+  scoreServiceAsset: {fileID: 11400000, guid: 1fdaac493842392498f1e485c6aba38b, type: 2}
+  ppeManager: {fileID: 666742475}
 --- !u!1 &969665735
 GameObject:
   m_ObjectHideFlags: 0
@@ -36711,7 +36702,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afd1a68e958de424a9ccbac5853c1b15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  eventBus: {fileID: 11400000, guid: c126452765d65734fbb97600168d0eec, type: 2}
   actionTypeToTrigger: 4
   interactorId: 0
 --- !u!1 &1198251549
@@ -36991,7 +36981,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   taskManager: {fileID: 588787366}
-  eventBus: {fileID: 11400000, guid: c126452765d65734fbb97600168d0eec, type: 2}
   taskListContainer: {fileID: 1200682052}
   taskEntryPrefab: {fileID: 3949114980085604816, guid: 2bd480ef72c7c7d428d84f48ba38c31c, type: 3}
   currentTaskOrderText: {fileID: 225534351}
@@ -46275,7 +46264,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bec517e9286c67e4e8530f486d2f2707, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  eventBus: {fileID: 11400000, guid: c126452765d65734fbb97600168d0eec, type: 2}
 --- !u!1 &1472648887
 GameObject:
   m_ObjectHideFlags: 0
@@ -48013,7 +48001,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79fa0e541b28bc4498517c7a0e762e3a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  eventBus: {fileID: 11400000, guid: c126452765d65734fbb97600168d0eec, type: 2}
   eventTypeToListen: 10
   target: {fileID: 542658587}
   enableOnEvent: 1
@@ -48029,7 +48016,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79fa0e541b28bc4498517c7a0e762e3a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  eventBus: {fileID: 11400000, guid: c126452765d65734fbb97600168d0eec, type: 2}
   eventTypeToListen: 10
   target: {fileID: 622997895}
   enableOnEvent: 1
@@ -61383,10 +61369,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 3147465}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 15}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 50.774998, y: -40.38666}
+  m_SizeDelta: {x: 101.549995, y: 15}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1901658065
 MonoBehaviour:
@@ -66066,7 +66052,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b5a6b2cbd759c0440a83d5859e71409c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  eventBus: {fileID: 11400000, guid: c126452765d65734fbb97600168d0eec, type: 2}
 --- !u!1 &2054246264
 GameObject:
   m_ObjectHideFlags: 0

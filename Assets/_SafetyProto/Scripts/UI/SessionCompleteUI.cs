@@ -8,18 +8,27 @@ public class SessionCompleteUI : MonoBehaviour
     public TextMeshProUGUI scoreText;
     public TextMeshProUGUI taskSummaryText;
 
-    void Start()
+    private void OnEnable()
     {
         if (!this.IsEventBusReady())
-        {
             return;
-        }
 
-        EventBus.Instance.onSessionCompleted.AddListener(HandleSessionCompleted);
-        gameObject.SetActive(false); // Hide initially
+        TryDisplayStoredSummary();
     }
 
-    private void HandleSessionCompleted(SessionCompletedEventArgs args)
+    private void TryDisplayStoredSummary()
+    {
+        var taskManager = FindFirstObjectByType<TaskManager>();
+        if (taskManager == null) return;
+
+        var summaryOpt = taskManager.LastSessionSummary;
+        if (summaryOpt.HasValue)
+        {
+            DisplaySummary(summaryOpt.Value);
+        }
+    }
+
+    private void DisplaySummary(SessionCompletedEventArgs args)
     {
         int minutes = Mathf.FloorToInt(args.totalElapsedTime / 60f);
         int seconds = Mathf.FloorToInt(args.totalElapsedTime % 60f);
@@ -28,7 +37,5 @@ public class SessionCompleteUI : MonoBehaviour
         timeText.text = $"Time: {formattedTime}";
         scoreText.text = $"Score: {args.totalScore}";
         taskSummaryText.text = $"Tasks Completed: {args.tasksCompleted} / {args.totalTasks}";
-
-        gameObject.SetActive(true);
     }
 }

@@ -23,6 +23,9 @@ public class TaskManager : MonoBehaviour
 
     private IScoreService _scoreService;
     private readonly HashSet<TaskGroup> _completedGroups = new HashSet<TaskGroup>();
+    
+    private SessionCompletedEventArgs? _lastSessionSummary;
+    public SessionCompletedEventArgs? LastSessionSummary => _lastSessionSummary;
 
     void Start()
     {
@@ -167,6 +170,7 @@ public class TaskManager : MonoBehaviour
             tasksCompleted: _sessionTasks.Count(t => t.State == TaskState.CompletedSuccess),
             totalTasks: _sessionTasks.Count
         );
+        _lastSessionSummary = summary; 
         EventBus.Instance.RaiseSessionCompleted(summary);
     }
 

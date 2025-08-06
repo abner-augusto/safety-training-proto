@@ -3,13 +3,12 @@ using UnityEngine;
 using TMPro;
 
 /// <summary>
-/// Displays the list of tasks and the current task details,
+/// Displays the list of tasks and the current task details.
 /// </summary>
 public class TaskUIController : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private TaskManager taskManager;
-    [SerializeField] private EventBus eventBus;
     [SerializeField] private Transform taskListContainer;
     [SerializeField] private GameObject taskEntryPrefab;
 
@@ -18,35 +17,43 @@ public class TaskUIController : MonoBehaviour
     [SerializeField] private TMP_Text currentTaskNameText;
     [SerializeField] private TMP_Text currentTaskDescriptionText;
 
-    private readonly Dictionary<SafetyTask, TaskEntryUI> _taskToEntryUI = new Dictionary<SafetyTask, TaskEntryUI>();
+    private readonly Dictionary<SafetyTask, TaskEntryUI> _taskToEntryUI = new();
 
     void Start()
     {
-        if (taskManager == null || eventBus == null || taskListContainer == null || taskEntryPrefab == null)
+        if (taskManager == null || taskListContainer == null || taskEntryPrefab == null)
         {
             Debug.LogError("TaskUIController is missing references.", this);
             enabled = false;
             return;
         }
 
+        if (!this.IsEventBusReady())
+        {
+            return;
+        }
+
         PopulateTaskList();
 
-        eventBus.onTaskStarted.AddListener(OnTaskStarted);
-        eventBus.onTaskCompleted.AddListener(OnTaskCompleted);
-        eventBus.onTaskTimeout.AddListener(OnTaskTimeout);
+        EventBus.Instance.onTaskStarted.AddListener(OnTaskStarted);
+        EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
+        EventBus.Instance.onTaskTimeout.AddListener(OnTaskTimeout);
 
-        // in case a task was already running when we came up
+        // Show current task if one is already active
         var initial = taskManager.GetCurrentTaskData();
-        if (initial != null) OnTaskStarted(new TaskEventArgs(initial));
+        if (initial != null)
+        {
+            OnTaskStarted(new TaskEventArgs(initial));
+        }
     }
 
     void OnDestroy()
     {
-        if (eventBus != null)
+        if (EventBus.Instance != null)
         {
-            eventBus.onTaskStarted.RemoveListener(OnTaskStarted);
-            eventBus.onTaskCompleted.RemoveListener(OnTaskCompleted);
-            eventBus.onTaskTimeout.RemoveListener(OnTaskTimeout);
+            EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStarted);
+            EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
+            EventBus.Instance.onTaskTimeout.RemoveListener(OnTaskTimeout);
         }
     }
 
@@ -91,11 +98,8 @@ public class TaskUIController : MonoBehaviour
 
     private void UpdateCurrentTaskPanel(SafetyTask task)
     {
-        // purely display; index is provided by TaskManager
         int idx = taskManager.CurrentTaskIndex;
-        currentTaskOrderText.text = (idx >= 0)
-            ? $"{idx + 1}."
-            : "";
+        currentTaskOrderText.text = (idx >= 0) ? $"{idx + 1}." : "";
         currentTaskNameText.text = task.taskName;
         currentTaskDescriptionText.text = task.taskDescription;
     }
