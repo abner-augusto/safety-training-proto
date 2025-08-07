@@ -16,6 +16,7 @@ public class TimerSystem : MonoBehaviour, ISessionResettable
     private TaskGroup _timedGroup;
     private float _timeRemaining;
     private float _elapsedTime;
+    private float _sessionStartTime = -1f; // -1 means not started
     private bool _isPaused;
 
     void Start()
@@ -35,7 +36,7 @@ public class TimerSystem : MonoBehaviour, ISessionResettable
                 return;
             }
         }
-
+        EventBus.Instance.onSessionStarted.AddListener(OnSessionStarted);
         EventBus.Instance.onGroupStarted.AddListener(OnGroupStarted);
         EventBus.Instance.onGroupCompleted.AddListener(OnGroupCompleted);
         EventBus.Instance.onTaskStarted.AddListener(OnTaskStartedForFreeOrder);
@@ -54,6 +55,11 @@ public class TimerSystem : MonoBehaviour, ISessionResettable
             EventBus.Instance.onSessionResumed.RemoveListener(ResumeTimer);
         }
         StopCurrentTimer();
+    }
+
+    private void OnSessionStarted(SessionStartedEventArgs _)
+    {
+        _sessionStartTime = Time.time;
     }
 
     private void OnTaskStartedForFreeOrder(TaskEventArgs args)
@@ -164,7 +170,11 @@ public class TimerSystem : MonoBehaviour, ISessionResettable
 
     public float GetTimeRemaining() => _timeRemaining;
     public float GetElapsedTime() => _elapsedTime;
-
+    public float GetTotalSessionTime()
+    {
+        if (_sessionStartTime < 0) return 0f;
+        return Time.time - _sessionStartTime;
+    }
     public void ResetSession()
     {
         StopCurrentTimer();

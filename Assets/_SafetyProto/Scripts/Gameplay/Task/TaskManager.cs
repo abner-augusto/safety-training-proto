@@ -162,7 +162,7 @@ public class TaskManager : MonoBehaviour, ISessionResettable
         if (_currentTask != null) return; // already ending
 
         Debug.Log("TaskManager: All task groups completed!");
-        float totalTime = FindFirstObjectByType<TimerSystem>()?.GetElapsedTime() ?? 0f;
+        float totalTime = FindFirstObjectByType<TimerSystem>()?.GetTotalSessionTime() ?? 0f;
         int totalScore = _scoreService.CurrentScore;
 
         var summary = new SessionCompletedEventArgs(
@@ -184,7 +184,7 @@ public class TaskManager : MonoBehaviour, ISessionResettable
     /// <summary>Resets tasks and indexes for a new training session.</summary>
     public void ResetSession()
     {
-        // If its in execution, cancel all pending callbacks
+        // If it's in execution, cancel all pending callbacks
         CancelInvoke(nameof(StartNextTask));
 
         // Resets group states and tasks

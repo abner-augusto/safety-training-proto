@@ -13,6 +13,9 @@ public class SceneLoader : MonoBehaviour, ISessionResettable
     public StringEvent onLoadScene;
     public UnityEvent onReloadScene;
 
+    [SerializeField] 
+    private ScoreServiceSO scoreService;
+
     /// <summary>
     /// Loads a scene by its name.
     /// </summary>
@@ -33,21 +36,42 @@ public class SceneLoader : MonoBehaviour, ISessionResettable
     /// <summary>
     /// Resets all ISessionResettable managers in the current scene, excluding this loader.
     /// </summary>
-    private void ResetManagers()
+    public void ResetManagers()
     {
-        foreach (var resettable in Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
-                     .OfType<ISessionResettable>())
+        // Reset all MonoBehaviour-based managers
+        var resettableObjects = Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
+            .OfType<ISessionResettable>()
+            .ToList();
+
+        Debug.Log($"[SceneLoader] Found {resettableObjects.Count} ISessionResettable components.");
+
+        foreach (var resettable in resettableObjects)
         {
-            // Avoid calling ResetSession on self
-            if ((SceneLoader)resettable != this)
+            if (!ReferenceEquals(this, resettable))
             {
+                Debug.Log($"[SceneLoader] Resetting: {resettable.GetType().Name}");
                 resettable.ResetSession();
             }
+            else
+            {
+                Debug.Log("[SceneLoader] Skipping self-reset.");
+            }
         }
+
+        // Manually reset ScriptableObject-based services
+        if (scoreService != null)
+        {
+            Debug.Log($"[SceneLoader] Resetting ScriptableObject service: {scoreService.name}");
+            scoreService.ResetSession();
+        }
+
+        Debug.Log("[SceneLoader] All resettable managers processed.");
     }
+
+
     
     /// <summary>
-    /// Full session reset + scene reload. Call this to restart everything.
+    /// Full session reset and scene reload. Call this to restart everything.
     /// </summary>
     public void ResetSession()
     {
