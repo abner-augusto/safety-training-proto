@@ -10,5 +10,7 @@ public enum TaskState
     /// <summary>The task was completed successfully.</summary>
     CompletedSuccess,
     /// <summary>The task was failed (e.g., by timeout).</summary>
-    CompletedFailure
+    CompletedFailure,
+    /// <summary>The task was completed, but without the correct PPE.</summary>
+    CompletedSuccessButUnsafe
 }

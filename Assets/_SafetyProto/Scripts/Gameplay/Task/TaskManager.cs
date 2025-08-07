@@ -12,19 +12,17 @@ public class TaskManager : MonoBehaviour, ISessionResettable
 
     [Header("Scoring")]
     public ScoreServiceSO scoreServiceAsset;
+    public ScoreManagerAdapter scoreManagerAdapter; // <--- Add reference to query penalty flags
 
     private readonly List<RuntimeSafetyTask> _sessionTasks = new List<RuntimeSafetyTask>();
     private RuntimeSafetyTask _currentTask;
     private int _currentGroupIndex = -1;
-
-    // TRACKS the flat index of the current task in _sessionTasks
     private int _currentTaskIndex = -1;
-    /// <summary>Zero-based index of the active task, or -1 if none.</summary>
     public int CurrentTaskIndex => _currentTaskIndex;
 
     private IScoreService _scoreService;
     private readonly HashSet<TaskGroup> _completedGroups = new HashSet<TaskGroup>();
-    
+
     private SessionCompletedEventArgs? _lastSessionSummary;
     public SessionCompletedEventArgs? LastSessionSummary => _lastSessionSummary;
 
@@ -120,11 +118,10 @@ public class TaskManager : MonoBehaviour, ISessionResettable
         var currentGroup = GetCurrentGroup();
         if (currentGroup == null)
         {
-            EndSession(); // Should be handled by StartNextGroup, but as a safeguard.
+            EndSession();
             return;
         }
 
-        // find the next runtime wrapper for a not-started task in this group
         int nextIndex = _sessionTasks.FindIndex(t =>
             t.State == TaskState.NotStarted && currentGroup.tasks.Contains(t.TaskData));
 
@@ -148,7 +145,7 @@ public class TaskManager : MonoBehaviour, ISessionResettable
 
         bool allDone = _sessionTasks
             .Where(t => currentGroup.tasks.Contains(t.TaskData))
-            .All(t => t.State == TaskState.CompletedSuccess || t.State == TaskState.CompletedFailure);
+            .All(t => t.State == TaskState.CompletedSuccess || t.State == TaskState.CompletedFailure || t.State == TaskState.CompletedSuccessButUnsafe);
 
         if (allDone)
         {
@@ -159,7 +156,7 @@ public class TaskManager : MonoBehaviour, ISessionResettable
 
     private void EndSession()
     {
-        if (_currentTask != null) return; // already ending
+        if (_currentTask != null) return;
 
         Debug.Log("TaskManager: All task groups completed!");
         float totalTime = FindFirstObjectByType<TimerSystem>()?.GetTotalSessionTime() ?? 0f;
@@ -168,10 +165,10 @@ public class TaskManager : MonoBehaviour, ISessionResettable
         var summary = new SessionCompletedEventArgs(
             totalElapsedTime: totalTime,
             totalScore: totalScore,
-            tasksCompleted: _sessionTasks.Count(t => t.State == TaskState.CompletedSuccess),
+            tasksCompleted: _sessionTasks.Count(t => t.State == TaskState.CompletedSuccess || t.State == TaskState.CompletedSuccessButUnsafe),
             totalTasks: _sessionTasks.Count
         );
-        _lastSessionSummary = summary; 
+        _lastSessionSummary = summary;
         EventBus.Instance.RaiseSessionCompleted(summary);
     }
 
@@ -181,13 +178,9 @@ public class TaskManager : MonoBehaviour, ISessionResettable
             ? taskGroups[_currentGroupIndex]
             : null;
 
-    /// <summary>Resets tasks and indexes for a new training session.</summary>
     public void ResetSession()
     {
-        // If it's in execution, cancel all pending callbacks
         CancelInvoke(nameof(StartNextTask));
-
-        // Resets group states and tasks
         _completedGroups.Clear();
         _lastSessionSummary = null;
         _currentGroupIndex = -1;
@@ -195,5 +188,4 @@ public class TaskManager : MonoBehaviour, ISessionResettable
         _currentTask = null;
         InitializeRuntimeTasks();
     }
-    
 }
