@@ -4,6 +4,7 @@ public enum PPEType
     Helmet,
     Gloves,
     Goggles,
-    Harness
-    // Add more as needed
+    Harness,
+    Vest,
+    Boots,
 }
