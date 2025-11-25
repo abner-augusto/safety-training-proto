@@ -1,41 +1,47 @@
-using UnityEngine;
+using SafetyProto.Core;
+using SafetyProto.Gameplay.Task;
+using SafetyProto.Utils;
 using TMPro;
+using UnityEngine;
 
-public class SessionCompleteUI : MonoBehaviour
+namespace SafetyProto.UI
 {
-    [Header("UI Elements")]
-    public TextMeshProUGUI timeText;
-    public TextMeshProUGUI scoreText;
-    public TextMeshProUGUI taskSummaryText;
-
-    private void OnEnable()
+    public class SessionCompleteUI : MonoBehaviour
     {
-        if (!this.IsEventBusReady())
-            return;
+        [Header("UI Elements")]
+        public TextMeshProUGUI timeText;
+        public TextMeshProUGUI scoreText;
+        public TextMeshProUGUI taskSummaryText;
 
-        TryDisplayStoredSummary();
-    }
-
-    private void TryDisplayStoredSummary()
-    {
-        var taskManager = FindFirstObjectByType<TaskManager>();
-        if (taskManager == null) return;
-
-        var summaryOpt = taskManager.LastSessionSummary;
-        if (summaryOpt.HasValue)
+        private void OnEnable()
         {
-            DisplaySummary(summaryOpt.Value);
+            if (!this.IsEventBusReady())
+                return;
+
+            TryDisplayStoredSummary();
         }
-    }
 
-    private void DisplaySummary(SessionCompletedEventArgs args)
-    {
-        int minutes = Mathf.FloorToInt(args.totalElapsedTime / 60f);
-        int seconds = Mathf.FloorToInt(args.totalElapsedTime % 60f);
-        string formattedTime = $"{minutes:00}:{seconds:00}";
+        private void TryDisplayStoredSummary()
+        {
+            var taskManager = FindFirstObjectByType<TaskManager>();
+            if (taskManager == null) return;
 
-        timeText.text = $"Time: {formattedTime}";
-        scoreText.text = $"Score: {args.totalScore}";
-        taskSummaryText.text = $"Tasks Completed: {args.tasksCompleted} / {args.totalTasks}";
+            var summaryOpt = taskManager.LastSessionSummary;
+            if (summaryOpt.HasValue)
+            {
+                DisplaySummary(summaryOpt.Value);
+            }
+        }
+
+        private void DisplaySummary(SessionCompletedEventArgs args)
+        {
+            int minutes = Mathf.FloorToInt(args.totalElapsedTime / 60f);
+            int seconds = Mathf.FloorToInt(args.totalElapsedTime % 60f);
+            string formattedTime = $"{minutes:00}:{seconds:00}";
+
+            timeText.text = $"Time: {formattedTime}";
+            scoreText.text = $"Score: {args.totalScore}";
+            taskSummaryText.text = $"Tasks Completed: {args.tasksCompleted} / {args.totalTasks}";
+        }
     }
 }

@@ -1,18 +1,38 @@
+using SafetyProto.Data.Enums;
 using UnityEngine;
 
-[RequireComponent(typeof(Collider))] // Ensure it has a collider to be detected
-public class PPEItem : MonoBehaviour
+namespace SafetyProto.Gameplay.PPE
 {
-    public PPEType ppeType = PPEType.None;
-
-    private void Start()
+    [RequireComponent(typeof(Collider))] // Ensure it has a collider to be detected
+    public class PPEItem : MonoBehaviour
     {
-        if (ppeType == PPEType.None)
+        public PPEType ppeType = PPEType.None;
+
+        private void Start()
         {
-            Debug.LogWarning($"PPEItem on {gameObject.name} has PPEType set to None.", this);
+            if (ppeType == PPEType.None)
+            {
+                Debug.LogWarning($"PPEItem on {gameObject.name} has PPEType set to None.", this);
+            }
         }
-        // Optionally ensure the collider is a trigger if your detection logic requires it,
-        // or ensure it has a Rigidbody if it needs to physically interact and then be detected.
-        // For simple trigger zone detection, the PPEItem's collider can be non-trigger.
+
+        private void OnDisable()
+        {
+            UnregisterFromManager();
+        }
+
+        private void OnDestroy()
+        {
+            UnregisterFromManager();
+        }
+
+        private void UnregisterFromManager()
+        {
+            var manager = FindFirstObjectByType<PPEManager>();
+            if (manager != null)
+            {
+                manager.UnregisterIfOwned(ppeType, gameObject);
+            }
+        }
     }
 }

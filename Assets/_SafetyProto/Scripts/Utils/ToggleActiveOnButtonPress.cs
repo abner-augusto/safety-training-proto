@@ -1,26 +1,27 @@
-using UnityEngine;
 using Oculus.Interaction.OVR.Input;
+using UnityEngine;
 
-public class ToggleActiveOnButtonPress : MonoBehaviour
+namespace SafetyProto.Utils
 {
-    [Header("References")]
-    public OVRButtonActiveState buttonState; // Assign your OVRButtonActiveState component
-    public GameObject target; // The GameObject you want to toggle
-
-    private bool _wasButtonActiveLastFrame;
-
-    void Update()
+    public class ToggleActiveOnButtonPress : MonoBehaviour
     {
-        if (buttonState == null || target == null)
-            return;
+        [Header("References")]
+        public OVRButtonActiveState buttonState;
+        public GameObject target;
 
-        // Detect a button down event (transition from false to true)
-        bool isActive = buttonState.Active;
-        if (isActive && !_wasButtonActiveLastFrame)
+        private bool _wasButtonActiveLastFrame;
+
+        private void Update()
         {
-            // Toggle the target's active state
-            target.SetActive(!target.activeSelf);
+            if (buttonState == null || target == null)
+                return;
+
+            bool isActive = buttonState.Active;
+            if (isActive && !_wasButtonActiveLastFrame)
+            {
+                target.SetActive(!target.activeSelf);
+            }
+            _wasButtonActiveLastFrame = isActive;
         }
-        _wasButtonActiveLastFrame = isActive;
     }
 }

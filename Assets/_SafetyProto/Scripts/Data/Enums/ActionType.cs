@@ -1,15 +1,18 @@
-public enum ActionType
+namespace SafetyProto.Data.Enums
 {
-    None, // Default or unassigned
-    AttachGuardrail,
-    Attach,
-    PutOnHelmet,
-    PutOnGlove,
-    PutOnBoots,
-    PutOnGlasses,
-    PutOnVest,
-    GrabTool,
-    UseTool,
-    UseAllPpe,
-    // Add more as needed
+    public enum ActionType
+    {
+        None, // Default or unassigned
+        AttachGuardrail,
+        Attach,
+        PutOnHelmet,
+        PutOnGlove,
+        PutOnBoots,
+        PutOnGlasses,
+        PutOnVest,
+        GrabTool,
+        UseTool,
+        UseAllPpe,
+        // Add more as needed
+    }
 }

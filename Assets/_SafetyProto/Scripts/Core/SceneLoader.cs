@@ -1,92 +1,92 @@
-using SafetyProto.Core.Interfaces;
 using System.Linq;
+using SafetyProto.Core.Interfaces;
+using SafetyProto.Data.ScriptableObjects;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
-public class SceneLoader : MonoBehaviour, ISessionResettable
+namespace SafetyProto.Core
 {
-    [System.Serializable]
-    public class StringEvent : UnityEvent<string> { }
-
-    [Header("Events")]
-    public StringEvent onLoadScene;
-    public UnityEvent onReloadScene;
-
-    [SerializeField] 
-    private ScoreServiceSO scoreService;
-
-    /// <summary>
-    /// Loads a scene by its name.
-    /// </summary>
-    public void LoadSceneByName(string sceneName)
+    public class SceneLoader : MonoBehaviour, ISessionResettable
     {
-        SceneManager.LoadScene(sceneName);
-    }
+        [System.Serializable]
+        public class StringEvent : UnityEvent<string> { }
 
-    /// <summary>
-    /// Reloads the current active scene.
-    /// </summary>
-    public void ReloadCurrentScene()
-    {
-        var currentScene = SceneManager.GetActiveScene();
-        SceneManager.LoadScene(currentScene.name);
-    }
+        [Header("Events")]
+        public StringEvent onLoadScene;
+        public UnityEvent onReloadScene;
 
-    /// <summary>
-    /// Resets all ISessionResettable managers in the current scene, excluding this loader.
-    /// </summary>
-    public void ResetManagers()
-    {
-        // Reset all MonoBehaviour-based managers
-        var resettableObjects = Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
-            .OfType<ISessionResettable>()
-            .ToList();
+        [SerializeField] 
+        private ScoreServiceSO scoreService;
 
-        Debug.Log($"[SceneLoader] Found {resettableObjects.Count} ISessionResettable components.");
-
-        foreach (var resettable in resettableObjects)
+        /// <summary>
+        /// Loads a scene by its name.
+        /// </summary>
+        public void LoadSceneByName(string sceneName)
         {
-            if (!ReferenceEquals(this, resettable))
-            {
-                Debug.Log($"[SceneLoader] Resetting: {resettable.GetType().Name}");
-                resettable.ResetSession();
-            }
-            else
-            {
-                Debug.Log("[SceneLoader] Skipping self-reset.");
-            }
+            SceneManager.LoadScene(sceneName);
         }
 
-        // Manually reset ScriptableObject-based services
-        if (scoreService != null)
+        /// <summary>
+        /// Reloads the current active scene.
+        /// </summary>
+        public void ReloadCurrentScene()
         {
-            Debug.Log($"[SceneLoader] Resetting ScriptableObject service: {scoreService.name}");
-            scoreService.ResetSession();
+            var currentScene = SceneManager.GetActiveScene();
+            SceneManager.LoadScene(currentScene.name);
         }
 
-        Debug.Log("[SceneLoader] All resettable managers processed.");
-    }
+        /// <summary>
+        /// Resets all ISessionResettable managers in the current scene, excluding this loader.
+        /// </summary>
+        public void ResetManagers()
+        {
+            var resettableObjects = Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
+                .OfType<ISessionResettable>()
+                .ToList();
 
+            Debug.Log($"[SceneLoader] Found {resettableObjects.Count} ISessionResettable components.");
 
-    
-    /// <summary>
-    /// Full session reset and scene reload. Call this to restart everything.
-    /// </summary>
-    public void ResetSession()
-    {
-        ResetManagers();
-        ReloadCurrentScene();
-    }
-    
-    private void Reset()
-    {
-        onLoadScene ??= new StringEvent();
-        onReloadScene ??= new UnityEvent();
+            foreach (var resettable in resettableObjects)
+            {
+                if (!ReferenceEquals(this, resettable))
+                {
+                    Debug.Log($"[SceneLoader] Resetting: {resettable.GetType().Name}");
+                    resettable.ResetSession();
+                }
+                else
+                {
+                    Debug.Log("[SceneLoader] Skipping self-reset.");
+                }
+            }
 
-        if (onLoadScene.GetPersistentEventCount() == 0)
-            onLoadScene.AddListener(LoadSceneByName);
-        if (onReloadScene.GetPersistentEventCount() == 0)
-            onReloadScene.AddListener(ReloadCurrentScene);
+            if (scoreService != null)
+            {
+                Debug.Log($"[SceneLoader] Resetting ScriptableObject service: {scoreService.name}");
+                scoreService.ResetSession();
+            }
+
+            Debug.Log("[SceneLoader] All resettable managers processed.");
+        }
+
+        /// <summary>
+        /// Full session reset and scene reload. Call this to restart everything.
+        /// </summary>
+        public void ResetSession()
+        {
+            ResetManagers();
+            ReloadCurrentScene();
+        }
+        
+        private void Reset()
+        {
+            onLoadScene ??= new StringEvent();
+            onReloadScene ??= new UnityEvent();
+
+            if (onLoadScene.GetPersistentEventCount() == 0)
+                onLoadScene.AddListener(LoadSceneByName);
+            if (onReloadScene.GetPersistentEventCount() == 0)
+                onReloadScene.AddListener(ReloadCurrentScene);
+        }
     }
 }

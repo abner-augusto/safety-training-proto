@@ -1,73 +1,73 @@
-using UnityEngine;
+using SafetyProto.Core.Interfaces;
+using SafetyProto.Data.ScriptableObjects;
 using TMPro;
+using UnityEngine;
 
-[RequireComponent(typeof(TextMeshProUGUI))]
-public class ScoreHUD : MonoBehaviour
+namespace SafetyProto.UI
 {
-    [Tooltip("Link the ScoreService ScriptableObject.")]
-    public ScoreServiceSO scoreServiceAsset;
-
-    private TextMeshProUGUI _scoreText;
-    private IScoreService _scoreService;
-
-    public static ScoreHUD Instance { get; private set; }
-
-    private void Awake()
+    [RequireComponent(typeof(TextMeshProUGUI))]
+    public class ScoreHUD : MonoBehaviour
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-        Instance = this;
-    }
+        [Tooltip("Link the ScoreService ScriptableObject.")]
+        public ScoreServiceSO scoreServiceAsset;
 
-    private void Start()
-    {
-        _scoreText = GetComponent<TextMeshProUGUI>();
+        private TextMeshProUGUI _scoreText;
+        private IScoreService _scoreService;
 
-        if (scoreServiceAsset == null)
+        public static ScoreHUD Instance { get; private set; }
+
+        private void Awake()
         {
-            Debug.LogError("ScoreHUD: ScoreService asset not assigned.", this);
-            enabled = false;
-            return;
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
         }
 
-        _scoreService = scoreServiceAsset.Service;
-        _scoreService.ScoreChanged += OnScoreChanged;
-
-        // Set initial score
-        UpdateScoreDisplay(_scoreService.CurrentScore);
-    }
-
-    private void OnDestroy()
-    {
-        if (_scoreService != null)
+        private void Start()
         {
-            _scoreService.ScoreChanged -= OnScoreChanged;
+            _scoreText = GetComponent<TextMeshProUGUI>();
+
+            if (scoreServiceAsset == null)
+            {
+                Debug.LogError("ScoreHUD: ScoreService asset not assigned.", this);
+                enabled = false;
+                return;
+            }
+
+            _scoreService = scoreServiceAsset.Service;
+            _scoreService.ScoreChanged += OnScoreChanged;
+
+            UpdateScoreDisplay(_scoreService.CurrentScore);
         }
-    }
 
-    private void OnScoreChanged(int newScore, int delta, string reason)
-    {
-        UpdateScoreDisplay(newScore);
-    }
-
-    private void UpdateScoreDisplay(int score)
-    {
-        if (_scoreText != null)
+        private void OnDestroy()
         {
-            _scoreText.text = $"Score: {score}";
+            if (_scoreService != null)
+            {
+                _scoreService.ScoreChanged -= OnScoreChanged;
+            }
         }
-    }
 
-    /// <summary>
-    /// Call this from ScoreManagerAdapter to show score deltas visually if needed.
-    /// </summary>
-    public void ShowDelta(int delta, string reason, int totalScore)
-    {
-        Debug.Log($"[HUD] {reason}: {(delta >= 0 ? "+" : "")}{delta} → Total: {totalScore}");
-        UpdateScoreDisplay(totalScore);
-        // Optional: Trigger floating text or animation here
+        private void OnScoreChanged(int newScore, int delta, string reason)
+        {
+            UpdateScoreDisplay(newScore);
+        }
+
+        private void UpdateScoreDisplay(int score)
+        {
+            if (_scoreText != null)
+            {
+                _scoreText.text = $"Score: {score}";
+            }
+        }
+
+        public void ShowDelta(int delta, string reason, int totalScore)
+        {
+            Debug.Log($"[HUD] {reason}: {(delta >= 0 ? "+" : "")}{delta} (Total: {totalScore})");
+            UpdateScoreDisplay(totalScore);
+        }
     }
 }

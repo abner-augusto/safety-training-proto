@@ -1,106 +1,113 @@
 using System.Collections.Generic;
-using UnityEngine;
+using SafetyProto.Core;
+using SafetyProto.Data.Enums;
+using SafetyProto.Data.ScriptableObjects;
+using SafetyProto.Gameplay.Task;
+using SafetyProto.Utils;
 using TMPro;
+using UnityEngine;
 
-/// <summary>
-/// Displays the list of tasks and the current task details.
-/// </summary>
-public class TaskUIController : MonoBehaviour
+namespace SafetyProto.UI
 {
-    [Header("References")]
-    [SerializeField] private TaskManager taskManager;
-    [SerializeField] private Transform taskListContainer;
-    [SerializeField] private GameObject taskEntryPrefab;
-
-    [Header("Current Task Detail Panel")]
-    [SerializeField] private TMP_Text currentTaskOrderText;
-    [SerializeField] private TMP_Text currentTaskNameText;
-    [SerializeField] private TMP_Text currentTaskDescriptionText;
-
-    private readonly Dictionary<SafetyTask, TaskEntryUI> _taskToEntryUI = new();
-
-    void Start()
+    /// <summary>
+    /// Displays the list of tasks and the current task details.
+    /// </summary>
+    public class TaskUIController : MonoBehaviour
     {
-        if (taskManager == null || taskListContainer == null || taskEntryPrefab == null)
+        [Header("References")]
+        [SerializeField] private TaskManager taskManager;
+        [SerializeField] private Transform taskListContainer;
+        [SerializeField] private GameObject taskEntryPrefab;
+
+        [Header("Current Task Detail Panel")]
+        [SerializeField] private TMP_Text currentTaskOrderText;
+        [SerializeField] private TMP_Text currentTaskNameText;
+        [SerializeField] private TMP_Text currentTaskDescriptionText;
+
+        private readonly Dictionary<SafetyTask, TaskEntryUI> _taskToEntryUI = new();
+
+        private void Start()
         {
-            Debug.LogError("TaskUIController is missing references.", this);
-            enabled = false;
-            return;
-        }
-
-        if (!this.IsEventBusReady())
-        {
-            return;
-        }
-
-        PopulateTaskList();
-
-        EventBus.Instance.onTaskStarted.AddListener(OnTaskStarted);
-        EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
-        EventBus.Instance.onTaskTimeout.AddListener(OnTaskTimeout);
-
-        // Show current task if one is already active
-        var initial = taskManager.GetCurrentTaskData();
-        if (initial != null)
-        {
-            OnTaskStarted(new TaskEventArgs(initial));
-        }
-    }
-
-    void OnDestroy()
-    {
-        if (EventBus.Instance != null)
-        {
-            EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStarted);
-            EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
-            EventBus.Instance.onTaskTimeout.RemoveListener(OnTaskTimeout);
-        }
-    }
-
-    private void PopulateTaskList()
-    {
-        int order = 1;
-        foreach (var group in taskManager.taskGroups)
-        {
-            foreach (var task in group.tasks)
+            if (taskManager == null || taskListContainer == null || taskEntryPrefab == null)
             {
-                var go = Instantiate(taskEntryPrefab, taskListContainer);
-                var entry = go.GetComponent<TaskEntryUI>();
-                entry.Setup(order, task.taskName);
-                _taskToEntryUI[task] = entry;
-                order++;
+                Debug.LogError("TaskUIController is missing references.", this);
+                enabled = false;
+                return;
+            }
+
+            if (!this.IsEventBusReady())
+            {
+                return;
+            }
+
+            PopulateTaskList();
+
+            EventBus.Instance.onTaskStarted.AddListener(OnTaskStarted);
+            EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
+            EventBus.Instance.onTaskTimeout.AddListener(OnTaskTimeout);
+
+            var initial = taskManager.GetCurrentTaskData();
+            if (initial != null)
+            {
+                OnTaskStarted(new TaskEventArgs(initial, null));
             }
         }
-    }
 
-    private void OnTaskStarted(TaskEventArgs args)
-    {
-        if (args.Task == null) return;
-        if (_taskToEntryUI.TryGetValue(args.Task, out var entryUI))
-            entryUI.UpdateState(TaskState.InProgress);
+        private void OnDestroy()
+        {
+            if (EventBus.Instance != null)
+            {
+                EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStarted);
+                EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
+                EventBus.Instance.onTaskTimeout.RemoveListener(OnTaskTimeout);
+            }
+        }
 
-        UpdateCurrentTaskPanel(args.Task);
-    }
+        private void PopulateTaskList()
+        {
+            int order = 1;
+            foreach (var group in taskManager.taskGroups)
+            {
+                foreach (var task in group.tasks)
+                {
+                    var go = Instantiate(taskEntryPrefab, taskListContainer);
+                    var entry = go.GetComponent<TaskEntryUI>();
+                    entry.Setup(order, task.taskName);
+                    _taskToEntryUI[task] = entry;
+                    order++;
+                }
+            }
+        }
 
-    private void OnTaskCompleted(TaskEventArgs args)
-    {
-        if (args.Task == null) return;
-        if (_taskToEntryUI.TryGetValue(args.Task, out var entryUI))
-            entryUI.UpdateState(TaskState.CompletedSuccess);
-    }
+        private void OnTaskStarted(TaskEventArgs args)
+        {
+            if (args.Task == null) return;
+            if (_taskToEntryUI.TryGetValue(args.Task, out var entryUI))
+                entryUI.UpdateState(TaskState.InProgress);
 
-    private void OnTaskTimeout(TaskEventArgs args)
-    {
-        if (args.Task == null) return;
-        if (_taskToEntryUI.TryGetValue(args.Task, out var entryUI))
-            entryUI.UpdateState(TaskState.CompletedFailure);
-    }
+            UpdateCurrentTaskPanel(args.Task);
+        }
 
-    private void UpdateCurrentTaskPanel(SafetyTask task)
-    {
-        int idx = taskManager.CurrentTaskIndex;
-        currentTaskOrderText.text = (idx >= 0) ? $"{idx + 1}." : "";
-        currentTaskNameText.text = task.taskName;
-        currentTaskDescriptionText.text = task.taskDescription;
+        private void OnTaskCompleted(TaskEventArgs args)
+        {
+            if (args.Task == null) return;
+            if (_taskToEntryUI.TryGetValue(args.Task, out var entryUI))
+                entryUI.UpdateState(TaskState.CompletedSuccess);
+        }
+
+        private void OnTaskTimeout(TaskEventArgs args)
+        {
+            if (args.Task == null) return;
+            if (_taskToEntryUI.TryGetValue(args.Task, out var entryUI))
+                entryUI.UpdateState(TaskState.CompletedFailure);
+        }
+
+        private void UpdateCurrentTaskPanel(SafetyTask task)
+        {
+            int idx = taskManager.CurrentTaskIndex;
+            currentTaskOrderText.text = (idx >= 0) ? $"{idx + 1}." : "";
+            currentTaskNameText.text = task.taskName;
+            currentTaskDescriptionText.text = task.taskDescription;
+        }
     }
 }

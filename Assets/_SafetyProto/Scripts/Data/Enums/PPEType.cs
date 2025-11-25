@@ -1,10 +1,13 @@
-public enum PPEType
+namespace SafetyProto.Data.Enums
 {
-    None, // Default or unassigned
-    Helmet,
-    Gloves,
-    Goggles,
-    Harness,
-    Vest,
-    Boots,
+    public enum PPEType
+    {
+        None, // Default or unassigned
+        Helmet,
+        Gloves,
+        Goggles,
+        Harness,
+        Vest,
+        Boots,
+    }
 }

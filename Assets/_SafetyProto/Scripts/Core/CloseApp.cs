@@ -1,24 +1,27 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-public class AppCloser : MonoBehaviour
+namespace SafetyProto.Core
 {
-    public UnityEvent onQuitApp;
-
-    public void QuitApp()
+    public class AppCloser : MonoBehaviour
     {
+        public UnityEvent onQuitApp;
+
+        public void QuitApp()
+        {
 #if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
+            UnityEditor.EditorApplication.isPlaying = false;
 #else
-        Application.Quit();
+            Application.Quit();
 #endif
-    }
+        }
 
-    // For convenience, link in inspector
-    private void Reset()
-    {
-        if (onQuitApp == null)
-            onQuitApp = new UnityEvent();
-        onQuitApp.AddListener(QuitApp);
+        // For convenience, link in inspector
+        private void Reset()
+        {
+            if (onQuitApp == null)
+                onQuitApp = new UnityEvent();
+            onQuitApp.AddListener(QuitApp);
+        }
     }
 }

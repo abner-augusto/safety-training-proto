@@ -1,51 +1,56 @@
+using SafetyProto.Utils;
 using UnityEngine;
-public class XRSessionManager : MonoBehaviour
+
+namespace SafetyProto.Core
 {
-    private bool _isPaused;
-
-    void Start()
+    public class XRSessionManager : MonoBehaviour
     {
-        if (!this.IsEventBusReady())
+        private bool _isPaused;
+
+        private void Start()
         {
-            return;
+            if (!this.IsEventBusReady())
+            {
+                return;
+            }
+
+            EventBus.Instance.RaiseSessionStarted();
+            Debug.Log("XRSessionManager: Session Started event raised.");
         }
 
-        EventBus.Instance.RaiseSessionStarted();
-        Debug.Log("XRSessionManager: Session Started event raised.");
-    }
-
-    void OnApplicationPause(bool pauseStatus)
-    {
-        if (pauseStatus && !_isPaused)
+        private void OnApplicationPause(bool pauseStatus)
         {
-            _isPaused = true;
-            EventBus.Instance.RaiseSessionPaused();
-            Debug.Log("XRSessionManager: Session Paused event raised.");
+            if (pauseStatus && !_isPaused)
+            {
+                _isPaused = true;
+                EventBus.Instance.RaiseSessionPaused();
+                Debug.Log("XRSessionManager: Session Paused event raised.");
+            }
         }
-    }
 
-    void OnApplicationFocus(bool hasFocus)
-    {
-        if (hasFocus && _isPaused)
+        private void OnApplicationFocus(bool hasFocus)
         {
-            _isPaused = false;
-            EventBus.Instance.RaiseSessionResumed();
-            Debug.Log("XRSessionManager: Session Resumed event raised.");
+            if (hasFocus && _isPaused)
+            {
+                _isPaused = false;
+                EventBus.Instance.RaiseSessionResumed();
+                Debug.Log("XRSessionManager: Session Resumed event raised.");
+            }
+            else if (!hasFocus && !_isPaused)
+            {
+                _isPaused = true;
+                EventBus.Instance.RaiseSessionPaused();
+                Debug.Log("XRSessionManager: Session Paused (due to focus loss) event raised.");
+            }
         }
-        else if (!hasFocus && !_isPaused)
-        {
-            _isPaused = true;
-            EventBus.Instance.RaiseSessionPaused();
-            Debug.Log("XRSessionManager: Session Paused (due to focus loss) event raised.");
-        }
-    }
 
-    void OnDestroy()
-    {
-        if (EventBus.Instance != null)
+        private void OnDestroy()
         {
-            EventBus.Instance.RaiseSessionEnded();
-            Debug.Log("XRSessionManager: Session Ended event raised.");
+            if (EventBus.Instance != null)
+            {
+                EventBus.Instance.RaiseSessionEnded();
+                Debug.Log("XRSessionManager: Session Ended event raised.");
+            }
         }
     }
 }

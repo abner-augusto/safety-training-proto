@@ -1,59 +1,59 @@
-using UnityEngine;
 using Oculus.Interaction;
+using UnityEngine;
 
-[RequireComponent(typeof(Renderer))]
-public class ColorChangerFullControl : MonoBehaviour
+namespace SafetyProto.Utils
 {
-    [SerializeField]
-    private RayInteractable rayInteractable;
-
-    private Renderer _renderer;
-    private Color _lastSelectedColor;
-
-    private void Awake()
+    [RequireComponent(typeof(Renderer))]
+    public class ColorChangerFullControl : MonoBehaviour
     {
-        _renderer = GetComponent<Renderer>();
+        [SerializeField]
+        private RayInteractable rayInteractable;
 
-        if (_renderer == null)
+        private Renderer _renderer;
+        private Color _lastSelectedColor;
+
+        private void Awake()
         {
-            Debug.LogError("ColorChanger: Renderer missing.");
-            return;
+            _renderer = GetComponent<Renderer>();
+
+            if (_renderer == null)
+            {
+                Debug.LogError("ColorChanger: Renderer missing.");
+                return;
+            }
+
+            _lastSelectedColor = _renderer.material.color;
+
+            if (rayInteractable == null)
+            {
+                Debug.LogError("ColorChanger: RayInteractable is not assigned.");
+                return;
+            }
+
+            rayInteractable.WhenStateChanged += OnStateChanged;
         }
 
-        // grab current material color at start
-        _lastSelectedColor = _renderer.material.color;
-
-        if (rayInteractable == null)
+        private void OnDestroy()
         {
-            Debug.LogError("ColorChanger: RayInteractable is not assigned.");
-            return;
+            if (rayInteractable != null)
+            {
+                rayInteractable.WhenStateChanged -= OnStateChanged;
+            }
         }
 
-        rayInteractable.WhenStateChanged += OnStateChanged;
-    }
-
-    private void OnDestroy()
-    {
-        if (rayInteractable != null)
+        private void OnStateChanged(InteractableStateChangeArgs args)
         {
-            rayInteractable.WhenStateChanged -= OnStateChanged;
-        }
-    }
+            switch (args.NewState)
+            {
+                case InteractableState.Select:
+                    _lastSelectedColor = Random.ColorHSV();
+                    _renderer.material.color = _lastSelectedColor;
+                    break;
 
-    private void OnStateChanged(InteractableStateChangeArgs args)
-    {
-        switch (args.NewState)
-        {
-            case InteractableState.Select:
-                _lastSelectedColor = Random.ColorHSV();
-                _renderer.material.color = _lastSelectedColor;
-                break;
-
-            case InteractableState.Normal:
-                _renderer.material.color = _lastSelectedColor;
-                break;
-
-                // ignore Hover
+                case InteractableState.Normal:
+                    _renderer.material.color = _lastSelectedColor;
+                    break;
+            }
         }
     }
 }
