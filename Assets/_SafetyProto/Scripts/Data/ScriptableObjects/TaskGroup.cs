@@ -5,8 +5,8 @@ namespace SafetyProto.Data.ScriptableObjects
 {
     public enum TaskExecutionMode
     {
-        Sequential,
-        FreeOrder
+        Sequential, // User MUST do Task 1 -> Task 2 -> Task 3
+        FreeOrder   // User can do Task 3 -> Task 1 -> Task 2 (all must be done to finish group)
     }
 
     [CreateAssetMenu(fileName = "NewTaskGroup", menuName = "VRSafetyTraining/TaskGroup", order = 2)]
@@ -14,17 +14,17 @@ namespace SafetyProto.Data.ScriptableObjects
     {
         [Header("Group Settings")]
         public string groupName = "New Task Group";
+        [Tooltip("Sequential: Strict order. FreeOrder: Any order allowed within this group.")]
         public TaskExecutionMode executionMode = TaskExecutionMode.Sequential;
 
-        [Header("Group Time Limit (seconds)")]
-        [Tooltip("Total time allowed for this entire group.")]
-        public float timeLimit = 120f; 
+        [Header("Time Limits")]
+        public float timeLimit = 120f;
 
-        [Header("Tasks In This Group")]
+        [Header("Tasks")]
         public List<SafetyTask> tasks = new List<SafetyTask>();
 
-        [Header("Group Dependencies")]
-        [Tooltip("These groups must be completed before this one starts.")]
-        public List<TaskGroup> prerequisites = new List<TaskGroup>();
+        [Header("Dependencies")]
+        [Tooltip("This group cannot start until these groups are fully completed.")]
+        public List<TaskGroup> requiredGroups = new List<TaskGroup>();
     }
 }

@@ -17,6 +17,8 @@ namespace SafetyProto.Gameplay.Task
 
         public bool HasMissedPPEOnce { get; set; }
 
+        public float CompletionTime { get; set; }
+
         public RuntimeSafetyTask(SafetyTask taskData)
         {
             TaskData = taskData;

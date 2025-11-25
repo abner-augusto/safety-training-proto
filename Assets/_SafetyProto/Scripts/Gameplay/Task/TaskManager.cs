@@ -4,6 +4,7 @@ using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Data.Enums;
 using SafetyProto.Data.ScriptableObjects;
+using SafetyProto.Gameplay.PPE;
 using SafetyProto.Utils;
 using UnityEngine;
 
@@ -20,6 +21,9 @@ namespace SafetyProto.Gameplay.Task
         public ScoreServiceSO scoreServiceAsset;
         public ScoreManagerAdapter scoreManagerAdapter;
 
+        [Header("Validation")]
+        public PPEManager ppeManager;
+
         private readonly List<RuntimeSafetyTask> _sessionTasks = new List<RuntimeSafetyTask>();
         private RuntimeSafetyTask _currentTask;
         private int _currentGroupIndex = -1;
@@ -28,6 +32,7 @@ namespace SafetyProto.Gameplay.Task
 
         private IScoreService _scoreService;
         private readonly HashSet<TaskGroup> _completedGroups = new HashSet<TaskGroup>();
+        private readonly List<string> _orderViolations = new List<string>();
 
         private SessionCompletedEventArgs? _lastSessionSummary;
         public SessionCompletedEventArgs? LastSessionSummary => _lastSessionSummary;
@@ -44,10 +49,20 @@ namespace SafetyProto.Gameplay.Task
                 return;
             }
 
+            if (ppeManager == null)
+            {
+                ppeManager = FindFirstObjectByType<PPEManager>();
+                if (ppeManager == null)
+                {
+                    Debug.LogWarning("TaskManager: No PPEManager assigned or found. PPE compliance checks will be skipped.");
+                }
+            }
+
             InitializeRuntimeTasks();
 
             EventBus.Instance.onTaskCompleted.AddListener(HandleTaskCompletion);
             EventBus.Instance.onTaskTimeout.AddListener(HandleTaskTimeout);
+            EventBus.Instance.onActionAttempt.AddListener(HandleActionAttempt);
 
             if (startTasksAutomatically)
                 StartNextGroup();
@@ -59,6 +74,7 @@ namespace SafetyProto.Gameplay.Task
             {
                 EventBus.Instance.onTaskCompleted.RemoveListener(HandleTaskCompletion);
                 EventBus.Instance.onTaskTimeout.RemoveListener(HandleTaskTimeout);
+                EventBus.Instance.onActionAttempt.RemoveListener(HandleActionAttempt);
             }
         }
 
@@ -66,34 +82,131 @@ namespace SafetyProto.Gameplay.Task
         {
             _sessionTasks.Clear();
             foreach (var group in taskGroups)
+            {
                 foreach (var taskData in group.tasks)
+                {
                     _sessionTasks.Add(new RuntimeSafetyTask(taskData));
+                }
+            }
 
             _currentTaskIndex = -1;
         }
 
+        private void HandleActionAttempt(ActionAttemptEventArgs args)
+        {
+            var currentGroup = GetCurrentGroup();
+            if (currentGroup == null)
+            {
+                return;
+            }
+
+            if (currentGroup.executionMode == TaskExecutionMode.Sequential)
+            {
+                if (_currentTask == null)
+                {
+                    return;
+                }
+
+                if (args.ActionType == _currentTask.expectedAction)
+                {
+                    ValidateAndCompleteTask(_currentTask);
+                }
+                else
+                {
+                    var idxInGroup = currentGroup.tasks.IndexOf(_currentTask.TaskData);
+                    bool isFutureTask = currentGroup.tasks.Skip(idxInGroup + 1).Any(t => t.expectedAction == args.ActionType);
+                    if (isFutureTask)
+                    {
+                        _orderViolations.Add($"Out-of-order action {args.ActionType} while current task is {_currentTask.expectedAction}");
+                    }
+                }
+            }
+            else // FreeOrder
+            {
+                var candidate = _sessionTasks
+                    .Where(t => t.State == TaskState.NotStarted && currentGroup.tasks.Contains(t.TaskData))
+                    .FirstOrDefault(t => t.expectedAction == args.ActionType);
+
+                if (candidate != null)
+                {
+                    _currentTask = candidate;
+                    _currentTaskIndex = _sessionTasks.IndexOf(candidate);
+                    ValidateAndCompleteTask(candidate);
+                }
+            }
+        }
+
+        private void ValidateAndCompleteTask(RuntimeSafetyTask task)
+        {
+            if (task.State == TaskState.CompletedSuccess || task.State == TaskState.CompletedSuccessButUnsafe)
+            {
+                return;
+            }
+
+            bool compliant = ppeManager == null || ppeManager.VerifyPPECompliance(task.TaskData.requiredPPE);
+            task.State = compliant ? TaskState.CompletedSuccess : TaskState.CompletedSuccessButUnsafe;
+            task.HasMissedPPEOnce = !compliant;
+            task.CompletionTime = Time.time;
+
+            EventBus.Instance.RaiseTaskCompleted(new TaskEventArgs(task.TaskData, task));
+
+            var currentGroup = GetCurrentGroup();
+            if (currentGroup != null && currentGroup.executionMode == TaskExecutionMode.FreeOrder)
+            {
+                CheckGroupCompletion();
+            }
+        }
+
         private void HandleTaskCompletion(TaskEventArgs args)
         {
-            if (_currentTask != null && args.RuntimeTask == _currentTask)
+            var runtimeTask = args.RuntimeTask ?? _sessionTasks.FirstOrDefault(t => t.TaskData == args.Task);
+            if (runtimeTask == null)
             {
-                _currentTask.State = TaskState.CompletedSuccess;
+                return;
+            }
+
+            if (runtimeTask.State == TaskState.NotStarted)
+            {
+                runtimeTask.State = TaskState.CompletedSuccess;
+            }
+
+            if (_currentTask == runtimeTask)
+            {
                 _currentTask = null;
                 _currentTaskIndex = -1;
+            }
 
-                CheckGroupCompletion();
+            CheckGroupCompletion();
+
+            var currentGroup = GetCurrentGroup();
+            if (currentGroup != null && currentGroup.executionMode == TaskExecutionMode.Sequential)
+            {
                 _ = WaitAndStartNextTask(delayBetweenTasks);
             }
         }
 
         private void HandleTaskTimeout(TaskEventArgs args)
         {
-            if (_currentTask != null && args.RuntimeTask == _currentTask)
+            var runtimeTask = args.RuntimeTask ?? _sessionTasks.FirstOrDefault(t => t.TaskData == args.Task);
+            if (runtimeTask == null)
             {
-                _currentTask.State = TaskState.CompletedFailure;
+                return;
+            }
+
+            runtimeTask.State = TaskState.CompletedFailure;
+            runtimeTask.CompletionTime = Time.time;
+
+            if (_currentTask == runtimeTask)
+            {
                 _currentTask = null;
                 _currentTaskIndex = -1;
+            }
 
-                CheckGroupCompletion();
+            CheckGroupCompletion();
+
+            var currentGroup = GetCurrentGroup();
+            if (currentGroup != null && currentGroup.executionMode == TaskExecutionMode.Sequential)
+            {
                 _ = WaitAndStartNextTask(delayBetweenTasks);
             }
         }
@@ -104,7 +217,7 @@ namespace SafetyProto.Gameplay.Task
             while (nextGroupIndex < taskGroups.Count)
             {
                 var group = taskGroups[nextGroupIndex];
-                bool canStart = group.prerequisites.All(p => _completedGroups.Contains(p));
+                bool canStart = group.requiredGroups.All(r => _completedGroups.Contains(r));
                 if (canStart)
                 {
                     _currentGroupIndex = nextGroupIndex;
@@ -112,7 +225,8 @@ namespace SafetyProto.Gameplay.Task
                     StartNextTask();
                     return;
                 }
-                Debug.LogWarning($"Skipping group '{group.groupName}' (unmet prerequisites)");
+
+                Debug.LogWarning($"Skipping group '{group.groupName}' (unmet dependencies)");
                 nextGroupIndex++;
             }
 
@@ -175,7 +289,7 @@ namespace SafetyProto.Gameplay.Task
         {
             if (_currentTask != null) return;
 
-            Debug.Log("TaskManager: All task groups completed!");
+            Debug.Log("TaskManager: All task groups completed or no groups available.");
             float totalTime = FindFirstObjectByType<TimerSystem>()?.GetTotalSessionTime() ?? 0f;
             int totalScore = _scoreService.CurrentScore;
 
@@ -183,7 +297,8 @@ namespace SafetyProto.Gameplay.Task
                 totalElapsedTime: totalTime,
                 totalScore: totalScore,
                 tasksCompleted: _sessionTasks.Count(t => t.State == TaskState.CompletedSuccess || t.State == TaskState.CompletedSuccessButUnsafe),
-                totalTasks: _sessionTasks.Count
+                totalTasks: _sessionTasks.Count,
+                orderViolationCount: _orderViolations.Count
             );
             _lastSessionSummary = summary;
             EventBus.Instance.RaiseSessionCompleted(summary);
@@ -198,6 +313,7 @@ namespace SafetyProto.Gameplay.Task
         public void ResetSession()
         {
             _completedGroups.Clear();
+            _orderViolations.Clear();
             _lastSessionSummary = null;
             _currentGroupIndex = -1;
             _currentTaskIndex = -1;

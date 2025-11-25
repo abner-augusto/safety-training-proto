@@ -14,10 +14,12 @@ namespace SafetyProto.Gameplay.PPE
         private float complianceDistance = 0.75f;
 
         private readonly Dictionary<PPEType, GameObject> _wornPPE = new Dictionary<PPEType, GameObject>();
+        private Transform _playerTransform;
 
         private void Start()
         {
             this.IsEventBusReady();
+            _playerTransform = Camera.main != null ? Camera.main.transform : null;
         }
 
         public void ReportPPEStateChange(PPEType ppeType, bool isNowInsideZone, GameObject ppeObject)
@@ -104,7 +106,8 @@ namespace SafetyProto.Gameplay.PPE
                     continue;
                 }
 
-                if (complianceDistance > 0f && Vector3.Distance(transform.position, obj.transform.position) > complianceDistance)
+                var referencePos = _playerTransform != null ? _playerTransform.position : transform.position;
+                if (complianceDistance > 0f && Vector3.Distance(referencePos, obj.transform.position) > complianceDistance)
                 {
                     _wornPPE.Remove(ppe);
                     allValid = false;

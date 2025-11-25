@@ -77,6 +77,7 @@ namespace SafetyProto.Core
         public int totalScore;
         public int tasksCompleted;
         public int totalTasks;
+        public int orderViolationCount;
 
         public SessionCompletedEventArgs(float totalElapsedTime, int totalScore, int tasksCompleted, int totalTasks)
         {
@@ -84,6 +85,16 @@ namespace SafetyProto.Core
             this.totalScore = totalScore;
             this.tasksCompleted = tasksCompleted;
             this.totalTasks = totalTasks;
+            orderViolationCount = 0;
+        }
+
+        public SessionCompletedEventArgs(float totalElapsedTime, int totalScore, int tasksCompleted, int totalTasks, int orderViolationCount)
+        {
+            this.totalElapsedTime = totalElapsedTime;
+            this.totalScore = totalScore;
+            this.tasksCompleted = tasksCompleted;
+            this.totalTasks = totalTasks;
+            this.orderViolationCount = orderViolationCount;
         }
     }
 
