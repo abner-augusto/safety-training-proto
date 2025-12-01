@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using SafetyProto.Core.Events;
 using UnityEngine;
 using UnityEngine.Events;
@@ -11,6 +13,8 @@ namespace SafetyProto.Core
     public class EventBus : ScriptableObject
     {
         private static EventBus _instance;
+        private readonly Queue<Action> _eventQueue = new Queue<Action>();
+        private readonly Stopwatch _stopwatch = new Stopwatch();
 
         public static EventBus Instance
         {
@@ -77,6 +81,38 @@ namespace SafetyProto.Core
             OnSafetyErrorCSharp = null;
         }
 
+        private void Enqueue(Action action)
+        {
+            if (action == null)
+            {
+                return;
+            }
+
+            _eventQueue.Enqueue(action);
+        }
+
+        public void ProcessEvents(int maxMillis = 2)
+        {
+            if (_eventQueue.Count == 0)
+            {
+                return;
+            }
+
+            _stopwatch.Restart();
+            while (_eventQueue.Count > 0)
+            {
+                var action = _eventQueue.Dequeue();
+                action?.Invoke();
+
+                if (_stopwatch.ElapsedMilliseconds >= maxMillis)
+                {
+                    break;
+                }
+            }
+
+            _stopwatch.Stop();
+        }
+
         private static void StampMetadata(ref string sessionId, ref string playerId, ref string scenarioId, ref long timestampMs)
         {
             sessionId = EventContext.CurrentSessionId;
@@ -134,129 +170,193 @@ namespace SafetyProto.Core
         // --- Methods to Raise Events ---
         public void RaiseSessionStarted(SessionStartedEventArgs args = new SessionStartedEventArgs())
         {
-            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
-            if (verboseLogging) Debug.Log("[EventBus] SessionStarted");
-            OnSessionStartedCSharp?.Invoke(args);
-            onSessionStarted?.Invoke(args);
+            var payload = args;
+            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            Enqueue(() =>
+            {
+                if (verboseLogging) Debug.Log("[EventBus] SessionStarted");
+                OnSessionStartedCSharp?.Invoke(payload);
+                onSessionStarted?.Invoke(payload);
+            });
         }
 
         public void RaiseSessionPaused(SessionPausedEventArgs args = new SessionPausedEventArgs())
         {
-            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
-            if (verboseLogging) Debug.Log("[EventBus] SessionPaused");
-            OnSessionPausedCSharp?.Invoke(args);
-            onSessionPaused?.Invoke(args);
+            var payload = args;
+            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            Enqueue(() =>
+            {
+                if (verboseLogging) Debug.Log("[EventBus] SessionPaused");
+                OnSessionPausedCSharp?.Invoke(payload);
+                onSessionPaused?.Invoke(payload);
+            });
         }
 
         public void RaiseSessionResumed(SessionResumedEventArgs args = new SessionResumedEventArgs())
         {
-            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
-            if (verboseLogging) Debug.Log("[EventBus] SessionResumed");
-            OnSessionResumedCSharp?.Invoke(args);
-            onSessionResumed?.Invoke(args);
+            var payload = args;
+            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            Enqueue(() =>
+            {
+                if (verboseLogging) Debug.Log("[EventBus] SessionResumed");
+                OnSessionResumedCSharp?.Invoke(payload);
+                onSessionResumed?.Invoke(payload);
+            });
         }
 
         public void RaiseSessionEnded(SessionEndedEventArgs args = new SessionEndedEventArgs())
         {
-            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
-            if (verboseLogging) Debug.Log("[EventBus] SessionEnded");
-            OnSessionEndedCSharp?.Invoke(args);
-            onSessionEnded?.Invoke(args);
+            var payload = args;
+            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            Enqueue(() =>
+            {
+                if (verboseLogging) Debug.Log("[EventBus] SessionEnded");
+                OnSessionEndedCSharp?.Invoke(payload);
+                onSessionEnded?.Invoke(payload);
+            });
         }
 
         public void RaiseActionAttempt(ActionAttemptEventArgs args)
         {
-            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
-            if (verboseLogging) Debug.Log($"[EventBus] ActionAttempt: {args.ActionType}, Interactor: {args.InteractorId}, Pos: {args.WorldPosition}");
-            OnActionAttemptCSharp?.Invoke(args);
-            onActionAttempt?.Invoke(args);
+            var payload = args;
+            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            Enqueue(() =>
+            {
+                if (verboseLogging) Debug.Log($"[EventBus] ActionAttempt: {payload.ActionType}, Interactor: {payload.InteractorId}, Pos: {payload.WorldPosition}");
+                OnActionAttemptCSharp?.Invoke(payload);
+                onActionAttempt?.Invoke(payload);
+            });
         }
 
         public void RaisePpeStateChanged(PPEStateChangedEventArgs args)
         {
-            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
-            if (verboseLogging) Debug.Log($"[EventBus] PPEStateChanged: {args.PpeType}, Wearing: {args.IsWearing}");
-            OnPpeStateChangedCSharp?.Invoke(args);
-            onPpeStateChanged?.Invoke(args);
+            var payload = args;
+            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            Enqueue(() =>
+            {
+                if (verboseLogging) Debug.Log($"[EventBus] PPEStateChanged: {payload.PpeType}, Wearing: {payload.IsWearing}");
+                OnPpeStateChangedCSharp?.Invoke(payload);
+                onPpeStateChanged?.Invoke(payload);
+            });
         }
 
         public void RaiseTaskStarted(TaskEventArgs args)
         {
-            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
-            if (verboseLogging && args.Task != null) Debug.Log($"[EventBus] TaskStarted: {args.Task.taskName}");
-            OnTaskStartedCSharp?.Invoke(args);
-            onTaskStarted?.Invoke(args);
+            var payload = args;
+            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            Enqueue(() =>
+            {
+                if (verboseLogging && payload.Task != null) Debug.Log($"[EventBus] TaskStarted: {payload.Task.taskName}");
+                OnTaskStartedCSharp?.Invoke(payload);
+                onTaskStarted?.Invoke(payload);
+            });
         }
 
         public void RaiseTaskCompleted(TaskEventArgs args)
         {
-            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
-            if (verboseLogging && args.Task != null) Debug.Log($"[EventBus] TaskCompleted: {args.Task.taskName}");
-            OnTaskCompletedCSharp?.Invoke(args);
-            onTaskCompleted?.Invoke(args);
+            var payload = args;
+            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            Enqueue(() =>
+            {
+                if (verboseLogging && payload.Task != null) Debug.Log($"[EventBus] TaskCompleted: {payload.Task.taskName}");
+                OnTaskCompletedCSharp?.Invoke(payload);
+                onTaskCompleted?.Invoke(payload);
+            });
         }
 
         public void RaiseTaskTimeout(TaskEventArgs args)
         {
-            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
-            if (verboseLogging && args.Task != null) Debug.Log($"[EventBus] TaskTimeout: {args.Task.taskName}");
-            OnTaskTimeoutCSharp?.Invoke(args);
-            onTaskTimeout?.Invoke(args);
+            var payload = args;
+            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            Enqueue(() =>
+            {
+                if (verboseLogging && payload.Task != null) Debug.Log($"[EventBus] TaskTimeout: {payload.Task.taskName}");
+                OnTaskTimeoutCSharp?.Invoke(payload);
+                onTaskTimeout?.Invoke(payload);
+            });
         }
 
         public void RaiseScoreChanged(ScoreChangedEventArgs args)
         {
-            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
-            if (verboseLogging) Debug.Log($"[EventBus] ScoreChanged: Total {args.TotalScore}, Delta {args.Delta}");
-            OnScoreChangedCSharp?.Invoke(args);
-            onScoreChanged?.Invoke(args);
+            var payload = args;
+            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            Enqueue(() =>
+            {
+                if (verboseLogging) Debug.Log($"[EventBus] ScoreChanged: Total {payload.TotalScore}, Delta {payload.Delta}");
+                OnScoreChangedCSharp?.Invoke(payload);
+                onScoreChanged?.Invoke(payload);
+            });
         }
 
         public void RaiseGroupStarted(TaskGroupEventArgs args)
         {
-            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
-            if (verboseLogging && args.Group != null) Debug.Log($"[EventBus] GroupStarted: {args.Group.groupName}");
-            OnGroupStartedCSharp?.Invoke(args);
-            onGroupStarted?.Invoke(args);
+            var payload = args;
+            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            Enqueue(() =>
+            {
+                if (verboseLogging && payload.Group != null) Debug.Log($"[EventBus] GroupStarted: {payload.Group.groupName}");
+                OnGroupStartedCSharp?.Invoke(payload);
+                onGroupStarted?.Invoke(payload);
+            });
         }
 
         public void RaiseGroupCompleted(TaskGroupEventArgs args)
         {
-            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
-            if (verboseLogging && args.Group != null) Debug.Log($"[EventBus] GroupCompleted: {args.Group.groupName}");
-            OnGroupCompletedCSharp?.Invoke(args);
-            onGroupCompleted?.Invoke(args);
+            var payload = args;
+            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            Enqueue(() =>
+            {
+                if (verboseLogging && payload.Group != null) Debug.Log($"[EventBus] GroupCompleted: {payload.Group.groupName}");
+                OnGroupCompletedCSharp?.Invoke(payload);
+                onGroupCompleted?.Invoke(payload);
+            });
         }
 
         public void RaiseSessionCompleted(SessionCompletedEventArgs args)
         {
-            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
-            if (verboseLogging) Debug.Log($"[EventBus] SessionCompleted: {args.tasksCompleted} tasks, {args.totalElapsedTime:F2}s, Score: {args.totalScore}");
-            onSessionCompleted?.Invoke(args);
+            var payload = args;
+            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            Enqueue(() =>
+            {
+                if (verboseLogging) Debug.Log($"[EventBus] SessionCompleted: {payload.tasksCompleted} tasks, {payload.totalElapsedTime:F2}s, Score: {payload.totalScore}");
+                onSessionCompleted?.Invoke(payload);
+            });
         }
 
         public void RaiseSafetyViolation(SafetyViolationEventArgs args)
         {
-            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
-            if (verboseLogging) Debug.Log($"[EventBus] SafetyViolation: {args.ViolationCode} - {args.Message}");
-            OnSafetyViolationCSharp?.Invoke(args);
-            onSafetyViolation?.Invoke(args);
+            var payload = args;
+            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            Enqueue(() =>
+            {
+                if (verboseLogging) Debug.Log($"[EventBus] SafetyViolation: {payload.ViolationCode} - {payload.Message}");
+                OnSafetyViolationCSharp?.Invoke(payload);
+                onSafetyViolation?.Invoke(payload);
+            });
         }
 
         public void RaiseCriticalSafetyFailure(CriticalSafetyFailureEventArgs args)
         {
-            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
-            if (verboseLogging) Debug.Log($"[EventBus] CriticalSafetyFailure: {args.Reason} ({args.ViolationCount} in {args.WindowSeconds}s)");
-            OnCriticalSafetyFailureCSharp?.Invoke(args);
-            onCriticalSafetyFailure?.Invoke(args);
+            var payload = args;
+            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            Enqueue(() =>
+            {
+                if (verboseLogging) Debug.Log($"[EventBus] CriticalSafetyFailure: {payload.Reason} ({payload.ViolationCount} in {payload.WindowSeconds}s)");
+                OnCriticalSafetyFailureCSharp?.Invoke(payload);
+                onCriticalSafetyFailure?.Invoke(payload);
+            });
         }
 
         public void RaiseSafetyError(SafetyErrorEventArgs args)
         {
-            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
-            if (verboseLogging) Debug.Log($"[EventBus] SafetyError: {args.Source} - {args.Message}");
-            OnSafetyErrorCSharp?.Invoke(args);
-            onSafetyError?.Invoke(args);
+            var payload = args;
+            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            Enqueue(() =>
+            {
+                if (verboseLogging) Debug.Log($"[EventBus] SafetyError: {payload.Source} - {payload.Message}");
+                OnSafetyErrorCSharp?.Invoke(payload);
+                onSafetyError?.Invoke(payload);
+            });
         }
     }
 }
