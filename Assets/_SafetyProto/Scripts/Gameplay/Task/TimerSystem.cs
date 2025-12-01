@@ -1,5 +1,6 @@
 using System.Threading;
 using SafetyProto.Core;
+using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Utils;
@@ -38,6 +39,12 @@ namespace SafetyProto.Gameplay.Task
                 if (taskManager == null)
                 {
                     Debug.LogError("TimerSystem: No TaskManager found in scene!", this);
+                    SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
+                    {
+                        Source = nameof(TimerSystem),
+                        Message = "TaskManager missing",
+                        Details = "TimerSystem requires a TaskManager reference to operate."
+                    });
                     enabled = false;
                     return;
                 }

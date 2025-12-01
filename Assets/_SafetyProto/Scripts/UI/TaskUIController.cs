@@ -15,9 +15,14 @@ namespace SafetyProto.UI
     public class TaskUIController : MonoBehaviour
     {
         [Header("References")]
-        [SerializeField] private TaskManager taskManager;
         [SerializeField] private Transform taskListContainer;
         [SerializeField] private GameObject taskEntryPrefab;
+
+        [Header("Task Definitions")]
+        [Tooltip("Optional static list of task groups to render. If empty, the controller will copy them from the provided TaskManager once.")]
+        [SerializeField] private List<TaskGroup> taskGroups = new List<TaskGroup>();
+        [Tooltip("Optional reference used only at startup to pull task definitions and initial task state.")]
+        [SerializeField] private TaskManager initialTaskProvider;
 
         [Header("Current Task Detail Panel")]
         [SerializeField] private TMP_Text currentTaskOrderText;
@@ -25,10 +30,11 @@ namespace SafetyProto.UI
         [SerializeField] private TMP_Text currentTaskDescriptionText;
 
         private readonly Dictionary<SafetyTask, TaskEntryUI> _taskToEntryUI = new();
+        private readonly Dictionary<SafetyTask, int> _taskOrderLookup = new();
 
         private void Start()
         {
-            if (taskManager == null || taskListContainer == null || taskEntryPrefab == null)
+            if (taskListContainer == null || taskEntryPrefab == null)
             {
                 Debug.LogError("TaskUIController is missing references.", this);
                 enabled = false;
@@ -40,17 +46,20 @@ namespace SafetyProto.UI
                 return;
             }
 
+            SeedTaskDefinitionsFromProvider();
             PopulateTaskList();
 
             EventBus.Instance.onTaskStarted.AddListener(OnTaskStarted);
             EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
             EventBus.Instance.onTaskTimeout.AddListener(OnTaskTimeout);
 
-            var initial = taskManager.GetCurrentTaskData();
+            var initial = initialTaskProvider != null ? initialTaskProvider.GetCurrentTaskData() : null;
             if (initial != null)
             {
-                OnTaskStarted(new TaskEventArgs(initial, null));
+                OnTaskStarted(new TaskEventArgs(initial));
             }
+
+            initialTaskProvider = null;
         }
 
         private void OnDestroy()
@@ -66,16 +75,26 @@ namespace SafetyProto.UI
         private void PopulateTaskList()
         {
             int order = 1;
-            foreach (var group in taskManager.taskGroups)
+            foreach (var group in taskGroups)
             {
+                if (group == null) continue;
                 foreach (var task in group.tasks)
                 {
                     var go = Instantiate(taskEntryPrefab, taskListContainer);
                     var entry = go.GetComponent<TaskEntryUI>();
                     entry.Setup(order, task.taskName);
                     _taskToEntryUI[task] = entry;
+                    _taskOrderLookup[task] = order;
                     order++;
                 }
+            }
+        }
+
+        private void SeedTaskDefinitionsFromProvider()
+        {
+            if (taskGroups.Count == 0 && initialTaskProvider != null)
+            {
+                taskGroups = new List<TaskGroup>(initialTaskProvider.taskGroups);
             }
         }
 
@@ -104,8 +123,15 @@ namespace SafetyProto.UI
 
         private void UpdateCurrentTaskPanel(SafetyTask task)
         {
-            int idx = taskManager.CurrentTaskIndex;
-            currentTaskOrderText.text = (idx >= 0) ? $"{idx + 1}." : "";
+            if (_taskOrderLookup.TryGetValue(task, out var order))
+            {
+                currentTaskOrderText.text = $"{order}.";
+            }
+            else
+            {
+                currentTaskOrderText.text = string.Empty;
+            }
+
             currentTaskNameText.text = task.taskName;
             currentTaskDescriptionText.text = task.taskDescription;
         }

@@ -10,8 +10,6 @@ namespace SafetyProto.UI
         public TimerSystem timerSystem;
         private TextMeshProUGUI _timerText;
 
-        private float _lastElapsed;
-
         private void Start()
         {
             _timerText = GetComponent<TextMeshProUGUI>();
@@ -29,8 +27,8 @@ namespace SafetyProto.UI
             timerSystem.onTimeUpdated.AddListener(UpdateTimeDisplay);
             timerSystem.onTimerCompleted.AddListener(OnTimerCompleted);
             timerSystem.onTimerTimeout.AddListener(OnTimerTimeout);
-
-            UpdateTimeDisplay(timerSystem.GetTimeRemaining());
+            _timerText.text = "Time: --:--";
+            _timerText.color = Color.white;
         }
 
         private void OnDestroy()
@@ -65,7 +63,6 @@ namespace SafetyProto.UI
             int seconds = Mathf.FloorToInt(elapsedTime % 60);
             _timerText.text = $"Completed!\nTime: {minutes:00}:{seconds:00}";
             _timerText.color = Color.green;
-            _lastElapsed = elapsedTime;
         }
 
         private void OnTimerTimeout()

@@ -21,6 +21,12 @@ namespace SafetyProto.Gameplay.Task
             if (scoreServiceAsset == null)
             {
                 Debug.LogError("ScoreManagerAdapter is missing required references (ScoreService).", this);
+                SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
+                {
+                    Source = nameof(ScoreManagerAdapter),
+                    Message = "ScoreService asset missing",
+                    Details = $"ScoreManagerAdapter on '{name}' requires a ScoreServiceSO reference."
+                });
                 enabled = false;
                 return;
             }

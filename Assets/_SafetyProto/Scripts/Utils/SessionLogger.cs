@@ -55,6 +55,9 @@ namespace SafetyProto.Utils
             EventBus.Instance.onScoreChanged.AddListener(OnScoreChanged);
             EventBus.Instance.onGroupStarted.AddListener(OnGroupStarted);
             EventBus.Instance.onGroupCompleted.AddListener(OnGroupCompleted);
+            EventBus.Instance.onSafetyViolation.AddListener(OnSafetyViolation);
+            EventBus.Instance.onSafetyError.AddListener(OnSafetyError);
+            EventBus.Instance.onCriticalSafetyFailure.AddListener(OnCriticalSafetyFailure);
         }
 
         private void OnDestroy()
@@ -73,6 +76,9 @@ namespace SafetyProto.Utils
                 EventBus.Instance.onScoreChanged.RemoveListener(OnScoreChanged);
                 EventBus.Instance.onGroupStarted.RemoveListener(OnGroupStarted);
                 EventBus.Instance.onGroupCompleted.RemoveListener(OnGroupCompleted);
+                EventBus.Instance.onSafetyViolation.RemoveListener(OnSafetyViolation);
+                EventBus.Instance.onSafetyError.RemoveListener(OnSafetyError);
+                EventBus.Instance.onCriticalSafetyFailure.RemoveListener(OnCriticalSafetyFailure);
             }
         }
 
@@ -109,6 +115,12 @@ namespace SafetyProto.Utils
             => LogEvent("GroupStarted", args.Group.groupName);
         private void OnGroupCompleted(TaskGroupEventArgs args)
             => LogEvent("GroupCompleted", args.Group.groupName);
+        private void OnSafetyViolation(SafetyViolationEventArgs args)
+            => LogEvent("SafetyViolation", $"{args.ViolationCode} | {args.Message} (Task={args.TaskId}, Group={args.GroupId})");
+        private void OnSafetyError(SafetyErrorEventArgs args)
+            => LogEvent("SafetyError", $"{args.Source}: {args.Message} ({args.Details})");
+        private void OnCriticalSafetyFailure(CriticalSafetyFailureEventArgs args)
+            => LogEvent("CriticalSafetyFailure", $"{args.Reason} [{args.ViolationCount} in {args.WindowSeconds}s]");
 
         private void LogEvent(string eventName, string details)
         {

@@ -1,5 +1,4 @@
 using SafetyProto.Core;
-using SafetyProto.Gameplay.Task;
 using SafetyProto.Utils;
 using TMPro;
 using UnityEngine;
@@ -13,24 +12,33 @@ namespace SafetyProto.UI
         public TextMeshProUGUI scoreText;
         public TextMeshProUGUI taskSummaryText;
 
+        private static SessionCompletedEventArgs? _cachedSummary;
+
         private void OnEnable()
         {
             if (!this.IsEventBusReady())
                 return;
 
-            TryDisplayStoredSummary();
+            EventBus.Instance.onSessionCompleted.AddListener(OnSessionCompleted);
+
+            if (_cachedSummary.HasValue)
+            {
+                DisplaySummary(_cachedSummary.Value);
+            }
         }
 
-        private void TryDisplayStoredSummary()
+        private void OnDisable()
         {
-            var taskManager = FindFirstObjectByType<TaskManager>();
-            if (taskManager == null) return;
-
-            var summaryOpt = taskManager.LastSessionSummary;
-            if (summaryOpt.HasValue)
+            if (EventBus.Instance != null)
             {
-                DisplaySummary(summaryOpt.Value);
+                EventBus.Instance.onSessionCompleted.RemoveListener(OnSessionCompleted);
             }
+        }
+
+        private void OnSessionCompleted(SessionCompletedEventArgs args)
+        {
+            _cachedSummary = args;
+            DisplaySummary(args);
         }
 
         private void DisplaySummary(SessionCompletedEventArgs args)

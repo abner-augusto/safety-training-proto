@@ -72,6 +72,9 @@ namespace SafetyProto.Core
             OnScoreChangedCSharp = null;
             OnGroupStartedCSharp = null;
             OnGroupCompletedCSharp = null;
+            OnSafetyViolationCSharp = null;
+            OnCriticalSafetyFailureCSharp = null;
+            OnSafetyErrorCSharp = null;
         }
 
         private static void StampMetadata(ref string sessionId, ref string playerId, ref string scenarioId, ref long timestampMs)
@@ -98,6 +101,9 @@ namespace SafetyProto.Core
         public static event Action<ScoreChangedEventArgs> OnScoreChangedCSharp;
         public static event Action<TaskGroupEventArgs> OnGroupStartedCSharp;
         public static event Action<TaskGroupEventArgs> OnGroupCompletedCSharp;
+        public static event Action<SafetyViolationEventArgs> OnSafetyViolationCSharp;
+        public static event Action<CriticalSafetyFailureEventArgs> OnCriticalSafetyFailureCSharp;
+        public static event Action<SafetyErrorEventArgs> OnSafetyErrorCSharp;
 
         // --- UnityEvents (for Inspector assignment) ---
         [Header("Session Events")]
@@ -120,6 +126,10 @@ namespace SafetyProto.Core
 
         [Header("End of Session")]
         public UnityEvent<SessionCompletedEventArgs> onSessionCompleted;
+        [Header("Safety Events")]
+        public UnityEvent<SafetyViolationEventArgs> onSafetyViolation;
+        public UnityEvent<CriticalSafetyFailureEventArgs> onCriticalSafetyFailure;
+        public UnityEvent<SafetyErrorEventArgs> onSafetyError;
 
         // --- Methods to Raise Events ---
         public void RaiseSessionStarted(SessionStartedEventArgs args = new SessionStartedEventArgs())
@@ -223,6 +233,30 @@ namespace SafetyProto.Core
             StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
             if (verboseLogging) Debug.Log($"[EventBus] SessionCompleted: {args.tasksCompleted} tasks, {args.totalElapsedTime:F2}s, Score: {args.totalScore}");
             onSessionCompleted?.Invoke(args);
+        }
+
+        public void RaiseSafetyViolation(SafetyViolationEventArgs args)
+        {
+            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
+            if (verboseLogging) Debug.Log($"[EventBus] SafetyViolation: {args.ViolationCode} - {args.Message}");
+            OnSafetyViolationCSharp?.Invoke(args);
+            onSafetyViolation?.Invoke(args);
+        }
+
+        public void RaiseCriticalSafetyFailure(CriticalSafetyFailureEventArgs args)
+        {
+            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
+            if (verboseLogging) Debug.Log($"[EventBus] CriticalSafetyFailure: {args.Reason} ({args.ViolationCount} in {args.WindowSeconds}s)");
+            OnCriticalSafetyFailureCSharp?.Invoke(args);
+            onCriticalSafetyFailure?.Invoke(args);
+        }
+
+        public void RaiseSafetyError(SafetyErrorEventArgs args)
+        {
+            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
+            if (verboseLogging) Debug.Log($"[EventBus] SafetyError: {args.Source} - {args.Message}");
+            OnSafetyErrorCSharp?.Invoke(args);
+            onSafetyError?.Invoke(args);
         }
     }
 }

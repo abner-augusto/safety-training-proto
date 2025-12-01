@@ -96,6 +96,44 @@ namespace SafetyProto.Core
     }
 
     [System.Serializable]
+    public struct SafetyViolationEventArgs
+    {
+        public string SessionId;
+        public string PlayerId;
+        public string ScenarioId;
+        public long TimestampMs;
+
+        public string ViolationCode;
+        public string Message;
+        public string TaskId;
+        public string GroupId;
+    }
+
+    [System.Serializable]
+    public struct CriticalSafetyFailureEventArgs
+    {
+        public string SessionId;
+        public string PlayerId;
+        public string ScenarioId;
+        public long TimestampMs;
+        public int ViolationCount;
+        public float WindowSeconds;
+        public string Reason;
+    }
+
+    [System.Serializable]
+    public struct SafetyErrorEventArgs
+    {
+        public string SessionId;
+        public string PlayerId;
+        public string ScenarioId;
+        public long TimestampMs;
+        public string Source;
+        public string Message;
+        public string Details;
+    }
+
+    [System.Serializable]
     public struct SessionCompletedEventArgs
     {
         public string SessionId;
