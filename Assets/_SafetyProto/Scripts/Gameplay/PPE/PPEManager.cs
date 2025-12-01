@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SafetyProto.Core;
+using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Data.Enums;
 using SafetyProto.Utils;
@@ -32,7 +33,7 @@ namespace SafetyProto.Gameplay.PPE
                 if (!previouslyWorn || currentWornObject != ppeObject)
                 {
                     _wornPPE[ppeType] = ppeObject;
-                    EventBus.Instance.RaisePpeStateChanged(new PPEStateChangedEventArgs(ppeType, true));
+                    PPEEvents.RaisePpeStateChanged(new PPEStateChangedEventArgs(ppeType, true));
                     Debug.Log($"PPEManager: {ppeType} is now WORN (Item: {ppeObject.name}).");
                 }
             }
@@ -41,7 +42,7 @@ namespace SafetyProto.Gameplay.PPE
                 if (previouslyWorn && currentWornObject == ppeObject)
                 {
                     _wornPPE.Remove(ppeType);
-                    EventBus.Instance.RaisePpeStateChanged(new PPEStateChangedEventArgs(ppeType, false));
+                    PPEEvents.RaisePpeStateChanged(new PPEStateChangedEventArgs(ppeType, false));
                     Debug.Log($"PPEManager: {ppeType} is now NOT WORN (Item: {ppeObject.name} exited).");
                 }
             }
@@ -57,7 +58,7 @@ namespace SafetyProto.Gameplay.PPE
             if (_wornPPE.TryGetValue(ppeType, out var current) && current == ppeObject)
             {
                 _wornPPE.Remove(ppeType);
-                EventBus.Instance.RaisePpeStateChanged(new PPEStateChangedEventArgs(ppeType, false));
+                PPEEvents.RaisePpeStateChanged(new PPEStateChangedEventArgs(ppeType, false));
             }
         }
 

@@ -1,4 +1,5 @@
 using System;
+using SafetyProto.Core.Events;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -73,6 +74,14 @@ namespace SafetyProto.Core
             OnGroupCompletedCSharp = null;
         }
 
+        private static void StampMetadata(ref string sessionId, ref string playerId, ref string scenarioId, ref long timestampMs)
+        {
+            sessionId = EventContext.CurrentSessionId;
+            playerId = EventContext.CurrentPlayerId;
+            scenarioId = EventContext.CurrentScenarioId;
+            timestampMs = EventContext.NowUnixMs();
+        }
+
         [Header("Debug")]
         public bool verboseLogging;
 
@@ -115,6 +124,7 @@ namespace SafetyProto.Core
         // --- Methods to Raise Events ---
         public void RaiseSessionStarted(SessionStartedEventArgs args = new SessionStartedEventArgs())
         {
+            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
             if (verboseLogging) Debug.Log("[EventBus] SessionStarted");
             OnSessionStartedCSharp?.Invoke(args);
             onSessionStarted?.Invoke(args);
@@ -122,6 +132,7 @@ namespace SafetyProto.Core
 
         public void RaiseSessionPaused(SessionPausedEventArgs args = new SessionPausedEventArgs())
         {
+            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
             if (verboseLogging) Debug.Log("[EventBus] SessionPaused");
             OnSessionPausedCSharp?.Invoke(args);
             onSessionPaused?.Invoke(args);
@@ -129,6 +140,7 @@ namespace SafetyProto.Core
 
         public void RaiseSessionResumed(SessionResumedEventArgs args = new SessionResumedEventArgs())
         {
+            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
             if (verboseLogging) Debug.Log("[EventBus] SessionResumed");
             OnSessionResumedCSharp?.Invoke(args);
             onSessionResumed?.Invoke(args);
@@ -136,6 +148,7 @@ namespace SafetyProto.Core
 
         public void RaiseSessionEnded(SessionEndedEventArgs args = new SessionEndedEventArgs())
         {
+            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
             if (verboseLogging) Debug.Log("[EventBus] SessionEnded");
             OnSessionEndedCSharp?.Invoke(args);
             onSessionEnded?.Invoke(args);
@@ -143,6 +156,7 @@ namespace SafetyProto.Core
 
         public void RaiseActionAttempt(ActionAttemptEventArgs args)
         {
+            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
             if (verboseLogging) Debug.Log($"[EventBus] ActionAttempt: {args.ActionType}, Interactor: {args.InteractorId}, Pos: {args.WorldPosition}");
             OnActionAttemptCSharp?.Invoke(args);
             onActionAttempt?.Invoke(args);
@@ -150,6 +164,7 @@ namespace SafetyProto.Core
 
         public void RaisePpeStateChanged(PPEStateChangedEventArgs args)
         {
+            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
             if (verboseLogging) Debug.Log($"[EventBus] PPEStateChanged: {args.PpeType}, Wearing: {args.IsWearing}");
             OnPpeStateChangedCSharp?.Invoke(args);
             onPpeStateChanged?.Invoke(args);
@@ -157,6 +172,7 @@ namespace SafetyProto.Core
 
         public void RaiseTaskStarted(TaskEventArgs args)
         {
+            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
             if (verboseLogging && args.Task != null) Debug.Log($"[EventBus] TaskStarted: {args.Task.taskName}");
             OnTaskStartedCSharp?.Invoke(args);
             onTaskStarted?.Invoke(args);
@@ -164,6 +180,7 @@ namespace SafetyProto.Core
 
         public void RaiseTaskCompleted(TaskEventArgs args)
         {
+            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
             if (verboseLogging && args.Task != null) Debug.Log($"[EventBus] TaskCompleted: {args.Task.taskName}");
             OnTaskCompletedCSharp?.Invoke(args);
             onTaskCompleted?.Invoke(args);
@@ -171,6 +188,7 @@ namespace SafetyProto.Core
 
         public void RaiseTaskTimeout(TaskEventArgs args)
         {
+            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
             if (verboseLogging && args.Task != null) Debug.Log($"[EventBus] TaskTimeout: {args.Task.taskName}");
             OnTaskTimeoutCSharp?.Invoke(args);
             onTaskTimeout?.Invoke(args);
@@ -178,6 +196,7 @@ namespace SafetyProto.Core
 
         public void RaiseScoreChanged(ScoreChangedEventArgs args)
         {
+            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
             if (verboseLogging) Debug.Log($"[EventBus] ScoreChanged: Total {args.TotalScore}, Delta {args.Delta}");
             OnScoreChangedCSharp?.Invoke(args);
             onScoreChanged?.Invoke(args);
@@ -185,6 +204,7 @@ namespace SafetyProto.Core
 
         public void RaiseGroupStarted(TaskGroupEventArgs args)
         {
+            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
             if (verboseLogging && args.Group != null) Debug.Log($"[EventBus] GroupStarted: {args.Group.groupName}");
             OnGroupStartedCSharp?.Invoke(args);
             onGroupStarted?.Invoke(args);
@@ -192,6 +212,7 @@ namespace SafetyProto.Core
 
         public void RaiseGroupCompleted(TaskGroupEventArgs args)
         {
+            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
             if (verboseLogging && args.Group != null) Debug.Log($"[EventBus] GroupCompleted: {args.Group.groupName}");
             OnGroupCompletedCSharp?.Invoke(args);
             onGroupCompleted?.Invoke(args);
@@ -199,6 +220,7 @@ namespace SafetyProto.Core
 
         public void RaiseSessionCompleted(SessionCompletedEventArgs args)
         {
+            StampMetadata(ref args.SessionId, ref args.PlayerId, ref args.ScenarioId, ref args.TimestampMs);
             if (verboseLogging) Debug.Log($"[EventBus] SessionCompleted: {args.tasksCompleted} tasks, {args.totalElapsedTime:F2}s, Score: {args.totalScore}");
             onSessionCompleted?.Invoke(args);
         }

@@ -8,6 +8,11 @@ namespace SafetyProto.Core
     [System.Serializable]
     public struct ActionAttemptEventArgs
     {
+        public string SessionId;
+        public string PlayerId;
+        public string ScenarioId;
+        public long TimestampMs;
+
         public ActionType ActionType;
         public int InteractorId; // Could be player ID or specific hand/controller
         public Vector3 WorldPosition;
@@ -23,6 +28,11 @@ namespace SafetyProto.Core
     [System.Serializable]
     public struct PPEStateChangedEventArgs
     {
+        public string SessionId;
+        public string PlayerId;
+        public string ScenarioId;
+        public long TimestampMs;
+
         public PPEType PpeType;
         public bool IsWearing;
 
@@ -36,6 +46,11 @@ namespace SafetyProto.Core
     [System.Serializable]
     public struct TaskEventArgs // Used for TaskStarted, TaskCompleted, TaskTimeout
     {
+        public string SessionId;
+        public string PlayerId;
+        public string ScenarioId;
+        public long TimestampMs;
+
         public SafetyTask Task; // Base task data
         public RuntimeSafetyTask RuntimeTask; // Runtime instance when available
 
@@ -49,6 +64,11 @@ namespace SafetyProto.Core
     [System.Serializable]
     public struct TaskGroupEventArgs // for group-started / group-completed
     {
+        public string SessionId;
+        public string PlayerId;
+        public string ScenarioId;
+        public long TimestampMs;
+
         public TaskGroup Group;
 
         public TaskGroupEventArgs(TaskGroup group)
@@ -60,6 +80,11 @@ namespace SafetyProto.Core
     [System.Serializable]
     public struct ScoreChangedEventArgs
     {
+        public string SessionId;
+        public string PlayerId;
+        public string ScenarioId;
+        public long TimestampMs;
+
         public int TotalScore;
         public int Delta;
 
@@ -73,6 +98,11 @@ namespace SafetyProto.Core
     [System.Serializable]
     public struct SessionCompletedEventArgs
     {
+        public string SessionId;
+        public string PlayerId;
+        public string ScenarioId;
+        public long TimestampMs;
+
         public float totalElapsedTime;
         public int totalScore;
         public int tasksCompleted;
@@ -100,11 +130,35 @@ namespace SafetyProto.Core
 
     // Basic session events might not need payloads, but can be structs for consistency
     [System.Serializable]
-    public struct SessionStartedEventArgs { }
+    public struct SessionStartedEventArgs
+    {
+        public string SessionId;
+        public string PlayerId;
+        public string ScenarioId;
+        public long TimestampMs;
+    }
     [System.Serializable]
-    public struct SessionPausedEventArgs { }
+    public struct SessionPausedEventArgs
+    {
+        public string SessionId;
+        public string PlayerId;
+        public string ScenarioId;
+        public long TimestampMs;
+    }
     [System.Serializable]
-    public struct SessionResumedEventArgs { }
+    public struct SessionResumedEventArgs
+    {
+        public string SessionId;
+        public string PlayerId;
+        public string ScenarioId;
+        public long TimestampMs;
+    }
     [System.Serializable]
-    public struct SessionEndedEventArgs { }
+    public struct SessionEndedEventArgs
+    {
+        public string SessionId;
+        public string PlayerId;
+        public string ScenarioId;
+        public long TimestampMs;
+    }
 }

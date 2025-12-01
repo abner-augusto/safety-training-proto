@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using SafetyProto.Core;
+using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Data.Enums;
 using SafetyProto.Data.ScriptableObjects;
@@ -148,7 +149,7 @@ namespace SafetyProto.Gameplay.Task
             task.HasMissedPPEOnce = !compliant;
             task.CompletionTime = Time.time;
 
-            EventBus.Instance.RaiseTaskCompleted(new TaskEventArgs(task.TaskData, task));
+            TaskEvents.RaiseTaskCompleted(new TaskEventArgs(task.TaskData, task));
 
             var currentGroup = GetCurrentGroup();
             if (currentGroup != null && currentGroup.executionMode == TaskExecutionMode.FreeOrder)
@@ -221,7 +222,7 @@ namespace SafetyProto.Gameplay.Task
                 if (canStart)
                 {
                     _currentGroupIndex = nextGroupIndex;
-                    EventBus.Instance.RaiseGroupStarted(new TaskGroupEventArgs(group));
+                    TaskEvents.RaiseGroupStarted(new TaskGroupEventArgs(group));
                     StartNextTask();
                     return;
                 }
@@ -250,7 +251,7 @@ namespace SafetyProto.Gameplay.Task
                 _currentTaskIndex = nextIndex;
                 _currentTask = _sessionTasks[nextIndex];
                 _currentTask.State = TaskState.InProgress;
-                EventBus.Instance.RaiseTaskStarted(new TaskEventArgs(_currentTask.TaskData, _currentTask));
+                TaskEvents.RaiseTaskStarted(new TaskEventArgs(_currentTask.TaskData, _currentTask));
             }
             else
             {
@@ -269,7 +270,7 @@ namespace SafetyProto.Gameplay.Task
 
             if (allDone)
             {
-                EventBus.Instance.RaiseGroupCompleted(new TaskGroupEventArgs(currentGroup));
+                TaskEvents.RaiseGroupCompleted(new TaskGroupEventArgs(currentGroup));
                 _completedGroups.Add(currentGroup);
             }
         }
@@ -301,7 +302,7 @@ namespace SafetyProto.Gameplay.Task
                 orderViolationCount: _orderViolations.Count
             );
             _lastSessionSummary = summary;
-            EventBus.Instance.RaiseSessionCompleted(summary);
+            SessionEvents.RaiseSessionCompleted(summary);
         }
 
         public SafetyTask GetCurrentTaskData() => _currentTask?.TaskData;

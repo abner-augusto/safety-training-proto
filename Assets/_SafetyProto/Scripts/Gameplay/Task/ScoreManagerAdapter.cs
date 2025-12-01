@@ -1,4 +1,5 @@
 using SafetyProto.Core;
+using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Data.Enums;
 using SafetyProto.Data.ScriptableObjects;
@@ -73,6 +74,7 @@ namespace SafetyProto.Gameplay.Task
         private void HandleScoreChanged(int newScore, int delta, string reason)
         {
             Debug.Log($"[ScoreManagerAdapter] [Score] {reason}: {(delta >= 0 ? "+" : "")}{delta} (Total: {newScore})");
+            ScoreEvents.RaiseScoreChanged(new ScoreChangedEventArgs(newScore, delta));
         }
     }
 }
