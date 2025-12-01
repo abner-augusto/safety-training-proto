@@ -11,8 +11,10 @@ namespace SafetyProto.Gameplay.Analytics
     /// </summary>
     public class SafetyAnalyzer : MonoBehaviour
     {
-        [SerializeField] private float windowSeconds = 30f;
-        [SerializeField] private int violationThreshold = 3;
+        [SerializeField, Tooltip("Time window in seconds for repeated violations.")]
+        private float windowSeconds = 30f;
+        [SerializeField, Tooltip("Number of violations within the window to emit a critical failure.")]
+        private int violationThreshold = 3;
 
         private readonly Queue<float> _violationTimestamps = new Queue<float>();
         private bool _thresholdRaised;

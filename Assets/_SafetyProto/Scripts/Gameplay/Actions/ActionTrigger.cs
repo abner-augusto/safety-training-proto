@@ -1,4 +1,5 @@
 using SafetyProto.Core;
+using SafetyProto.Core.Events;
 using SafetyProto.Data.Enums;
 using SafetyProto.Utils;
 using UnityEngine;
@@ -32,7 +33,7 @@ namespace SafetyProto.Gameplay.Actions
                 transform.position
             );
 
-            EventBus.Instance.RaiseActionAttempt(args);
+            ActionEvents.RaiseActionAttempt(args);
             Debug.Log($"ActionTrigger on {gameObject.name} Fired Action: {actionTypeToTrigger}");
         }
     }
