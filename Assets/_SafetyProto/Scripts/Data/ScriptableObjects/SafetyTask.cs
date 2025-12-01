@@ -22,5 +22,9 @@ namespace SafetyProto.Data.ScriptableObjects
 
         [Header("Requirements")]
         public List<PPEType> requiredPPE = new List<PPEType>();
+
+        [Header("Guidance")]
+        [TextArea(2, 4)]
+        public string hintText = "Dica rápida para o participante.";
     }
 }
