@@ -17,36 +17,20 @@ namespace SafetyProto.Gameplay.Safety
     public class SafetyRuleEngine : MonoBehaviour
     {
         [Header("References")]
-        [SerializeField] private TaskManager taskManager;
         [SerializeField] private PPEManager ppeManager;
 
         [Header("Settings")]
         [SerializeField] private bool verboseLogging;
 
         private readonly Dictionary<PPEType, bool> _ppeStates = new Dictionary<PPEType, bool>();
+        private TaskGroup _activeGroup;
+        private SafetyTask _activeSequentialTask;
+        private readonly List<SafetyTask> _activeFreeOrderTasks = new List<SafetyTask>();
 
         private void Start()
         {
             if (!this.IsEventBusReady())
             {
-                enabled = false;
-                return;
-            }
-
-            if (taskManager == null)
-            {
-                taskManager = FindFirstObjectByType<TaskManager>();
-            }
-
-            if (taskManager == null)
-            {
-                Debug.LogError("SafetyRuleEngine: TaskManager reference missing.", this);
-                SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
-                {
-                    Source = nameof(SafetyRuleEngine),
-                    Message = "TaskManager reference missing",
-                    Details = "SafetyRuleEngine could not locate TaskManager in the scene"
-                });
                 enabled = false;
                 return;
             }
@@ -62,6 +46,9 @@ namespace SafetyProto.Gameplay.Safety
 
             EventBus.Instance.onActionAttempt.AddListener(HandleActionAttempt);
             EventBus.Instance.onPpeStateChanged.AddListener(HandlePpeStateChanged);
+            EventBus.Instance.onGroupStarted.AddListener(OnGroupStarted);
+            EventBus.Instance.onGroupCompleted.AddListener(OnGroupCompleted);
+            EventBus.Instance.onTaskStarted.AddListener(OnTaskStarted);
         }
 
         private void OnDestroy()
@@ -70,7 +57,50 @@ namespace SafetyProto.Gameplay.Safety
             {
                 EventBus.Instance.onActionAttempt.RemoveListener(HandleActionAttempt);
                 EventBus.Instance.onPpeStateChanged.RemoveListener(HandlePpeStateChanged);
+                EventBus.Instance.onGroupStarted.RemoveListener(OnGroupStarted);
+                EventBus.Instance.onGroupCompleted.RemoveListener(OnGroupCompleted);
+                EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStarted);
             }
+        }
+
+        private void OnGroupStarted(TaskGroupEventArgs args)
+        {
+            _activeGroup = args.Group;
+            _activeSequentialTask = null;
+            _activeFreeOrderTasks.Clear();
+
+            if (_activeGroup != null && _activeGroup.executionMode == TaskExecutionMode.FreeOrder)
+            {
+                _activeFreeOrderTasks.AddRange(_activeGroup.tasks);
+            }
+        }
+
+        private void OnGroupCompleted(TaskGroupEventArgs args)
+        {
+            if (_activeGroup == args.Group)
+            {
+                ClearActiveContext();
+            }
+        }
+
+        private void OnTaskStarted(TaskEventArgs args)
+        {
+            if (_activeGroup == null || args.Task == null)
+            {
+                return;
+            }
+
+            if (_activeGroup.executionMode == TaskExecutionMode.Sequential)
+            {
+                _activeSequentialTask = args.Task;
+            }
+        }
+
+        private void ClearActiveContext()
+        {
+            _activeGroup = null;
+            _activeSequentialTask = null;
+            _activeFreeOrderTasks.Clear();
         }
 
         private void HandlePpeStateChanged(PPEStateChangedEventArgs args)
@@ -80,19 +110,17 @@ namespace SafetyProto.Gameplay.Safety
 
         private void HandleActionAttempt(ActionAttemptEventArgs args)
         {
-            var currentGroup = taskManager.GetCurrentGroup();
-            if (currentGroup == null)
+            if (_activeGroup == null)
             {
                 RaiseViolation("NO_ACTIVE_GROUP", "Action attempted with no active task group.", null, null);
                 return;
             }
 
-            RuntimeSafetyTask runtimeTask = null;
+            SafetyTask targetTask = null;
 
-            if (currentGroup.executionMode == TaskExecutionMode.Sequential)
+            if (_activeGroup.executionMode == TaskExecutionMode.Sequential)
             {
-                runtimeTask = taskManager.CurrentRuntimeTask;
-                if (runtimeTask == null)
+                if (_activeSequentialTask == null)
                 {
                     if (verboseLogging)
                     {
@@ -101,49 +129,45 @@ namespace SafetyProto.Gameplay.Safety
                     return;
                 }
 
-                if (runtimeTask.expectedAction != args.ActionType)
+                if (_activeSequentialTask.expectedAction != args.ActionType)
                 {
-                    RegisterOrderViolationIfFutureTask(currentGroup, runtimeTask, args.ActionType);
                     RaiseViolation(
                         "WRONG_ACTION",
-                        $"Expected {runtimeTask.expectedAction} but received {args.ActionType}.",
-                        runtimeTask.TaskData,
-                        currentGroup);
+                        $"Expected {_activeSequentialTask.expectedAction} but received {args.ActionType}.",
+                        _activeSequentialTask,
+                        _activeGroup);
                     return;
                 }
+
+                targetTask = _activeSequentialTask;
             }
             else
             {
-                runtimeTask = taskManager.FindPendingTaskByAction(args.ActionType);
-                if (runtimeTask == null)
+                targetTask = _activeFreeOrderTasks.FirstOrDefault(t => t.expectedAction == args.ActionType);
+                if (targetTask == null)
                 {
                     RaiseViolation(
                         "WRONG_ACTION",
-                        $"Action {args.ActionType} does not match any pending task in '{currentGroup.groupName}'.",
+                        $"Action {args.ActionType} does not match any pending task in '{_activeGroup.groupName}'.",
                         null,
-                        currentGroup);
+                        _activeGroup);
                     return;
                 }
-
-                taskManager.FocusTask(runtimeTask);
             }
 
-            ProcessTaskAttempt(runtimeTask, currentGroup);
+            ProcessTaskAttempt(targetTask, _activeGroup);
         }
 
-        private void ProcessTaskAttempt(RuntimeSafetyTask runtimeTask, TaskGroup currentGroup)
+        private void ProcessTaskAttempt(SafetyTask task, TaskGroup currentGroup)
         {
-            if (runtimeTask == null)
+            if (task == null)
             {
                 return;
             }
 
-            if (runtimeTask.State == TaskState.CompletedSuccess || runtimeTask.State == TaskState.CompletedSuccessButUnsafe)
-            {
-                return;
-            }
+            var runtimeTask = new RuntimeSafetyTask(task);
 
-            bool compliant = IsPpeCompliant(runtimeTask.TaskData.requiredPPE);
+            bool compliant = IsPpeCompliant(task.requiredPPE);
             runtimeTask.State = compliant ? TaskState.CompletedSuccess : TaskState.CompletedSuccessButUnsafe;
             runtimeTask.HasMissedPPEOnce = !compliant;
             runtimeTask.CompletionTime = Time.time;
@@ -152,17 +176,22 @@ namespace SafetyProto.Gameplay.Safety
             {
                 RaiseViolation(
                     "PPE_MISSING",
-                    $"Required PPE missing for task '{runtimeTask.taskName}'.",
-                    runtimeTask.TaskData,
+                    $"Required PPE missing for task '{task.taskName}'.",
+                    task,
                     currentGroup);
             }
 
             if (verboseLogging)
             {
-                Debug.Log($"SafetyRuleEngine: Task '{runtimeTask.taskName}' completed. PPE compliant={compliant}");
+                Debug.Log($"SafetyRuleEngine: Task '{task.taskName}' completed. PPE compliant={compliant}");
             }
 
-            TaskEvents.RaiseTaskCompleted(new TaskEventArgs(runtimeTask.TaskData, runtimeTask));
+            if (currentGroup != null && currentGroup.executionMode == TaskExecutionMode.FreeOrder)
+            {
+                _activeFreeOrderTasks.Remove(task);
+            }
+
+            TaskEvents.RaiseTaskCompleted(new TaskEventArgs(task, runtimeTask));
         }
 
         private bool IsPpeCompliant(IReadOnlyCollection<PPEType> requiredPpe)
@@ -186,29 +215,6 @@ namespace SafetyProto.Gameplay.Safety
             }
 
             return true;
-        }
-
-        private void RegisterOrderViolationIfFutureTask(TaskGroup currentGroup, RuntimeSafetyTask runtimeTask, ActionType attemptedAction)
-        {
-            if (currentGroup == null || runtimeTask?.TaskData == null)
-            {
-                return;
-            }
-
-            var idx = currentGroup.tasks.IndexOf(runtimeTask.TaskData);
-            if (idx < 0)
-            {
-                return;
-            }
-
-            bool futureTaskMatches = currentGroup.tasks
-                .Skip(idx + 1)
-                .Any(t => t.expectedAction == attemptedAction);
-
-            if (futureTaskMatches)
-            {
-                taskManager.RegisterOrderViolation($"Out-of-order action {attemptedAction} while current task is {runtimeTask.expectedAction}");
-            }
         }
 
         private void RaiseViolation(string code, string message, SafetyTask task, TaskGroup group)
