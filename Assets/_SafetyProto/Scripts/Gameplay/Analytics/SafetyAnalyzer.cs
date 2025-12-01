@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Utils;
@@ -6,9 +5,10 @@ using UnityEngine;
 
 namespace SafetyProto.Gameplay.Analytics
 {
-    /// <summary>
-    /// Performs simple CEP on safety violations to raise critical failure signals.
-    /// </summary>
+    /// SafetyAnalyzer
+    /// Listens to safety violation events and uses SafetyPatternDetector (CEP core)
+    /// to detect repeated violations in a sliding time window. When the threshold
+    /// is reached, raises a CriticalSafetyFailure event for analytics and feedback.
     public class SafetyAnalyzer : MonoBehaviour
     {
         [SerializeField, Tooltip("Time window in seconds for repeated violations.")]
@@ -16,8 +16,13 @@ namespace SafetyProto.Gameplay.Analytics
         [SerializeField, Tooltip("Number of violations within the window to emit a critical failure.")]
         private int violationThreshold = 3;
 
-        private readonly Queue<float> _violationTimestamps = new Queue<float>();
+        private SafetyPatternDetector _detector;
         private bool _thresholdRaised;
+
+        private void Awake()
+        {
+            _detector = new SafetyPatternDetector(windowSeconds, violationThreshold);
+        }
 
         private void Start()
         {
@@ -40,9 +45,14 @@ namespace SafetyProto.Gameplay.Analytics
 
         private void Update()
         {
-            PruneOldViolations();
+            if (_detector == null)
+            {
+                return;
+            }
 
-            if (_thresholdRaised && _violationTimestamps.Count < violationThreshold)
+            _detector.Prune(Time.time);
+
+            if (_thresholdRaised && _detector.CurrentCount < violationThreshold)
             {
                 _thresholdRaised = false;
             }
@@ -50,40 +60,29 @@ namespace SafetyProto.Gameplay.Analytics
 
         private void OnSafetyViolation(SafetyViolationEventArgs args)
         {
-            _violationTimestamps.Enqueue(Time.time);
-            PruneOldViolations();
-
-            if (windowSeconds <= 0f || violationThreshold <= 0)
+            if (_detector == null || windowSeconds <= 0f || violationThreshold <= 0)
             {
                 return;
             }
 
-            if (_violationTimestamps.Count >= violationThreshold && !_thresholdRaised)
+            var now = Time.time;
+            bool thresholdReached = _detector.RecordViolation(now);
+
+            if (thresholdReached && !_thresholdRaised)
             {
                 _thresholdRaised = true;
                 var payload = new CriticalSafetyFailureEventArgs
                 {
-                    ViolationCount = _violationTimestamps.Count,
+                    ViolationCount = _detector.CurrentCount,
                     WindowSeconds = windowSeconds,
-                    Reason = $"{_violationTimestamps.Count} violations within {windowSeconds} seconds"
+                    Reason = $"{_detector.CurrentCount} violations within {windowSeconds} seconds"
                 };
                 Debug.LogWarning($"SafetyAnalyzer: Critical safety failure detected ({payload.Reason}).");
                 SafetyEvents.RaiseCriticalSafetyFailure(payload);
             }
-        }
-
-        private void PruneOldViolations()
-        {
-            if (windowSeconds <= 0f)
+            else if (!thresholdReached && _thresholdRaised && _detector.CurrentCount < violationThreshold)
             {
-                _violationTimestamps.Clear();
-                return;
-            }
-
-            float cutoff = Time.time - windowSeconds;
-            while (_violationTimestamps.Count > 0 && _violationTimestamps.Peek() < cutoff)
-            {
-                _violationTimestamps.Dequeue();
+                _thresholdRaised = false;
             }
         }
     }
