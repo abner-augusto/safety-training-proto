@@ -3,20 +3,26 @@ using UnityEngine;
 
 namespace SafetyProto.Gameplay.PPE
 {
-    [RequireComponent(typeof(Collider))]
     public class PPEZone : MonoBehaviour
     {
         public PPEType expectedPPEType = PPEType.None;
+        [SerializeField] private Collider zoneCollider;
 
         private PPEManager _ppeManager;
 
         private void Start()
         {
-            Collider col = GetComponent<Collider>();
-            if (!col.isTrigger)
+            if (zoneCollider == null)
+            {
+                Debug.LogError($"The 'zoneCollider' on {gameObject.name} is not assigned in the inspector!", this);
+                enabled = false;
+                return;
+            }
+            
+            if (!zoneCollider.isTrigger)
             {
                 Debug.LogWarning($"PPEZone on {gameObject.name} should have its Collider set to 'Is Trigger'. Automatically setting.", this);
-                col.isTrigger = true;
+                zoneCollider.isTrigger = true;
             }
 
             if (expectedPPEType == PPEType.None)

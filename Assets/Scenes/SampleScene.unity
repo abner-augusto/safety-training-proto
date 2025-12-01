@@ -365,6 +365,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2753834}
+  - component: {fileID: 2753836}
   - component: {fileID: 2753835}
   m_Layer: 6
   m_Name: SnapInteractor
@@ -381,13 +382,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2753833}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalRotation: {x: -0, y: 0.704145, z: -0.7100562, w: -0}
   m_LocalPosition: {x: 0, y: 0.031, z: 0.041}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1805900797}
-  m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -270.479, y: 0, z: 180}
 --- !u!114 &2753835
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -401,7 +402,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _activeState: {fileID: 0}
-  _interactableFilters: []
+  _interactableFilters:
+  - {fileID: 0}
   _candidateTiebreaker: {fileID: 0}
   _maxIterationsPerFrame: 3
   _data: {fileID: 0}
@@ -412,6 +414,22 @@ MonoBehaviour:
   _defaultInteractable: {fileID: 0}
   _timeOutInteractable: {fileID: 0}
   _timeOut: 0
+--- !u!114 &2753836
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2753833}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75d3a1facc5f29d4ea65d3af68af5c9e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Oculus.Interaction::Oculus.Interaction.TagSetFilter
+  _requireTags:
+  - head
+  _excludeTags:
+  - arms
 --- !u!1 &3147464
 GameObject:
   m_ObjectHideFlags: 0
@@ -9209,6 +9227,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   expectedPPEType: 1
+  zoneCollider: {fileID: 264431447}
 --- !u!135 &264431447
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -9242,7 +9261,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afd1a68e958de424a9ccbac5853c1b15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  actionTypeToTrigger: 2
+  actionTypeToTrigger: 3
   interactorId: 0
 --- !u!1 &268168575
 GameObject:
@@ -16608,7 +16627,7 @@ Transform:
   m_GameObject: {fileID: 501282273}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.188, z: -0}
+  m_LocalPosition: {x: 0, y: -0.16, z: -0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -16633,7 +16652,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.15, y: 0.48, z: 0.14}
+  m_Size: {x: -0.08, y: 0.27, z: 0.05}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!54 &501282276
 Rigidbody:
@@ -18963,6 +18982,7 @@ MonoBehaviour:
   delayBetweenTasks: 2
   scoreServiceAsset: {fileID: 11400000, guid: 1fdaac493842392498f1e485c6aba38b, type: 2}
   scoreManagerAdapter: {fileID: 0}
+  ppeManager: {fileID: 0}
 --- !u!1 &591899619
 GameObject:
   m_ObjectHideFlags: 0
@@ -19927,8 +19947,10 @@ MonoBehaviour:
   hmdTransform: {fileID: 1780371412}
   followDistance: 0.7
   menuOffset: {x: 0, y: -0.1, z: 0}
+  positionDeadzone: 0.05
   positionLerpSpeed: 5
   rotationLerpSpeed: 7
+  rotationDeadzoneDegrees: 15
 --- !u!4 &622997897
 Transform:
   m_ObjectHideFlags: 0
@@ -21026,6 +21048,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f947cfa9e9451a7439ca6747f237e152, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  complianceDistance: 0.75
 --- !u!4 &666742476
 Transform:
   m_ObjectHideFlags: 0
@@ -27929,6 +27952,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 895078450}
+  - component: {fileID: 895078458}
   - component: {fileID: 895078456}
   - component: {fileID: 895078454}
   - component: {fileID: 895078452}
@@ -27970,6 +27994,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   expectedPPEType: 2
+  zoneCollider: {fileID: 895078452}
 --- !u!135 &895078452
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -28073,6 +28098,20 @@ MonoBehaviour:
   _whenSelectingInteractorViewRemoved:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &895078458
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 895078449}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdeaf26e845dc5841bcd31de97d26003, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Oculus.Interaction::Oculus.Interaction.TagSet
+  _tags:
+  - arms
 --- !u!1 &896631290
 GameObject:
   m_ObjectHideFlags: 0
@@ -30870,7 +30909,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   scoreServiceAsset: {fileID: 11400000, guid: 1fdaac493842392498f1e485c6aba38b, type: 2}
-  ppeManager: {fileID: 666742475}
 --- !u!1 &969665735
 GameObject:
   m_ObjectHideFlags: 0
@@ -39304,7 +39342,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
-  m_Mesh: {fileID: -2432090755550338912, guid: 7b63d5f8c1cbcfa4bbb9ef6b833a9897, type: 3}
+  m_Mesh: {fileID: -1928373734739880043, guid: a9ddfe4818a5de846a220b617e4f2b75, type: 3}
 --- !u!1 &1242477944
 GameObject:
   m_ObjectHideFlags: 0
@@ -58971,7 +59009,7 @@ Transform:
   m_GameObject: {fileID: 1805900796}
   serializedVersion: 2
   m_LocalRotation: {x: 0.70090926, y: -0, z: -0, w: 0.71325046}
-  m_LocalPosition: {x: 0.806, y: 0.975, z: 0.98}
+  m_LocalPosition: {x: 0.806, y: 0.975, z: 1.031}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -59028,7 +59066,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
-  m_Mesh: {fileID: 6041377522765385347, guid: 2062d330f8df2b149b14ad61a7ce1647, type: 3}
+  m_Mesh: {fileID: 1403708706727109108, guid: 7b3887e7db4d1bf4e9f332a32e27c968, type: 3}
 --- !u!23 &1805900802
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -61054,6 +61092,7 @@ GameObject:
   - component: {fileID: 1842185481}
   - component: {fileID: 1842185480}
   - component: {fileID: 1842185483}
+  - component: {fileID: 1842185484}
   m_Layer: 0
   m_Name: SnapInteratable
   m_TagString: Untagged
@@ -61192,6 +61231,20 @@ MonoBehaviour:
   _whenSelectingInteractorViewRemoved:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1842185484
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1842185478}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdeaf26e845dc5841bcd31de97d26003, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Oculus.Interaction::Oculus.Interaction.TagSet
+  _tags:
+  - head
 --- !u!1 &1844387782
 GameObject:
   m_ObjectHideFlags: 0
@@ -65105,6 +65158,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1983022198}
+  - component: {fileID: 1983022200}
   - component: {fileID: 1983022199}
   m_Layer: 6
   m_Name: SnapInteractor
@@ -65152,6 +65206,22 @@ MonoBehaviour:
   _defaultInteractable: {fileID: 0}
   _timeOutInteractable: {fileID: 0}
   _timeOut: 0
+--- !u!114 &1983022200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1983022197}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75d3a1facc5f29d4ea65d3af68af5c9e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Oculus.Interaction::Oculus.Interaction.TagSetFilter
+  _requireTags:
+  - arms
+  _excludeTags:
+  - head
 --- !u!1 &1984543733
 GameObject:
   m_ObjectHideFlags: 0
@@ -73362,8 +73432,10 @@ MonoBehaviour:
   hmdTransform: {fileID: 1780371412}
   followDistance: 0.5
   menuOffset: {x: 0, y: 0, z: 0}
+  positionDeadzone: 0.05
   positionLerpSpeed: 5
   rotationLerpSpeed: 7
+  rotationDeadzoneDegrees: 15
 --- !u!23 &6718701945193719527
 MeshRenderer:
   m_ObjectHideFlags: 0
