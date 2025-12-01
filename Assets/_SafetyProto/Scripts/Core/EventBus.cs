@@ -91,6 +91,8 @@ namespace SafetyProto.Core
             _eventQueue.Enqueue(action);
         }
 
+        private const int MaxQueueWarningThreshold = 1000;
+
         public void ProcessEvents(int maxMillis = 2)
         {
             if (_eventQueue.Count == 0)
@@ -98,11 +100,34 @@ namespace SafetyProto.Core
                 return;
             }
 
+            if (_eventQueue.Count > MaxQueueWarningThreshold)
+            {
+                Debug.LogWarning($"[EventBus] Queue length high: {_eventQueue.Count} items");
+                SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
+                {
+                    Source = "EventBus.Queue",
+                    Message = "Event queue length exceeded threshold",
+                    Details = _eventQueue.Count.ToString()
+                });
+            }
+
             _stopwatch.Restart();
             while (_eventQueue.Count > 0)
             {
                 var action = _eventQueue.Dequeue();
-                action?.Invoke();
+                try
+                {
+                    action?.Invoke();
+                }
+                catch (Exception ex)
+                {
+                    SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
+                    {
+                        Source = "EventBus.ProcessEvents",
+                        Message = "Exception during event dispatch",
+                        Details = ex.ToString()
+                    });
+                }
 
                 if (_stopwatch.ElapsedMilliseconds >= maxMillis)
                 {
