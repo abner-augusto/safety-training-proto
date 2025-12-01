@@ -13,11 +13,13 @@ namespace SafetyProto.Gameplay.Feedback
     /// </summary>
     public class HapticManager : MonoBehaviour, ISessionResettable
     {
-        [Header("Haptic Settings")]
-        [SerializeField, Range(0f, 1f)] private float successAmplitude = 0.25f;
-        [SerializeField, Range(0f, 0.5f)] private float successDuration = 0.05f;
-        [SerializeField, Range(0f, 1f)] private float violationAmplitude = 0.75f;
-        [SerializeField, Range(0f, 0.5f)] private float violationDuration = 0.15f;
+        [Header("Click Haptic")]
+        [SerializeField, Range(0f, 1f)] private float clickAmplitude = 0.25f;
+        [SerializeField, Range(0f, 0.5f)] private float clickDuration = 0.05f;
+
+        [Header("Error Haptic")]
+        [SerializeField, Range(0f, 1f)] private float errorAmplitude = 0.75f;
+        [SerializeField, Range(0f, 0.5f)] private float errorDuration = 0.15f;
 
         private int _lastInteractorId;
 
@@ -59,13 +61,13 @@ namespace SafetyProto.Gameplay.Feedback
             if (args.RuntimeTask.State == TaskState.CompletedSuccess ||
                 args.RuntimeTask.State == TaskState.CompletedSuccessButUnsafe)
             {
-                TriggerHaptics(successAmplitude, successDuration);
+                TriggerHaptics(clickAmplitude, clickDuration);
             }
         }
 
         private void OnSafetyViolation(SafetyViolationEventArgs _)
         {
-            TriggerHaptics(violationAmplitude, violationDuration);
+            TriggerHaptics(errorAmplitude, errorDuration);
         }
 
         private void TriggerHaptics(float amplitude, float duration)

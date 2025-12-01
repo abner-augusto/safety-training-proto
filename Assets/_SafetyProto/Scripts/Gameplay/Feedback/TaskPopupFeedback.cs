@@ -23,8 +23,12 @@ namespace SafetyProto.Gameplay.Feedback
         [SerializeField] private TMP_Text bodyText;
 
         [Header("Animation")]
-        [SerializeField] private float popupDuration = 1.0f;
-        [SerializeField] private float moveDistance = 25f;
+        [SerializeField, Tooltip("Total time the popup remains visible (seconds).")]
+        private float popupDuration = 1.0f;
+        [SerializeField, Tooltip("Distance in UI units for the popup to rise.")]
+        private float popupRiseDistance = 25f;
+        [SerializeField, Tooltip("Seconds at the end of the popup duration devoted to fading out.")]
+        private float popupFadeOutTime = 0.3f;
         [SerializeField] private Color successColor = Color.cyan;
         [SerializeField] private Color warningColor = Color.yellow;
 
@@ -166,9 +170,22 @@ namespace SafetyProto.Gameplay.Feedback
             {
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / popupDuration);
-                float fadeIn = t < 0.5f ? Mathf.Lerp(0f, 1f, t * 2f) : Mathf.Lerp(1f, 0f, (t - 0.5f) * 2f);
-                canvasGroup.alpha = fadeIn;
-                popupTransform.localPosition = _initialLocalPosition + Vector3.up * moveDistance * t;
+                float timeRemaining = popupDuration - elapsed;
+                float fadeAlpha = 1f;
+
+                if (elapsed < popupFadeOutTime)
+                {
+                    float fadeInT = popupFadeOutTime <= 0f ? 1f : Mathf.Clamp01(elapsed / popupFadeOutTime);
+                    fadeAlpha = Mathf.Lerp(0f, 1f, fadeInT);
+                }
+                else if (timeRemaining <= popupFadeOutTime && popupFadeOutTime > 0f)
+                {
+                    float fadeOutT = Mathf.Clamp01(timeRemaining / popupFadeOutTime);
+                    fadeAlpha = fadeOutT;
+                }
+
+                canvasGroup.alpha = fadeAlpha;
+                popupTransform.localPosition = _initialLocalPosition + Vector3.up * popupRiseDistance * t;
                 yield return null;
             }
 

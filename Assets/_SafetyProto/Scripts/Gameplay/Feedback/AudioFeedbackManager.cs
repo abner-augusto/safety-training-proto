@@ -16,9 +16,9 @@ namespace SafetyProto.Gameplay.Feedback
         [Header("Audio")]
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private AudioClip successClip;
-        [SerializeField] private AudioClip warningClip;
+        [SerializeField] private AudioClip failureClip;
         [SerializeField, Range(0f, 1f)] private float successVolume = 0.6f;
-        [SerializeField, Range(0f, 1f)] private float warningVolume = 0.8f;
+        [SerializeField, Range(0f, 1f)] private float failureVolume = 0.8f;
 
         private void Awake()
         {
@@ -63,12 +63,12 @@ namespace SafetyProto.Gameplay.Feedback
 
         private void OnSafetyViolation(SafetyViolationEventArgs _)
         {
-            PlayClip(warningClip, warningVolume);
+            PlayClip(failureClip, failureVolume);
         }
 
         private void OnCriticalFailure(CriticalSafetyFailureEventArgs _)
         {
-            PlayClip(warningClip, warningVolume);
+            PlayClip(failureClip, failureVolume);
         }
 
         private void PlayClip(AudioClip clip, float volume)
