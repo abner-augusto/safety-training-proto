@@ -4,6 +4,7 @@ using System.IO;
 using JetBrains.Annotations;
 using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
+using SafetyProto.Core.Events;
 using SafetyProto.Utils;
 using UnityEngine;
 
@@ -17,6 +18,10 @@ namespace SafetyProto.Utils
             [UsedImplicitly] public string timestamp;
             [UsedImplicitly] public string eventName;
             [UsedImplicitly] public string details;
+            [UsedImplicitly] public string sessionId;
+            [UsedImplicitly] public string playerId;
+            [UsedImplicitly] public string scenarioId;
+            [UsedImplicitly] public long timestampMs;
         }
 
         [Serializable]
@@ -82,13 +87,14 @@ namespace SafetyProto.Utils
             }
         }
 
-        private void OnSessionStarted(SessionStartedEventArgs args) => LogEvent("SessionStarted", "");
-        private void OnSessionPaused(SessionPausedEventArgs args) => LogEvent("SessionPaused", "");
-        private void OnSessionResumed(SessionResumedEventArgs args) => LogEvent("SessionResumed", "");
+        private void OnSessionStarted(SessionStartedEventArgs args) => LogEvent("SessionStarted", "", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
+        private void OnSessionPaused(SessionPausedEventArgs args) => LogEvent("SessionPaused", "", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
+        private void OnSessionResumed(SessionResumedEventArgs args) => LogEvent("SessionResumed", "", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
         private void OnSessionCompleted(SessionCompletedEventArgs args)
         {
             LogEvent("SessionCompleted",
-                $"Time={args.totalElapsedTime}, Score={args.totalScore}, Completed={args.tasksCompleted}/{args.totalTasks}");
+                $"Time={args.totalElapsedTime}, Score={args.totalScore}, Completed={args.tasksCompleted}/{args.totalTasks}",
+                args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
             _sessionLog.summary = new SessionSummary
             {
                 totalElapsedTime = args.totalElapsedTime,
@@ -100,34 +106,41 @@ namespace SafetyProto.Utils
         }
 
         private void OnActionAttempt(ActionAttemptEventArgs args)
-            => LogEvent("ActionAttempt", args.ActionType.ToString());
+            => LogEvent("ActionAttempt", args.ActionType.ToString(), args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
         private void OnPpeStateChanged(PPEStateChangedEventArgs args)
-            => LogEvent("PpeStateChanged", $"PPE={args.PpeType}, Wearing={args.IsWearing}");
+            => LogEvent("PpeStateChanged", $"PPE={args.PpeType}, Wearing={args.IsWearing}", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
         private void OnTaskStarted(TaskEventArgs args)
-            => LogEvent("TaskStarted", args.Task.taskName);
+            => LogEvent("TaskStarted", args.Task != null ? args.Task.taskName : string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
         private void OnTaskCompleted(TaskEventArgs args)
-            => LogEvent("TaskCompleted", args.Task.taskName);
+            => LogEvent("TaskCompleted", args.Task != null ? args.Task.taskName : string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
         private void OnTaskTimeout(TaskEventArgs args)
-            => LogEvent("TaskTimeout", args.Task.taskName);
+            => LogEvent("TaskTimeout", args.Task != null ? args.Task.taskName : string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
         private void OnScoreChanged(ScoreChangedEventArgs args)
-            => LogEvent("ScoreChanged", $"Delta={args.Delta}, Total={args.TotalScore}");
+            => LogEvent("ScoreChanged", $"Delta={args.Delta}, Total={args.TotalScore}", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
         private void OnGroupStarted(TaskGroupEventArgs args)
-            => LogEvent("GroupStarted", args.Group.groupName);
+            => LogEvent("GroupStarted", args.Group != null ? args.Group.groupName : string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
         private void OnGroupCompleted(TaskGroupEventArgs args)
-            => LogEvent("GroupCompleted", args.Group.groupName);
+            => LogEvent("GroupCompleted", args.Group != null ? args.Group.groupName : string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
         private void OnSafetyViolation(SafetyViolationEventArgs args)
-            => LogEvent("SafetyViolation", $"{args.ViolationCode} | {args.Message} (Task={args.TaskId}, Group={args.GroupId})");
+            => LogEvent("SafetyViolation", $"{args.ViolationCode} | {args.Message} (Task={args.TaskId}, Group={args.GroupId})", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
         private void OnSafetyError(SafetyErrorEventArgs args)
-            => LogEvent("SafetyError", $"{args.Source}: {args.Message} ({args.Details})");
+            => LogEvent("SafetyError", $"{args.Source}: {args.Message} ({args.Details})", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
         private void OnCriticalSafetyFailure(CriticalSafetyFailureEventArgs args)
-            => LogEvent("CriticalSafetyFailure", $"{args.Reason} [{args.ViolationCount} in {args.WindowSeconds}s]");
+            => LogEvent("CriticalSafetyFailure", $"{args.Reason} [{args.ViolationCount} in {args.WindowSeconds}s]", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
 
-        private void LogEvent(string eventName, string details)
+        private void LogEvent(string eventName, string details, string sessionId, string playerId, string scenarioId, long timestampMs)
         {
+            long actualTimestamp = timestampMs == 0 ? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() : timestampMs;
+            var timestampIso = DateTimeOffset.FromUnixTimeMilliseconds(actualTimestamp).ToString("o");
+
             _sessionLog.entries.Add(new LogEntry {
-                timestamp = DateTime.Now.ToString("o"),
+                timestamp = timestampIso,
                 eventName = eventName,
-                details = details
+                details = details,
+                sessionId = sessionId,
+                playerId = playerId,
+                scenarioId = scenarioId,
+                timestampMs = actualTimestamp
             });
         }
 
@@ -149,7 +162,13 @@ namespace SafetyProto.Utils
         
         public void ResetSession()
         {
-            LogEvent("SessionReset", "User manually triggered session reset");
+            LogEvent(
+                "SessionReset",
+                "User manually triggered session reset",
+                EventContext.CurrentSessionId,
+                EventContext.CurrentPlayerId,
+                EventContext.CurrentScenarioId,
+                EventContext.NowUnixMs());
             WriteLogToFile();
             _sessionLog.entries.Clear();
             _sessionLog.summary = null;

@@ -40,7 +40,7 @@ namespace SafetyProto.Tests.Editor
             SessionEvents.RaiseSessionStarted();
             TaskEvents.RaiseTaskStarted(new TaskEventArgs());
 
-            EventBus.Instance.RaiseActionAttempt(new ActionAttemptEventArgs());
+            ActionEvents.RaiseActionAttempt(new ActionAttemptEventArgs());
             ProcessEvents();
 
             Assert.IsTrue(_taskCompleted, "Expected TaskCompleted event to fire via simulated rule engine.");
@@ -55,7 +55,7 @@ namespace SafetyProto.Tests.Editor
             SessionEvents.RaiseSessionStarted();
             TaskEvents.RaiseTaskStarted(new TaskEventArgs());
 
-            EventBus.Instance.RaiseActionAttempt(new ActionAttemptEventArgs());
+            ActionEvents.RaiseActionAttempt(new ActionAttemptEventArgs());
             ProcessEvents();
 
             Assert.IsTrue(_safetyViolation, "Expected SafetyViolation event when PPE is missing.");
