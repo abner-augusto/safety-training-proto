@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   groupName: Press Button
   executionMode: 0
+  timeLimit: 120
   tasks:
   - {fileID: 11400000, guid: 03ff1ce12d5ec124690d2b7e326d8095, type: 2}
-  prerequisites:
+  requiredGroups:
   - {fileID: 11400000, guid: 0dacfa45dfa4cd3439fac204b8d724c2, type: 2}

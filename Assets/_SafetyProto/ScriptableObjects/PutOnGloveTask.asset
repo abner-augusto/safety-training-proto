@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   taskName: Put On Glove
   taskDescription: Put on the glove in hands
-  expectedAction: 3
+  expectedAction: 4
   successPoints: 100
   failurePenalty: 25
   ppePenalty: 0
   requiredPPE: 
+  hintText: "Dica r\xE1pida para o participante."

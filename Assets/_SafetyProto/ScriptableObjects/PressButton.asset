@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   taskName: Interact with Button
   taskDescription: Just press a button
-  expectedAction: 4
-  timeLimit: 600
+  expectedAction: 9
   successPoints: 100
   failurePenalty: 50
   ppePenalty: 25
   requiredPPE: 0100000002000000
+  hintText: "Dica r\xE1pida para o participante."
