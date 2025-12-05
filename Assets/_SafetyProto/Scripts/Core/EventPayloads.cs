@@ -19,6 +19,10 @@ namespace SafetyProto.Core
 
         public ActionAttemptEventArgs(ActionType actionType, int interactorId, Vector3 worldPosition)
         {
+            SessionId = string.Empty;
+            PlayerId = string.Empty;
+            ScenarioId = string.Empty;
+            TimestampMs = 0L;
             ActionType = actionType;
             InteractorId = interactorId;
             WorldPosition = worldPosition;
@@ -38,6 +42,10 @@ namespace SafetyProto.Core
 
         public PPEStateChangedEventArgs(PPEType ppeType, bool isWearing)
         {
+            SessionId = string.Empty;
+            PlayerId = string.Empty;
+            ScenarioId = string.Empty;
+            TimestampMs = 0L;
             PpeType = ppeType;
             IsWearing = isWearing;
         }
@@ -56,6 +64,10 @@ namespace SafetyProto.Core
 
         public TaskEventArgs(SafetyTask task, RuntimeSafetyTask runtimeTask = null)
         {
+            SessionId = string.Empty;
+            PlayerId = string.Empty;
+            ScenarioId = string.Empty;
+            TimestampMs = 0L;
             Task = task;
             RuntimeTask = runtimeTask;
         }
@@ -73,6 +85,10 @@ namespace SafetyProto.Core
 
         public TaskGroupEventArgs(TaskGroup group)
         {
+            SessionId = string.Empty;
+            PlayerId = string.Empty;
+            ScenarioId = string.Empty;
+            TimestampMs = 0L;
             Group = group;
         }
     }
@@ -90,6 +106,10 @@ namespace SafetyProto.Core
 
         public ScoreChangedEventArgs(int totalScore, int delta)
         {
+            SessionId = string.Empty;
+            PlayerId = string.Empty;
+            ScenarioId = string.Empty;
+            TimestampMs = 0L;
             TotalScore = totalScore;
             Delta = delta;
         }
@@ -149,6 +169,10 @@ namespace SafetyProto.Core
 
         public SessionCompletedEventArgs(float totalElapsedTime, int totalScore, int tasksCompleted, int totalTasks)
         {
+            SessionId = string.Empty;
+            PlayerId = string.Empty;
+            ScenarioId = string.Empty;
+            TimestampMs = 0L;
             this.totalElapsedTime = totalElapsedTime;
             this.totalScore = totalScore;
             this.tasksCompleted = tasksCompleted;
@@ -158,6 +182,10 @@ namespace SafetyProto.Core
 
         public SessionCompletedEventArgs(float totalElapsedTime, int totalScore, int tasksCompleted, int totalTasks, int orderViolationCount)
         {
+            SessionId = string.Empty;
+            PlayerId = string.Empty;
+            ScenarioId = string.Empty;
+            TimestampMs = 0L;
             this.totalElapsedTime = totalElapsedTime;
             this.totalScore = totalScore;
             this.tasksCompleted = tasksCompleted;

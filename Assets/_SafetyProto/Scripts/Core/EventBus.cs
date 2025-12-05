@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using SafetyProto.Core.Events;
 using UnityEngine;
 using UnityEngine.Events;
+using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace SafetyProto.Core
 {

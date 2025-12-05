@@ -1,3 +1,4 @@
+using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Data.Enums;
 using UnityEngine;
