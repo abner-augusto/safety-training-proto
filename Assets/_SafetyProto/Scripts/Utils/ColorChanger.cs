@@ -1,5 +1,6 @@
 using Oculus.Interaction;
 using UnityEngine;
+using SafetyProto.Core.Logging;
 
 namespace SafetyProto.Utils
 {
@@ -18,7 +19,7 @@ namespace SafetyProto.Utils
 
             if (_renderer == null)
             {
-                Debug.LogError("ColorChanger: Renderer missing.");
+                SafetyLog.Error("ColorChanger: Renderer missing.", this);
                 return;
             }
 
@@ -26,7 +27,7 @@ namespace SafetyProto.Utils
 
             if (rayInteractable == null)
             {
-                Debug.LogError("ColorChanger: RayInteractable is not assigned.");
+                SafetyLog.Error("ColorChanger: RayInteractable is not assigned.", this);
                 return;
             }
 

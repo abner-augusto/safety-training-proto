@@ -1,4 +1,5 @@
 using SafetyProto.Data.Enums;
+using SafetyProto.Core.Logging;
 using UnityEngine;
 
 namespace SafetyProto.Gameplay.PPE
@@ -12,7 +13,7 @@ namespace SafetyProto.Gameplay.PPE
         {
             if (ppeType == PPEType.None)
             {
-                Debug.LogWarning($"PPEItem on {gameObject.name} has PPEType set to None.", this);
+                SafetyLog.Warning($"PPEItem on {gameObject.name} has PPEType set to None.", this);
             }
         }
 

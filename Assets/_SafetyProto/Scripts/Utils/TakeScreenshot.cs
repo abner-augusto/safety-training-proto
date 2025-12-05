@@ -1,4 +1,5 @@
 using System.IO;
+using SafetyProto.Core.Logging;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -46,7 +47,7 @@ namespace SafetyProto.Utils
             AssetDatabase.Refresh();
 #endif
 
-            Debug.Log($"screenshot salvo em: {fullPath}");
+            SafetyLog.Info($"Screenshot saved to: {fullPath}", this);
         }
     }
 }

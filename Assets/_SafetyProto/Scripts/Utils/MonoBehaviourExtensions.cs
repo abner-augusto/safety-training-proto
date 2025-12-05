@@ -1,4 +1,5 @@
 using SafetyProto.Core;
+using SafetyProto.Core.Logging;
 using UnityEngine;
 
 namespace SafetyProto.Utils
@@ -21,7 +22,7 @@ namespace SafetyProto.Utils
                 return true;
             }
 
-            Debug.LogError(
+            SafetyLog.Error(
                 $"[{monoBehaviour.GetType().Name}] EventBus instance not found. " +
                 "Please ensure your EventBus.asset is in a 'Resources' folder. Disabling this component.",
                 monoBehaviour);

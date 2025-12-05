@@ -3,6 +3,7 @@ using SafetyProto.Core.Events;
 using SafetyProto.Data.Enums;
 using SafetyProto.Utils;
 using UnityEngine;
+using SafetyProto.Core.Logging;
 
 namespace SafetyProto.Gameplay.Actions
 {
@@ -19,11 +20,11 @@ namespace SafetyProto.Gameplay.Actions
                 return;
             }
             
-            Debug.Log($"[TriggerAction] {actionTypeToTrigger} TRIGGERED on {gameObject.name}");
+            SafetyLog.Info($"[TriggerAction] {actionTypeToTrigger} TRIGGERED on {gameObject.name}", this);
 
             if (actionTypeToTrigger == ActionType.None)
             {
-                Debug.LogWarning($"ActionTrigger on {gameObject.name} has ActionType set to None. No event fired.", this);
+                SafetyLog.Warning($"ActionTrigger on {gameObject.name} has ActionType set to None. No event fired.", this);
                 return;
             }
 
@@ -34,7 +35,7 @@ namespace SafetyProto.Gameplay.Actions
             );
 
             ActionEvents.RaiseActionAttempt(args);
-            Debug.Log($"ActionTrigger on {gameObject.name} Fired Action: {actionTypeToTrigger}");
+            SafetyLog.Info($"ActionTrigger on {gameObject.name} Fired Action: {actionTypeToTrigger}", this);
         }
     }
 }

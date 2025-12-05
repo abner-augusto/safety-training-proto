@@ -1,5 +1,6 @@
 using System.Linq;
 using SafetyProto.Core.Interfaces;
+using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
 using UnityEngine;
 using UnityEngine.Events;
@@ -45,28 +46,28 @@ namespace SafetyProto.Core
                 .OfType<ISessionResettable>()
                 .ToList();
 
-            Debug.Log($"[SceneLoader] Found {resettableObjects.Count} ISessionResettable components.");
+            SafetyLog.Info($"[SceneLoader] Found {resettableObjects.Count} ISessionResettable components.", this);
 
             foreach (var resettable in resettableObjects)
             {
                 if (!ReferenceEquals(this, resettable))
                 {
-                    Debug.Log($"[SceneLoader] Resetting: {resettable.GetType().Name}");
+                    SafetyLog.Info($"[SceneLoader] Resetting: {resettable.GetType().Name}", this);
                     resettable.ResetSession();
                 }
                 else
                 {
-                    Debug.Log("[SceneLoader] Skipping self-reset.");
+                    SafetyLog.Info("[SceneLoader] Skipping self-reset.", this);
                 }
             }
 
             if (scoreService != null)
             {
-                Debug.Log($"[SceneLoader] Resetting ScriptableObject service: {scoreService.name}");
+                SafetyLog.Info($"[SceneLoader] Resetting ScriptableObject service: {scoreService.name}", scoreService);
                 scoreService.ResetSession();
             }
 
-            Debug.Log("[SceneLoader] All resettable managers processed.");
+            SafetyLog.Info("[SceneLoader] All resettable managers processed.", this);
         }
 
         /// <summary>

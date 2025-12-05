@@ -7,6 +7,7 @@ using SafetyProto.Data.Enums;
 using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Utils;
 using UnityEngine;
+using SafetyProto.Core.Logging;
 
 namespace SafetyProto.Gameplay.Task
 {
@@ -42,7 +43,7 @@ namespace SafetyProto.Gameplay.Task
             _scoreService = scoreServiceAsset?.Service;
             if (_scoreService == null)
             {
-                Debug.LogError("TaskManager requires a ScoreService asset.", this);
+                SafetyLog.Error("TaskManager requires a ScoreService asset.", this);
                 SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
                 {
                     Source = nameof(TaskManager),
@@ -154,7 +155,7 @@ namespace SafetyProto.Gameplay.Task
                     return;
                 }
 
-                Debug.LogWarning($"Skipping group '{group.groupName}' (unmet dependencies)");
+                SafetyLog.Warning($"Skipping group '{group.groupName}' (unmet dependencies)", this);
                 nextGroupIndex++;
             }
 
@@ -217,7 +218,7 @@ namespace SafetyProto.Gameplay.Task
         {
             if (_currentTask != null) return;
 
-            Debug.Log("TaskManager: All task groups completed or no groups available.");
+            SafetyLog.Info("TaskManager: All task groups completed or no groups available.", this);
             float totalTime = FindFirstObjectByType<TimerSystem>()?.GetTotalSessionTime() ?? 0f;
             int totalScore = _scoreService.CurrentScore;
 

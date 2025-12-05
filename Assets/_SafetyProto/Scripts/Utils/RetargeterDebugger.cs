@@ -1,6 +1,7 @@
 using UnityEngine;
 using Meta.XR.Movement.Retargeting;
 using static OVRSkeleton; // Make sure to include necessary namespaces
+using SafetyProto.Core.Logging;
 
 public class RetargeterDebugger : MonoBehaviour
 {
@@ -20,7 +21,7 @@ public class RetargeterDebugger : MonoBehaviour
 
         if (targetRetargeter == null)
         {
-            Debug.LogWarning("RetargeterDebugger could not find a CharacterRetargeter component on this GameObject. Please assign it manually.", this);
+            SafetyLog.Warning("RetargeterDebugger could not find a CharacterRetargeter component on this GameObject. Please assign it manually.", this);
         }
     }
 
@@ -33,7 +34,7 @@ public class RetargeterDebugger : MonoBehaviour
     {
         if (targetRetargeter == null)
         {
-            Debug.LogError("Target Retargeter is not assigned.");
+            SafetyLog.Error("Target Retargeter is not assigned.", this);
             return;
         }
 
@@ -42,7 +43,7 @@ public class RetargeterDebugger : MonoBehaviour
 
         if (newDataProvider == null)
         {
-            Debug.LogError("The assigned Data Provider Component does not implement IOVRSkeletonDataProvider.");
+            SafetyLog.Error("The assigned Data Provider Component does not implement IOVRSkeletonDataProvider.", this);
             return;
         }
 
@@ -56,7 +57,7 @@ public class RetargeterDebugger : MonoBehaviour
 
         // Safer approach: Reset the component and rely on the next Update() cycle.
         
-        Debug.Log("Attempting to re-run CharacterRetargeter's Setup...");
+        SafetyLog.Info("Attempting to re-run CharacterRetargeter's Setup...", this);
         
         // This relies on the internal structure of the SDK script:
         // By setting _dataProvider = gameObject.GetComponent<IOVRSkeletonDataProvider>();
@@ -77,6 +78,6 @@ public class RetargeterDebugger : MonoBehaviour
         // Assuming the setup is the main thing, call Setup:
         targetRetargeter.Setup(targetRetargeter.Config);
         
-        Debug.Log("CharacterRetargeter Setup has been re-called. Check console for any new Assert errors.");
+        SafetyLog.Info("CharacterRetargeter Setup has been re-called. Check console for any new Assert errors.", this);
     }
 }

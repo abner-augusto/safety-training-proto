@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 using SafetyProto.Core;
+using SafetyProto.Core.Logging;
 using UnityEngine;
 using TMPro;
 
@@ -31,7 +32,7 @@ namespace SafetyProto.UI
         {
             if (logText == null)
             {
-                Debug.LogError("LogHUD: logText is null! Please assign it in the inspector.");
+                SafetyLog.Error("LogHUD: logText is null! Please assign it in the inspector.", this);
                 enabled = false;
                 return;
             }

@@ -1,6 +1,7 @@
 using System.Collections;
 using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
+using SafetyProto.Core.Logging;
 using SafetyProto.Data.Enums;
 using SafetyProto.Gameplay.Task;
 using SafetyProto.Utils;
@@ -76,7 +77,7 @@ namespace SafetyProto.Gameplay.Feedback
             var controller = ResolveController(_lastInteractorId);
             StartCoroutine(HapticPulse(controller, amplitude, duration));
 #else
-            Debug.Log($"[HapticManager] Haptic pulse -> amplitude:{amplitude:F2}, duration:{duration:F2}s");
+            SafetyLog.Info($"[HapticManager] Haptic pulse -> amplitude:{amplitude:F2}, duration:{duration:F2}s", this);
 #endif
         }
 

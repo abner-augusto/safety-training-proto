@@ -1,6 +1,7 @@
 using SafetyProto.Core;
 using SafetyProto.Utils;
 using UnityEngine;
+using SafetyProto.Core.Logging;
 
 namespace SafetyProto.Gameplay.Actions
 {
@@ -30,7 +31,7 @@ namespace SafetyProto.Gameplay.Actions
         {
             if (target == null)
             {
-                Debug.LogError("Missing target reference in EventGameObjectToggleListener", this);
+                SafetyLog.Error("Missing target reference in EventGameObjectToggleListener", this);
                 enabled = false;
                 return;
             }

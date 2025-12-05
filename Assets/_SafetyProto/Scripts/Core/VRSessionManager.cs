@@ -1,5 +1,6 @@
 using System;
 using SafetyProto.Core.Events;
+using SafetyProto.Core.Logging;
 using SafetyProto.Utils;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -23,7 +24,7 @@ namespace SafetyProto.Core
                 SceneManager.GetActiveScene().name);
 
             SessionEvents.RaiseSessionStarted();
-            Debug.Log("XRSessionManager: Session Started event raised.");
+            SafetyLog.Info("XRSessionManager: Session Started event raised.", this);
         }
 
         private void OnApplicationPause(bool pauseStatus)
@@ -32,7 +33,7 @@ namespace SafetyProto.Core
             {
                 _isPaused = true;
                 SessionEvents.RaiseSessionPaused();
-                Debug.Log("XRSessionManager: Session Paused event raised.");
+                SafetyLog.Info("XRSessionManager: Session Paused event raised.", this);
             }
         }
 
@@ -42,13 +43,13 @@ namespace SafetyProto.Core
             {
                 _isPaused = false;
                 SessionEvents.RaiseSessionResumed();
-                Debug.Log("XRSessionManager: Session Resumed event raised.");
+                SafetyLog.Info("XRSessionManager: Session Resumed event raised.", this);
             }
             else if (!hasFocus && !_isPaused)
             {
                 _isPaused = true;
                 SessionEvents.RaiseSessionPaused();
-                Debug.Log("XRSessionManager: Session Paused (due to focus loss) event raised.");
+                SafetyLog.Info("XRSessionManager: Session Paused (due to focus loss) event raised.", this);
             }
         }
 
@@ -57,7 +58,7 @@ namespace SafetyProto.Core
             if (EventBus.Instance != null)
             {
                 SessionEvents.RaiseSessionEnded();
-                Debug.Log("XRSessionManager: Session Ended event raised.");
+                SafetyLog.Info("XRSessionManager: Session Ended event raised.", this);
             }
 
             EventContext.Clear();

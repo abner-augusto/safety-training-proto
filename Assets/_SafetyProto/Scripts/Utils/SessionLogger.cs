@@ -5,6 +5,7 @@ using JetBrains.Annotations;
 using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Events;
+using SafetyProto.Core.Logging;
 using SafetyProto.Utils;
 using UnityEngine;
 
@@ -152,11 +153,11 @@ namespace SafetyProto.Utils
                 string filename = $"session_log_{DateTime.Now:yyyyMMdd_HHmmss}.json";
                 string path = Path.Combine(Application.persistentDataPath, filename);
                 File.WriteAllText(path, json);
-                Debug.Log($"ComprehensiveSessionLogger: Log saved to {path}");
+                SafetyLog.Info($"ComprehensiveSessionLogger: Log saved to {path}", this);
             }
             catch (Exception ex)
             {
-                Debug.LogError($"ComprehensiveSessionLogger: Failed to write log. {ex.Message}");
+                SafetyLog.Error($"ComprehensiveSessionLogger: Failed to write log. {ex.Message}", this);
             }
         }
         

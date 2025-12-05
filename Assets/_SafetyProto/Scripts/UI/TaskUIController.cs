@@ -6,6 +6,7 @@ using SafetyProto.Gameplay.Task;
 using SafetyProto.Utils;
 using TMPro;
 using UnityEngine;
+using SafetyProto.Core.Logging;
 
 namespace SafetyProto.UI
 {
@@ -36,7 +37,7 @@ namespace SafetyProto.UI
         {
             if (taskListContainer == null || taskEntryPrefab == null)
             {
-                Debug.LogError("TaskUIController is missing references.", this);
+                SafetyLog.Error("TaskUIController is missing references.", this);
                 enabled = false;
                 return;
             }

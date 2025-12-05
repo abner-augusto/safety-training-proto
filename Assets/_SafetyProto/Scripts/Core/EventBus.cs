@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using SafetyProto.Core.Events;
+using SafetyProto.Core.Logging;
 using UnityEngine;
 using UnityEngine.Events;
 using Stopwatch = System.Diagnostics.Stopwatch;
@@ -41,7 +42,7 @@ namespace SafetyProto.Core
             _instance = Resources.Load<EventBus>(GameConstants.ResourcePaths.EventBus);
             if (_instance == null)
             {
-                Debug.LogError(
+                SafetyLog.Error(
                     $"[EventBus] Instance not found at Resources/{GameConstants.ResourcePaths.EventBus}. " +
                     $"Ensure a single EventBus.asset exists under a Resources folder. ({GameConstants.Logging.ProjectIdentifier})");
             }
@@ -102,7 +103,7 @@ namespace SafetyProto.Core
 
             if (_eventQueue.Count > MaxQueueWarningThreshold)
             {
-                Debug.LogWarning($"[EventBus] Queue length high: {_eventQueue.Count} items");
+                SafetyLog.Warning($"[EventBus] Queue length high: {_eventQueue.Count} items");
                 SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
                 {
                     Source = "EventBus.Queue",
@@ -199,7 +200,7 @@ namespace SafetyProto.Core
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             Enqueue(() =>
             {
-                if (verboseLogging) Debug.Log("[EventBus] SessionStarted");
+                if (verboseLogging) SafetyLog.Info("[EventBus] SessionStarted");
                 OnSessionStartedCSharp?.Invoke(payload);
                 onSessionStarted?.Invoke(payload);
             });
@@ -211,7 +212,7 @@ namespace SafetyProto.Core
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             Enqueue(() =>
             {
-                if (verboseLogging) Debug.Log("[EventBus] SessionPaused");
+                if (verboseLogging) SafetyLog.Info("[EventBus] SessionPaused");
                 OnSessionPausedCSharp?.Invoke(payload);
                 onSessionPaused?.Invoke(payload);
             });
@@ -223,7 +224,7 @@ namespace SafetyProto.Core
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             Enqueue(() =>
             {
-                if (verboseLogging) Debug.Log("[EventBus] SessionResumed");
+                if (verboseLogging) SafetyLog.Info("[EventBus] SessionResumed");
                 OnSessionResumedCSharp?.Invoke(payload);
                 onSessionResumed?.Invoke(payload);
             });
@@ -235,7 +236,7 @@ namespace SafetyProto.Core
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             Enqueue(() =>
             {
-                if (verboseLogging) Debug.Log("[EventBus] SessionEnded");
+                if (verboseLogging) SafetyLog.Info("[EventBus] SessionEnded");
                 OnSessionEndedCSharp?.Invoke(payload);
                 onSessionEnded?.Invoke(payload);
             });
@@ -247,7 +248,7 @@ namespace SafetyProto.Core
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             Enqueue(() =>
             {
-                if (verboseLogging) Debug.Log($"[EventBus] ActionAttempt: {payload.ActionType}, Interactor: {payload.InteractorId}, Pos: {payload.WorldPosition}");
+                if (verboseLogging) SafetyLog.Info($"[EventBus] ActionAttempt: {payload.ActionType}, Interactor: {payload.InteractorId}, Pos: {payload.WorldPosition}");
                 OnActionAttemptCSharp?.Invoke(payload);
                 onActionAttempt?.Invoke(payload);
             });
@@ -259,7 +260,7 @@ namespace SafetyProto.Core
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             Enqueue(() =>
             {
-                if (verboseLogging) Debug.Log($"[EventBus] PPEStateChanged: {payload.PpeType}, Wearing: {payload.IsWearing}");
+                if (verboseLogging) SafetyLog.Info($"[EventBus] PPEStateChanged: {payload.PpeType}, Wearing: {payload.IsWearing}");
                 OnPpeStateChangedCSharp?.Invoke(payload);
                 onPpeStateChanged?.Invoke(payload);
             });
@@ -271,7 +272,7 @@ namespace SafetyProto.Core
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             Enqueue(() =>
             {
-                if (verboseLogging && payload.Task != null) Debug.Log($"[EventBus] TaskStarted: {payload.Task.taskName}");
+                if (verboseLogging && payload.Task != null) SafetyLog.Info($"[EventBus] TaskStarted: {payload.Task.taskName}");
                 OnTaskStartedCSharp?.Invoke(payload);
                 onTaskStarted?.Invoke(payload);
             });
@@ -283,7 +284,7 @@ namespace SafetyProto.Core
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             Enqueue(() =>
             {
-                if (verboseLogging && payload.Task != null) Debug.Log($"[EventBus] TaskCompleted: {payload.Task.taskName}");
+                if (verboseLogging && payload.Task != null) SafetyLog.Info($"[EventBus] TaskCompleted: {payload.Task.taskName}");
                 OnTaskCompletedCSharp?.Invoke(payload);
                 onTaskCompleted?.Invoke(payload);
             });
@@ -295,7 +296,7 @@ namespace SafetyProto.Core
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             Enqueue(() =>
             {
-                if (verboseLogging && payload.Task != null) Debug.Log($"[EventBus] TaskTimeout: {payload.Task.taskName}");
+                if (verboseLogging && payload.Task != null) SafetyLog.Info($"[EventBus] TaskTimeout: {payload.Task.taskName}");
                 OnTaskTimeoutCSharp?.Invoke(payload);
                 onTaskTimeout?.Invoke(payload);
             });
@@ -307,7 +308,7 @@ namespace SafetyProto.Core
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             Enqueue(() =>
             {
-                if (verboseLogging) Debug.Log($"[EventBus] ScoreChanged: Total {payload.TotalScore}, Delta {payload.Delta}");
+                if (verboseLogging) SafetyLog.Info($"[EventBus] ScoreChanged: Total {payload.TotalScore}, Delta {payload.Delta}");
                 OnScoreChangedCSharp?.Invoke(payload);
                 onScoreChanged?.Invoke(payload);
             });
@@ -319,7 +320,7 @@ namespace SafetyProto.Core
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             Enqueue(() =>
             {
-                if (verboseLogging && payload.Group != null) Debug.Log($"[EventBus] GroupStarted: {payload.Group.groupName}");
+                if (verboseLogging && payload.Group != null) SafetyLog.Info($"[EventBus] GroupStarted: {payload.Group.groupName}");
                 OnGroupStartedCSharp?.Invoke(payload);
                 onGroupStarted?.Invoke(payload);
             });
@@ -331,7 +332,7 @@ namespace SafetyProto.Core
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             Enqueue(() =>
             {
-                if (verboseLogging && payload.Group != null) Debug.Log($"[EventBus] GroupCompleted: {payload.Group.groupName}");
+                if (verboseLogging && payload.Group != null) SafetyLog.Info($"[EventBus] GroupCompleted: {payload.Group.groupName}");
                 OnGroupCompletedCSharp?.Invoke(payload);
                 onGroupCompleted?.Invoke(payload);
             });
@@ -343,7 +344,7 @@ namespace SafetyProto.Core
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             Enqueue(() =>
             {
-                if (verboseLogging) Debug.Log($"[EventBus] SessionCompleted: {payload.tasksCompleted} tasks, {payload.totalElapsedTime:F2}s, Score: {payload.totalScore}");
+                if (verboseLogging) SafetyLog.Info($"[EventBus] SessionCompleted: {payload.tasksCompleted} tasks, {payload.totalElapsedTime:F2}s, Score: {payload.totalScore}");
                 onSessionCompleted?.Invoke(payload);
             });
         }
@@ -354,7 +355,7 @@ namespace SafetyProto.Core
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             Enqueue(() =>
             {
-                if (verboseLogging) Debug.Log($"[EventBus] SafetyViolation: {payload.ViolationCode} - {payload.Message}");
+                if (verboseLogging) SafetyLog.Info($"[EventBus] SafetyViolation: {payload.ViolationCode} - {payload.Message}");
                 OnSafetyViolationCSharp?.Invoke(payload);
                 onSafetyViolation?.Invoke(payload);
             });
@@ -366,7 +367,7 @@ namespace SafetyProto.Core
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             Enqueue(() =>
             {
-                if (verboseLogging) Debug.Log($"[EventBus] CriticalSafetyFailure: {payload.Reason} ({payload.ViolationCount} in {payload.WindowSeconds}s)");
+                if (verboseLogging) SafetyLog.Info($"[EventBus] CriticalSafetyFailure: {payload.Reason} ({payload.ViolationCount} in {payload.WindowSeconds}s)");
                 OnCriticalSafetyFailureCSharp?.Invoke(payload);
                 onCriticalSafetyFailure?.Invoke(payload);
             });
@@ -378,7 +379,7 @@ namespace SafetyProto.Core
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             Enqueue(() =>
             {
-                if (verboseLogging) Debug.Log($"[EventBus] SafetyError: {payload.Source} - {payload.Message}");
+                if (verboseLogging) SafetyLog.Info($"[EventBus] SafetyError: {payload.Source} - {payload.Message}");
                 OnSafetyErrorCSharp?.Invoke(payload);
                 onSafetyError?.Invoke(payload);
             });

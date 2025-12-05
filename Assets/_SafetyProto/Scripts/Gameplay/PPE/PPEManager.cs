@@ -5,6 +5,7 @@ using SafetyProto.Core.Interfaces;
 using SafetyProto.Data.Enums;
 using SafetyProto.Utils;
 using UnityEngine;
+using SafetyProto.Core.Logging;
 
 namespace SafetyProto.Gameplay.PPE
 {
@@ -34,7 +35,7 @@ namespace SafetyProto.Gameplay.PPE
                 {
                     _wornPPE[ppeType] = ppeObject;
                     PPEEvents.RaisePpeStateChanged(new PPEStateChangedEventArgs(ppeType, true));
-                    Debug.Log($"PPEManager: {ppeType} is now WORN (Item: {ppeObject.name}).");
+                    SafetyLog.Info($"PPEManager: {ppeType} is now WORN (Item: {ppeObject.name}).", this);
                 }
             }
             else
@@ -43,7 +44,7 @@ namespace SafetyProto.Gameplay.PPE
                 {
                     _wornPPE.Remove(ppeType);
                     PPEEvents.RaisePpeStateChanged(new PPEStateChangedEventArgs(ppeType, false));
-                    Debug.Log($"PPEManager: {ppeType} is now NOT WORN (Item: {ppeObject.name} exited).");
+                    SafetyLog.Info($"PPEManager: {ppeType} is now NOT WORN (Item: {ppeObject.name} exited).", this);
                 }
             }
         }

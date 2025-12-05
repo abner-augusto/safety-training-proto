@@ -1,4 +1,5 @@
 using UnityEngine;
+using SafetyProto.Core.Logging;
 
 namespace SafetyProto.UI
 {
@@ -25,7 +26,7 @@ namespace SafetyProto.UI
                 if (Camera.main != null)
                     hmdTransform = Camera.main.transform;
                 else
-                    Debug.LogError("MenuFollowHmd: Please assign the HMD Transform (Camera) in the Inspector!");
+                SafetyLog.Error("MenuFollowHmd: Please assign the HMD Transform (Camera) in the Inspector!", this);
             }
         }
 

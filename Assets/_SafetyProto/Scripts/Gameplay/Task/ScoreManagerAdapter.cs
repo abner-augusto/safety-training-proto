@@ -5,6 +5,7 @@ using SafetyProto.Data.Enums;
 using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Utils;
 using UnityEngine;
+using SafetyProto.Core.Logging;
 
 namespace SafetyProto.Gameplay.Task
 {
@@ -20,7 +21,7 @@ namespace SafetyProto.Gameplay.Task
         {
             if (scoreServiceAsset == null)
             {
-                Debug.LogError("ScoreManagerAdapter is missing required references (ScoreService).", this);
+                SafetyLog.Error("ScoreManagerAdapter is missing required references (ScoreService).", this);
                 SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
                 {
                     Source = nameof(ScoreManagerAdapter),
@@ -79,7 +80,7 @@ namespace SafetyProto.Gameplay.Task
 
         private void HandleScoreChanged(int newScore, int delta, string reason)
         {
-            Debug.Log($"[ScoreManagerAdapter] [Score] {reason}: {(delta >= 0 ? "+" : "")}{delta} (Total: {newScore})");
+            SafetyLog.Info($"[ScoreManagerAdapter] [Score] {reason}: {(delta >= 0 ? "+" : "")}{delta} (Total: {newScore})", this);
             ScoreEvents.RaiseScoreChanged(new ScoreChangedEventArgs(newScore, delta));
         }
     }

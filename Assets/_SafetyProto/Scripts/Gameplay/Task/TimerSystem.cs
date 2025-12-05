@@ -2,6 +2,7 @@ using System.Threading;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
+using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Utils;
 using UnityEngine;
@@ -38,7 +39,7 @@ namespace SafetyProto.Gameplay.Task
                 taskManager = FindFirstObjectByType<TaskManager>();
                 if (taskManager == null)
                 {
-                    Debug.LogError("TimerSystem: No TaskManager found in scene!", this);
+                    SafetyLog.Error("TimerSystem: No TaskManager found in scene!", this);
                     SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
                     {
                         Source = nameof(TimerSystem),
@@ -127,12 +128,12 @@ namespace SafetyProto.Gameplay.Task
                 _timerCts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
                 _ = GroupCountdownRoutine(_timedGroup.timeLimit, _timerCts.Token);
                 onTimeUpdated.Invoke(_timedGroup.timeLimit);
-                Debug.Log($"TimerSystem: Started timer for group '{_timedGroup.groupName}' ({_timedGroup.timeLimit}s).");
+                SafetyLog.Info($"TimerSystem: Started timer for group '{_timedGroup.groupName}' ({_timedGroup.timeLimit}s).", this);
             }
             else
             {
                 onTimeUpdated.Invoke(0);
-                Debug.Log($"TimerSystem: Group '{_timedGroup.groupName}' has no time limit.");
+                SafetyLog.Info($"TimerSystem: Group '{_timedGroup.groupName}' has no time limit.", this);
             }
         }
 

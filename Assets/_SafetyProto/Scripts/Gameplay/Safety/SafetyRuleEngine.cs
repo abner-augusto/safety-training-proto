@@ -8,6 +8,7 @@ using SafetyProto.Gameplay.PPE;
 using SafetyProto.Gameplay.Task;
 using SafetyProto.Utils;
 using UnityEngine;
+using SafetyProto.Core.Logging;
 
 namespace SafetyProto.Gameplay.Safety
 {
@@ -40,7 +41,7 @@ namespace SafetyProto.Gameplay.Safety
                 ppeManager = FindFirstObjectByType<PPEManager>();
                 if (ppeManager == null)
                 {
-                    Debug.LogWarning("SafetyRuleEngine: PPEManager not found. Falling back to PPE event tracking only.", this);
+                    SafetyLog.Warning("SafetyRuleEngine: PPEManager not found. Falling back to PPE event tracking only.", this);
                 }
             }
 
@@ -124,7 +125,7 @@ namespace SafetyProto.Gameplay.Safety
                 {
                     if (verboseLogging)
                     {
-                        Debug.LogWarning("SafetyRuleEngine: Sequential group active but no current task set.");
+                        SafetyLog.Warning("SafetyRuleEngine: Sequential group active but no current task set.", this);
                     }
                     return;
                 }
@@ -183,7 +184,7 @@ namespace SafetyProto.Gameplay.Safety
 
             if (verboseLogging)
             {
-                Debug.Log($"SafetyRuleEngine: Task '{task.taskName}' completed. PPE compliant={compliant}");
+                SafetyLog.Info($"SafetyRuleEngine: Task '{task.taskName}' completed. PPE compliant={compliant}", this);
             }
 
             if (currentGroup != null && currentGroup.executionMode == TaskExecutionMode.FreeOrder)

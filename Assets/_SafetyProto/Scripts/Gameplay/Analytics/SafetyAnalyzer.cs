@@ -1,5 +1,6 @@
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
+using SafetyProto.Core.Logging;
 using SafetyProto.Utils;
 using UnityEngine;
 
@@ -77,7 +78,7 @@ namespace SafetyProto.Gameplay.Analytics
                     WindowSeconds = windowSeconds,
                     Reason = $"{_detector.CurrentCount} violations within {windowSeconds} seconds"
                 };
-                Debug.LogWarning($"SafetyAnalyzer: Critical safety failure detected ({payload.Reason}).");
+                SafetyLog.Warning($"SafetyAnalyzer: Critical safety failure detected ({payload.Reason}).", this);
                 SafetyEvents.RaiseCriticalSafetyFailure(payload);
             }
             else if (!thresholdReached && _thresholdRaised && _detector.CurrentCount < violationThreshold)

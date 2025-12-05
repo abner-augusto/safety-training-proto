@@ -1,5 +1,7 @@
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
+using SafetyProto.Core;
+using SafetyProto.Core.Logging;
 using SafetyProto.Data.Enums;
 using UnityEngine;
 
@@ -16,7 +18,7 @@ namespace SafetyProto.Gameplay.PPE
         {
             if (zoneCollider == null)
             {
-                Debug.LogError($"The 'zoneCollider' on {gameObject.name} is not assigned in the inspector!", this);
+                SafetyLog.Error($"The 'zoneCollider' on {gameObject.name} is not assigned in the inspector!", this);
                 SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
                 {
                     Source = nameof(PPEZone),
@@ -29,19 +31,19 @@ namespace SafetyProto.Gameplay.PPE
             
             if (!zoneCollider.isTrigger)
             {
-                Debug.LogWarning($"PPEZone on {gameObject.name} should have its Collider set to 'Is Trigger'. Automatically setting.", this);
+                SafetyLog.Warning($"PPEZone on {gameObject.name} should have its Collider set to 'Is Trigger'. Automatically setting.", this);
                 zoneCollider.isTrigger = true;
             }
 
             if (expectedPPEType == PPEType.None)
             {
-                Debug.LogWarning($"PPEZone on {gameObject.name} has ExpectedPPEType set to None.", this);
+                SafetyLog.Warning($"PPEZone on {gameObject.name} has ExpectedPPEType set to None.", this);
             }
 
             _ppeManager = Object.FindFirstObjectByType<PPEManager>();
             if (_ppeManager == null)
             {
-                Debug.LogError($"PPEZone on {gameObject.name} could not find PPEManager in scene!", this);
+                SafetyLog.Error($"PPEZone on {gameObject.name} could not find PPEManager in scene!", this);
                 SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
                 {
                     Source = nameof(PPEZone),

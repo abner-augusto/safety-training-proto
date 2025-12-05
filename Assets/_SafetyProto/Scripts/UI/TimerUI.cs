@@ -1,4 +1,5 @@
 using SafetyProto.Gameplay.Task;
+using SafetyProto.Core.Logging;
 using UnityEngine;
 using TMPro;
 
@@ -18,7 +19,7 @@ namespace SafetyProto.UI
                 timerSystem = Object.FindFirstObjectByType<TimerSystem>();
                 if (timerSystem == null)
                 {
-                    Debug.LogError("TimerUI: No TimerSystem found!", this);
+                    SafetyLog.Error("TimerUI: No TimerSystem found!", this);
                     enabled = false;
                     return;
                 }
