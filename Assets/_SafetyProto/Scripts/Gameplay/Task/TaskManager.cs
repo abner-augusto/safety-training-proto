@@ -94,13 +94,22 @@ namespace SafetyProto.Gameplay.Task
                 return;
             }
 
-            if (runtimeTask.State == TaskState.NotStarted)
+            if (args.RuntimeTask != null)
             {
-                runtimeTask.State = TaskState.CompletedSuccess;
+                runtimeTask.State = args.RuntimeTask.State;
+                runtimeTask.CompletionTime = args.RuntimeTask.CompletionTime;
+                runtimeTask.HasMissedPPEOnce = args.RuntimeTask.HasMissedPPEOnce;
             }
+            else
+            {
+                if (runtimeTask.State == TaskState.NotStarted ||
+                    runtimeTask.State == TaskState.InProgress)
+                {
+                    runtimeTask.State = TaskState.CompletedSuccess;
+                }
 
-            runtimeTask.CompletionTime = args.RuntimeTask?.CompletionTime ?? Time.time;
-            runtimeTask.HasMissedPPEOnce = args.RuntimeTask?.HasMissedPPEOnce ?? runtimeTask.HasMissedPPEOnce;
+                runtimeTask.CompletionTime = Time.time;
+            }
 
             if (_currentTask == runtimeTask)
             {
@@ -175,14 +184,18 @@ namespace SafetyProto.Gameplay.Task
             }
 
             int nextIndex = _sessionTasks.FindIndex(t =>
-                t.State == TaskState.NotStarted && currentGroup.tasks.Contains(t.TaskData));
+                (t.State == TaskState.NotStarted || t.State == TaskState.InProgress) &&
+                currentGroup.tasks.Contains(t.TaskData));
 
             if (nextIndex >= 0)
             {
                 _currentTaskIndex = nextIndex;
                 _currentTask = _sessionTasks[nextIndex];
-                _currentTask.State = TaskState.InProgress;
-                TaskEvents.RaiseTaskStarted(new TaskEventArgs(_currentTask.TaskData, _currentTask));
+                if (_currentTask.State == TaskState.NotStarted)
+                {
+                    _currentTask.State = TaskState.InProgress;
+                    TaskEvents.RaiseTaskStarted(new TaskEventArgs(_currentTask.TaskData, _currentTask));
+                }
             }
             else
             {
