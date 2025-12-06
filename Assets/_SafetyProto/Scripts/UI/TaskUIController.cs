@@ -29,9 +29,12 @@ namespace SafetyProto.UI
         [SerializeField] private TMP_Text currentTaskOrderText;
         [SerializeField] private TMP_Text currentTaskNameText;
         [SerializeField] private TMP_Text currentTaskDescriptionText;
+        [Header("Hint UI")]
+        [SerializeField] private TMP_Text currentTaskHintText;
 
         private readonly Dictionary<SafetyTask, TaskEntryUI> _taskToEntryUI = new();
         private readonly Dictionary<SafetyTask, int> _taskOrderLookup = new();
+        private SafetyTask _currentFocusedTask;
 
         private void Start()
         {
@@ -53,6 +56,8 @@ namespace SafetyProto.UI
             EventBus.Instance.onTaskStarted.AddListener(OnTaskStarted);
             EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
             EventBus.Instance.onTaskTimeout.AddListener(OnTaskTimeout);
+            EventBus.Instance.onGroupStarted.AddListener(OnGroupStarted);
+            EventBus.Instance.onSafetyViolation.AddListener(OnSafetyViolation);
 
             var initial = initialTaskProvider != null ? initialTaskProvider.GetCurrentTaskData() : null;
             if (initial != null)
@@ -70,6 +75,8 @@ namespace SafetyProto.UI
                 EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStarted);
                 EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
                 EventBus.Instance.onTaskTimeout.RemoveListener(OnTaskTimeout);
+                EventBus.Instance.onGroupStarted.RemoveListener(OnGroupStarted);
+                EventBus.Instance.onSafetyViolation.RemoveListener(OnSafetyViolation);
             }
         }
 
@@ -99,13 +106,37 @@ namespace SafetyProto.UI
             }
         }
 
+        private void OnGroupStarted(TaskGroupEventArgs args)
+        {
+            if (args.Group == null)
+            {
+                return;
+            }
+
+            if (args.Group.executionMode == TaskExecutionMode.FreeOrder)
+            {
+                foreach (var task in args.Group.tasks)
+                {
+                    if (_taskToEntryUI.TryGetValue(task, out var entryUI))
+                    {
+                        entryUI.UpdateState(TaskState.InProgress);
+                    }
+                }
+            }
+        }
+
         private void OnTaskStarted(TaskEventArgs args)
         {
             if (args.Task == null) return;
+
+            _currentFocusedTask = args.Task;
+
             if (_taskToEntryUI.TryGetValue(args.Task, out var entryUI))
                 entryUI.UpdateState(TaskState.InProgress);
 
             UpdateCurrentTaskPanel(args.Task);
+
+            if (currentTaskHintText != null) currentTaskHintText.text = string.Empty;
         }
 
         private void OnTaskCompleted(TaskEventArgs args)
@@ -120,6 +151,32 @@ namespace SafetyProto.UI
             if (args.Task == null) return;
             if (_taskToEntryUI.TryGetValue(args.Task, out var entryUI))
                 entryUI.UpdateState(TaskState.CompletedFailure);
+
+            if (currentTaskHintText != null && args.Task == _currentFocusedTask)
+            {
+                currentTaskHintText.text = string.IsNullOrEmpty(args.Task.hintText)
+                    ? "Time ran out!"
+                    : $"Time Up: {args.Task.hintText}";
+                currentTaskHintText.color = Color.red;
+            }
+        }
+
+        private void OnSafetyViolation(SafetyViolationEventArgs args)
+        {
+            if (_currentFocusedTask == null || args.TaskId != _currentFocusedTask.taskName)
+            {
+                return;
+            }
+
+            if (currentTaskHintText != null)
+            {
+                string message = string.IsNullOrEmpty(_currentFocusedTask.hintText)
+                    ? args.Message
+                    : _currentFocusedTask.hintText;
+
+                currentTaskHintText.text = message;
+                currentTaskHintText.color = Color.yellow;
+            }
         }
 
         private void UpdateCurrentTaskPanel(SafetyTask task)
