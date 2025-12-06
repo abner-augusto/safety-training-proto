@@ -18,5 +18,5 @@ MonoBehaviour:
   successPoints: 100
   failurePenalty: 25
   ppePenalty: 0
-  requiredPPE: 
+  requiredPPE: 01000000
   hintText: "Dica r\xE1pida para o participante."
