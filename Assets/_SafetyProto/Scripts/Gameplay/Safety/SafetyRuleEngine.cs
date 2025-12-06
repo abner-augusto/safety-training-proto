@@ -147,6 +147,15 @@ namespace SafetyProto.Gameplay.Safety
                 targetTask = _activeFreeOrderTasks.FirstOrDefault(t => t.expectedAction == args.ActionType);
                 if (targetTask == null)
                 {
+                    if (IsActionAlreadyCompleted(args.ActionType))
+                    {
+                        if (verboseLogging)
+                        {
+                            SafetyLog.Info($"SafetyRuleEngine: Ignoring repeat action {args.ActionType} (already completed).", this);
+                        }
+                        return;
+                    }
+
                     RaiseViolation(
                         "WRONG_ACTION",
                         $"Action {args.ActionType} does not match any pending task in '{_activeGroup.groupName}'.",
@@ -157,6 +166,17 @@ namespace SafetyProto.Gameplay.Safety
             }
 
             ProcessTaskAttempt(targetTask, _activeGroup);
+        }
+
+        private bool IsActionAlreadyCompleted(ActionType actionType)
+        {
+            if (_activeGroup == null)
+            {
+                return false;
+            }
+
+            return _activeGroup.tasks.Any(t => t.expectedAction == actionType) &&
+                   _activeFreeOrderTasks.All(t => t.expectedAction != actionType);
         }
 
         private void ProcessTaskAttempt(SafetyTask task, TaskGroup currentGroup)
