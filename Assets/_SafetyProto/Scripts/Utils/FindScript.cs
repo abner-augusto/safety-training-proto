@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -113,3 +114,4 @@ public class ScriptScannerWindow : EditorWindow
             .FirstOrDefault(t => string.Equals(t.Name, typeName, StringComparison.Ordinal));
     }
 }
+#endif

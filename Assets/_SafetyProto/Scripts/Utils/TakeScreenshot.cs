@@ -28,11 +28,11 @@ namespace SafetyProto.Utils
             cam.targetTexture = null;
             RenderTexture.active = null;
 
-#if UNITY_EDITOR
+            #if UNITY_EDITOR
             DestroyImmediate(rt);
-#else
+            #else
             Destroy(rt);
-#endif
+            #endif
 
             string timestamp = System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
             string dirPath = Path.Combine(Application.dataPath, "_SafetyProto", "Screenshots");
@@ -43,9 +43,9 @@ namespace SafetyProto.Utils
 
             File.WriteAllBytes(fullPath, tex.EncodeToPNG());
 
-#if UNITY_EDITOR
+            #if UNITY_EDITOR
             AssetDatabase.Refresh();
-#endif
+            #endif
 
             SafetyLog.Info($"Screenshot saved to: {fullPath}", this);
         }
