@@ -88,7 +88,7 @@ namespace SafetyProto.Gameplay.Task
 
         private void HandleTaskCompletion(TaskEventArgs args)
         {
-            var runtimeTask = args.RuntimeTask ?? _sessionTasks.FirstOrDefault(t => t.TaskData == args.Task);
+            var runtimeTask = GetRuntimeTask(args);
             if (runtimeTask == null)
             {
                 return;
@@ -99,6 +99,9 @@ namespace SafetyProto.Gameplay.Task
                 runtimeTask.State = TaskState.CompletedSuccess;
             }
 
+            runtimeTask.CompletionTime = args.RuntimeTask?.CompletionTime ?? Time.time;
+            runtimeTask.HasMissedPPEOnce = args.RuntimeTask?.HasMissedPPEOnce ?? runtimeTask.HasMissedPPEOnce;
+
             if (_currentTask == runtimeTask)
             {
                 _currentTask = null;
@@ -108,7 +111,7 @@ namespace SafetyProto.Gameplay.Task
             CheckGroupCompletion();
 
             var currentGroup = GetCurrentGroup();
-            if (currentGroup != null && currentGroup.executionMode == TaskExecutionMode.Sequential)
+            if (currentGroup != null)
             {
                 _ = WaitAndStartNextTask(delayBetweenTasks);
             }
@@ -116,7 +119,7 @@ namespace SafetyProto.Gameplay.Task
 
         private void HandleTaskTimeout(TaskEventArgs args)
         {
-            var runtimeTask = args.RuntimeTask ?? _sessionTasks.FirstOrDefault(t => t.TaskData == args.Task);
+            var runtimeTask = GetRuntimeTask(args);
             if (runtimeTask == null)
             {
                 return;
@@ -134,7 +137,7 @@ namespace SafetyProto.Gameplay.Task
             CheckGroupCompletion();
 
             var currentGroup = GetCurrentGroup();
-            if (currentGroup != null && currentGroup.executionMode == TaskExecutionMode.Sequential)
+            if (currentGroup != null)
             {
                 _ = WaitAndStartNextTask(delayBetweenTasks);
             }
@@ -247,9 +250,32 @@ namespace SafetyProto.Gameplay.Task
                 return null;
             }
 
+            if (currentGroup.executionMode == TaskExecutionMode.Sequential)
+            {
+                if (_currentTask != null && _currentTask.expectedAction == actionType)
+                {
+                    return _currentTask;
+                }
+
+                return null;
+            }
+
             return _sessionTasks
-                .Where(t => t.State == TaskState.NotStarted && currentGroup.tasks.Contains(t.TaskData))
+                .Where(t =>
+                    (t.State == TaskState.NotStarted || t.State == TaskState.InProgress) &&
+                    currentGroup.tasks.Contains(t.TaskData))
                 .FirstOrDefault(t => t.expectedAction == actionType);
+        }
+
+        private RuntimeSafetyTask GetRuntimeTask(TaskEventArgs args)
+        {
+            var runtimeTask = _sessionTasks.FirstOrDefault(t => t.TaskData == args.Task);
+            if (runtimeTask != null)
+            {
+                return runtimeTask;
+            }
+
+            return args.RuntimeTask;
         }
 
         public void FocusTask(RuntimeSafetyTask runtimeTask)
