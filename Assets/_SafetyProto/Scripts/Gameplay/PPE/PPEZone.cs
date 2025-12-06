@@ -1,4 +1,3 @@
-using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core;
 using SafetyProto.Core.Logging;
