@@ -16,25 +16,47 @@ public class SnapInteractableVisuals : MonoBehaviour
 
     private void OnEnable()
     {
+        if (snapInteractable == null)
+        {
+            Debug.LogWarning($"[{nameof(SnapInteractableVisuals)}] No SnapInteractable assigned on {name}. Disabling component.", this);
+            enabled = false;
+            return;
+        }
+
         snapInteractable.WhenInteractorAdded.Action += WhenInteractorAdded_Action;
         snapInteractable.WhenSelectingInteractorViewAdded += SnapInteractable_WhenSelectingInteractorViewAdded;
         snapInteractable.WhenInteractorViewRemoved += SnapInteractable_WhenInteractorViewRemoved;
         snapInteractable.WhenInteractorViewAdded += SnapInteractable_WhenInteractorViewAdded;
     }
 
+    private void OnDisable()
+    {
+        if (snapInteractable != null)
+        {
+            snapInteractable.WhenInteractorAdded.Action -= WhenInteractorAdded_Action;
+            snapInteractable.WhenSelectingInteractorViewAdded -= SnapInteractable_WhenSelectingInteractorViewAdded;
+            snapInteractable.WhenInteractorViewRemoved -= SnapInteractable_WhenInteractorViewRemoved;
+            snapInteractable.WhenInteractorViewAdded -= SnapInteractable_WhenInteractorViewAdded;
+        }
+
+        ResetCurrentInteractor();
+    }
+
     private void WhenInteractorAdded_Action(SnapInteractor obj)
     {
         if (currentInteractor == null)
-            currentInteractor = obj;
-        else if (currentInteractor != obj)
         {
             currentInteractor = obj;
-            var tempGP = currentInteractorGameObject;
-            Destroy(tempGP);
-            currentInteractorGameObject = null;
+        }
+        else if (currentInteractor != obj)
+        {
+            ResetCurrentInteractor();
+            currentInteractor = obj;
         }
         else
+        {
             return;
+        }
 
         SetupGhostModel(obj);
     }
@@ -51,7 +73,10 @@ public class SnapInteractableVisuals : MonoBehaviour
 
     private void SnapInteractable_WhenInteractorViewRemoved(IInteractorView obj)
     {
-        currentInteractorGameObject.SetActive(false);
+        if (currentInteractorGameObject != null)
+        {
+            ResetCurrentInteractor();
+        }
     }
 
     private void SetupGhostModel(SnapInteractor interactor)
@@ -83,5 +108,15 @@ public class SnapInteractableVisuals : MonoBehaviour
                 newGo.AddComponent<MeshRenderer>().material = hoverMaterial;
             }
         }
+    }
+    private void ResetCurrentInteractor()
+    {
+        if (currentInteractorGameObject != null)
+        {
+            Destroy(currentInteractorGameObject);
+            currentInteractorGameObject = null;
+        }
+
+        currentInteractor = null;
     }
 }

@@ -51,10 +51,17 @@ namespace SafetyProto.UI
                 while (_entries.Count > maxLines)
                     _entries.Dequeue();
             }
+
+            RefreshDisplay();
         }
 
-        private void Update()
+        private void RefreshDisplay()
         {
+            if (logText == null)
+            {
+                return;
+            }
+
             lock (_entries)
             {
                 var display = new List<string>();
@@ -66,7 +73,11 @@ namespace SafetyProto.UI
             Canvas.ForceUpdateCanvases();
         }
 
-        public void ToggleLogFilter(bool onlyMyCode) => showOnlyProjectLogs = onlyMyCode;
+        public void ToggleLogFilter(bool onlyMyCode)
+        {
+            showOnlyProjectLogs = onlyMyCode;
+            RefreshDisplay();
+        }
         public string GetFullLog() => _allLogs.ToString();
         public void ClearLog()
         {
@@ -74,8 +85,8 @@ namespace SafetyProto.UI
             {
                 _entries.Clear();
                 _allLogs.Clear();
-                logText.text = "";
             }
+            RefreshDisplay();
         }
     }
 }
