@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafetyProto Evaluator Dashboard</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #1a1a1a; font-family: sans-serif; }
+        #info {
+            position: absolute; top: 10px; left: 10px; color: white;
+            background: rgba(0,0,0,0.5); padding: 10px; border-radius: 4px;
+            pointer-events: none;
+        }
+        #status { font-weight: bold; color: #ff4444; }
+        .connected { color: #44ff44 !important; }
+        #log {
+            position: absolute; bottom: 10px; left: 10px; color: #aaa;
+            font-size: 12px; max-height: 150px; overflow-y: hidden;
+            width: 300px; text-shadow: 1px 1px 1px black;
+        }
+    </style>
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.154.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.154.0/examples/jsm/"
+        }
+      }
+    </script>
+</head>
+<body>
+    <div id="info">
+        <div>Status: <span id="status">Disconnected</span></div>
+        <div>Session: <span id="session-id">--</span></div>
+        <div>Score: <span id="score">0</span></div>
+    </div>
+    <div id="log"></div>
+    <script type="module" src="app.js"></script>
+</body>
+</html>

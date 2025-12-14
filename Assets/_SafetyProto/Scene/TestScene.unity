@@ -31134,6 +31134,79 @@ Transform:
   m_Children: []
   m_Father: {fileID: 675985938}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1013818223
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1013818224}
+  - component: {fileID: 1013818226}
+  - component: {fileID: 1013818225}
+  m_Layer: 0
+  m_Name: EvaluatorDashboard
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1013818224
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1013818223}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2024512761}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1013818225
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1013818223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b54915f5273a8640ac0701b4bd76e9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.Networking.EvaluatorDashboard.PoseBroadcaster
+  hmd: {fileID: 1310421823}
+  leftHand: {fileID: 1544284427}
+  rightHand: {fileID: 2147018525}
+  ppeObjects:
+  - {fileID: 528269813}
+  - {fileID: 1272341260}
+  ppeIds:
+  - helmet
+  - gloves
+  sendRateHz: 10
+  useWorldSpace: 1
+  decimalPrecision: 3
+--- !u!114 &1013818226
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1013818223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9109aa36bbc0f7b4fbf795f2465c26f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.Networking.EvaluatorDashboard.EvaluatorDashboardBootstrap
+  httpPort: 8080
+  wsPort: 7071
+  poseBroadcaster: {fileID: 1013818225}
+  verboseEvents: 1
 --- !u!1 &1014106133
 GameObject:
   m_ObjectHideFlags: 0
@@ -63715,7 +63788,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxLines: 20
   logText: {fileID: 1960127343}
-  showOnlyProjectLogs: 1
 --- !u!114 &1960127343
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -65913,6 +65985,7 @@ Transform:
   - {fileID: 1235118631}
   - {fileID: 165463879}
   - {fileID: 1051726876}
+  - {fileID: 1013818224}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2026256951
