@@ -19,18 +19,38 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
         private Thread _thread;
         private volatile bool _running;
 
-        public MiniHttpServer(byte[] indexBytes, byte[] appBytes, byte[] styleBytes = null)
+        public MiniHttpServer(
+            byte[] indexBytes,
+            byte[] appBytes,
+            byte[] styleBytes = null,
+            Dictionary<string, (byte[] body, string contentType)> extraRoutes = null)
         {
-            _routes = new Dictionary<string, Route>
+            _routes = new Dictionary<string, Route>();
+
+            if (indexBytes != null)
             {
-                { "/", new Route(indexBytes ?? Array.Empty<byte>(), "text/html; charset=utf-8") },
-                { "/index.html", new Route(indexBytes ?? Array.Empty<byte>(), "text/html; charset=utf-8") },
-                { "/app.js", new Route(appBytes ?? Array.Empty<byte>(), "application/javascript") }
-            };
+                _routes["/"] = new Route(indexBytes, "text/html; charset=utf-8");
+                _routes["/index.html"] = new Route(indexBytes, "text/html; charset=utf-8");
+            }
+
+            if (appBytes != null)
+            {
+                _routes["/app.js"] = new Route(appBytes, "application/javascript");
+            }
 
             if (styleBytes != null)
             {
                 _routes["/style.css"] = new Route(styleBytes, "text/css");
+            }
+
+            if (extraRoutes != null)
+            {
+                foreach (var kvp in extraRoutes)
+                {
+                    if (string.IsNullOrEmpty(kvp.Key) || kvp.Value.body == null)
+                        continue;
+                    _routes[kvp.Key] = new Route(kvp.Value.body, kvp.Value.contentType);
+                }
             }
         }
 

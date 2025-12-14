@@ -31207,6 +31207,7 @@ MonoBehaviour:
   wsPort: 7071
   poseBroadcaster: {fileID: 1013818225}
   verboseEvents: 1
+  taskManager: {fileID: 588787366}
 --- !u!1 &1014106133
 GameObject:
   m_ObjectHideFlags: 0

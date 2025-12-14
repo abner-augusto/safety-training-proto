@@ -5,18 +5,631 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SafetyProto Evaluator Dashboard</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #1a1a1a; font-family: sans-serif; }
-        #info {
-            position: absolute; top: 10px; left: 10px; color: white;
-            background: rgba(0,0,0,0.5); padding: 10px; border-radius: 4px;
-            pointer-events: none;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        #status { font-weight: bold; color: #ff4444; }
-        .connected { color: #44ff44 !important; }
-        #log {
-            position: absolute; bottom: 10px; left: 10px; color: #aaa;
-            font-size: 12px; max-height: 150px; overflow-y: hidden;
-            width: 300px; text-shadow: 1px 1px 1px black;
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0e27;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 380px;
+            background: linear-gradient(180deg, #1a1f3a 0%, #0f1229 100%);
+            overflow-y: auto;
+            overflow-x: hidden;
+            border-right: 1px solid rgba(100, 200, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+            z-index: 100;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(100, 200, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        /* Header */
+        .header {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ff4444;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.connected {
+            background: #44ff44;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .session-info {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .session-info span {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+
+        /* Score Card */
+        .score-card {
+            margin: 20px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(240, 147, 251, 0.3);
+            text-align: center;
+        }
+
+        .score-value {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 10px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .score-label {
+            font-size: 14px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Section */
+        .section {
+            margin: 20px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64c8ff;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(100, 200, 255, 0.2);
+        }
+
+        /* Task List */
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .task-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 15px;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .task-item.pending {
+            border-left-color: #ffa500;
+        }
+
+        .task-item.active {
+            border-left-color: #64c8ff;
+            background: rgba(100, 200, 255, 0.1);
+            box-shadow: 0 0 20px rgba(100, 200, 255, 0.2);
+        }
+
+        .task-item.completed {
+            border-left-color: #44ff44;
+            opacity: 0.7;
+        }
+
+        .task-item.failed {
+            border-left-color: #ff4444;
+            opacity: 0.7;
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .task-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .task-status {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .task-status.pending { background: rgba(255, 165, 0, 0.2); color: #ffa500; }
+        .task-status.active { background: rgba(100, 200, 255, 0.2); color: #64c8ff; }
+        .task-status.completed { background: rgba(68, 255, 68, 0.2); color: #44ff44; }
+        .task-status.failed { background: rgba(255, 68, 68, 0.2); color: #ff4444; }
+
+        .task-description {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 4px;
+        }
+
+        /* Activity Log */
+        .log-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .log-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .log-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .log-container::-webkit-scrollbar-thumb {
+            background: rgba(100, 200, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .log-item {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            border-left: 3px solid rgba(100, 200, 255, 0.3);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .log-item.violation {
+            border-left-color: #ff4444;
+            background: rgba(255, 68, 68, 0.05);
+        }
+
+        .log-item.success {
+            border-left-color: #44ff44;
+            background: rgba(68, 255, 68, 0.05);
+        }
+
+        .log-time {
+            opacity: 0.6;
+            font-size: 11px;
+            margin-right: 8px;
+        }
+
+        /* 3D Viewport */
+        .viewport {
+            flex: 1;
+            position: relative;
+            background: #0a0e27;
+        }
+
+        #three-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Mobile Toggle */
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 200;
+            background: rgba(102, 126, 234, 0.9);
+            border: none;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Language Toggle */
+        .language-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 200;
+            background: rgba(102, 126, 234, 0.9);
+            border: none;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+
+        .language-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .language-toggle:active {
+            transform: scale(0.95);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                height: 100vh;
+                transform: translateX(-100%);
+                box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .mobile-toggle {
+                display: block;
+            }
+
+            .language-toggle {
+                top: 80px;
+            }
+
+            .viewport {
+                width: 100vw;
+            }
+
+            .score-card {
+                margin: 15px;
+                padding: 20px;
+            }
+
+            .score-value {
+                font-size: 36px;
+            }
+        }
+
+        /* Empty States */
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        /* Report Section */
+        .report-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .report-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .report-stat {
+            background: rgba(100, 200, 255, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .report-stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #64c8ff;
+            margin-bottom: 4px;
+        }
+
+        .report-stat-label {
+            font-size: 11px;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .report-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .report-button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .report-button.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .report-button.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .report-button.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .report-button.secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: #1a1f3a;
+            border-radius: 16px;
+            width: 90vw;
+            max-width: 800px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid rgba(100, 200, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            opacity: 1;
+        }
+
+        .modal-body {
+            padding: 25px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-body::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .modal-body::-webkit-scrollbar-thumb {
+            background: rgba(100, 200, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        .json-viewer {
+            background: #0a0e27;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre;
+            color: #e0e0e0;
+        }
+
+        .session-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .summary-card {
+            background: rgba(100, 200, 255, 0.1);
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 4px solid #64c8ff;
+        }
+
+        .summary-card-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #64c8ff;
+            margin-bottom: 5px;
+        }
+
+        .summary-card-label {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: rgba(100, 200, 255, 0.3);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            border-left: 3px solid rgba(100, 200, 255, 0.5);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -23px;
+            top: 20px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #64c8ff;
+            border: 2px solid #1a1f3a;
+        }
+
+        .timeline-time {
+            font-size: 11px;
+            opacity: 0.6;
+            margin-bottom: 5px;
+        }
+
+        .timeline-event {
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .timeline-details {
+            font-size: 13px;
+            opacity: 0.8;
         }
     </style>
     <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
@@ -30,12 +643,716 @@
     </script>
 </head>
 <body>
-    <div id="info">
-        <div>Status: <span id="status">Disconnected</span></div>
-        <div>Session: <span id="session-id">--</span></div>
-        <div>Score: <span id="score">0</span></div>
+    <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+    
+    <!-- Language Toggle -->
+    <button class="language-toggle" onclick="toggleLanguage()" id="lang-toggle">
+        <span id="lang-flag">🇧🇷</span>
+    </button>
+    
+    <div class="container">
+        <div class="sidebar" id="sidebar">
+            <div class="header">
+                <h1>
+                    <span class="status-indicator" id="status-indicator"></span>
+                    SafetyProto
+                </h1>
+                <div class="session-info">
+                    <span id="session-id">No Session</span>
+                    <span id="connection-status">Disconnected</span>
+                </div>
+            </div>
+
+            <div class="score-card">
+                <div class="score-label">Current Score</div>
+                <div class="score-value" id="score">0</div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">📋 Active Tasks</div>
+                <div class="task-list" id="task-list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⏳</div>
+                        <div>Waiting for session to start...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">📡 Activity Log</div>
+                <div class="log-container" id="log-container">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <div>No activity yet</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">📊 Session Report</div>
+                <div id="report-section">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📄</div>
+                        <div>Report available after session</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="viewport">
+            <div id="three-canvas"></div>
+        </div>
     </div>
-    <div id="log"></div>
-    <script type="module" src="app.js"></script>
+
+    <!-- Report Modal -->
+    <div class="modal" id="report-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📊 Session Report</div>
+                <button class="modal-close" onclick="closeReportModal()">×</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Content will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- Configuration ---
+        const WS_PORT = 7071;
+        const WS_URL = `ws://${window.location.hostname}:${WS_PORT}/eval`;
+
+        // --- Translations ---
+        let currentLang = 'pt';
+        const translations = {
+            en: {
+                title: 'SafetyProto',
+                noSession: 'No Session',
+                session: 'Session',
+                disconnected: 'Disconnected',
+                connected: 'Connected',
+                currentScore: 'Current Score',
+                activeTasks: '📋 Active Tasks',
+                activityLog: '📡 Activity Log',
+                sessionReport: '📊 Session Report',
+                waitingSession: 'Waiting for session to start...',
+                noActivity: 'No activity yet',
+                reportAfterSession: 'Report available after session',
+                viewFullReport: 'View Full Report',
+                downloadJson: 'Download JSON',
+                duration: 'Duration',
+                finalScore: 'Final Score',
+                tasks: 'Tasks',
+                events: 'Events',
+                totalDuration: 'Total Duration',
+                tasksCompleted: 'Tasks Completed',
+                totalTasks: 'Total Tasks',
+                eventTimeline: 'Event Timeline',
+                pending: 'pending',
+                active: 'active',
+                completed: 'completed',
+                failed: 'failed',
+                // Log messages
+                logConnected: '🟢 Connected to training session',
+                logDisconnected: '🔴 Connection lost. Reconnecting...',
+                logSessionStarted: '🎮 Training session started',
+                logStarted: '▶️ Started',
+                logCompleted: '✅ Completed',
+                logTimeout: '⏰ Timeout',
+                logScorePlus: '➕ Score',
+                logScoreMinus: '➖ Score',
+                logTotal: 'Total',
+                logViolation: '⚠️ Safety Violation',
+                logCritical: '🚨 CRITICAL',
+                logSessionComplete: '🏁 Session Complete! Score',
+                logGroupStarted: '📂 Group Started',
+                logGroupCompleted: '📁 Group Completed',
+                logSessionReset: '🔄 Session has been reset',
+                logReportAvailable: '📊 Session report available'
+            },
+            pt: {
+                title: 'SafetyProto',
+                noSession: 'Sem Sessão',
+                session: 'Sessão',
+                disconnected: 'Desconectado',
+                connected: 'Conectado',
+                currentScore: 'Pontuação Atual',
+                activeTasks: '📋 Tarefas Ativas',
+                activityLog: '📡 Registro de Atividades',
+                sessionReport: '📊 Relatório da Sessão',
+                waitingSession: 'Aguardando início da sessão...',
+                noActivity: 'Nenhuma atividade ainda',
+                reportAfterSession: 'Relatório disponível após a sessão',
+                viewFullReport: 'Ver Relatório Completo',
+                downloadJson: 'Baixar JSON',
+                duration: 'Duração',
+                finalScore: 'Pontuação Final',
+                tasks: 'Tarefas',
+                events: 'Eventos',
+                totalDuration: 'Duração Total',
+                tasksCompleted: 'Tarefas Concluídas',
+                totalTasks: 'Total de Tarefas',
+                eventTimeline: 'Linha do Tempo',
+                pending: 'pendente',
+                active: 'ativa',
+                completed: 'concluída',
+                failed: 'falhou',
+                // Log messages
+                logConnected: '🟢 Conectado à sessão de treinamento',
+                logDisconnected: '🔴 Conexão perdida. Reconectando...',
+                logSessionStarted: '🎮 Sessão de treinamento iniciada',
+                logStarted: '▶️ Iniciada',
+                logCompleted: '✅ Concluída',
+                logTimeout: '⏰ Tempo esgotado',
+                logScorePlus: '➕ Pontos',
+                logScoreMinus: '➖ Pontos',
+                logTotal: 'Total',
+                logViolation: '⚠️ Violação de Segurança',
+                logCritical: '🚨 CRÍTICO',
+                logSessionComplete: '🏁 Sessão Completa! Pontuação',
+                logGroupStarted: '📂 Grupo Iniciado',
+                logGroupCompleted: '📁 Grupo Concluído',
+                logSessionReset: '🔄 Sessão foi reiniciada',
+                logReportAvailable: '📊 Relatório da sessão disponível'
+            }
+        };
+
+        function t(key) {
+            return translations[currentLang][key] || key;
+        }
+
+        function updateUILanguage() {
+            // Update static text elements
+            document.querySelector('.score-label').textContent = t('currentScore');
+            document.querySelectorAll('.section-title')[0].textContent = t('activeTasks');
+            document.querySelectorAll('.section-title')[1].textContent = t('activityLog');
+            document.querySelectorAll('.section-title')[2].textContent = t('sessionReport');
+            
+            // Update flag
+            document.getElementById('lang-flag').textContent = currentLang === 'en' ? '🇺🇸' : '🇧🇷';
+            
+            // Update empty states if they exist
+            const taskList = document.getElementById('task-list');
+            if (taskList.querySelector('.empty-state')) {
+                taskList.querySelector('.empty-state div:last-child').textContent = t('waitingSession');
+            }
+            
+            const logContainer = document.getElementById('log-container');
+            if (logContainer.querySelector('.empty-state')) {
+                logContainer.querySelector('.empty-state div:last-child').textContent = t('noActivity');
+            }
+            
+            const reportSection = document.getElementById('report-section');
+            if (reportSection.querySelector('.empty-state')) {
+                reportSection.querySelector('.empty-state div:last-child').textContent = t('reportAfterSession');
+            }
+            
+            // Update connection status
+            const connectionStatus = document.getElementById('connection-status');
+            if (connectionStatus) {
+                const isConnected = connectionStatus.textContent.includes('Connect') || connectionStatus.textContent.includes('Conectado');
+                connectionStatus.textContent = isConnected ? t('connected') : t('disconnected');
+            }
+            
+            // Update session ID label if no session
+            const sessionId = document.getElementById('session-id');
+            if (sessionId && (sessionId.textContent === 'No Session' || sessionId.textContent === 'Sem Sessão')) {
+                sessionId.textContent = t('noSession');
+            }
+        }
+
+        window.toggleLanguage = function() {
+            currentLang = currentLang === 'en' ? 'pt' : 'en';
+            updateUILanguage();
+            
+            // Save preference
+            localStorage.setItem('dashboardLang', currentLang);
+        };
+
+        // Load saved language preference
+        const savedLang = localStorage.getItem('dashboardLang');
+        if (savedLang) {
+            currentLang = savedLang;
+        }
+
+        // --- UI State ---
+        const tasks = new Map();
+        const logMessages = [];
+        let currentScore = 0;
+        let sessionReport = null;
+
+        // --- Three.js Setup ---
+        const container = document.getElementById('three-canvas');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0e27);
+        scene.fog = new THREE.Fog(0x0a0e27, 5, 30);
+
+        const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(0, 1.6, 3);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        container.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.target.set(0, 1.0, 0);
+        controls.update();
+
+        const ambientLight = new THREE.AmbientLight(0x404040, 2);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(2, 5, 2);
+        scene.add(dirLight);
+
+        const gridHelper = new THREE.GridHelper(10, 10, 0x444444, 0x444444);
+        scene.add(gridHelper);
+        const axesHelper = new THREE.AxesHelper(1);
+        scene.add(axesHelper);
+
+        // Label system
+        const labelRenderer = document.createElement('div');
+        labelRenderer.style.position = 'absolute';
+        labelRenderer.style.top = '0';
+        labelRenderer.style.left = '0';
+        labelRenderer.style.width = '100%';
+        labelRenderer.style.height = '100%';
+        labelRenderer.style.pointerEvents = 'none';
+        container.appendChild(labelRenderer);
+
+        const labels = new Map();
+
+        function createLabel(text, color = '#ffffff') {
+            const label = document.createElement('div');
+            label.style.position = 'absolute';
+            label.style.color = color;
+            label.style.fontSize = '12px';
+            label.style.fontWeight = 'bold';
+            label.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+            label.style.padding = '4px 8px';
+            label.style.borderRadius = '4px';
+            label.style.border = `1px solid ${color}`;
+            label.style.whiteSpace = 'nowrap';
+            label.style.transform = 'translate(-50%, -100%)';
+            label.style.marginTop = '-10px';
+            label.textContent = text;
+            labelRenderer.appendChild(label);
+            return label;
+        }
+
+        function updateLabelPosition(label, position) {
+            const vector = position.clone();
+            vector.project(camera);
+            
+            const x = (vector.x * 0.5 + 0.5) * container.clientWidth;
+            const y = (vector.y * -0.5 + 0.5) * container.clientHeight;
+            
+            label.style.left = `${x}px`;
+            label.style.top = `${y}px`;
+            
+            // Hide label if behind camera
+            label.style.display = vector.z > 1 ? 'none' : 'block';
+        }
+
+        // --- 3D Objects ---
+        const objects = { hmd: null, leftHand: null, rightHand: null, ppe: {} };
+        const matHead = new THREE.MeshLambertMaterial({ color: 0x00aaff });
+        const matHand = new THREE.MeshLambertMaterial({ color: 0x00ffaa });
+        const matPPE = new THREE.MeshLambertMaterial({ color: 0xffaa00 });
+        const matPPEAttached = new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
+        const geoHead = new THREE.BoxGeometry(0.2, 0.15, 0.25);
+        const geoHand = new THREE.SphereGeometry(0.05, 16, 16);
+        const geoPPE = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+
+        function updateObject(id, pose, type, attachedTo = "") {
+            let obj = type === 'ppe' ? objects.ppe[id] : objects[id];
+            if (!obj) {
+                let mesh;
+                if (type === 'hmd') mesh = new THREE.Mesh(geoHead, matHead);
+                else if (type === 'hand') mesh = new THREE.Mesh(geoHand, matHand);
+                else if (type === 'ppe') mesh = new THREE.Mesh(geoPPE, matPPE);
+                scene.add(mesh);
+                obj = mesh;
+                if (type === 'ppe') objects.ppe[id] = obj;
+                else objects[id] = obj;
+
+                // Create label for this object
+                let labelText = '';
+                let labelColor = '#ffffff';
+                
+                if (type === 'hmd') {
+                    labelText = 'HMD';
+                    labelColor = '#00aaff';
+                } else if (type === 'hand') {
+                    labelText = id === 'leftHand' ? 'Left Hand' : 'Right Hand';
+                    labelColor = '#00ffaa';
+                } else if (type === 'ppe') {
+                    labelText = id.toUpperCase();
+                    labelColor = '#ffaa00';
+                }
+                
+                const label = createLabel(labelText, labelColor);
+                labels.set(obj, label);
+            }
+            obj.position.set(pose.px, pose.py, -pose.pz);
+            obj.quaternion.set(-pose.qx, pose.qy, pose.qz, -pose.qw);
+            if (type === 'ppe') {
+                if (attachedTo && attachedTo !== "") {
+                    obj.material = matPPEAttached;
+                    obj.scale.set(0.8, 0.8, 0.8);
+                } else {
+                    obj.material = matPPE;
+                    obj.scale.set(1, 1, 1);
+                }
+            }
+        }
+
+        // --- UI Functions ---
+        function updateScore(score) {
+            currentScore = score;
+            document.getElementById('score').textContent = score;
+        }
+
+        function addLog(message, type = 'info') {
+            const container = document.getElementById('log-container');
+            if (container.querySelector('.empty-state')) {
+                container.innerHTML = '';
+            }
+
+            const logItem = document.createElement('div');
+            logItem.className = `log-item ${type}`;
+            
+            const time = new Date().toLocaleTimeString(currentLang === 'pt' ? 'pt-BR' : 'en-US', { hour12: false });
+            logItem.innerHTML = `<span class="log-time">${time}</span>${message}`;
+            
+            container.insertBefore(logItem, container.firstChild);
+            
+            // Keep only last 50 logs
+            while (container.children.length > 50) {
+                container.removeChild(container.lastChild);
+            }
+        }
+
+        function updateTaskUI() {
+            const container = document.getElementById('task-list');
+            if (tasks.size === 0) return;
+            
+            container.innerHTML = '';
+            tasks.forEach((task, taskId) => {
+                const taskItem = document.createElement('div');
+                taskItem.className = `task-item ${task.status}`;
+                taskItem.innerHTML = `
+                    <div class="task-header">
+                        <div class="task-name">${task.name}</div>
+                        <div class="task-status ${task.status}">${t(task.status)}</div>
+                    </div>
+                    ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
+                `;
+                container.appendChild(taskItem);
+            });
+        }
+
+        function addOrUpdateTask(taskId, name, description, status) {
+            tasks.set(taskId, { name, description, status });
+            updateTaskUI();
+        }
+
+        function updateReportSection(report) {
+            sessionReport = report;
+            const container = document.getElementById('report-section');
+            
+            const summary = report.summary || {};
+            const minutes = Math.floor(summary.totalElapsedTime / 60);
+            const seconds = Math.floor(summary.totalElapsedTime % 60);
+            
+            container.innerHTML = `
+                <div class="report-card">
+                    <div class="report-summary">
+                        <div class="report-stat">
+                            <div class="report-stat-value">${minutes}:${seconds.toString().padStart(2, '0')}</div>
+                            <div class="report-stat-label">${t('duration')}</div>
+                        </div>
+                        <div class="report-stat">
+                            <div class="report-stat-value">${summary.totalScore || 0}</div>
+                            <div class="report-stat-label">${t('finalScore')}</div>
+                        </div>
+                        <div class="report-stat">
+                            <div class="report-stat-value">${summary.tasksCompleted || 0}/${summary.totalTasks || 0}</div>
+                            <div class="report-stat-label">${t('tasks')}</div>
+                        </div>
+                        <div class="report-stat">
+                            <div class="report-stat-value">${report.entries ? report.entries.length : 0}</div>
+                            <div class="report-stat-label">${t('events')}</div>
+                        </div>
+                    </div>
+                    <div class="report-actions">
+                        <button class="report-button primary" onclick="viewFullReport()">${t('viewFullReport')}</button>
+                        <button class="report-button secondary" onclick="downloadReport()">${t('downloadJson')}</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function viewFullReport() {
+            if (!sessionReport) return;
+            
+            const modal = document.getElementById('report-modal');
+            const modalBody = document.getElementById('modal-body');
+            
+            const summary = sessionReport.summary || {};
+            const entries = sessionReport.entries || [];
+            
+            const minutes = Math.floor(summary.totalElapsedTime / 60);
+            const seconds = Math.floor(summary.totalElapsedTime % 60);
+            
+            let html = `
+                <div class="session-summary-grid">
+                    <div class="summary-card">
+                        <div class="summary-card-value">${minutes}:${seconds.toString().padStart(2, '0')}</div>
+                        <div class="summary-card-label">${t('totalDuration')}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-card-value">${summary.totalScore || 0}</div>
+                        <div class="summary-card-label">${t('finalScore')}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-card-value">${summary.tasksCompleted || 0}</div>
+                        <div class="summary-card-label">${t('tasksCompleted')}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-card-value">${summary.totalTasks || 0}</div>
+                        <div class="summary-card-label">${t('totalTasks')}</div>
+                    </div>
+                </div>
+                
+                <h3 style="margin-bottom: 15px; color: #64c8ff;">${t('eventTimeline')}</h3>
+                <div class="timeline">
+            `;
+            
+            entries.forEach(entry => {
+                const time = new Date(entry.timestamp).toLocaleTimeString(currentLang === 'pt' ? 'pt-BR' : 'en-US', { hour12: false });
+                const eventClass = entry.eventName.toLowerCase().includes('violation') ? 'violation' : '';
+                html += `
+                    <div class="timeline-item ${eventClass}">
+                        <div class="timeline-time">${time}</div>
+                        <div class="timeline-event">${entry.eventName}</div>
+                        ${entry.details ? `<div class="timeline-details">${entry.details}</div>` : ''}
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            modalBody.innerHTML = html;
+            modal.classList.add('open');
+        }
+
+        function downloadReport() {
+            if (!sessionReport) return;
+            
+            const dataStr = JSON.stringify(sessionReport, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `session_report_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function closeReportModal() {
+            document.getElementById('report-modal').classList.remove('open');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('report-modal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeReportModal();
+            }
+        });
+
+        // --- WebSocket ---
+        function connect() {
+            const ws = new WebSocket(WS_URL);
+            const statusIndicator = document.getElementById('status-indicator');
+            const connectionStatus = document.getElementById('connection-status');
+
+            ws.onopen = () => {
+                statusIndicator.classList.add('connected');
+                connectionStatus.textContent = t('connected');
+                addLog(t('logConnected'), 'success');
+            };
+
+            ws.onclose = () => {
+                statusIndicator.classList.remove('connected');
+                connectionStatus.textContent = t('disconnected');
+                addLog(t('logDisconnected'), 'violation');
+                setTimeout(connect, 3000);
+            };
+
+            ws.onerror = (err) => console.error("WS Error", err);
+
+            ws.onmessage = (event) => {
+                try {
+                    const envelope = JSON.parse(event.data);
+                    handleEvent(envelope);
+                } catch (e) {
+                    console.error("Parse error:", e);
+                }
+            };
+        }
+
+        function handleEvent(envelope) {
+            const type = envelope.eventType;
+            const payload = envelope.payload;
+
+            switch (type) {
+                case "PoseFrame":
+                    if (payload.hmd) updateObject('hmd', payload.hmd, 'hmd');
+                    if (payload.leftHand) updateObject('leftHand', payload.leftHand, 'hand');
+                    if (payload.rightHand) updateObject('rightHand', payload.rightHand, 'hand');
+                    if (payload.ppe && Array.isArray(payload.ppe)) {
+                        payload.ppe.forEach(p => updateObject(p.id, p.pose, 'ppe', p.attachedTo));
+                    }
+                    break;
+
+                case "SessionStarted":
+                    document.getElementById('session-id').textContent = 
+                        `Session: ${payload.sessionId.substring(0, 8)}`;
+                    addLog('🎮 Training session started', 'success');
+                    break;
+
+                case "SessionManifest":
+                    if (payload.tasks) {
+                        payload.tasks.forEach(task => {
+                            addOrUpdateTask(task.taskName, task.taskName, task.description, 'pending');
+                        });
+                    }
+                    break;
+
+                case "TaskStarted":
+                    addOrUpdateTask(payload.taskId, payload.taskName, payload.taskDescription, 'active');
+                    addLog(`▶️ Started: ${payload.taskName}`);
+                    break;
+
+                case "TaskCompleted":
+                    addOrUpdateTask(payload.taskId, payload.taskName, payload.taskDescription, 'completed');
+                    addLog(`✅ Completed: ${payload.taskName}`, 'success');
+                    break;
+
+                case "TaskTimeout":
+                    addOrUpdateTask(payload.taskId, payload.taskName, payload.taskDescription, 'failed');
+                    addLog(`⏰ Timeout: ${payload.taskName}`, 'violation');
+                    break;
+
+                case "ScoreChanged":
+                    const delta = payload.delta;
+                    updateScore(payload.totalScore);
+                    if (delta > 0) {
+                        addLog(`➕ Score +${delta} (Total: ${payload.totalScore})`, 'success');
+                    } else if (delta < 0) {
+                        addLog(`➖ Score ${delta} (Total: ${payload.totalScore})`, 'violation');
+                    }
+                    break;
+
+                case "SafetyViolation":
+                    addLog(`⚠️ Safety Violation: ${payload.message}`, 'violation');
+                    break;
+
+                case "CriticalSafetyFailure":
+                    addLog(`🚨 CRITICAL: ${payload.reason}`, 'violation');
+                    break;
+
+                case "SessionCompleted":
+                    addLog(`🏁 Session Complete! Score: ${payload.totalScore}, Tasks: ${payload.tasksCompleted}/${payload.totalTasks}`, 'success');
+                    break;
+
+                case "SessionLogFile":
+                    if (payload.content) {
+                        try {
+                            const report = JSON.parse(payload.content);
+                            updateReportSection(report);
+                            addLog('📊 Session report available', 'success');
+                        } catch (e) {
+                            console.error('Failed to parse session log:', e);
+                        }
+                    }
+                    break;
+
+                case "GroupStarted":
+                    addLog(`📂 Group Started: ${payload.groupName}`);
+                    break;
+
+                case "GroupCompleted":
+                    addLog(`📁 Group Completed: ${payload.groupName}`, 'success');
+                    break;
+
+                case "SessionReset":
+                    // Clear all UI state
+                    tasks.clear();
+                    sessionReport = null;
+                    currentScore = 0;
+                    
+                    // Reset UI elements
+                    updateScore(0);
+                    document.getElementById('task-list').innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">⏳</div>
+                            <div>Waiting for session to start...</div>
+                        </div>
+                    `;
+                    document.getElementById('report-section').innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📄</div>
+                            <div>Report available after session</div>
+                        </div>
+                    `;
+                    document.getElementById('session-id').textContent = 'No Session';
+                    
+                    addLog('🔄 Session has been reset', 'info');
+                    break;
+            }
+        }
+
+        // --- Render Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            
+            // Update all label positions
+            labels.forEach((label, obj) => {
+                if (obj && obj.position) {
+                    const labelPosition = obj.position.clone();
+                    labelPosition.y += 0.15; // Offset above the object
+                    updateLabelPosition(label, labelPosition);
+                }
+            });
+            
+            renderer.render(scene, camera);
+        }
+
+        // --- Resize Handler ---
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+
+        // --- Start ---
+        connect();
+        animate();
+        updateUILanguage();
+
+        // Expose functions globally
+        window.toggleSidebar = function() {
+            document.getElementById('sidebar').classList.toggle('open');
+        };
+        
+        window.viewFullReport = viewFullReport;
+        window.downloadReport = downloadReport;
+        window.closeReportModal = closeReportModal;
+    </script>
 </body>
 </html>

@@ -6,8 +6,13 @@ using System.Text;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
+using SafetyProto.Data.ScriptableObjects;
+using SafetyProto.Core.Interfaces;
+using SafetyProto.Gameplay.Task;
 using SafetyProto.Utils;
 using UnityEngine;
+using System.IO;
+using System.Collections.Generic;
 
 namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
 {
@@ -15,7 +20,7 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
     /// Bootstraps the on-device evaluator dashboard servers (HTTP + WebSocket) and event streaming.
     /// Drop this into a boot scene to expose training telemetry over LAN.
     /// </summary>
-    public class EvaluatorDashboardBootstrap : MonoBehaviour
+    public class EvaluatorDashboardBootstrap : MonoBehaviour, ISessionResettable
     {
         [Header("Networking")]
         public int httpPort = 8080;
@@ -27,6 +32,10 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
         [Header("Event Filtering")]
         [Tooltip("If false, reduces chatter by skipping high-volume events (ActionAttempts, PPE changes).")]
         public bool verboseEvents = true;
+
+        [Header("Task Data")]
+        [Tooltip("Optional reference to map tasks to groups and order for remote dashboard UI.")]
+        [SerializeField] private TaskManager taskManager;
 
         private MiniHttpServer _httpServer;
         private EvaluatorWebSocketServer _wsServer;
@@ -69,8 +78,8 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
             var appAsset = Resources.Load<TextAsset>("Dashboard/app");
             var styleAsset = Resources.Load<TextAsset>("Dashboard/style");
 
-            var indexBytes = indexAsset != null ? Encoding.UTF8.GetBytes(indexAsset.text) : Array.Empty<byte>();
-            var appBytes = appAsset != null ? Encoding.UTF8.GetBytes(appAsset.text) : Array.Empty<byte>();
+            var indexBytes = indexAsset != null ? Encoding.UTF8.GetBytes(indexAsset.text) : null;
+            var appBytes = appAsset != null ? Encoding.UTF8.GetBytes(appAsset.text) : null;
             var styleBytes = styleAsset != null ? Encoding.UTF8.GetBytes(styleAsset.text) : null;
 
             _httpServer = new MiniHttpServer(indexBytes, appBytes, styleBytes);
@@ -140,6 +149,9 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
         private void OnSessionStarted(SessionStartedEventArgs args)
         {
             Broadcast("SessionStarted", new SessionDto(args.SessionId, ResolveTimestamp(args.TimestampMs)));
+
+            var manifest = BuildSessionManifest(args.SessionId);
+            Broadcast("SessionManifest", manifest);
         }
 
         private void OnSessionPaused(SessionPausedEventArgs args)
@@ -170,6 +182,7 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
                 orderViolationCount = args.orderViolationCount
             };
             Broadcast("SessionCompleted", dto);
+            TryBroadcastLatestSessionLog();
         }
 
         private void OnGroupStarted(TaskGroupEventArgs args)
@@ -302,13 +315,110 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
         {
             var name = args.Task != null ? args.Task.taskName : string.Empty;
             var id = args.Task != null ? args.Task.taskName : string.Empty;
+            var meta = BuildTaskMetadata(args.Task);
             return new TaskDto
             {
                 sessionId = args.SessionId,
                 taskId = id,
                 taskName = name,
+                taskDescription = meta.description,
+                hint = meta.hint,
+                groupName = meta.groupName,
+                order = meta.order,
+                executionMode = meta.executionMode,
+                expectedAction = meta.expectedAction,
+                requiredPpe = meta.requiredPpe,
+                successPoints = meta.successPoints,
+                failurePenalty = meta.failurePenalty,
+                ppePenalty = meta.ppePenalty,
                 status = status,
                 timestampMs = ResolveTimestamp(args.TimestampMs)
+            };
+        }
+
+        private TaskMetadata BuildTaskMetadata(SafetyTask task)
+        {
+            if (task == null || taskManager == null || taskManager.taskGroups == null)
+            {
+                return TaskMetadata.Empty;
+            }
+
+            string groupName = string.Empty;
+            string executionMode = string.Empty;
+            int order = -1;
+            int runningOrder = 1;
+
+            foreach (var group in taskManager.taskGroups)
+            {
+                if (group == null || group.tasks == null)
+                    continue;
+
+                foreach (var candidate in group.tasks)
+                {
+                    if (candidate == null)
+                    {
+                        runningOrder++;
+                        continue;
+                    }
+
+                    if (candidate == task)
+                    {
+                        groupName = group.groupName;
+                        executionMode = group.executionMode.ToString();
+                        order = runningOrder;
+                        goto Found;
+                    }
+
+                    runningOrder++;
+                }
+            }
+
+        Found:
+            var required = task.requiredPPE != null
+                ? task.requiredPPE.ConvertAll(p => p.ToString()).ToArray()
+                : System.Array.Empty<string>();
+
+            return new TaskMetadata
+            {
+                groupName = groupName,
+                executionMode = executionMode,
+                order = order,
+                description = task.taskDescription ?? string.Empty,
+                hint = task.hintText ?? string.Empty,
+                expectedAction = task.expectedAction.ToString(),
+                requiredPpe = required,
+                successPoints = task.successPoints,
+                failurePenalty = task.failurePenalty,
+                ppePenalty = task.ppePenalty
+            };
+        }
+
+        private SessionManifestDto BuildSessionManifest(string sessionId)
+        {
+            var dtos = new List<TaskManifestItemDto>();
+
+            if (taskManager != null && taskManager.taskGroups != null)
+            {
+                foreach (var group in taskManager.taskGroups)
+                {
+                    if (group == null) continue;
+                    foreach (var task in group.tasks)
+                    {
+                        if (task == null) continue;
+                        dtos.Add(new TaskManifestItemDto
+                        {
+                            taskName = task.taskName,
+                            groupName = group.groupName,
+                            description = task.taskDescription
+                        });
+                    }
+                }
+            }
+
+            return new SessionManifestDto
+            {
+                sessionId = sessionId,
+                tasks = dtos.ToArray()
             };
         }
 
@@ -317,9 +427,60 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
             return timestampMs != 0 ? timestampMs : DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
 
+        public void ResetSession()
+        {
+            var dto = new SessionResetDto
+            {
+                timestampMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+            };
+            Broadcast("SessionReset", dto);
+        }
+
         private void Broadcast<T>(string eventType, T payload)
         {
             _wsServer?.Broadcast(eventType, payload);
+        }
+
+        private void TryBroadcastLatestSessionLog()
+        {
+            try
+            {
+                var dir = Application.persistentDataPath;
+                if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir))
+                    return;
+
+                var files = Directory.GetFiles(dir, "session_log_*.json");
+                if (files == null || files.Length == 0)
+                    return;
+
+                string latestFile = null;
+                DateTime latestTime = DateTime.MinValue;
+                foreach (var f in files)
+                {
+                    var t = File.GetLastWriteTimeUtc(f);
+                    if (t > latestTime)
+                    {
+                        latestTime = t;
+                        latestFile = f;
+                    }
+                }
+
+                if (string.IsNullOrEmpty(latestFile))
+                    return;
+
+                var content = File.ReadAllText(latestFile);
+                var payload = new SessionLogFileDto
+                {
+                    fileName = Path.GetFileName(latestFile),
+                    path = latestFile,
+                    content = content
+                };
+                Broadcast("SessionLogFile", payload);
+            }
+            catch (Exception ex)
+            {
+                SafetyLog.Warning($"Failed to broadcast session log file: {ex.Message}", this);
+            }
         }
 
         private void LogStartupInfo()
@@ -398,8 +559,46 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
             public string sessionId;
             public string taskId;
             public string taskName;
+            public string taskDescription;
+            public string hint;
+            public string groupName;
+            public int order;
+            public string executionMode;
+            public string expectedAction;
+            public string[] requiredPpe;
+            public int successPoints;
+            public int failurePenalty;
+            public int ppePenalty;
             public string status;
             public long timestampMs;
+        }
+
+        private struct TaskMetadata
+        {
+            public string groupName;
+            public string executionMode;
+            public int order;
+            public string description;
+            public string hint;
+            public string expectedAction;
+            public string[] requiredPpe;
+            public int successPoints;
+            public int failurePenalty;
+            public int ppePenalty;
+
+            public static TaskMetadata Empty => new TaskMetadata
+            {
+                groupName = string.Empty,
+                executionMode = string.Empty,
+                order = -1,
+                description = string.Empty,
+                hint = string.Empty,
+                expectedAction = string.Empty,
+                requiredPpe = System.Array.Empty<string>(),
+                successPoints = 0,
+                failurePenalty = 0,
+                ppePenalty = 0
+            };
         }
 
         [Serializable]
@@ -460,6 +659,35 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
             public string source;
             public string message;
             public string details;
+            public long timestampMs;
+        }
+
+        [Serializable]
+        private struct SessionLogFileDto
+        {
+            public string fileName;
+            public string path;
+            public string content;
+        }
+
+        [Serializable]
+        private struct SessionManifestDto
+        {
+            public string sessionId;
+            public TaskManifestItemDto[] tasks;
+        }
+
+        [Serializable]
+        private struct TaskManifestItemDto
+        {
+            public string taskName;
+            public string groupName;
+            public string description;
+        }
+
+        [Serializable]
+        private struct SessionResetDto
+        {
             public long timestampMs;
         }
 
