@@ -1,3 +1,4 @@
+using SafetyProto.Data.Enums;
 using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Gameplay.Actions;
 

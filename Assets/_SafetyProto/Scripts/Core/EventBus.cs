@@ -249,7 +249,11 @@ namespace SafetyProto.Core
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             Enqueue(() =>
             {
-                if (verboseLogging) SafetyLog.Info($"[EventBus] ActionAttempt: {payload.ActionId}, Interactor: {payload.InteractorId}, Pos: {payload.Position?.ToString() ?? \"<none>\"}");
+                if (verboseLogging)
+                {
+                    var positionText = payload.Position.HasValue ? payload.Position.Value.ToString() : "<none>";
+                    SafetyLog.Info($"[EventBus] ActionAttempt: {payload.ActionId}, Interactor: {payload.InteractorId}, Pos: {positionText}");
+                }
                 OnActionAttemptCSharp?.Invoke(payload);
                 onActionAttempt?.Invoke(payload);
             });
