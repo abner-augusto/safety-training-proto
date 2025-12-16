@@ -8,6 +8,7 @@ using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Core.Interfaces;
+using SafetyProto.Gameplay.Events;
 using SafetyProto.Gameplay.Task;
 using SafetyProto.Utils;
 using UnityEngine;
@@ -251,19 +252,24 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
             }
         }
 
-        private void OnActionAttempt(ActionAttemptEventArgs args)
+        private void OnActionAttempt(ActionAttemptedEvent args)
         {
             if (!verboseEvents)
                 return;
+            var position = args.Position ?? Vector3.zero;
 
             var dto = new ActionAttemptDto
             {
                 sessionId = args.SessionId,
-                actionType = args.ActionType.ToString(),
+                actionId = args.ActionId,
+                sourceId = args.SourceId,
+                context = args.Context,
                 interactorId = args.InteractorId,
-                px = args.WorldPosition.x,
-                py = args.WorldPosition.y,
-                pz = args.WorldPosition.z,
+                px = position.x,
+                py = position.y,
+                pz = position.z,
+                hasPosition = args.Position.HasValue,
+                time = args.Time,
                 timestampMs = ResolveTimestamp(args.TimestampMs)
             };
             Broadcast("ActionAttempt", dto);
@@ -385,7 +391,7 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
                 order = order,
                 description = task.taskDescription ?? string.Empty,
                 hint = task.hintText ?? string.Empty,
-                expectedAction = task.expectedAction.ToString(),
+                expectedAction = task.ResolveExpectedActionId(),
                 requiredPpe = required,
                 successPoints = task.successPoints,
                 failurePenalty = task.failurePenalty,
@@ -623,11 +629,15 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
         private struct ActionAttemptDto
         {
             public string sessionId;
-            public string actionType;
+            public string actionId;
+            public string sourceId;
+            public string context;
             public int interactorId;
             public float px;
             public float py;
             public float pz;
+            public bool hasPosition;
+            public float time;
             public long timestampMs;
         }
 

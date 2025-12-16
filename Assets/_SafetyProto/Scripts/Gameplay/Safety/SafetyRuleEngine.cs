@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using SafetyProto.Core;
@@ -9,6 +10,7 @@ using SafetyProto.Gameplay.Task;
 using SafetyProto.Utils;
 using UnityEngine;
 using SafetyProto.Core.Logging;
+using SafetyProto.Gameplay.Events;
 
 namespace SafetyProto.Gameplay.Safety
 {
@@ -109,8 +111,17 @@ namespace SafetyProto.Gameplay.Safety
             _ppeStates[args.PpeType] = args.IsWearing;
         }
 
-        private void HandleActionAttempt(ActionAttemptEventArgs args)
+        private void HandleActionAttempt(ActionAttemptedEvent args)
         {
+            var actionId = args.ActionId;
+            if (string.IsNullOrWhiteSpace(actionId))
+            {
+                RaiseViolation("ACTION_ID_MISSING", "Received action attempt without a valid ActionId.", null, null);
+                return;
+            }
+
+            actionId = actionId.Trim();
+
             if (_activeGroup == null)
             {
                 RaiseViolation("NO_ACTIVE_GROUP", "Action attempted with no active task group.", null, null);
@@ -130,11 +141,11 @@ namespace SafetyProto.Gameplay.Safety
                     return;
                 }
 
-                if (_activeSequentialTask.expectedAction != args.ActionType)
+                if (!MatchesAction(_activeSequentialTask, actionId))
                 {
                     RaiseViolation(
                         "WRONG_ACTION",
-                        $"Expected {_activeSequentialTask.expectedAction} but received {args.ActionType}.",
+                        $"Expected {_activeSequentialTask.ResolveExpectedActionId()} but received {actionId}.",
                         _activeSequentialTask,
                         _activeGroup);
                     return;
@@ -144,21 +155,21 @@ namespace SafetyProto.Gameplay.Safety
             }
             else
             {
-                targetTask = _activeFreeOrderTasks.FirstOrDefault(t => t.expectedAction == args.ActionType);
+                targetTask = _activeFreeOrderTasks.FirstOrDefault(t => MatchesAction(t, actionId));
                 if (targetTask == null)
                 {
-                    if (IsActionAlreadyCompleted(args.ActionType))
+                    if (IsActionAlreadyCompleted(actionId))
                     {
                         if (verboseLogging)
                         {
-                            SafetyLog.Info($"SafetyRuleEngine: Ignoring repeat action {args.ActionType} (already completed).", this);
+                            SafetyLog.Info($"SafetyRuleEngine: Ignoring repeat action {actionId} (already completed).", this);
                         }
                         return;
                     }
 
                     RaiseViolation(
                         "WRONG_ACTION",
-                        $"Action {args.ActionType} does not match any pending task in '{_activeGroup.groupName}'.",
+                        $"Action {actionId} does not match any pending task in '{_activeGroup.groupName}'.",
                         null,
                         _activeGroup);
                     return;
@@ -168,15 +179,15 @@ namespace SafetyProto.Gameplay.Safety
             ProcessTaskAttempt(targetTask, _activeGroup);
         }
 
-        private bool IsActionAlreadyCompleted(ActionType actionType)
+        private bool IsActionAlreadyCompleted(string actionId)
         {
-            if (_activeGroup == null)
+            if (_activeGroup == null || string.IsNullOrWhiteSpace(actionId))
             {
                 return false;
             }
 
-            return _activeGroup.tasks.Any(t => t.expectedAction == actionType) &&
-                   _activeFreeOrderTasks.All(t => t.expectedAction != actionType);
+            return _activeGroup.tasks.Any(t => MatchesAction(t, actionId)) &&
+                   _activeFreeOrderTasks.All(t => !MatchesAction(t, actionId));
         }
 
         private void ProcessTaskAttempt(SafetyTask task, TaskGroup currentGroup)
@@ -247,6 +258,18 @@ namespace SafetyProto.Gameplay.Safety
                 TaskId = task != null ? task.taskName : string.Empty,
                 GroupId = group != null ? group.groupName : string.Empty
             });
+        }
+
+        private static bool MatchesAction(SafetyTask task, string actionId)
+        {
+            if (task == null || string.IsNullOrWhiteSpace(actionId))
+            {
+                return false;
+            }
+
+            var expectedId = task.ResolveExpectedActionId();
+            return !string.IsNullOrEmpty(expectedId) &&
+                   string.Equals(expectedId, actionId, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

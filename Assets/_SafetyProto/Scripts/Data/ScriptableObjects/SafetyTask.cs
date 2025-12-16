@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using SafetyProto.Data.Enums;
 using UnityEngine;
+using SafetyProto.Gameplay.Actions;
 
 namespace SafetyProto.Data.ScriptableObjects
 {
@@ -13,7 +14,9 @@ namespace SafetyProto.Data.ScriptableObjects
         public string taskDescription = "Describe the task objectives here.";
 
         [Header("Task Logic")]
-        public ActionType expectedAction = ActionType.None;
+        public ActionDefinition expectedAction;
+        [Tooltip("Auto-filled from ExpectedAction; used as a fallback identifier when the asset reference is missing.")]
+        public string expectedActionId = string.Empty;
         
         [Header("Scoring")]
         public int successPoints = 100;
@@ -26,5 +29,28 @@ namespace SafetyProto.Data.ScriptableObjects
         [Header("Guidance")]
         [TextArea(2, 4)]
         public string hintText = "Dica rápida para o participante.";
+
+        public string ResolveExpectedActionId()
+        {
+            if (expectedAction != null && !string.IsNullOrWhiteSpace(expectedAction.ActionId))
+            {
+                expectedActionId = expectedAction.ActionId;
+                return expectedAction.ActionId;
+            }
+
+            return string.IsNullOrWhiteSpace(expectedActionId) ? string.Empty : expectedActionId.Trim();
+        }
+
+        private void OnValidate()
+        {
+            if (expectedAction != null && !string.IsNullOrWhiteSpace(expectedAction.ActionId))
+            {
+                expectedActionId = expectedAction.ActionId;
+            }
+            else if (!string.IsNullOrEmpty(expectedActionId))
+            {
+                expectedActionId = expectedActionId.Trim();
+            }
+        }
     }
 }

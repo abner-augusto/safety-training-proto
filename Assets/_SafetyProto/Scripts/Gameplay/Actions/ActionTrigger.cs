@@ -1,16 +1,18 @@
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
-using SafetyProto.Data.Enums;
+using SafetyProto.Core.Logging;
 using SafetyProto.Utils;
 using UnityEngine;
-using SafetyProto.Core.Logging;
 
 namespace SafetyProto.Gameplay.Actions
 {
     public class ActionTrigger : MonoBehaviour
     {
         [Header("Action Configuration")]
-        public ActionType actionTypeToTrigger = ActionType.None;
+        [SerializeField] private ActionDefinition action;
+        [SerializeField] private string actionIdOverride = string.Empty;
+        [SerializeField] private string sourceIdOverride = string.Empty;
+        [SerializeField] private string context = string.Empty;
         public int interactorId = 0; // 0 for player, could be specific for multi-user or hands
 
         public void TriggerAction()
@@ -19,23 +21,56 @@ namespace SafetyProto.Gameplay.Actions
             {
                 return;
             }
-            
-            SafetyLog.Info($"[TriggerAction] {actionTypeToTrigger} TRIGGERED on {gameObject.name}", this);
 
-            if (actionTypeToTrigger == ActionType.None)
+            var actionId = ResolveActionId();
+            if (string.IsNullOrEmpty(actionId))
             {
-                SafetyLog.Warning($"ActionTrigger on {gameObject.name} has ActionType set to None. No event fired.", this);
+                SafetyLog.Warning($"ActionTrigger on {gameObject.name} has no ActionId configured. No event fired.", this);
                 return;
             }
 
-            var args = new ActionAttemptEventArgs(
-                actionTypeToTrigger,
-                interactorId,
-                transform.position
-            );
+            var sourceId = string.IsNullOrWhiteSpace(sourceIdOverride) ? gameObject.name : sourceIdOverride.Trim();
+            ActionEvents.PublishActionAttempt(
+                actionId,
+                sourceId,
+                string.IsNullOrWhiteSpace(context) ? null : context.Trim(),
+                transform.position,
+                interactorId);
 
-            ActionEvents.RaiseActionAttempt(args);
-            SafetyLog.Info($"ActionTrigger on {gameObject.name} Fired Action: {actionTypeToTrigger}", this);
+            SafetyLog.Info($"ActionTrigger on {gameObject.name} Fired Action: {actionId}", this);
+        }
+
+        private void OnValidate()
+        {
+            if (action != null && !string.IsNullOrWhiteSpace(action.ActionId))
+            {
+                actionIdOverride = action.ActionId;
+            }
+            else if (!string.IsNullOrEmpty(actionIdOverride))
+            {
+                actionIdOverride = actionIdOverride.Trim();
+            }
+
+            if (!string.IsNullOrEmpty(sourceIdOverride))
+            {
+                sourceIdOverride = sourceIdOverride.Trim();
+            }
+
+            if (!string.IsNullOrEmpty(context))
+            {
+                context = context.Trim();
+            }
+        }
+
+        private string ResolveActionId()
+        {
+            if (action != null && !string.IsNullOrWhiteSpace(action.ActionId))
+            {
+                actionIdOverride = action.ActionId;
+                return action.ActionId;
+            }
+
+            return string.IsNullOrWhiteSpace(actionIdOverride) ? string.Empty : actionIdOverride.Trim();
         }
     }
 }

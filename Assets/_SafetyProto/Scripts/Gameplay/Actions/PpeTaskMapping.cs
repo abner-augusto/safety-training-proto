@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Data.Enums;
-using SafetyProto.Gameplay.PPE;
+using SafetyProto.Gameplay.Actions;
 using SafetyProto.Gameplay.Task;
 using SafetyProto.Utils;
 using UnityEngine;
@@ -13,15 +13,26 @@ namespace SafetyProto.Gameplay.PPE
     [Serializable]
     public class PpeTaskMappingEntry
     {
-        public string name;                       // just for inspector readability
-        public ActionType actionToTrigger;        // must match SafetyTask.expectedAction
-        public List<PPEType> requiredPpe = new(); // which PPE must be valid
+        public string name;
+        public ActionDefinition action;
+        public string actionIdOverride;
+        public List<PPEType> requiredPpe = new();
+
+        public string ResolveActionId()
+        {
+            if (action != null && !string.IsNullOrWhiteSpace(action.ActionId))
+            {
+                actionIdOverride = action.ActionId;
+                return action.ActionId;
+            }
+
+            return string.IsNullOrWhiteSpace(actionIdOverride) ? string.Empty : actionIdOverride.Trim();
+        }
     }
 
     /// <summary>
-    /// For each mapping, when all its required PPE are compliant and there is
-    /// a pending task with that ActionType, emits an ActionAttempt so the
-    /// SafetyRuleEngine can complete the task normally.
+    /// When PPE becomes compliant for a mapping and that action is pending in the current task group,
+    /// emits an action attempt so the normal task flow can complete.
     /// </summary>
     public class PpeTaskMapping : MonoBehaviour
     {
@@ -77,22 +88,23 @@ namespace SafetyProto.Gameplay.PPE
 
             foreach (var mapping in mappings)
             {
-                if (mapping == null || mapping.actionToTrigger == ActionType.None)
+                if (mapping == null)
                     continue;
 
-                // 1) Are all PPE in this mapping compliant?
+                var actionId = mapping.ResolveActionId();
+                if (string.IsNullOrEmpty(actionId))
+                    continue;
+
                 if (!ppeManager.VerifyPPECompliance(mapping.requiredPpe))
                     continue;
 
-                // 2) Is there a pending task with this action type in the CURRENT group?
-                var pending = taskManager.FindPendingTaskByAction(mapping.actionToTrigger);
+                var pending = taskManager.FindPendingTaskByActionId(actionId);
                 if (pending == null)
                     continue;
 
-                // 3) Emit ActionAttempt so SafetyRuleEngine handles everything
-                var pos = playerTransform != null ? playerTransform.position : transform.position;
-                var args = new ActionAttemptEventArgs(mapping.actionToTrigger, interactorId, pos);
-                ActionEvents.RaiseActionAttempt(args);
+                var position = playerTransform != null ? playerTransform.position : transform.position;
+                var sourceId = string.IsNullOrWhiteSpace(mapping.name) ? nameof(PpeTaskMapping) : mapping.name.Trim();
+                ActionEvents.PublishActionAttempt(actionId, sourceId, "ppe_mapping", position, interactorId);
             }
         }
 

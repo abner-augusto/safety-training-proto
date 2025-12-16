@@ -1,5 +1,5 @@
-using SafetyProto.Data.Enums;
 using SafetyProto.Data.ScriptableObjects;
+using SafetyProto.Gameplay.Actions;
 
 namespace SafetyProto.Gameplay.Task
 {
@@ -26,6 +26,7 @@ namespace SafetyProto.Gameplay.Task
         }
 
         public string taskName => TaskData.taskName;
-        public ActionType expectedAction => TaskData.expectedAction;
+        public ActionDefinition ExpectedAction => TaskData.expectedAction;
+        public string ExpectedActionId => TaskData?.ResolveExpectedActionId() ?? string.Empty;
     }
 }

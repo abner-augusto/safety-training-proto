@@ -6,6 +6,7 @@ using SafetyProto.Core.Logging;
 using SafetyProto.Utils;
 using TMPro;
 using UnityEngine;
+using SafetyProto.Gameplay.Events;
 
 namespace SafetyProto.UI
 {
@@ -158,9 +159,10 @@ namespace SafetyProto.UI
             AppendLog($"[PPE] {args.PpeType}: {(args.IsWearing ? "WORN" : "REMOVED")}");
         }
 
-        private void OnActionAttempt(ActionAttemptEventArgs args)
+        private void OnActionAttempt(ActionAttemptedEvent args)
         {
-            AppendLog($"[Action] {args.ActionType} @ {args.WorldPosition}");
+            var positionText = args.Position?.ToString() ?? "<no position>";
+            AppendLog($"[Action] {args.ActionId} @ {positionText}");
         }
 
         private void OnSafetyViolation(SafetyViolationEventArgs args)

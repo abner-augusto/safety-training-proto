@@ -6,6 +6,7 @@ using SafetyProto.Data.Enums;
 using SafetyProto.Gameplay.Task;
 using SafetyProto.Utils;
 using UnityEngine;
+using SafetyProto.Gameplay.Events;
 
 namespace SafetyProto.Gameplay.Feedback
 {
@@ -47,7 +48,7 @@ namespace SafetyProto.Gameplay.Feedback
             }
         }
 
-        private void CacheInteractor(ActionAttemptEventArgs args)
+        private void CacheInteractor(ActionAttemptedEvent args)
         {
             _lastInteractorId = args.InteractorId;
         }

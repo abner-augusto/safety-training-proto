@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
+using SafetyProto.Gameplay.Events;
 
 namespace SafetyProto.Tests.Editor
 {
@@ -40,7 +41,7 @@ namespace SafetyProto.Tests.Editor
             SessionEvents.RaiseSessionStarted();
             TaskEvents.RaiseTaskStarted(new TaskEventArgs());
 
-            ActionEvents.RaiseActionAttempt(new ActionAttemptEventArgs());
+            ActionEvents.PublishActionAttempt("test_action");
             ProcessEvents();
 
             Assert.IsTrue(_taskCompleted, "Expected TaskCompleted event to fire via simulated rule engine.");
@@ -55,7 +56,7 @@ namespace SafetyProto.Tests.Editor
             SessionEvents.RaiseSessionStarted();
             TaskEvents.RaiseTaskStarted(new TaskEventArgs());
 
-            ActionEvents.RaiseActionAttempt(new ActionAttemptEventArgs());
+            ActionEvents.PublishActionAttempt("test_action");
             ProcessEvents();
 
             Assert.IsTrue(_safetyViolation, "Expected SafetyViolation event when PPE is missing.");
@@ -78,12 +79,12 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual(50, _score);
         }
 
-        private void SimulateRuleEngine(ActionAttemptEventArgs _)
+        private void SimulateRuleEngine(ActionAttemptedEvent _)
         {
             TaskEvents.RaiseTaskCompleted(new TaskEventArgs());
         }
 
-        private void SimulateViolationRule(ActionAttemptEventArgs _)
+        private void SimulateViolationRule(ActionAttemptedEvent _)
         {
             SafetyEvents.RaiseSafetyViolation(new SafetyViolationEventArgs
             {

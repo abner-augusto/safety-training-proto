@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using SafetyProto.Core;
@@ -255,8 +256,14 @@ namespace SafetyProto.Gameplay.Task
                 ? taskGroups[_currentGroupIndex]
                 : null;
 
-        public RuntimeSafetyTask FindPendingTaskByAction(ActionType actionType)
+        public RuntimeSafetyTask FindPendingTaskByActionId(string actionId)
         {
+            if (string.IsNullOrWhiteSpace(actionId))
+            {
+                return null;
+            }
+
+            var normalized = actionId.Trim();
             var currentGroup = GetCurrentGroup();
             if (currentGroup == null)
             {
@@ -265,7 +272,7 @@ namespace SafetyProto.Gameplay.Task
 
             if (currentGroup.executionMode == TaskExecutionMode.Sequential)
             {
-                if (_currentTask != null && _currentTask.expectedAction == actionType)
+                if (MatchesAction(_currentTask, normalized))
                 {
                     return _currentTask;
                 }
@@ -277,7 +284,19 @@ namespace SafetyProto.Gameplay.Task
                 .Where(t =>
                     (t.State == TaskState.NotStarted || t.State == TaskState.InProgress) &&
                     currentGroup.tasks.Contains(t.TaskData))
-                .FirstOrDefault(t => t.expectedAction == actionType);
+                .FirstOrDefault(t => MatchesAction(t, normalized));
+        }
+
+        private static bool MatchesAction(RuntimeSafetyTask task, string actionId)
+        {
+            if (task == null)
+            {
+                return false;
+            }
+
+            var expected = task.ExpectedActionId;
+            return !string.IsNullOrEmpty(expected) &&
+                   string.Equals(expected, actionId, StringComparison.OrdinalIgnoreCase);
         }
 
         private RuntimeSafetyTask GetRuntimeTask(TaskEventArgs args)

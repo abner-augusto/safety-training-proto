@@ -8,6 +8,7 @@ using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
 using SafetyProto.Utils;
 using UnityEngine;
+using SafetyProto.Gameplay.Events;
 
 namespace SafetyProto.Utils
 {
@@ -106,8 +107,8 @@ namespace SafetyProto.Utils
             WriteLogToFile();
         }
 
-        private void OnActionAttempt(ActionAttemptEventArgs args)
-            => LogEvent("ActionAttempt", args.ActionType.ToString(), args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
+        private void OnActionAttempt(ActionAttemptedEvent args)
+            => LogEvent("ActionAttempt", args.ActionId, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
         private void OnPpeStateChanged(PPEStateChangedEventArgs args)
             => LogEvent("PpeStateChanged", $"PPE={args.PpeType}, Wearing={args.IsWearing}", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
         private void OnTaskStarted(TaskEventArgs args)

@@ -6,30 +6,6 @@ using UnityEngine;
 namespace SafetyProto.Core
 {
     [System.Serializable]
-    public struct ActionAttemptEventArgs
-    {
-        public string SessionId;
-        public string PlayerId;
-        public string ScenarioId;
-        public long TimestampMs;
-
-        public ActionType ActionType;
-        public int InteractorId; // Could be player ID or specific hand/controller
-        public Vector3 WorldPosition;
-
-        public ActionAttemptEventArgs(ActionType actionType, int interactorId, Vector3 worldPosition)
-        {
-            SessionId = string.Empty;
-            PlayerId = string.Empty;
-            ScenarioId = string.Empty;
-            TimestampMs = 0L;
-            ActionType = actionType;
-            InteractorId = interactorId;
-            WorldPosition = worldPosition;
-        }
-    }
-
-    [System.Serializable]
     public struct PPEStateChangedEventArgs
     {
         public string SessionId;

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
+using SafetyProto.Gameplay.Events;
 using UnityEngine;
 using UnityEngine.Events;
 using Stopwatch = System.Diagnostics.Stopwatch;
@@ -155,7 +156,7 @@ namespace SafetyProto.Core
         public static event Action<SessionPausedEventArgs> OnSessionPausedCSharp;
         public static event Action<SessionResumedEventArgs> OnSessionResumedCSharp;
         public static event Action<SessionEndedEventArgs> OnSessionEndedCSharp;
-        public static event Action<ActionAttemptEventArgs> OnActionAttemptCSharp;
+        public static event Action<ActionAttemptedEvent> OnActionAttemptCSharp;
         public static event Action<PPEStateChangedEventArgs> OnPpeStateChangedCSharp;
         public static event Action<TaskEventArgs> OnTaskStartedCSharp;
         public static event Action<TaskEventArgs> OnTaskCompletedCSharp;
@@ -175,7 +176,7 @@ namespace SafetyProto.Core
         public UnityEvent<SessionEndedEventArgs> onSessionEnded;
 
         [Header("Gameplay Events")]
-        public UnityEvent<ActionAttemptEventArgs> onActionAttempt;
+        public UnityEvent<ActionAttemptedEvent> onActionAttempt;
         public UnityEvent<PPEStateChangedEventArgs> onPpeStateChanged;
         public UnityEvent<TaskEventArgs> onTaskStarted;
         public UnityEvent<TaskEventArgs> onTaskCompleted;
@@ -242,13 +243,13 @@ namespace SafetyProto.Core
             });
         }
 
-        public void RaiseActionAttempt(ActionAttemptEventArgs args)
+        public void RaiseActionAttempt(ActionAttemptedEvent args)
         {
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             Enqueue(() =>
             {
-                if (verboseLogging) SafetyLog.Info($"[EventBus] ActionAttempt: {payload.ActionType}, Interactor: {payload.InteractorId}, Pos: {payload.WorldPosition}");
+                if (verboseLogging) SafetyLog.Info($"[EventBus] ActionAttempt: {payload.ActionId}, Interactor: {payload.InteractorId}, Pos: {payload.Position?.ToString() ?? \"<none>\"}");
                 OnActionAttemptCSharp?.Invoke(payload);
                 onActionAttempt?.Invoke(payload);
             });
