@@ -1,4 +1,5 @@
 using SafetyProto.Core.Logging;
+using SafetyProto.Gameplay.Actions;
 using SafetyProto.Gameplay.Events;
 using UnityEngine;
 
@@ -20,6 +21,7 @@ namespace SafetyProto.Core.Events
             }
 
             var normalized = actionId.Trim();
+            ActionResolver.TryResolve(normalized, out _);
             Publish(new ActionAttemptedEvent(normalized, sourceId, context, position, interactorId));
         }
     }

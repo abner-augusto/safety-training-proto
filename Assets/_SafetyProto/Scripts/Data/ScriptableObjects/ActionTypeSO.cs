@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.Actions
+namespace SafetyProto.Data.ScriptableObjects
 {
-    [CreateAssetMenu(fileName = "ActionDefinition", menuName = "SafetyProto/Actions/ActionDefinition", order = 0)]
-    public class ActionDefinition : ScriptableObject
+    [CreateAssetMenu(fileName = "ActionType", menuName = "SafetyProto/Actions/ActionType", order = 0)]
+    public class ActionTypeSO : ScriptableObject
     {
         [Header("Identification")]
         [SerializeField] private string actionId = string.Empty;
@@ -55,11 +55,17 @@ namespace SafetyProto.Gameplay.Actions
         public int BaseScore => baseScore;
         public int Severity => severity;
 
+        public override string ToString() => DisplayName;
+
         private void OnValidate()
         {
-            if (!string.IsNullOrEmpty(actionId))
+            if (string.IsNullOrWhiteSpace(actionId))
             {
-                actionId = actionId.Trim();
+                actionId = GenerateIdFromName(displayName);
+            }
+            else
+            {
+                actionId = SanitizeId(actionId);
             }
 
             if (!string.IsNullOrEmpty(displayName))
@@ -71,6 +77,45 @@ namespace SafetyProto.Gameplay.Actions
             {
                 telemetryNameOverride = telemetryNameOverride.Trim();
             }
+        }
+
+        private static string GenerateIdFromName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return string.Empty;
+            }
+
+            return SanitizeId(name);
+        }
+
+        private static string SanitizeId(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            value = value.Trim().ToLowerInvariant();
+            Span<char> buffer = stackalloc char[value.Length];
+            var length = 0;
+            foreach (var c in value)
+            {
+                if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9'))
+                {
+                    buffer[length++] = c;
+                }
+                else if (c == '-' || c == '_' || c == '.')
+                {
+                    buffer[length++] = c;
+                }
+                else if (char.IsWhiteSpace(c))
+                {
+                    buffer[length++] = '_';
+                }
+            }
+
+            return new string(buffer.Slice(0, length));
         }
 
         [Serializable]

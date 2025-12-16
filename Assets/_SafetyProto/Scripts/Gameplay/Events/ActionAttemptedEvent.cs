@@ -1,4 +1,5 @@
 using System;
+using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Gameplay.Actions;
 using UnityEngine;
 
@@ -38,7 +39,7 @@ namespace SafetyProto.Gameplay.Events
             Time = UnityEngine.Time.time;
         }
 
-        public ActionDefinition ResolveDefinition()
+        public ActionTypeSO ResolveDefinition()
         {
             return string.IsNullOrWhiteSpace(ActionId) ? null : ActionResolver.Resolve(ActionId);
         }

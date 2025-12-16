@@ -1,6 +1,7 @@
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
+using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Utils;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ namespace SafetyProto.Gameplay.Actions
     public class ActionTrigger : MonoBehaviour
     {
         [Header("Action Configuration")]
-        [SerializeField] private ActionDefinition action;
+        [SerializeField] private ActionTypeSO action;
         [SerializeField] private string actionIdOverride = string.Empty;
         [SerializeField] private string sourceIdOverride = string.Empty;
         [SerializeField] private string context = string.Empty;
@@ -22,7 +23,7 @@ namespace SafetyProto.Gameplay.Actions
                 return;
             }
 
-            var actionId = ResolveActionId();
+            var actionId = GetConfiguredActionId();
             if (string.IsNullOrEmpty(actionId))
             {
                 SafetyLog.Warning($"ActionTrigger on {gameObject.name} has no ActionId configured. No event fired.", this);
@@ -62,12 +63,11 @@ namespace SafetyProto.Gameplay.Actions
             }
         }
 
-        private string ResolveActionId()
+        private string GetConfiguredActionId()
         {
             if (action != null && !string.IsNullOrWhiteSpace(action.ActionId))
             {
-                actionIdOverride = action.ActionId;
-                return action.ActionId;
+                return action.ActionId.Trim();
             }
 
             return string.IsNullOrWhiteSpace(actionIdOverride) ? string.Empty : actionIdOverride.Trim();

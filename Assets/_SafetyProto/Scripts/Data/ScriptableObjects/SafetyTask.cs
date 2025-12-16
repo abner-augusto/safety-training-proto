@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using SafetyProto.Data.Enums;
 using UnityEngine;
-using SafetyProto.Gameplay.Actions;
 
 namespace SafetyProto.Data.ScriptableObjects
 {
@@ -14,7 +13,7 @@ namespace SafetyProto.Data.ScriptableObjects
         public string taskDescription = "Describe the task objectives here.";
 
         [Header("Task Logic")]
-        public ActionDefinition expectedAction;
+        public ActionTypeSO expectedAction;
         [Tooltip("Auto-filled from ExpectedAction; used as a fallback identifier when the asset reference is missing.")]
         public string expectedActionId = string.Empty;
         

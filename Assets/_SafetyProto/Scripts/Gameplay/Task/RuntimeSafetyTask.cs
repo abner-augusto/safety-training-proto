@@ -1,6 +1,5 @@
 using SafetyProto.Data.Enums;
 using SafetyProto.Data.ScriptableObjects;
-using SafetyProto.Gameplay.Actions;
 
 namespace SafetyProto.Gameplay.Task
 {
@@ -20,6 +19,9 @@ namespace SafetyProto.Gameplay.Task
 
         public float CompletionTime { get; set; }
 
+        public bool IsValid { get; private set; } = true;
+        public string InvalidReason { get; private set; }
+
         public RuntimeSafetyTask(SafetyTask taskData)
         {
             TaskData = taskData;
@@ -27,7 +29,17 @@ namespace SafetyProto.Gameplay.Task
         }
 
         public string taskName => TaskData.taskName;
-        public ActionDefinition ExpectedAction => TaskData.expectedAction;
+        public ActionTypeSO ExpectedAction => TaskData.expectedAction;
         public string ExpectedActionId => TaskData?.ResolveExpectedActionId() ?? string.Empty;
+
+        public void MarkInvalid(string reason)
+        {
+            IsValid = false;
+            InvalidReason = reason;
+            if (State == TaskState.NotStarted || State == TaskState.InProgress)
+            {
+                State = TaskState.CompletedFailure;
+            }
+        }
     }
 }

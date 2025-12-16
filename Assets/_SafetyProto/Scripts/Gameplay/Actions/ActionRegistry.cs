@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SafetyProto.Data.ScriptableObjects;
 using UnityEngine;
 
 namespace SafetyProto.Gameplay.Actions
@@ -7,11 +8,11 @@ namespace SafetyProto.Gameplay.Actions
     [CreateAssetMenu(fileName = "ActionRegistry", menuName = "SafetyProto/Actions/ActionRegistry", order = 1)]
     public class ActionRegistry : ScriptableObject
     {
-        [SerializeField] private List<ActionDefinition> actions = new List<ActionDefinition>();
+        [SerializeField] private List<ActionTypeSO> actions = new List<ActionTypeSO>();
 
-        private readonly Dictionary<string, ActionDefinition> _lookup = new Dictionary<string, ActionDefinition>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, ActionTypeSO> _lookup = new Dictionary<string, ActionTypeSO>(StringComparer.OrdinalIgnoreCase);
 
-        public IReadOnlyList<ActionDefinition> Actions => actions;
+        public IReadOnlyList<ActionTypeSO> Actions => actions;
 
         private void OnEnable()
         {
@@ -24,7 +25,7 @@ namespace SafetyProto.Gameplay.Actions
             RebuildLookup();
         }
 
-        public bool TryGet(string actionId, out ActionDefinition action)
+        public bool TryGet(string actionId, out ActionTypeSO action)
         {
             action = null;
 
@@ -37,7 +38,7 @@ namespace SafetyProto.Gameplay.Actions
             return _lookup.TryGetValue(NormalizeId(actionId), out action);
         }
 
-        public ActionDefinition GetOrThrow(string actionId)
+        public ActionTypeSO GetOrThrow(string actionId)
         {
             if (TryGet(actionId, out var action))
             {

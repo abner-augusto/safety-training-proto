@@ -1,5 +1,6 @@
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
+using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Gameplay.Events;
 using SafetyProto.Utils;
 using UnityEngine;
@@ -13,7 +14,7 @@ namespace SafetyProto.Gameplay.Actions
     public class ActionEmitter : MonoBehaviour
     {
         [Header("Action")]
-        [SerializeField] private ActionDefinition action;
+        [SerializeField] private ActionTypeSO action;
         [SerializeField] private string actionIdOverride = string.Empty;
 
         [Header("Metadata")]
@@ -35,6 +36,8 @@ namespace SafetyProto.Gameplay.Actions
             }
         }
 
+        public string ConfiguredActionId => GetConfiguredActionId();
+
         public void Emit()
         {
             if (!this.IsEventBusReady())
@@ -42,7 +45,7 @@ namespace SafetyProto.Gameplay.Actions
                 return;
             }
 
-            var actionId = ResolveActionId();
+            var actionId = GetConfiguredActionId();
             if (string.IsNullOrEmpty(actionId))
             {
                 SafetyLog.Warning($"[ActionEmitter] No ActionId configured on {name}. Skipping emit.", this);
@@ -72,12 +75,11 @@ namespace SafetyProto.Gameplay.Actions
             return Time.time >= _lastEmitTime + debounceSeconds;
         }
 
-        private string ResolveActionId()
+        private string GetConfiguredActionId()
         {
             if (action != null && !string.IsNullOrWhiteSpace(action.ActionId))
             {
-                actionIdOverride = action.ActionId;
-                return action.ActionId;
+                return action.ActionId.Trim();
             }
 
             return string.IsNullOrWhiteSpace(actionIdOverride) ? string.Empty : actionIdOverride.Trim();

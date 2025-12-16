@@ -1,9 +1,12 @@
+using System;
+using System.Collections.Generic;
+using SafetyProto.Data.ScriptableObjects;
 using UnityEngine;
 
 namespace SafetyProto.Gameplay.Actions
 {
     /// <summary>
-    /// Runtime helper that resolves action IDs to their associated ActionDefinition assets.
+    /// Runtime helper that resolves action IDs to their associated ActionTypeSO assets.
     /// </summary>
     public static class ActionResolver
     {
@@ -11,6 +14,9 @@ namespace SafetyProto.Gameplay.Actions
 
         private static ActionRegistry _registry;
         private static bool _hasLoggedMissingRegistry;
+        private static readonly HashSet<string> MissingActions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private const int MaxMissingWarnings = 10;
+        private static int _missingWarningCount;
 
         /// <summary>
         /// Overrides the registry used for lookups. Useful for tests or bootstrap code.
@@ -19,12 +25,14 @@ namespace SafetyProto.Gameplay.Actions
         {
             _registry = registry;
             _hasLoggedMissingRegistry = false;
+            MissingActions.Clear();
+            _missingWarningCount = 0;
         }
 
         /// <summary>
         /// Resolves an action ID to its definition. Returns null when not found.
         /// </summary>
-        public static ActionDefinition Resolve(string actionId)
+        public static ActionTypeSO Resolve(string actionId)
         {
             return TryResolve(actionId, out var definition) ? definition : null;
         }
@@ -32,7 +40,7 @@ namespace SafetyProto.Gameplay.Actions
         /// <summary>
         /// Attempts to resolve an action ID to its definition.
         /// </summary>
-        public static bool TryResolve(string actionId, out ActionDefinition definition)
+        public static bool TryResolve(string actionId, out ActionTypeSO definition)
         {
             definition = null;
 
@@ -41,12 +49,21 @@ namespace SafetyProto.Gameplay.Actions
                 return false;
             }
 
+            var normalized = actionId.Trim();
+
             if (!EnsureRegistryLoaded())
             {
+                WarnMissingAction(normalized, $"Action '{normalized}' requested but ActionRegistry is not loaded.");
                 return false;
             }
 
-            return _registry.TryGet(actionId, out definition);
+            if (_registry.TryGet(normalized, out definition))
+            {
+                return true;
+            }
+
+            WarnMissingAction(normalized, $"Action '{normalized}' not found in registry.");
+            return false;
         }
 
         private static bool EnsureRegistryLoaded()
@@ -65,6 +82,32 @@ namespace SafetyProto.Gameplay.Actions
             }
 
             return _registry != null;
+        }
+
+        private static void WarnMissingAction(string actionId, string message)
+        {
+            if (string.IsNullOrEmpty(actionId))
+            {
+                return;
+            }
+
+            if (!MissingActions.Add(actionId))
+            {
+                return;
+            }
+
+            if (_missingWarningCount >= MaxMissingWarnings)
+            {
+                if (_missingWarningCount == MaxMissingWarnings)
+                {
+                    Debug.LogWarning("[ActionResolver] Additional missing action warnings suppressed.");
+                    _missingWarningCount++;
+                }
+                return;
+            }
+
+            _missingWarningCount++;
+            Debug.LogWarning($"[ActionResolver] {message}");
         }
     }
 }

@@ -6,6 +6,7 @@ using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Data.Enums;
 using SafetyProto.Data.ScriptableObjects;
+using SafetyProto.Gameplay.Actions;
 using SafetyProto.Utils;
 using UnityEngine;
 using SafetyProto.Core.Logging;
@@ -76,15 +77,69 @@ namespace SafetyProto.Gameplay.Task
         private void InitializeRuntimeTasks()
         {
             _sessionTasks.Clear();
+            if (taskGroups == null)
+            {
+                _currentTaskIndex = -1;
+                return;
+            }
+
             foreach (var group in taskGroups)
             {
+                if (group == null || group.tasks == null)
+                {
+                    continue;
+                }
+
                 foreach (var taskData in group.tasks)
                 {
-                    _sessionTasks.Add(new RuntimeSafetyTask(taskData));
+                    if (taskData == null)
+                    {
+                        continue;
+                    }
+
+                    var runtimeTask = new RuntimeSafetyTask(taskData);
+                    ValidateRuntimeTask(runtimeTask);
+                    _sessionTasks.Add(runtimeTask);
                 }
             }
 
             _currentTaskIndex = -1;
+        }
+
+        private void ValidateRuntimeTask(RuntimeSafetyTask runtimeTask)
+        {
+            if (runtimeTask == null || runtimeTask.TaskData == null)
+            {
+                return;
+            }
+
+            var actionId = runtimeTask.ExpectedActionId;
+            if (string.IsNullOrEmpty(actionId))
+            {
+                runtimeTask.MarkInvalid("Expected action id missing.");
+                ReportInvalidTask(runtimeTask.TaskData, "Expected action id missing.");
+                return;
+            }
+
+            if (!ActionResolver.TryResolve(actionId, out _))
+            {
+                runtimeTask.MarkInvalid($"Action '{actionId}' not found.");
+                ReportInvalidTask(runtimeTask.TaskData, $"Action '{actionId}' not found in registry.");
+            }
+        }
+
+        private void ReportInvalidTask(SafetyTask task, string reason)
+        {
+            var taskName = task != null ? task.taskName : "<null>";
+            var message = $"Task '{taskName}' invalid: {reason}";
+            SafetyLog.Error($"[TaskManager] {message}", this);
+
+            SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
+            {
+                Source = nameof(TaskManager),
+                Message = "Invalid task configuration",
+                Details = message
+            });
         }
 
         private void HandleTaskCompletion(TaskEventArgs args)

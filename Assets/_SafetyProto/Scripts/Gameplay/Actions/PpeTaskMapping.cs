@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Data.Enums;
-using SafetyProto.Gameplay.Actions;
+using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Gameplay.Task;
 using SafetyProto.Utils;
 using UnityEngine;
@@ -14,7 +14,7 @@ namespace SafetyProto.Gameplay.PPE
     public class PpeTaskMappingEntry
     {
         public string name;
-        public ActionDefinition action;
+        public ActionTypeSO action;
         public string actionIdOverride;
         public List<PPEType> requiredPpe = new();
 
