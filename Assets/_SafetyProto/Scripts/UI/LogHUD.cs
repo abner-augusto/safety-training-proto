@@ -19,6 +19,7 @@ namespace SafetyProto.UI
 
         private readonly Queue<string> _entries = new();
         private readonly StringBuilder _allLogs = new();
+        private readonly StringBuilder _displayBuilder = new();
 
         private void OnEnable()
         {
@@ -194,13 +195,36 @@ namespace SafetyProto.UI
             {
                 _entries.Enqueue(message);
                 _allLogs.AppendLine(message);
-                while (_entries.Count > maxLines)
+
+                if (_entries.Count > maxLines)
                 {
                     _entries.Dequeue();
+                    RebuildDisplayBuilder();
+                }
+                else
+                {
+                    if (_displayBuilder.Length > 0)
+                    {
+                        _displayBuilder.Append('\n');
+                    }
+                    _displayBuilder.Append(message);
                 }
             }
 
             RefreshDisplay();
+        }
+
+        private void RebuildDisplayBuilder()
+        {
+            _displayBuilder.Clear();
+            bool first = true;
+            foreach (var entry in _entries)
+            {
+                if (!first)
+                    _displayBuilder.Append('\n');
+                _displayBuilder.Append(entry);
+                first = false;
+            }
         }
 
         private void RefreshDisplay()
@@ -212,7 +236,7 @@ namespace SafetyProto.UI
 
             lock (_entries)
             {
-                logText.text = string.Join("\n", _entries);
+                logText.SetText(_displayBuilder);
             }
             Canvas.ForceUpdateCanvases();
         }

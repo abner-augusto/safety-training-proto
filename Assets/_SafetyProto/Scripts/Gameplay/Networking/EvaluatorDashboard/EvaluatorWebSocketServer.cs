@@ -85,7 +85,15 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
                 return;
 
             var payload = Encoding.UTF8.GetBytes(json);
-            var frame = BuildFrame(payload);
+            BroadcastUtf8(payload, payload.Length);
+        }
+
+        public void BroadcastUtf8(byte[] utf8Json, int length)
+        {
+            if (!_running || utf8Json == null || length <= 0)
+                return;
+
+            var frame = BuildTextFrame(utf8Json, length);
 
             List<ClientConnection> disconnected = null;
 
@@ -298,31 +306,35 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
 
         private static byte[] BuildFrame(byte[] payload)
         {
+            return BuildTextFrame(payload, payload.Length);
+        }
+
+        private static byte[] BuildTextFrame(byte[] payload, int payloadLength)
+        {
             using var ms = new MemoryStream();
             ms.WriteByte(0x81); // FIN + text frame
 
-            var length = payload.Length;
-            if (length <= 125)
+            if (payloadLength <= 125)
             {
-                ms.WriteByte((byte)length);
+                ms.WriteByte((byte)payloadLength);
             }
-            else if (length <= ushort.MaxValue)
+            else if (payloadLength <= ushort.MaxValue)
             {
                 ms.WriteByte(126);
-                ms.WriteByte((byte)((length >> 8) & 0xFF));
-                ms.WriteByte((byte)(length & 0xFF));
+                ms.WriteByte((byte)((payloadLength >> 8) & 0xFF));
+                ms.WriteByte((byte)(payloadLength & 0xFF));
             }
             else
             {
                 ms.WriteByte(127);
-                var len = (ulong)length;
+                var len = (ulong)payloadLength;
                 for (int i = 7; i >= 0; i--)
                 {
                     ms.WriteByte((byte)((len >> (8 * i)) & 0xFF));
                 }
             }
 
-            ms.Write(payload, 0, payload.Length);
+            ms.Write(payload, 0, payloadLength);
             return ms.ToArray();
         }
 

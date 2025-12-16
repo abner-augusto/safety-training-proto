@@ -95,7 +95,7 @@ namespace SafetyProto.Core
 
         private const int MaxQueueWarningThreshold = 1000;
 
-        public void ProcessEvents(int maxMillis = 2)
+        public void ProcessEvents(double maxMillis = 2)
         {
             if (_eventQueue.Count == 0)
             {
@@ -131,7 +131,7 @@ namespace SafetyProto.Core
                     });
                 }
 
-                if (_stopwatch.ElapsedMilliseconds >= maxMillis)
+                if (_stopwatch.Elapsed.TotalMilliseconds >= maxMillis)
                 {
                     break;
                 }

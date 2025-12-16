@@ -10,6 +10,7 @@ namespace SafetyProto.UI
         [Tooltip("Assign your TimerSystem here (not EventBus).")]
         public TimerSystem timerSystem;
         private TextMeshProUGUI _timerText;
+        private int _lastDisplayedSecond = -1;
 
         private void Start()
         {
@@ -44,15 +45,23 @@ namespace SafetyProto.UI
 
         private void UpdateTimeDisplay(float timeRemaining)
         {
-            if (timeRemaining > 0)
+            if (timeRemaining > 0f)
             {
-                int minutes = Mathf.FloorToInt(timeRemaining / 60F);
-                int seconds = Mathf.FloorToInt(timeRemaining % 60);
+                var totalSeconds = Mathf.FloorToInt(timeRemaining);
+                if (totalSeconds == _lastDisplayedSecond)
+                {
+                    return;
+                }
+
+                _lastDisplayedSecond = totalSeconds;
+                int minutes = totalSeconds / 60;
+                int seconds = totalSeconds % 60;
                 _timerText.text = $"Time: {minutes:00}:{seconds:00}";
                 _timerText.color = Color.white;
             }
             else
             {
+                _lastDisplayedSecond = -1;
                 _timerText.text = "Time Up!";
                 _timerText.color = Color.red;
             }
@@ -60,6 +69,7 @@ namespace SafetyProto.UI
 
         private void OnTimerCompleted(float elapsedTime)
         {
+            _lastDisplayedSecond = -1;
             int minutes = Mathf.FloorToInt(elapsedTime / 60F);
             int seconds = Mathf.FloorToInt(elapsedTime % 60);
             _timerText.text = $"Completed!\nTime: {minutes:00}:{seconds:00}";
@@ -68,6 +78,7 @@ namespace SafetyProto.UI
 
         private void OnTimerTimeout()
         {
+            _lastDisplayedSecond = -1;
             _timerText.text = "Time Up!";
             _timerText.color = Color.red;
         }

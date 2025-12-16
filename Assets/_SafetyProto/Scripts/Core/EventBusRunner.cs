@@ -19,7 +19,7 @@ namespace SafetyProto.Core
         {
             if (eventBus != null)
             {
-                eventBus.ProcessEvents(2);
+                eventBus.ProcessEvents(0.5f);
             }
         }
     }
