@@ -10,11 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 04755c844e92b994b931a41673b57e9d, type: 3}
-  m_Name: PutOnHelmetTask
+  m_Name: PutOnGloveTask
   m_EditorClassIdentifier: 
-  taskName: Head Gear
-  taskDescription: Put on Helmet
-  expectedAction: 3
+  taskName: Put On Glove
+  taskDescription: Put on the glove in hands
+  expectedAction: {fileID: 11400000, guid: 1fe43f5981e03854c838a839de11cfbe, type: 2}
+  expectedActionId: ppe.putongloves
   successPoints: 100
   failurePenalty: 25
   ppePenalty: 0

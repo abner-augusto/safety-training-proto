@@ -6640,7 +6640,7 @@ PrefabInstance:
     - target: {fileID: 3718601612112823234, guid: 323cb65d2594c79499a11a99ff0fb347, type: 3}
       propertyPath: _whenSelect.m_PersistentCalls.m_Calls.Array.data[1].m_Target
       value: 
-      objectReference: {fileID: 943589889}
+      objectReference: {fileID: 1571846383}
     - target: {fileID: 3718601612112823234, guid: 323cb65d2594c79499a11a99ff0fb347, type: 3}
       propertyPath: _whenSelect.m_PersistentCalls.m_Calls.Array.data[1].m_CallState
       value: 2
@@ -6651,7 +6651,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3718601612112823234, guid: 323cb65d2594c79499a11a99ff0fb347, type: 3}
       propertyPath: _whenSelect.m_PersistentCalls.m_Calls.Array.data[1].m_TargetAssemblyTypeName
-      value: AppCloser, Assembly-CSharp
+      value: SafetyProto.Core.AppCloser, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 3718601612112823234, guid: 323cb65d2594c79499a11a99ff0fb347, type: 3}
       propertyPath: _whenSelect.m_PersistentCalls.m_Calls.Array.data[1].m_Arguments.m_ObjectArgumentAssemblyTypeName
@@ -6728,7 +6728,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4171210596153234762, guid: 323cb65d2594c79499a11a99ff0fb347, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1571846383}
   m_SourcePrefab: {fileID: 100100000, guid: 323cb65d2594c79499a11a99ff0fb347, type: 3}
 --- !u!4 &192929099 stripped
 Transform:
@@ -24026,7 +24029,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afd1a68e958de424a9ccbac5853c1b15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.Actions.ActionTrigger
-  actionTypeToTrigger: 9
+  action: {fileID: 0}
+  actionIdOverride: 
+  sourceIdOverride: 
+  context: 
   interactorId: 0
 --- !u!1 &740998306
 GameObject:
@@ -38454,7 +38460,7 @@ PrefabInstance:
     - target: {fileID: 3718601612112823234, guid: 323cb65d2594c79499a11a99ff0fb347, type: 3}
       propertyPath: _whenSelect.m_PersistentCalls.m_Calls.Array.data[1].m_Target
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 1973042917}
     - target: {fileID: 3718601612112823234, guid: 323cb65d2594c79499a11a99ff0fb347, type: 3}
       propertyPath: _whenSelect.m_PersistentCalls.m_Calls.Array.data[1].m_CallState
       value: 2
@@ -38465,7 +38471,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3718601612112823234, guid: 323cb65d2594c79499a11a99ff0fb347, type: 3}
       propertyPath: _whenSelect.m_PersistentCalls.m_Calls.Array.data[1].m_TargetAssemblyTypeName
-      value: ActionTrigger, Assembly-CSharp
+      value: SafetyProto.Gameplay.Actions.ActionTrigger, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 3718601612112823234, guid: 323cb65d2594c79499a11a99ff0fb347, type: 3}
       propertyPath: _whenSelect.m_PersistentCalls.m_Calls.Array.data[1].m_Arguments.m_ObjectArgumentAssemblyTypeName
@@ -38555,6 +38561,9 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4171210596153234762, guid: 323cb65d2594c79499a11a99ff0fb347, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1973042917}
     - targetCorrespondingSourceObject: {fileID: 3159839825100900288, guid: 323cb65d2594c79499a11a99ff0fb347, type: 3}
       insertIndex: -1
       addedObject: {fileID: 0}
@@ -51775,6 +51784,26 @@ Transform:
   m_Children: []
   m_Father: {fileID: 15509751}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1571846380 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4171210596153234762, guid: 323cb65d2594c79499a11a99ff0fb347, type: 3}
+  m_PrefabInstance: {fileID: 192929098}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1571846383
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1571846380}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae27b3df6e5ad144ebf81dd5777f251b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Core.AppCloser
+  onQuitApp:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1572980679
 GameObject:
   m_ObjectHideFlags: 0
@@ -59795,9 +59824,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb4271c8bc584c24ab9aeddcf2b0019a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cam: {fileID: 1817946274}
-  width: 3840
-  height: 2160
 --- !u!20 &1817946274
 Camera:
   m_ObjectHideFlags: 0
@@ -61355,7 +61381,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1464721f2283eb14e94a33e812b47be4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Oculus.Interaction::Oculus.Interaction.InteractableUnityEventWrapper
-  _interactableView: {fileID: 0}
+  _interactableView: {fileID: 1842185482}
   _whenHover:
     m_PersistentCalls:
       m_Calls: []
@@ -65637,6 +65663,28 @@ Transform:
   - {fileID: 50931509}
   m_Father: {fileID: 1613187685}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1973042914 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4171210596153234762, guid: 323cb65d2594c79499a11a99ff0fb347, type: 3}
+  m_PrefabInstance: {fileID: 1195135405}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1973042917
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1973042914}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: afd1a68e958de424a9ccbac5853c1b15, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.Actions.ActionTrigger
+  action: {fileID: 11400000, guid: 9afbe5816ee6eed419301aa744dd8b09, type: 2}
+  actionIdOverride: action.button
+  sourceIdOverride: 
+  context: 
+  interactorId: 0
 --- !u!1 &1975924408
 GameObject:
   m_ObjectHideFlags: 0
@@ -71573,10 +71621,12 @@ MonoBehaviour:
   playerTransform: {fileID: 71153798}
   mappings:
   - name: Gloves
-    actionToTrigger: 4
+    action: {fileID: 11400000, guid: 1fe43f5981e03854c838a839de11cfbe, type: 2}
+    actionIdOverride: 
     requiredPpe: 02000000
   - name: Helmet
-    actionToTrigger: 3
+    action: {fileID: 11400000, guid: 51e0635cc8db34047a63e4b8aadeb5f3, type: 2}
+    actionIdOverride: 
     requiredPpe: 01000000
   interactorId: 0
 --- !u!1 &2143815809
@@ -73827,7 +73877,7 @@ MeshCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 5
-  m_Convex: 0
+  m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: -2850772215537624660, guid: f4fa132ba2b70904ca3ad2d871de2029, type: 3}
 --- !u!64 &3451118302692971744

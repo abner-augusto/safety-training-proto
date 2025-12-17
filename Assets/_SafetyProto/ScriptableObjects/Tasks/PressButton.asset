@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   taskName: Interact with Button
   taskDescription: Just press a button
-  expectedAction: 9
+  expectedAction: {fileID: 11400000, guid: 9afbe5816ee6eed419301aa744dd8b09, type: 2}
+  expectedActionId: action.button
   successPoints: 100
   failurePenalty: 50
   ppePenalty: 25
