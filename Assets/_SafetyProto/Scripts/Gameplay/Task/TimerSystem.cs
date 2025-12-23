@@ -177,6 +177,8 @@ namespace SafetyProto.Gameplay.Task
             }
         }
 
+        public bool IsPaused => _isPaused;
+
         private void PauseTimer(SessionPausedEventArgs _)
         {
             _isPaused = true;

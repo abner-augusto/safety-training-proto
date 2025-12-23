@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -38,8 +39,13 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
         [Tooltip("Optional reference to map tasks to groups and order for remote dashboard UI.")]
         [SerializeField] private TaskManager taskManager;
 
+        [Header("Session Log Broadcast")]
+        [Tooltip("Delay (seconds) before broadcasting the session log to ensure it has been written to disk.")]
+        [SerializeField] private float sessionLogBroadcastDelay = 0.25f;
+
         private MiniHttpServer _httpServer;
         private EvaluatorWebSocketServer _wsServer;
+        private Coroutine _pendingLogBroadcast;
 
         private void OnEnable()
         {
@@ -66,6 +72,11 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
 
         private void OnDestroy()
         {
+            if (_pendingLogBroadcast != null)
+            {
+                StopCoroutine(_pendingLogBroadcast);
+                _pendingLogBroadcast = null;
+            }
             _httpServer?.Stop();
             _wsServer?.StopServer();
         }
@@ -183,7 +194,7 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
                 orderViolationCount = args.orderViolationCount
             };
             Broadcast("SessionCompleted", dto);
-            TryBroadcastLatestSessionLog();
+            QueueSessionLogBroadcast();
         }
 
         private void OnGroupStarted(TaskGroupEventArgs args)
@@ -445,6 +456,34 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
         private void Broadcast<T>(string eventType, T payload)
         {
             _wsServer?.Broadcast(eventType, payload);
+        }
+
+        private void QueueSessionLogBroadcast()
+        {
+            if (!isActiveAndEnabled)
+                return;
+
+            if (_pendingLogBroadcast != null)
+            {
+                StopCoroutine(_pendingLogBroadcast);
+            }
+
+            _pendingLogBroadcast = StartCoroutine(BroadcastLogDelayed());
+        }
+
+        private IEnumerator BroadcastLogDelayed()
+        {
+            if (sessionLogBroadcastDelay > 0f)
+            {
+                yield return new WaitForSeconds(sessionLogBroadcastDelay);
+            }
+            else
+            {
+                yield return null;
+            }
+
+            TryBroadcastLatestSessionLog();
+            _pendingLogBroadcast = null;
         }
 
         private void TryBroadcastLatestSessionLog()

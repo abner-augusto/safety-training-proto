@@ -1,4 +1,6 @@
 using Oculus.Interaction.OVR.Input;
+using SafetyProto.Core;
+using SafetyProto.Core.Events;
 using UnityEngine;
 
 namespace SafetyProto.Utils
@@ -19,9 +21,26 @@ namespace SafetyProto.Utils
             bool isActive = buttonState.Active;
             if (isActive && !_wasButtonActiveLastFrame)
             {
-                target.SetActive(!target.activeSelf);
+                bool newState = !target.activeSelf;
+                target.SetActive(newState);
+                NotifySessionState(newState);
             }
             _wasButtonActiveLastFrame = isActive;
+        }
+
+        private static void NotifySessionState(bool menuVisible)
+        {
+            if (EventBus.Instance == null)
+                return;
+
+            if (menuVisible)
+            {
+                SessionEvents.RaiseSessionPaused();
+            }
+            else
+            {
+                SessionEvents.RaiseSessionResumed();
+            }
         }
     }
 }
