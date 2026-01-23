@@ -110,3 +110,4 @@ repomix-output.txt
 Assets/_SafetyProto/Scripts/repomix-output.txt.meta
 packages-microsoft-prod.deb
 *.json
+repomix-output.*
