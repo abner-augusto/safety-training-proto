@@ -3,21 +3,21 @@
 --- !u!55 &1
 PhysicsManager:
   m_ObjectHideFlags: 0
-  serializedVersion: 21
+  serializedVersion: 23
   m_Gravity: {x: 0, y: -9.81, z: 0}
   m_DefaultMaterial: {fileID: 0}
   m_BounceThreshold: 0
   m_DefaultMaxDepenetrationVelocity: 5
   m_SleepThreshold: 0.005
   m_DefaultContactOffset: 0.01
-  m_DefaultSolverIterations: 8
-  m_DefaultSolverVelocityIterations: 8
+  m_DefaultSolverIterations: 15
+  m_DefaultSolverVelocityIterations: 15
   m_QueriesHitBackfaces: 0
   m_QueriesHitTriggers: 1
   m_EnableAdaptiveForce: 1
   m_ClothInterCollisionDistance: 0
   m_ClothInterCollisionStiffness: 0
-  m_LayerCollisionMatrix: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+  m_LayerCollisionMatrix: c000000000000000000000000000000000000000000000008100000041000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
   m_SimulationMode: 0
   m_AutoSyncTransforms: 0
   m_ReuseCollisionCallbacks: 1
@@ -41,3 +41,5 @@ PhysicsManager:
   m_FastMotionThreshold: 3.4028235e+38
   m_SceneBuffersReleaseInterval: 0
   m_ReleaseSceneBuffers: 0
+  m_LogVerbosity: 3
+  m_IncrementalStaticBroadphase: 1

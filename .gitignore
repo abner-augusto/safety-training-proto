@@ -1,33 +1,54 @@
-# This .gitignore file should be placed at the root of your Unity project directory
-#
-# Get latest from https://github.com/github/gitignore/blob/main/Unity.gitignore
+# ============================================================
+# Unity .gitignore — Safety Training Proto
+# ============================================================
 
-
-# core unity engine cache
+# ============================================================
+# UNITY ENGINE CACHE & GENERATED DIRS
+# ============================================================
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/
 /[Bb]uild/
 /[Bb]uilds/
+/[Bb]uilds*/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
+BuildCache/
+obj/
+bin/
 
-# sensitive or large data
+# ============================================================
+# REPOMIX — ignore outputs, keep settings
+# ============================================================
+repomix-output.*
+!repomix.config.json
+
+# ============================================================
+# SENSITIVE / LARGE DATA
+# ============================================================
 /[Mm]emoryCaptures/
 /[Rr]ecordings/
+.env*
+*.local
 
-# platform-specific
+# ============================================================
+# PLATFORM BUILD ARTIFACTS
+# ============================================================
 *.apk
 *.aab
 *.unitypackage
 *.app
 *.ipa
 
-# project files
+# ============================================================
+# IDE & PROJECT FILES
+# ============================================================
 ExportedObj/
 .consulo/
 .vs/
+.idea/
 .gradle/
+*.iml
 *.csproj
 *.unityproj
 *.sln
@@ -42,72 +63,78 @@ ExportedObj/
 *.mdb
 *.opendb
 *.VC.db
-*.DS_Store
 
-# meta files from debug symbols
+# ============================================================
+# OS JUNK
+# ============================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================================
+# LOGS / CRASH / DEBUG
+# ============================================================
+*.log
+*.dmp
+*.bak
+*.backup
+*.utmp
+sysinfo.txt
+crashlytics-build.properties
+
+# ============================================================
+# DEBUG SYMBOL META FILES
+# ============================================================
 *.pidb.meta
 *.pdb.meta
 *.mdb.meta
 
-# crash/debug
-sysinfo.txt
-crashlytics-build.properties
-
-# asset store / editor tools
+# ============================================================
+# UNITY ASSET STORE & EDITOR TOOLS
+# ============================================================
 /[Aa]ssets/AssetStoreTools*
 /[Aa]ssets/Plugins/Editor/JetBrains*
 
-# addressables / streaming assets
+# ============================================================
+# ADDRESSABLES / STREAMING ASSETS
+# ============================================================
 /[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/**/*.bin*
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/**/*
 
-# rider / ide config
-.idea/
-*.iml
-
-# meta xr sdk generated artifacts
+# ============================================================
+# META XR / OCULUS SDK GENERATED ARTIFACTS
+# ============================================================
 /[Aa]ssets/Oculus/
 /[Aa]ssets/Meta/
 /[Pp]roject[Ss]ettings/XRSettings.asset
 
-# unity sample assets
-/[Aa]ssets/[Ss]amples/
-
-# ignore XR package noise
+# ============================================================
+# XR PACKAGE NOISE
+# ============================================================
 /[Aa]ssets/XR/Tests/
 /[Aa]ssets/XR/Samples/
 /[Aa]ssets/XR/Examples/
 
-# ignore TextMesh Pro noise
+# ============================================================
+# THIRD-PARTY ASSET PACKAGES (untracked store assets)
+# ============================================================
+/Assets/Dark UI/
+/Assets/TextMesh Pro/
+/Assets/TutorialInfo/
+/[Aa]ssets/[Ss]amples/
+
+# TextMesh Pro generated noise
 /[Aa]ssets/TextMesh Pro/Examples*/
 /[Aa]ssets/TextMesh Pro/Fonts/
 /[Aa]ssets/TextMesh Pro/Resources/Font Assets/
 
-# local dev / build cache
-obj/
-bin/
-Builds*/
-BuildCache/
-
-# exclude .envs or config used in local testing
-.env*
-*.local
-
-# logs / crash dumps
-*.log
-*.dmp
-
-# temp scenes / backup autosaves
-*.bak
-*.backup
-*.tmp
-*.utmp
-repomix-output.txt
-/Assets/Dark UI
-/Assets/TextMesh Pro
-/Assets/TutorialInfo
+# ============================================================
+# STRAY / ORPHANED META FILES
+# ============================================================
 Assets/_SafetyProto/Scripts/repomix-output.txt.meta
+
+# ============================================================
+# LINUX PACKAGE ARTIFACTS
+# ============================================================
 packages-microsoft-prod.deb
-*.json
-repomix-output.*
