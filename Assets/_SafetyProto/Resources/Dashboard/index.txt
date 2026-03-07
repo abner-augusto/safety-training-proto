@@ -963,8 +963,18 @@
         const objects = { hmd: null, leftHand: null, rightHand: null, ppe: {} };
         const matHead = new THREE.MeshLambertMaterial({ color: 0x00aaff });
         const matHand = new THREE.MeshLambertMaterial({ color: 0x00ffaa });
-        const matPPE = new THREE.MeshLambertMaterial({ color: 0xffaa00 });
         const matPPEAttached = new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
+
+        // Five-color palette for PPE objects — mesh and label share the same color
+        const PPE_PALETTE = [
+            { hex: 0xff6b35, css: '#ff6b35' },
+            { hex: 0xc44dff, css: '#c44dff' },
+            { hex: 0x00cfff, css: '#00cfff' },
+            { hex: 0xff4da6, css: '#ff4da6' },
+            { hex: 0x44ff88, css: '#44ff88' },
+        ];
+        const ppeColors = new Map(); // id → { css, mat }
+        let _ppeColorIdx = 0;
         const geoHead = new THREE.BoxGeometry(0.2, 0.15, 0.25);
         const geoHand = new THREE.SphereGeometry(0.05, 16, 16);
         const geoPPE = new THREE.BoxGeometry(0.1, 0.1, 0.1);
@@ -975,7 +985,13 @@
                 let mesh;
                 if (type === 'hmd') mesh = new THREE.Mesh(geoHead, matHead);
                 else if (type === 'hand') mesh = new THREE.Mesh(geoHand, matHand);
-                else if (type === 'ppe') mesh = new THREE.Mesh(geoPPE, matPPE);
+                else if (type === 'ppe') {
+                    const palette = PPE_PALETTE[_ppeColorIdx % PPE_PALETTE.length];
+                    const ppeMat = new THREE.MeshLambertMaterial({ color: palette.hex });
+                    ppeColors.set(id, { css: palette.css, mat: ppeMat });
+                    _ppeColorIdx++;
+                    mesh = new THREE.Mesh(geoPPE, ppeMat);
+                }
                 scene.add(mesh);
                 obj = mesh;
                 if (type === 'ppe') objects.ppe[id] = obj;
@@ -996,7 +1012,7 @@
                     labelYOffset = 0.12;
                 } else if (type === 'ppe') {
                     labelText = id.toUpperCase();
-                    labelColor = '#ffaa00';
+                    labelColor = ppeColors.get(id)?.css ?? '#ffaa00';
                     labelYOffset = 0.14;
                 }
 
@@ -1010,7 +1026,8 @@
                     obj.material = matPPEAttached;
                     obj.scale.set(0.8, 0.8, 0.8);
                 } else {
-                    obj.material = matPPE;
+                    const ppeColor = ppeColors.get(id);
+                    if (ppeColor) obj.material = ppeColor.mat;
                     obj.scale.set(1, 1, 1);
                 }
             }
