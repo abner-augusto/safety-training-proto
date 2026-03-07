@@ -5379,6 +5379,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 10
       objectReference: {fileID: 0}
+    - target: {fileID: 3903482225804038118, guid: 0a7d2469f24041c4284c66706f84c45e, type: 3}
+      propertyPath: m_ExcludeLayers.m_Bits
+      value: 64
+      objectReference: {fileID: 0}
     - target: {fileID: 3903482225864869174, guid: 0a7d2469f24041c4284c66706f84c45e, type: 3}
       propertyPath: m_Layer
       value: 10
@@ -10624,12 +10628,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54915f5273a8640ac0701b4bd76e9c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.Networking.EvaluatorDashboard.PoseBroadcaster
-  hmd: {fileID: 0}
-  leftHand: {fileID: 0}
-  rightHand: {fileID: 0}
+  hmd: {fileID: 1441408791}
+  leftHand: {fileID: 959968146}
+  rightHand: {fileID: 1829156621}
   ppeObjects:
-  - {fileID: 528269813}
+  - {fileID: 543450653489186051}
   - {fileID: 1272341260}
+  - {fileID: 528269813}
+  - {fileID: 543450653557730202}
   ppeIds:
   - helmet
   - gloves

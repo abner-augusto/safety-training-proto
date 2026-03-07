@@ -1174,6 +1174,8 @@
         });
 
         // --- WebSocket ---
+        let _wsReconnecting = false;
+
         function connect() {
             const ws = new WebSocket(WS_URL);
             const statusIndicator = document.getElementById('status-indicator');
@@ -1183,12 +1185,16 @@
                 statusIndicator.classList.add('connected');
                 connectionStatus.textContent = t('connected');
                 addLog(t('logConnected'), 'success');
+                _wsReconnecting = false;
             };
 
             ws.onclose = () => {
                 statusIndicator.classList.remove('connected');
                 connectionStatus.textContent = t('disconnected');
-                addLog(t('logDisconnected'), 'violation');
+                if (!_wsReconnecting) {
+                    addLog(t('logDisconnected'), 'violation');
+                    _wsReconnecting = true;
+                }
                 setTimeout(connect, 3000);
             };
 
