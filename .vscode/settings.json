@@ -67,5 +67,6 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "safety-training-proto.slnx"
+    "dotnet.defaultSolution": "safety-training-proto.slnx",
+    "dotnet.preferCSharpExtension": true
 }
