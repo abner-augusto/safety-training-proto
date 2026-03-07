@@ -16,6 +16,8 @@ GameObject:
   - component: {fileID: 7227783744570428228}
   - component: {fileID: 3370640472509175233}
   - component: {fileID: 2071844871054918497}
+  - component: {fileID: 1361230313900689059}
+  - component: {fileID: 3675088251666186420}
   m_Layer: 6
   m_Name: Safety_Vest
   m_TagString: Untagged
@@ -265,6 +267,34 @@ MonoBehaviour:
   _whenCancel:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1361230313900689059
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 355759347426033923}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdeaf26e845dc5841bcd31de97d26003, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Oculus.Interaction::Oculus.Interaction.TagSet
+  _tags:
+  - chest-ppe
+  - vest
+--- !u!114 &3675088251666186420
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 355759347426033923}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 401bc184e3b0346409dbafee300036b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPEItem
+  ppeType: 5
 --- !u!1 &7936803571692151077
 GameObject:
   m_ObjectHideFlags: 0

@@ -32,6 +32,11 @@ namespace SafetyProto.Gameplay.Feedback
         [SerializeField] private Color successColor = Color.cyan;
         [SerializeField] private Color warningColor = Color.yellow;
 
+        [Header("Audio")]
+        [SerializeField] private AudioSource audioSource;
+        [SerializeField] private AudioClip successSound;
+        [SerializeField] private AudioClip warningSound;
+
         [Header("Task Lookup")]
         [SerializeField] private List<SafetyTask> knownTasks = new List<SafetyTask>();
 
@@ -108,6 +113,7 @@ namespace SafetyProto.Gameplay.Feedback
             _lastScoreDelta = 0;
 
             string body = points != 0 ? $"+{points} pontos" : "Objetivo concluído";
+            PlaySound(successSound);
             ShowPopup(taskName, body, successColor);
         }
 
@@ -115,7 +121,14 @@ namespace SafetyProto.Gameplay.Feedback
         {
             string hintText = GetHint(args.TaskId);
             string message = string.IsNullOrEmpty(hintText) ? args.Message : hintText;
+            PlaySound(warningSound);
             ShowPopup("Atenção", message, warningColor);
+        }
+
+        private void PlaySound(AudioClip clip)
+        {
+            if (audioSource != null && clip != null)
+                audioSource.PlayOneShot(clip);
         }
 
         private string GetHint(string taskId)

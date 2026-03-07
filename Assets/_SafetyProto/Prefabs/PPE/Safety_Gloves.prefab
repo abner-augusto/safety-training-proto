@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 3965247634208357737}
   - component: {fileID: 2601642719565040040}
   - component: {fileID: 8088619854274177640}
+  - component: {fileID: 5141141167493791703}
   m_Layer: 6
   m_Name: Safety_Gloves
   m_TagString: Untagged
@@ -129,8 +130,8 @@ Rigidbody:
   m_GameObject: {fileID: 1160870894067531648}
   serializedVersion: 5
   m_Mass: 1
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
+  m_LinearDamping: 3
+  m_AngularDamping: 1.5
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -280,6 +281,21 @@ MonoBehaviour:
   _whenCancel:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &5141141167493791703
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1160870894067531648}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdeaf26e845dc5841bcd31de97d26003, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Oculus.Interaction::Oculus.Interaction.TagSet
+  _tags:
+  - hand-ppe
+  - gloves
 --- !u!1 &3113684316446788425
 GameObject:
   m_ObjectHideFlags: 0
@@ -386,7 +402,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7631424121230974876}
-  - component: {fileID: 1865191205784918903}
+  - component: {fileID: 5118316525197524491}
+  - component: {fileID: 5787720662554831416}
+  - component: {fileID: 6842479507406220200}
   m_Layer: 6
   m_Name: SnapInteractor
   m_TagString: Untagged
@@ -409,7 +427,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 521638020468003343}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1865191205784918903
+--- !u!114 &5118316525197524491
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -418,21 +436,43 @@ MonoBehaviour:
   m_GameObject: {fileID: 7083028319040254549}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2756c251a8363df4f9d4b30ee6414bd9, type: 3}
+  m_Script: {fileID: 11500000, guid: 06bd28341d3e86a4c8ab52b1a0269c7b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Oculus.Interaction::Oculus.Interaction.SnapInteractor
-  _activeState: {fileID: 0}
-  _interactableFilters: []
-  _candidateTiebreaker: {fileID: 0}
-  _maxIterationsPerFrame: 3
+  m_EditorClassIdentifier: Oculus.Interaction::Oculus.Interaction.SnapInteractable
+  _interactorFilters: []
+  _maxInteractors: 1
+  _maxSelectingInteractors: 1
   _data: {fileID: 0}
-  _pointableElement: {fileID: 0}
   _rigidbody: {fileID: 5959504045116577694}
-  _distanceThreshold: 0.01
-  _snapPoseTransform: {fileID: 521638020468003343}
-  _defaultInteractable: {fileID: 0}
-  _timeOutInteractable: {fileID: 0}
-  _timeOut: 0
+  _snapPoseDelegate: {fileID: 0}
+  _movementProvider: {fileID: 5787720662554831416}
+--- !u!114 &5787720662554831416
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7083028319040254549}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4120d88f4ba2a3f48989ce4b2ff1e317, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Oculus.Interaction::Oculus.Interaction.FollowTargetProvider
+  _speed: 5
+--- !u!114 &6842479507406220200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7083028319040254549}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1397d30d2aecb5a4d9d645617f571f76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SnapInteractableVisuals
+  snapInteractable: {fileID: 5118316525197524491}
+  hoverMaterial: {fileID: 2100000, guid: 75c8d4ec9d3d3424f886bf3f240bdac8, type: 2}
 --- !u!1 &7716851483882013550
 GameObject:
   m_ObjectHideFlags: 0

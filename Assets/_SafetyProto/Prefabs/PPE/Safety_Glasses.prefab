@@ -137,6 +137,8 @@ GameObject:
   - component: {fileID: 3776430364029854082}
   - component: {fileID: 3560460861262399336}
   - component: {fileID: 1645125502946345823}
+  - component: {fileID: 584909347004473316}
+  - component: {fileID: 7878552798793847000}
   m_Layer: 6
   m_Name: Safety_Glasses
   m_TagString: Untagged
@@ -389,6 +391,34 @@ MonoBehaviour:
   _whenCancel:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &584909347004473316
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5123576640106811540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdeaf26e845dc5841bcd31de97d26003, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Oculus.Interaction::Oculus.Interaction.TagSet
+  _tags:
+  - head-ppe
+  - goggles
+--- !u!114 &7878552798793847000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5123576640106811540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 401bc184e3b0346409dbafee300036b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPEItem
+  ppeType: 3
 --- !u!1 &5189332614156892250
 GameObject:
   m_ObjectHideFlags: 0

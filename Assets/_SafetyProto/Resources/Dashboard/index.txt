@@ -924,7 +924,8 @@
 
         const labels = new Map();
 
-        function createLabel(text, color = '#ffffff') {
+        // labels Map stores { el, yOffset } per mesh
+        function createLabel(text, color = '#ffffff', yOffset = 0.15) {
             const label = document.createElement('div');
             label.style.position = 'absolute';
             label.style.color = color;
@@ -939,21 +940,23 @@
             label.style.marginTop = '-10px';
             label.textContent = text;
             labelRenderer.appendChild(label);
-            return label;
+            return { el: label, yOffset };
         }
 
-        function updateLabelPosition(label, position) {
+        // Projects a world position to screen, sets label position, returns { x, y, visible }
+        function updateLabelPosition(labelData, position) {
             const vector = position.clone();
             vector.project(camera);
-            
+
             const x = (vector.x * 0.5 + 0.5) * container.clientWidth;
             const y = (vector.y * -0.5 + 0.5) * container.clientHeight;
-            
-            label.style.left = `${x}px`;
-            label.style.top = `${y}px`;
-            
-            // Hide label if behind camera
-            label.style.display = vector.z > 1 ? 'none' : 'block';
+            const visible = vector.z <= 1;
+
+            labelData.el.style.display = visible ? 'block' : 'none';
+            labelData.el.style.left = `${x}px`;
+            labelData.el.style.top = `${y}px`;
+
+            return { x, y, visible };
         }
 
         // --- 3D Objects ---
@@ -978,23 +981,27 @@
                 if (type === 'ppe') objects.ppe[id] = obj;
                 else objects[id] = obj;
 
-                // Create label for this object
+                // Create label for this object, with per-type Y offsets
                 let labelText = '';
                 let labelColor = '#ffffff';
-                
+                let labelYOffset = 0.15;
+
                 if (type === 'hmd') {
                     labelText = 'HMD';
                     labelColor = '#00aaff';
+                    labelYOffset = 0.28;
                 } else if (type === 'hand') {
                     labelText = id === 'leftHand' ? 'Left Hand' : 'Right Hand';
                     labelColor = '#00ffaa';
+                    labelYOffset = 0.12;
                 } else if (type === 'ppe') {
                     labelText = id.toUpperCase();
                     labelColor = '#ffaa00';
+                    labelYOffset = 0.14;
                 }
-                
-                const label = createLabel(labelText, labelColor);
-                labels.set(obj, label);
+
+                const labelData = createLabel(labelText, labelColor, labelYOffset);
+                labels.set(obj, labelData);
             }
             obj.position.set(pose.px, pose.py, -pose.pz);
             obj.quaternion.set(-pose.qx, pose.qy, pose.qz, -pose.qw);
@@ -1327,13 +1334,44 @@
             requestAnimationFrame(animate);
             controls.update();
             
-            // Update all label positions
-            labels.forEach((label, obj) => {
+            // --- Label update: project to screen then push apart to avoid overlap ---
+            const screenLabels = [];
+            labels.forEach((labelData, obj) => {
                 if (obj && obj.position) {
-                    const labelPosition = obj.position.clone();
-                    labelPosition.y += 0.15; // Offset above the object
-                    updateLabelPosition(label, labelPosition);
+                    const wp = obj.position.clone();
+                    wp.y += labelData.yOffset;
+                    const sp = updateLabelPosition(labelData, wp);
+                    if (sp.visible) {
+                        screenLabels.push({ el: labelData.el, x: sp.x, y: sp.y });
+                    }
                 }
+            });
+
+            // Iterative screen-space push-apart (estimated label size 96x22 px + padding)
+            const LW = 96, LH = 22, PAD = 6;
+            for (let iter = 0; iter < 4; iter++) {
+                for (let i = 0; i < screenLabels.length; i++) {
+                    for (let j = i + 1; j < screenLabels.length; j++) {
+                        const a = screenLabels[i], b = screenLabels[j];
+                        const overlapX = (LW + PAD) - Math.abs(b.x - a.x);
+                        const overlapY = (LH + PAD) - Math.abs(b.y - a.y);
+                        if (overlapX > 0 && overlapY > 0) {
+                            if (overlapX < overlapY) {
+                                const push = overlapX / 2 * Math.sign(b.x - a.x || 1);
+                                a.x -= push; b.x += push;
+                            } else {
+                                const push = overlapY / 2 * Math.sign(b.y - a.y || -1);
+                                a.y -= push; b.y += push;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Write corrected screen positions
+            screenLabels.forEach(({ el, x, y }) => {
+                el.style.left = `${x}px`;
+                el.style.top = `${y}px`;
             });
             
             renderer.render(scene, camera);
