@@ -1,5 +1,59 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &443275644639107411
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 334812474384582266}
+  - component: {fileID: 8232754839431467956}
+  m_Layer: 6
+  m_Name: PhysicsCollider
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &334812474384582266
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 443275644639107411}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1214448945251666111}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!64 &8232754839431467956
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 443275644639107411}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 5700849923565455005, guid: 063f5be22d842ab41aaeff9d0b8122ac, type: 3}
 --- !u!1 &4143869970303474665
 GameObject:
   m_ObjectHideFlags: 0
@@ -11,13 +65,14 @@ GameObject:
   - component: {fileID: 1214448945251666111}
   - component: {fileID: 3277283241473420907}
   - component: {fileID: 5257051649480729102}
-  - component: {fileID: 3556827597228158444}
   - component: {fileID: 4209057801313712340}
   - component: {fileID: 6661677556064204382}
   - component: {fileID: 7375837194418130784}
   - component: {fileID: 2620479718144631587}
   - component: {fileID: 5132323004119710480}
   - component: {fileID: 5489383007762037677}
+  - component: {fileID: 3388957587563469949}
+  - component: {fileID: 2578568355370428004}
   m_Layer: 6
   m_Name: Safety_Harness
   m_TagString: Untagged
@@ -40,6 +95,7 @@ Transform:
   m_Children:
   - {fileID: 1546048976021466179}
   - {fileID: 5752909364526136116}
+  - {fileID: 334812474384582266}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: -180, z: -180}
 --- !u!33 &3277283241473420907
@@ -99,28 +155,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &3556827597228158444
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4143869970303474665}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 5700849923565455005, guid: 063f5be22d842ab41aaeff9d0b8122ac, type: 3}
 --- !u!54 &4209057801313712340
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -184,7 +218,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.Interactables.ReturnObjectHome
   homeOverride: {fileID: 0}
-  returnDelay: 5
+  maxHomeDistance: 0.3
+  returnDelay: 2
   returnDuration: 0.4
   returnCurve:
     serializedVersion: 2
@@ -296,6 +331,44 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPEItem
   ppeType: 4
+--- !u!65 &3388957587563469949
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4143869970303474665}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.39390823, y: 0.2615364, z: 0.79666585}
+  m_Center: {x: 0.00000007450546, y: -0.0021947925, z: 0.0018510522}
+--- !u!114 &2578568355370428004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4143869970303474665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2df4532240349734cbdfbc40e8bd79bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapItem
+  snapSearchRadius: 0.12
+  unsnapDistance: 0.15
+  followSpeed: 20
+  handGrabInteractable: {fileID: 1692212783426962088}
+  returnObjectHome: {fileID: 7375837194418130784}
 --- !u!1 &4243240717789492444
 GameObject:
   m_ObjectHideFlags: 0
