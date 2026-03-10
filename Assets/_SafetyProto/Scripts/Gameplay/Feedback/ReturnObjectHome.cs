@@ -14,6 +14,10 @@ namespace SafetyProto.Gameplay.Interactables
         [Tooltip("Optional Transform to use as home position/rotation. Leave empty to use the object's initial pose.")]
         [SerializeField] private Transform homeOverride;
 
+        [Header("Proximity")]
+        [Tooltip("Maximum distance from home before an automatic return is triggered. 0 = disabled.")]
+        [SerializeField] private float maxHomeDistance = 0f;
+
         [Tooltip("Seconds after release before the return animation begins.")]
         [SerializeField] private float returnDelay = 0f;
 
@@ -26,6 +30,7 @@ namespace SafetyProto.Gameplay.Interactables
         private Vector3 _homePosition;
         private Quaternion _homeRotation;
 
+        private bool _isGrabbed;
         private bool _returning;
         private float _returnProgress;
         private Vector3 _returnFromPosition;
@@ -64,10 +69,42 @@ namespace SafetyProto.Gameplay.Interactables
             _grabbable.WhenPointerEventRaised -= OnPointerEvent;
         }
 
+        public void CancelReturn()
+        {
+            _returning = false;
+
+            if (_delayCoroutine != null)
+            {
+                StopCoroutine(_delayCoroutine);
+                _delayCoroutine = null;
+            }
+
+            // If we were returning, we likely forced kinematic. Let the grab system/physics take over again.
+            if (_rb != null)
+                _rb.isKinematic = false;
+        }
+
+        public void BeginReturnNow()
+        {
+            CancelReturn();
+            BeginReturn();
+        }
+
+        public void RequestReturn()
+        {
+            CancelReturn();
+
+            if (returnDelay > 0f)
+                _delayCoroutine = StartCoroutine(ReturnAfterDelay());
+            else
+                BeginReturn();
+        }
+
         private void OnPointerEvent(PointerEvent evt)
         {
             if (evt.Type == PointerEventType.Select)
             {
+                _isGrabbed = true;
                 _returning = false;
                 if (_delayCoroutine != null)
                 {
@@ -75,12 +112,10 @@ namespace SafetyProto.Gameplay.Interactables
                     _delayCoroutine = null;
                 }
             }
-            else if (evt.Type == PointerEventType.Unselect)
+            else if (evt.Type == PointerEventType.Unselect || evt.Type == PointerEventType.Cancel)
             {
-                if (returnDelay > 0f)
-                    _delayCoroutine = StartCoroutine(ReturnAfterDelay());
-                else
-                    BeginReturn();
+                _isGrabbed = false;
+                RequestReturn();
             }
         }
 
@@ -109,6 +144,13 @@ namespace SafetyProto.Gameplay.Interactables
 
         private void Update()
         {
+            if (!_returning && _delayCoroutine == null && maxHomeDistance > 0f && !_isGrabbed)
+            {
+                float dist = Vector3.Distance(transform.position, _homePosition);
+                if (dist > maxHomeDistance)
+                    RequestReturn();
+            }
+
             if (!_returning) return;
 
             _returnProgress += Time.deltaTime / returnDuration;
