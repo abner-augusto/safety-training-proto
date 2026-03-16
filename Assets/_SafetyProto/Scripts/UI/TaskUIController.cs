@@ -143,7 +143,10 @@ namespace SafetyProto.UI
         {
             if (args.Task == null) return;
             if (_taskToEntryUI.TryGetValue(args.Task, out var entryUI))
-                entryUI.UpdateState(TaskState.CompletedSuccess);
+            {
+                var state = args.RuntimeTask?.State ?? TaskState.CompletedSuccess;
+                entryUI.UpdateState(state);
+            }
         }
 
         private void OnTaskTimeout(TaskEventArgs args)

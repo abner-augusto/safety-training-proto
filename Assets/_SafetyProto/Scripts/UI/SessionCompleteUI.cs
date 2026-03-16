@@ -1,4 +1,5 @@
 using SafetyProto.Core;
+using SafetyProto.Gameplay.Task;
 using SafetyProto.Utils;
 using TMPro;
 using UnityEngine;
@@ -12,6 +13,9 @@ namespace SafetyProto.UI
         public TextMeshProUGUI scoreText;
         public TextMeshProUGUI taskSummaryText;
 
+        [Header("References")]
+        public TaskManager taskManager;
+
         private static SessionCompletedEventArgs? _cachedSummary;
 
         private void OnEnable()
@@ -24,6 +28,13 @@ namespace SafetyProto.UI
             if (_cachedSummary.HasValue)
             {
                 DisplaySummary(_cachedSummary.Value);
+            }
+            else if (taskManager != null && taskManager.LastSessionSummary.HasValue)
+            {
+                // Panel was activated inside the onSessionCompleted event invoke, so the
+                // listener above was added too late to receive this invocation.
+                // TaskManager.LastSessionSummary is set before the event fires, so it's safe to read here.
+                DisplaySummary(taskManager.LastSessionSummary.Value);
             }
         }
 

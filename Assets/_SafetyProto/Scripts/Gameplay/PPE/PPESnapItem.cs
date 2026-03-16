@@ -21,6 +21,12 @@ namespace SafetyProto.Gameplay.PPE
         [Tooltip("Fallback radius to search for a compatible slot on release (helps if trigger exit happens right as you let go).")]
         [SerializeField] private float snapSearchRadius = 0.12f;
 
+        [Tooltip("Optional transform on this item that should align to the slot when snapped (lets you override the snap 'center' and rotation).")]
+        [SerializeField] private Transform snapPoseOverride;
+
+        [Tooltip("When snapped, re-samples the snapPoseOverride pose every frame (useful for tuning the anchor in Play Mode).")]
+        [SerializeField] private bool trackSnapPoseOverrideEveryFrame = false;
+
         [Header("Unsnap")]
         [Tooltip("How far the hand must pull from the slot before unsnapping.")]
         [SerializeField] private float unsnapDistance = 0.15f;
@@ -49,6 +55,11 @@ namespace SafetyProto.Gameplay.PPE
 
         private bool _isGrabbed;
         private bool _isSnapped;
+
+        // Cached pose of snapPoseOverride in this root's local space, used to keep a stable offset while following a slot.
+        private bool _useSnapPoseOverride;
+        private Vector3 _snapOverrideLocalPos;
+        private Quaternion _snapOverrideLocalRot;
 
         private void Awake()
         {
@@ -201,7 +212,8 @@ namespace SafetyProto.Gameplay.PPE
         {
             _currentSlot = slot;
             _isSnapped = true;
-            transform.SetPositionAndRotation(slot.transform.position, slot.transform.rotation);
+            CacheSnapOverrideLocalPose();
+            ApplySnapPose(slot.transform.position, slot.transform.rotation, true);
             SetPhysicsEnabled(false);
 
             if (returnObjectHome != null)
@@ -244,20 +256,59 @@ namespace SafetyProto.Gameplay.PPE
                     }
                 }
 
+                if (trackSnapPoseOverrideEveryFrame && snapPoseOverride != null)
+                    CacheSnapOverrideLocalPose();
+
                 // Follow slot transform
                 if (followSpeed <= 0f)
                 {
-                    transform.SetPositionAndRotation(
-                        _currentSlot.transform.position,
-                        _currentSlot.transform.rotation);
+                    ApplySnapPose(_currentSlot.transform.position, _currentSlot.transform.rotation, true);
                 }
                 else
                 {
-                    transform.SetPositionAndRotation(
-                        Vector3.Lerp(transform.position, _currentSlot.transform.position, followSpeed * Time.deltaTime),
-                        Quaternion.Slerp(transform.rotation, _currentSlot.transform.rotation, followSpeed * Time.deltaTime));
+                    ApplySnapPose(_currentSlot.transform.position, _currentSlot.transform.rotation, false);
                 }
             }
+        }
+
+        private void CacheSnapOverrideLocalPose()
+        {
+            if (snapPoseOverride == null)
+            {
+                _useSnapPoseOverride = false;
+                return;
+            }
+
+            // Cache override pose relative to this root (works even if override is nested deeper in the hierarchy).
+            _snapOverrideLocalPos = transform.InverseTransformPoint(snapPoseOverride.position);
+            _snapOverrideLocalRot = Quaternion.Inverse(transform.rotation) * snapPoseOverride.rotation;
+            _useSnapPoseOverride = true;
+        }
+
+        private void ApplySnapPose(Vector3 slotPosition, Quaternion slotRotation, bool instant)
+        {
+            Vector3 targetPos = slotPosition;
+            Quaternion targetRot = slotRotation;
+
+            if (_useSnapPoseOverride)
+            {
+                // Want: (rootRot * overrideLocalRot) == slotRot  => rootRot = slotRot * inverse(overrideLocalRot)
+                targetRot = slotRotation * Quaternion.Inverse(_snapOverrideLocalRot);
+
+                // Want: rootPos + rootRot * overrideLocalPos == slotPos  => rootPos = slotPos - rootRot * overrideLocalPos
+                targetPos = slotPosition - (targetRot * _snapOverrideLocalPos);
+            }
+
+            if (instant || followSpeed <= 0f)
+            {
+                transform.SetPositionAndRotation(targetPos, targetRot);
+                return;
+            }
+
+            float t = followSpeed * Time.deltaTime;
+            transform.SetPositionAndRotation(
+                Vector3.Lerp(transform.position, targetPos, t),
+                Quaternion.Slerp(transform.rotation, targetRot, t));
         }
 
         private void SetPhysicsEnabled(bool physicsEnabled)
