@@ -119,7 +119,7 @@ Rigidbody:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 1024
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 1
@@ -148,7 +148,7 @@ MonoBehaviour:
   _maxGrabPoints: -1
   _rigidbody: {fileID: 5959504045116577694}
   _kinematicWhileSelected: 1
-  _throwWhenUnselected: 1
+  _throwWhenUnselected: 0
   _forceKinematicDisabled: 0
 --- !u!114 &2601642719565040040
 MonoBehaviour:
@@ -295,8 +295,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapItem
   snapSearchRadius: 0.12
-  unsnapDistance: 0.15
-  followSpeed: 20
+  snapPoseOverride: {fileID: 0}
+  trackSnapPoseOverrideEveryFrame: 0
+  unsnapDistance: 0.1
+  followSpeed: 0
   handGrabInteractable: {fileID: 7450468912020579302}
   returnObjectHome: {fileID: 2601642719565040040}
 --- !u!1 &3113684316446788425

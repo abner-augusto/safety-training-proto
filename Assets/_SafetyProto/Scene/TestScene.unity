@@ -429,37 +429,6 @@ MonoBehaviour:
   overlapMask: 0
   compositionMode: 2
   _overlayEnabled: 1
---- !u!1 &24415808
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 24415809}
-  m_Layer: 6
-  m_Name: SnapAnchor
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &24415809
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 24415808}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.008, y: 0.106, z: 0.004}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 543450653557730202}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &30915622
 GameObject:
   m_ObjectHideFlags: 0
@@ -10885,14 +10854,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Safety_Gloves (1)
       objectReference: {fileID: 0}
-    - target: {fileID: 7803944540948783177, guid: 724faf244143a4845a4171c611f53c74, type: 3}
-      propertyPath: followSpeed
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7803944540948783177, guid: 724faf244143a4845a4171c611f53c74, type: 3}
-      propertyPath: unsnapDistance
-      value: 0.1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -18367,14 +18328,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: -180
       objectReference: {fileID: 0}
-    - target: {fileID: 7581102808523933404, guid: 5a9e3b4d052902b498dba45e40fe02df, type: 3}
-      propertyPath: followSpeed
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7581102808523933404, guid: 5a9e3b4d052902b498dba45e40fe02df, type: 3}
-      propertyPath: unsnapDistance
-      value: 0.1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -18704,14 +18657,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2100340764}
     m_Modifications:
-    - target: {fileID: 3531162144887181740, guid: 847eb023fa54e7045a03369dcc02ea45, type: 3}
-      propertyPath: followSpeed
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3531162144887181740, guid: 847eb023fa54e7045a03369dcc02ea45, type: 3}
-      propertyPath: unsnapDistance
-      value: 0.1
-      objectReference: {fileID: 0}
     - target: {fileID: 3554470869194058418, guid: 847eb023fa54e7045a03369dcc02ea45, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.896
@@ -18998,12 +18943,8 @@ PrefabInstance:
       value: Safety_Helmet
       objectReference: {fileID: 0}
     - target: {fileID: 2639094376097806207, guid: 7ba70831d1b548345a0a702c1ae5c3f1, type: 3}
-      propertyPath: followSpeed
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2639094376097806207, guid: 7ba70831d1b548345a0a702c1ae5c3f1, type: 3}
-      propertyPath: unsnapDistance
-      value: 0.1
+      propertyPath: handGrabInteractable
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 8606835022182292615, guid: 7ba70831d1b548345a0a702c1ae5c3f1, type: 3}
       propertyPath: m_LocalPosition.x
@@ -19117,26 +19058,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Safety_Glasses
       objectReference: {fileID: 0}
-    - target: {fileID: 6590348386747832007, guid: 6be8d278f48718b478e4b35acc3adea5, type: 3}
-      propertyPath: snapAnchor
-      value: 
-      objectReference: {fileID: 24415809}
-    - target: {fileID: 6590348386747832007, guid: 6be8d278f48718b478e4b35acc3adea5, type: 3}
-      propertyPath: followSpeed
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6590348386747832007, guid: 6be8d278f48718b478e4b35acc3adea5, type: 3}
-      propertyPath: unsnapDistance
-      value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6590348386747832007, guid: 6be8d278f48718b478e4b35acc3adea5, type: 3}
-      propertyPath: snapPoseOverride
-      value: 
-      objectReference: {fileID: 24415809}
-    - target: {fileID: 6590348386747832007, guid: 6be8d278f48718b478e4b35acc3adea5, type: 3}
-      propertyPath: trackSnapPoseOverrideEveryFrame
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 7418877302980936100, guid: 6be8d278f48718b478e4b35acc3adea5, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.481
@@ -19179,10 +19100,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 7418877302980936100, guid: 6be8d278f48718b478e4b35acc3adea5, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 24415809}
+    m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6be8d278f48718b478e4b35acc3adea5, type: 3}
 --- !u!33 &2823090746083387147
@@ -20272,14 +20190,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2578568355370428004, guid: 92ddb6f6d0a6c5d4f9837aa7f9a547af, type: 3}
-      propertyPath: followSpeed
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2578568355370428004, guid: 92ddb6f6d0a6c5d4f9837aa7f9a547af, type: 3}
-      propertyPath: unsnapDistance
-      value: 0.1
-      objectReference: {fileID: 0}
     - target: {fileID: 4143869970303474665, guid: 92ddb6f6d0a6c5d4f9837aa7f9a547af, type: 3}
       propertyPath: m_Name
       value: Safety_Harness
@@ -21233,14 +21143,6 @@ PrefabInstance:
     - target: {fileID: 1160870894067531648, guid: 724faf244143a4845a4171c611f53c74, type: 3}
       propertyPath: m_Name
       value: Safety_Gloves
-      objectReference: {fileID: 0}
-    - target: {fileID: 7803944540948783177, guid: 724faf244143a4845a4171c611f53c74, type: 3}
-      propertyPath: followSpeed
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7803944540948783177, guid: 724faf244143a4845a4171c611f53c74, type: 3}
-      propertyPath: unsnapDistance
-      value: 0.1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
