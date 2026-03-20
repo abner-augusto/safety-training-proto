@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using SafetyProto.Core;
 using SafetyProto.Data.Enums;
+using SafetyProto.Gameplay.Safety;
 using SafetyProto.Gameplay.Task;
 using SafetyProto.Utils;
 using TMPro;
@@ -18,6 +19,7 @@ namespace SafetyProto.UI
     {
         [Header("References")]
         [SerializeField] private TaskManager taskManager;
+        [SerializeField] private InspectionGateValidator gateValidator; // optional
 
         [Header("Score Section")]
         [SerializeField] private TMP_Text titleText;
@@ -169,6 +171,15 @@ namespace SafetyProto.UI
                 Destroy(child.gameObject);
 
             var messages = GenerateImprovementMessages(tasks);
+
+            // Gate validator failures
+            if (gateValidator != null && gateValidator.FailedAttemptCount > 0)
+            {
+                int n = gateValidator.FailedAttemptCount;
+                messages.Add(
+                    $"🚫 Você tentou iniciar a atividade {n} vez(es) sem completar a inspeção. " +
+                    "Na obra real, isso equivale a começar o trabalho com condições inseguras.");
+            }
 
             if (messages.Count == 0)
             {
