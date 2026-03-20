@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3f96f40fbdfbc448ab3071b965b44ff, type: 3}
+  m_Name: TaskGroup_HeightInspection
+  m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Data.ScriptableObjects.TaskGroup
+  groupName: "Inspe\xE7\xE3o em Andaime Fachadeiro"
+  executionMode: 1
+  timeLimit: 300
+  tasks:
+  - {fileID: 11400000, guid: de93c462d15e8714496853646ef607ed, type: 2}
+  - {fileID: 11400000, guid: 88719d2148ee6304bb67d7e22ff676b6, type: 2}
+  - {fileID: 11400000, guid: af5d923438fb43c4485bf31a0c3fd2b1, type: 2}
+  - {fileID: 11400000, guid: dbc812fcee9f5a84eb169456bf8f95c0, type: 2}
+  requiredGroups:
+  - {fileID: 11400000, guid: 6e1629f57347e014c96e89e215055d55, type: 2}

@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04755c844e92b994b931a41673b57e9d, type: 3}
+  m_Name: Task_equip_gloves
+  m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Data.ScriptableObjects.SafetyTask
+  taskName: "Equipar Luvas de Prote\xE7\xE3o"
+  taskDescription: "Selecione as luvas adequadas para estruturas met\xE1licas e equipe
+    nas m\xE3os."
+  expectedAction: {fileID: 11400000, guid: a521de0e5a59317468292ddca56d3fb2, type: 2}
+  expectedActionId: equip_gloves
+  successPoints: 100
+  failurePenalty: 30
+  ppePenalty: 0
+  requiredPPE: 06000000
+  hintText: "Use luvas de raspa de couro para estruturas met\xE1licas \u2014 n\xE3o
+    luvas de l\xE1tex."
+  failureAdvice: "Luvas de raspa de couro s\xE3o obrigat\xF3rias para manuseio de
+    estruturas met\xE1licas em altura."
+  ppeAdvice: 

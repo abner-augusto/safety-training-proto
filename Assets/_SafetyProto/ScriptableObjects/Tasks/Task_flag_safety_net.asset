@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04755c844e92b994b931a41673b57e9d, type: 3}
+  m_Name: Task_flag_safety_net
+  m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Data.ScriptableObjects.SafetyTask
+  taskName: "Sinalizar Tela de Prote\xE7\xE3o"
+  taskDescription: "Identifique a tela de prote\xE7\xE3o ca\xEDda e sinalize a irregularidade."
+  expectedAction: {fileID: 11400000, guid: cf73a41117dee2847a42903ffa24e142, type: 2}
+  expectedActionId: flag_safety_net
+  successPoints: 100
+  failurePenalty: 30
+  ppePenalty: 30
+  requiredPPE: 0400000001000000
+  hintText: "Interaja com a placa de alerta pr\xF3xima \xE0 tela solta para registrar
+    a irregularidade."
+  failureAdvice: "A tela de prote\xE7\xE3o \xE9 obrigat\xF3ria para prevenir queda
+    de objetos. Sinalizar sua aus\xEAncia \xE9 um procedimento cr\xEDtico antes de
+    iniciar qualquer atividade."
+  ppeAdvice: 

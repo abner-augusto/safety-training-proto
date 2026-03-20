@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04755c844e92b994b931a41673b57e9d, type: 3}
+  m_Name: Task_equip_boots
+  m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Data.ScriptableObjects.SafetyTask
+  taskName: "Equipar Botina de Seguran\xE7a"
+  taskDescription: "Selecione a botina de seguran\xE7a correta e equipe nos p\xE9s."
+  expectedAction: {fileID: 11400000, guid: 520a16e786f4fdc47a7fe2233463896a, type: 2}
+  expectedActionId: equip_boots
+  successPoints: 100
+  failurePenalty: 30
+  ppePenalty: 0
+  requiredPPE: 
+  hintText: "A botina deve ser fechada e com bico de prote\xE7\xE3o. Verifique o
+    CA."
+  failureAdvice: "A botina de seguran\xE7a protege contra perfura\xE7\xF5es e quedas
+    de objetos nos p\xE9s. NR-18 exige cal\xE7ado fechado em canteiro."
+  ppeAdvice: 

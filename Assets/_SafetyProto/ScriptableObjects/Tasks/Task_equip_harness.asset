@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04755c844e92b994b931a41673b57e9d, type: 3}
+  m_Name: Task_equip_harness
+  m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Data.ScriptableObjects.SafetyTask
+  taskName: Equipar Cinto Paraquedista
+  taskDescription: Selecione o cinto tipo paraquedista e vista corretamente.
+  expectedAction: {fileID: 11400000, guid: 99900bd837460b646b2d26126b58595e, type: 2}
+  expectedActionId: equip_harness
+  successPoints: 200
+  failurePenalty: 30
+  ppePenalty: 0
+  requiredPPE: 06000000020000000300000001000000
+  hintText: "Use APENAS o cinto tipo paraquedista. Cintos abdominais n\xE3o s\xE3o
+    aceitos para trabalho em altura."
+  failureAdvice: "O cinto tipo paraquedista \xE9 o \xFAnico modelo aceito para trabalho
+    em altura (NR-35). Cintos abdominais n\xE3o distribuem a for\xE7a de queda adequadamente."
+  ppeAdvice: 
