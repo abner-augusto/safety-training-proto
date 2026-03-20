@@ -305,6 +305,8 @@ namespace SafetyProto.Gameplay.Task
             SessionEvents.RaiseSessionCompleted(summary);
         }
 
+        public IReadOnlyList<RuntimeSafetyTask> GetSessionTasks() => _sessionTasks.AsReadOnly();
+
         public SafetyTask GetCurrentTaskData() => _currentTask?.TaskData;
         public TaskGroup GetCurrentGroup() =>
             (_currentGroupIndex >= 0 && _currentGroupIndex < taskGroups.Count)

@@ -29,6 +29,12 @@ namespace SafetyProto.Data.ScriptableObjects
         [TextArea(2, 4)]
         public string hintText = "Dica rápida para o participante.";
 
+        [Header("Report Feedback")]
+        [TextArea(2, 4)]
+        public string failureAdvice = "";
+        [TextArea(2, 4)]
+        public string ppeAdvice = "";
+
         public string ResolveExpectedActionId()
         {
             if (expectedAction != null && !string.IsNullOrWhiteSpace(expectedAction.ActionId))
