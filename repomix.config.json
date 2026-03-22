@@ -48,7 +48,7 @@
       "**/*.wav",
       "**/*.mat",
       "**/*.shader",
-      "Assets/_SafetyProto/Scripts/Gameplay/Networking/**"
+      "Assets/_SafetyProto/Resources/Dashboard/**"
     ]
   },
   "security": {
