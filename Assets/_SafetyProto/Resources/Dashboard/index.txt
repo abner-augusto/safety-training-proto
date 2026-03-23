@@ -771,7 +771,15 @@
                 logGroupStarted: '📂 Group Started',
                 logGroupCompleted: '📁 Group Completed',
                 logSessionReset: '🔄 Session has been reset',
-                logReportAvailable: '📊 Session report available'
+                logReportAvailable: '📊 Session report available',
+                logSessionPaused: '⏸️ Session paused',
+                logSessionResumed: '▶️ Session resumed',
+                logSessionEnded: '🔚 Session ended',
+                logPpeEquipped: '🦺 PPE Equipped',
+                logPpeRemoved: '🦺 PPE Removed',
+                logActionAttempt: '🎯 Action',
+                logSafetyError: '❌ Safety Error',
+                at: 'at'
             },
             pt: {
                 title: 'SafetyProto',
@@ -816,7 +824,15 @@
                 logGroupStarted: '📂 Grupo Iniciado',
                 logGroupCompleted: '📁 Grupo Concluído',
                 logSessionReset: '🔄 Sessão foi reiniciada',
-                logReportAvailable: '📊 Relatório da sessão disponível'
+                logReportAvailable: '📊 Relatório da sessão disponível',
+                logSessionPaused: '⏸️ Sessão pausada',
+                logSessionResumed: '▶️ Sessão retomada',
+                logSessionEnded: '🔚 Sessão encerrada',
+                logPpeEquipped: '🦺 EPI Equipado',
+                logPpeRemoved: '🦺 EPI Removido',
+                logActionAttempt: '🎯 Ação',
+                logSafetyError: '❌ Erro de Segurança',
+                at: 'em'
             }
         };
 
@@ -1249,9 +1265,21 @@
                     break;
 
                 case "SessionStarted":
-                    document.getElementById('session-id').textContent = 
-                        `Session: ${payload.sessionId.substring(0, 8)}`;
-                    addLog('🎮 Training session started', 'success');
+                    document.getElementById('session-id').textContent =
+                        `${t('session')}: ${payload.sessionId.substring(0, 8)}`;
+                    addLog(t('logSessionStarted'), 'success');
+                    break;
+
+                case "SessionPaused":
+                    addLog(t('logSessionPaused'));
+                    break;
+
+                case "SessionResumed":
+                    addLog(t('logSessionResumed'), 'success');
+                    break;
+
+                case "SessionEnded":
+                    addLog(t('logSessionEnded'));
                     break;
 
                 case "SessionManifest":
@@ -1264,39 +1292,56 @@
 
                 case "TaskStarted":
                     addOrUpdateTask(payload.taskId, payload.taskName, payload.taskDescription, 'active');
-                    addLog(`▶️ Started: ${payload.taskName}`);
+                    addLog(`${t('logStarted')}: ${payload.taskName}`);
                     break;
 
                 case "TaskCompleted":
                     addOrUpdateTask(payload.taskId, payload.taskName, payload.taskDescription, 'completed');
-                    addLog(`✅ Completed: ${payload.taskName}`, 'success');
+                    addLog(`${t('logCompleted')}: ${payload.taskName}`, 'success');
                     break;
 
                 case "TaskTimeout":
                     addOrUpdateTask(payload.taskId, payload.taskName, payload.taskDescription, 'failed');
-                    addLog(`⏰ Timeout: ${payload.taskName}`, 'violation');
+                    addLog(`${t('logTimeout')}: ${payload.taskName}`, 'violation');
                     break;
 
-                case "ScoreChanged":
+                case "ScoreChanged": {
                     const delta = payload.delta;
                     updateScore(payload.totalScore);
                     if (delta > 0) {
-                        addLog(`➕ Score +${delta} (Total: ${payload.totalScore})`, 'success');
+                        addLog(`${t('logScorePlus')} +${delta} (${t('logTotal')}: ${payload.totalScore})`, 'success');
                     } else if (delta < 0) {
-                        addLog(`➖ Score ${delta} (Total: ${payload.totalScore})`, 'violation');
+                        addLog(`${t('logScoreMinus')} ${delta} (${t('logTotal')}: ${payload.totalScore})`, 'violation');
+                    }
+                    break;
+                }
+
+                case "PpeChanged":
+                    if (payload.isWearing) {
+                        addLog(`${t('logPpeEquipped')}: ${payload.ppeType}`, 'success');
+                    } else {
+                        addLog(`${t('logPpeRemoved')}: ${payload.ppeType}`, 'violation');
                     }
                     break;
 
+                case "ActionAttempt":
+                    addLog(`${t('logActionAttempt')}: ${payload.actionId} (${payload.sourceId || ''})${payload.hasPosition ? ` ${t('at')} (${payload.px.toFixed(1)}, ${payload.py.toFixed(1)}, ${payload.pz.toFixed(1)})` : ''}`);
+                    break;
+
                 case "SafetyViolation":
-                    addLog(`⚠️ Safety Violation: ${payload.message}`, 'violation');
+                    addLog(`${t('logViolation')}: ${payload.message}`, 'violation');
                     break;
 
                 case "CriticalSafetyFailure":
-                    addLog(`🚨 CRITICAL: ${payload.reason}`, 'violation');
+                    addLog(`${t('logCritical')}: ${payload.reason}`, 'violation');
+                    break;
+
+                case "SafetyError":
+                    addLog(`${t('logSafetyError')}: [${payload.source}] ${payload.message}`, 'violation');
                     break;
 
                 case "SessionCompleted":
-                    addLog(`🏁 Session Complete! Score: ${payload.totalScore}, Tasks: ${payload.tasksCompleted}/${payload.totalTasks}`, 'success');
+                    addLog(`${t('logSessionComplete')}: ${payload.totalScore}, ${t('tasks')}: ${payload.tasksCompleted}/${payload.totalTasks}`, 'success');
                     break;
 
                 case "SessionLogFile":
@@ -1304,7 +1349,7 @@
                         try {
                             const report = JSON.parse(payload.content);
                             updateReportSection(report);
-                            addLog('📊 Session report available', 'success');
+                            addLog(t('logReportAvailable'), 'success');
                         } catch (e) {
                             console.error('Failed to parse session log:', e);
                         }
@@ -1312,36 +1357,34 @@
                     break;
 
                 case "GroupStarted":
-                    addLog(`📂 Group Started: ${payload.groupName}`);
+                    addLog(`${t('logGroupStarted')}: ${payload.groupName}`);
                     break;
 
                 case "GroupCompleted":
-                    addLog(`📁 Group Completed: ${payload.groupName}`, 'success');
+                    addLog(`${t('logGroupCompleted')}: ${payload.groupName}`, 'success');
                     break;
 
                 case "SessionReset":
-                    // Clear all UI state
                     tasks.clear();
                     sessionReport = null;
                     currentScore = 0;
-                    
-                    // Reset UI elements
+
                     updateScore(0);
                     document.getElementById('task-list').innerHTML = `
                         <div class="empty-state">
                             <div class="empty-state-icon">⏳</div>
-                            <div>Waiting for session to start...</div>
+                            <div>${t('waitingSession')}</div>
                         </div>
                     `;
                     document.getElementById('report-section').innerHTML = `
                         <div class="empty-state">
                             <div class="empty-state-icon">📄</div>
-                            <div>Report available after session</div>
+                            <div>${t('reportAfterSession')}</div>
                         </div>
                     `;
-                    document.getElementById('session-id').textContent = 'No Session';
-                    
-                    addLog('🔄 Session has been reset', 'info');
+                    document.getElementById('session-id').textContent = t('noSession');
+
+                    addLog(t('logSessionReset'));
                     break;
             }
         }

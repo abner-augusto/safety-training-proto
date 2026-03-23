@@ -8,9 +8,7 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
-using SafetyProto.Core.Interfaces;
 using SafetyProto.Gameplay.Events;
-using SafetyProto.Gameplay.Task;
 using SafetyProto.Utils;
 using UnityEngine;
 using System.IO;
@@ -22,22 +20,20 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
     /// Bootstraps the on-device evaluator dashboard servers (HTTP + WebSocket) and event streaming.
     /// Drop this into a boot scene to expose training telemetry over LAN.
     /// </summary>
-    public class EvaluatorDashboardBootstrap : MonoBehaviour, ISessionResettable
+    public class EvaluatorDashboardBootstrap : MonoBehaviour
     {
         [Header("Networking")]
         public int httpPort = 8080;
         public int wsPort = 7071;
 
         [Header("Pose Broadcasting")]
-        public PoseBroadcaster poseBroadcaster;
+        [SerializeField] private PoseChannelSO poseChannel;
+        [SerializeField] private float poseSendRateHz = 10f;
+        [SerializeField] private int poseDecimalPrecision = 3;
 
         [Header("Event Filtering")]
         [Tooltip("If false, reduces chatter by skipping high-volume events (ActionAttempts, PPE changes).")]
         public bool verboseEvents = true;
-
-        [Header("Task Data")]
-        [Tooltip("Optional reference to map tasks to groups and order for remote dashboard UI.")]
-        [SerializeField] private TaskManager taskManager;
 
         [Header("Session Log Broadcast")]
         [Tooltip("Delay (seconds) before broadcasting the session log to ensure it has been written to disk.")]
@@ -46,6 +42,19 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
         private MiniHttpServer _httpServer;
         private EvaluatorWebSocketServer _wsServer;
         private Coroutine _pendingLogBroadcast;
+        private Coroutine _poseSendCoroutine;
+        private readonly List<TaskGroup> _knownGroups = new List<TaskGroup>();
+
+        private void Awake()
+        {
+            var existing = FindObjectsByType<EvaluatorDashboardBootstrap>(FindObjectsSortMode.None);
+            if (existing.Length > 1)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            DontDestroyOnLoad(gameObject);
+        }
 
         private void OnEnable()
         {
@@ -58,9 +67,10 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
         private void Start()
         {
             StartServers();
-            if (poseBroadcaster != null)
+            if (poseChannel != null)
             {
-                poseBroadcaster.Initialize(_wsServer);
+                var poseSender = new PoseSender(poseChannel, _wsServer, poseSendRateHz, poseDecimalPrecision);
+                _poseSendCoroutine = StartCoroutine(poseSender.SendLoop());
             }
             LogStartupInfo();
         }
@@ -72,6 +82,11 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
 
         private void OnDestroy()
         {
+            if (_poseSendCoroutine != null)
+            {
+                StopCoroutine(_poseSendCoroutine);
+                _poseSendCoroutine = null;
+            }
             if (_pendingLogBroadcast != null)
             {
                 StopCoroutine(_pendingLogBroadcast);
@@ -206,7 +221,11 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
                 groupName = args.Group != null ? args.Group.groupName : string.Empty,
                 timestampMs = ResolveTimestamp(args.TimestampMs)
             };
+            if (args.Group != null && !_knownGroups.Contains(args.Group))
+                _knownGroups.Add(args.Group);
+
             Broadcast("GroupStarted", dto);
+            Broadcast("SessionManifest", BuildSessionManifest(args.SessionId));
         }
 
         private void OnGroupCompleted(TaskGroupEventArgs args)
@@ -355,7 +374,7 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
 
         private TaskMetadata BuildTaskMetadata(SafetyTask task)
         {
-            if (task == null || taskManager == null || taskManager.taskGroups == null)
+            if (task == null || _knownGroups.Count == 0)
             {
                 return TaskMetadata.Empty;
             }
@@ -365,7 +384,7 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
             int order = -1;
             int runningOrder = 1;
 
-            foreach (var group in taskManager.taskGroups)
+            foreach (var group in _knownGroups)
             {
                 if (group == null || group.tasks == null)
                     continue;
@@ -414,21 +433,18 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
         {
             var dtos = new List<TaskManifestItemDto>();
 
-            if (taskManager != null && taskManager.taskGroups != null)
+            foreach (var group in _knownGroups)
             {
-                foreach (var group in taskManager.taskGroups)
+                if (group == null) continue;
+                foreach (var task in group.tasks)
                 {
-                    if (group == null) continue;
-                    foreach (var task in group.tasks)
+                    if (task == null) continue;
+                    dtos.Add(new TaskManifestItemDto
                     {
-                        if (task == null) continue;
-                        dtos.Add(new TaskManifestItemDto
-                        {
-                            taskName = task.taskName,
-                            groupName = group.groupName,
-                            description = task.taskDescription
-                        });
-                    }
+                        taskName = task.taskName,
+                        groupName = group.groupName,
+                        description = task.taskDescription
+                    });
                 }
             }
 
@@ -446,6 +462,7 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
 
         public void ResetSession()
         {
+            _knownGroups.Clear();
             var dto = new SessionResetDto
             {
                 timestampMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
