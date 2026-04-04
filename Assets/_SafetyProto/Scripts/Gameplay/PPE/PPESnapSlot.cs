@@ -17,6 +17,17 @@ namespace SafetyProto.Gameplay.PPE
         [Tooltip("PPE types this slot accepts.")]
         [SerializeField] private PPEType[] acceptedTypes;
 
+        [Header("Behavior")]
+        [Tooltip("Esconde o item (SetActive false) quando ele é encaixado no slot.")]
+        [SerializeField] private bool hideWhenEquipped;
+        [Tooltip("Impede que o item seja removido do slot após ser equipado.")]
+        [SerializeField] private bool lockAfterEquipped;
+
+        /// <summary>True se o slot está ocupado e bloqueado contra remoção.</summary>
+        public bool IsLocked => lockAfterEquipped && IsOccupied && !_unlocked;
+
+        private bool _unlocked;
+
         [Header("Visual Feedback")]
         [Tooltip("Optional renderer to highlight when a compatible item is hovering.")]
         [SerializeField] private Renderer highlightRenderer;
@@ -109,20 +120,37 @@ namespace SafetyProto.Gameplay.PPE
             _hoverCounts.Remove(item);
             UpdateHighlight();
             _ppeManager.ReportPPEStateChange(item.PpeType, true, item.gameObject);
+
+            if (hideWhenEquipped)
+                item.gameObject.SetActive(false);
+
             SafetyLog.Info($"PPESnapSlot [{name}]: accepted {item.PpeType}", this);
             return true;
+        }
+
+        /// <summary>
+        /// Destravar o slot manualmente, permitindo que o item seja removido mesmo com lockAfterEquipped ativo.
+        /// Pode ser chamado via UnityEvent no Inspector ou por outro script.
+        /// </summary>
+        public void Unlock()
+        {
+            _unlocked = true;
+            SafetyLog.Info($"PPESnapSlot [{name}]: desbloqueado manualmente.", this);
         }
 
         // Called by PPESnapItem when it unsnaps
         public void OnItemUnsnapped(PPESnapItem item)
         {
-            if (SnappedItem == item)
-            {
-                SnappedItem = null;
-                UpdateHighlight();
-                _ppeManager.ReportPPEStateChange(item.PpeType, false, item.gameObject);
-                SafetyLog.Info($"PPESnapSlot [{name}]: released {item.PpeType}", this);
-            }
+            if (SnappedItem != item) return;
+
+            if (hideWhenEquipped)
+                item.gameObject.SetActive(true);
+
+            SnappedItem = null;
+            _unlocked = false;
+            UpdateHighlight();
+            _ppeManager.ReportPPEStateChange(item.PpeType, false, item.gameObject);
+            SafetyLog.Info($"PPESnapSlot [{name}]: released {item.PpeType}", this);
         }
 
         private void UpdateHighlight()

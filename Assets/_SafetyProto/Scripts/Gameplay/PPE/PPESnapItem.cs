@@ -247,6 +247,8 @@ namespace SafetyProto.Gameplay.PPE
             {
                 if (_isGrabbed)
                 {
+                    if (_currentSlot.IsLocked) return;
+
                     // Check if hand has pulled far enough to unsnap
                     float dist = Vector3.Distance(transform.position, _currentSlot.transform.position);
                     if (dist >= unsnapDistance)
