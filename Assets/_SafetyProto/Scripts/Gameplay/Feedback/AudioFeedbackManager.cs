@@ -71,6 +71,9 @@ namespace SafetyProto.Gameplay.Feedback
             PlayClip(failureClip, failureVolume);
         }
 
+        public void PlaySuccessClip() => PlayClip(successClip, successVolume);
+        public void PlayFailureClip() => PlayClip(failureClip, failureVolume);
+
         private void PlayClip(AudioClip clip, float volume)
         {
             if (clip == null || audioSource == null)
