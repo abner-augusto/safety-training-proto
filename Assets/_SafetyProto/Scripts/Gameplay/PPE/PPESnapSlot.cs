@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.Enums;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace SafetyProto.Gameplay.PPE
 {
@@ -27,6 +28,11 @@ namespace SafetyProto.Gameplay.PPE
         public bool IsLocked => lockAfterEquipped && IsOccupied && !_unlocked;
 
         private bool _unlocked;
+
+        [Header("Events")]
+        [Tooltip("Disparado quando um item distrator tenta encaixar neste slot. " +
+                 "Passa o PPEType tentado para o TaskFeedbackController.")]
+        public UnityEvent<PPEType> onDistractorSnapAttempted;
 
         [Header("Visual Feedback")]
         [Tooltip("Optional renderer to highlight when a compatible item is hovering.")]
@@ -113,7 +119,17 @@ namespace SafetyProto.Gameplay.PPE
         public bool TryAcceptSnap(PPESnapItem item)
         {
             if (item == null) return false;
-            if (!Accepts(item.PpeType)) return false;
+            if (!Accepts(item.PpeType))
+            {
+                var ppeItem = item.GetComponent<PPEItem>();
+                if (ppeItem != null && ppeItem.isDistractor)
+                {
+                    onDistractorSnapAttempted?.Invoke(item.PpeType);
+                    SafetyLog.Info(
+                        $"PPESnapSlot [{name}]: distrator '{item.name}' ({item.PpeType}) rejeitado.", this);
+                }
+                return false;
+            }
             if (IsOccupied) return false;
 
             SnappedItem = item;

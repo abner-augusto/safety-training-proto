@@ -9,6 +9,11 @@ namespace SafetyProto.Gameplay.PPE
     {
         public PPEType ppeType = PPEType.None;
 
+        [Header("Distractor")]
+        [Tooltip("Marcar true para EPIs incorretos (ex: capacete sem jugular, cinto abdominal). " +
+                 "Distradores disparam popup educativo ao tentar encaixar num slot.")]
+        public bool isDistractor = false;
+
         private void Start()
         {
             if (ppeType == PPEType.None)
