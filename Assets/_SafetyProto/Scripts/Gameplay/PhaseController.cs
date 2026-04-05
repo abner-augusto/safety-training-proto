@@ -1,6 +1,7 @@
 using System.Collections;
 using SafetyProto.Core;
 using SafetyProto.Core.Logging;
+using SafetyProto.Data.ScriptableObjects;
 using UnityEngine;
 
 namespace SafetyProto.Gameplay
@@ -26,7 +27,8 @@ namespace SafetyProto.Gameplay
         [SerializeField] private GameObject transitionPanel;
 
         [Header("Trigger")]
-        [SerializeField] private string triggerGroupName = "ppe_selection";
+        [Tooltip("TaskGroup ScriptableObject que dispara a transição ao ser concluído.")]
+        [SerializeField] private TaskGroup triggerGroup;
 
         private bool _transitionExecuted;
 
@@ -49,8 +51,7 @@ namespace SafetyProto.Gameplay
         private void OnGroupCompleted(TaskGroupEventArgs args)
         {
             if (_transitionExecuted) return;
-            if (args.Group == null) return;
-            if (!string.Equals(args.Group.groupName, triggerGroupName, System.StringComparison.OrdinalIgnoreCase)) return;
+            if (triggerGroup == null || args.Group != triggerGroup) return;
 
             _transitionExecuted = true;
             StartCoroutine(ExecutePhaseTransition());
@@ -110,6 +111,8 @@ namespace SafetyProto.Gameplay
 
         private void ValidateReferences()
         {
+            if (triggerGroup == null)
+                SafetyLog.Warning("[PhaseController] triggerGroup não atribuído no Inspector.", this);
             if (playerRig == null)
                 SafetyLog.Warning("[PhaseController] playerRig não atribuído no Inspector.", this);
             if (spawnPointAndaime == null)
