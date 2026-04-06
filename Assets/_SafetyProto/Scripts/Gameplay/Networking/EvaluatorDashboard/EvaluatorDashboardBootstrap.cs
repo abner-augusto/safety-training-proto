@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
@@ -39,6 +40,8 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
         [Tooltip("Delay (seconds) before broadcasting the session log to ensure it has been written to disk.")]
         [SerializeField] private float sessionLogBroadcastDelay = 0.25f;
 
+        private static EvaluatorDashboardBootstrap _instance;
+
         private MiniHttpServer _httpServer;
         private EvaluatorWebSocketServer _wsServer;
         private Coroutine _pendingLogBroadcast;
@@ -47,22 +50,16 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
 
         private void Awake()
         {
-            var existing = FindObjectsByType<EvaluatorDashboardBootstrap>(FindObjectsSortMode.None);
-            if (existing.Length > 1)
+            if (_instance != null && _instance != this)
             {
                 Destroy(gameObject);
                 return;
             }
+            _instance = this;
             DontDestroyOnLoad(gameObject);
         }
 
-        private void OnEnable()
-        {
-            if (!this.IsEventBusReady())
-                return;
-
-            SubscribeEvents();
-        }
+        private void OnEnable() { } // intentionally empty — subscription moved to Start
 
         private void Start()
         {
@@ -72,16 +69,15 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
                 var poseSender = new PoseSender(poseChannel, _wsServer, poseSendRateHz, poseDecimalPrecision);
                 _poseSendCoroutine = StartCoroutine(poseSender.SendLoop());
             }
-            LogStartupInfo();
+            _ = LogStartupInfoAsync();
+            SubscribeEvents(); // after servers are ready
         }
 
-        private void OnDisable()
-        {
-            UnsubscribeEvents();
-        }
+        private void OnDisable() { } // intentionally empty
 
         private void OnDestroy()
         {
+            UnsubscribeEvents();
             if (_poseSendCoroutine != null)
             {
                 StopCoroutine(_poseSendCoroutine);
@@ -94,6 +90,7 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
             }
             _httpServer?.Stop();
             _wsServer?.StopServer();
+            if (_instance == this) _instance = null;
         }
 
         private void StartServers()
@@ -545,9 +542,9 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
             }
         }
 
-        private void LogStartupInfo()
+        private async Awaitable LogStartupInfoAsync()
         {
-            var ip = TryGetLocalIPv4();
+            string ip = await System.Threading.Tasks.Task.Run(TryGetLocalIPv4);
             SafetyLog.Info($"Evaluator Dashboard servers started. HTTP=http://{ip}:{httpPort} WS=ws://{ip}:{wsPort}/eval", this);
         }
 

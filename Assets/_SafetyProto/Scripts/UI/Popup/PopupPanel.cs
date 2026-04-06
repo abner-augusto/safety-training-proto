@@ -88,6 +88,8 @@ namespace SafetyProto.UI
 
             StopAnim();
             IsVisible = false;
+            // Snap to open scale before shrinking, in case Show's grow animation was interrupted
+            transform.localScale = _openScale;
             _animCoroutine = StartCoroutine(AnimateScaleAndDeactivate(_openScale, Vector3.zero, shrinkCurve));
         }
 

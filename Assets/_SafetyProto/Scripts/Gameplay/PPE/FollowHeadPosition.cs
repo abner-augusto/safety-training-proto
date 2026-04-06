@@ -1,3 +1,4 @@
+using SafetyProto.Core.Logging;
 using UnityEngine;
 
 namespace SafetyProto.Gameplay.PPE
@@ -12,6 +13,11 @@ namespace SafetyProto.Gameplay.PPE
         private void Start()
         {
             _head = transform.parent;
+            if (_head == null)
+            {
+                SafetyLog.Error($"[FollowHeadPosition] '{name}' has no parent transform. Disabling.", this);
+                enabled = false;
+            }
         }
 
         private void LateUpdate()

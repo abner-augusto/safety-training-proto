@@ -1,3 +1,4 @@
+using System.Collections;
 using SafetyProto.Core.Logging;
 using UnityEngine;
 using UnityEngine.Events;
@@ -9,12 +10,21 @@ namespace SafetyProto.UI
         [SerializeField] private PopupService popupService;
         [SerializeField] private OnboardingStep[] steps;
         [SerializeField] private bool autoStartOnEnable = true;
+        [Tooltip("Frames to wait before showing the first popup, giving OVR time to initialize stereo matrices.")]
+        [SerializeField, Min(0)] private int startDelayFrames = 3;
 
         private int _currentIndex = -1;
         private GameObject _activeHighlight;
 
-        private void OnEnable()  { if (autoStartOnEnable) StartSequence(); }
-        private void OnDisable() { EndSequence(); }
+        private void OnEnable()  { if (autoStartOnEnable) StartCoroutine(StartDelayed()); }
+        private void OnDisable() { StopAllCoroutines(); EndSequence(); }
+
+        private IEnumerator StartDelayed()
+        {
+            for (int i = 0; i < startDelayFrames; i++)
+                yield return null;
+            StartSequence();
+        }
 
         public void StartSequence()
         {

@@ -74,7 +74,8 @@ namespace SafetyProto.Gameplay.Task
 
         private void HandleTaskTimeout(TaskEventArgs args)
         {
-            if (args.Task != null)
+            if (args.Task == null) return;
+            if (args.Task.failurePenalty > 0)
                 _scoreService.SubtractPoints(args.Task.failurePenalty, $"Task '{args.Task.taskName}' timed out");
         }
 

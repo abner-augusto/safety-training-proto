@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
@@ -38,10 +39,14 @@ namespace SafetyProto.Gameplay.Task
         private SessionCompletedEventArgs? _lastSessionSummary;
         public SessionCompletedEventArgs? LastSessionSummary => _lastSessionSummary;
 
+        private CancellationTokenSource _taskDelayCts;
+
         private void Start()
         {
             if (!this.IsEventBusReady()) return;
 
+            // Both TaskManager and ScoreManagerAdapter resolve IScoreService independently
+            // from scoreServiceAsset.Service — no execution-order dependency between them.
             _scoreService = scoreServiceAsset?.Service;
             if (_scoreService == null)
             {
@@ -67,6 +72,8 @@ namespace SafetyProto.Gameplay.Task
 
         private void OnDestroy()
         {
+            _taskDelayCts?.Cancel();
+            _taskDelayCts?.Dispose();
             if (EventBus.Instance != null)
             {
                 EventBus.Instance.onTaskCompleted.RemoveListener(HandleTaskCompletion);
@@ -214,7 +221,18 @@ namespace SafetyProto.Gameplay.Task
             while (nextGroupIndex < taskGroups.Count)
             {
                 var group = taskGroups[nextGroupIndex];
-                bool canStart = group.requiredGroups.All(r => _completedGroups.Contains(r));
+                bool canStart = true;
+                if (group.requiredGroups != null)
+                {
+                    foreach (var req in group.requiredGroups)
+                    {
+                        if (!_completedGroups.Contains(req))
+                        {
+                            canStart = false;
+                            break;
+                        }
+                    }
+                }
                 if (canStart)
                 {
                     _currentGroupIndex = nextGroupIndex;
@@ -264,9 +282,21 @@ namespace SafetyProto.Gameplay.Task
             var currentGroup = GetCurrentGroup();
             if (currentGroup == null || _completedGroups.Contains(currentGroup)) return;
 
-            bool allDone = _sessionTasks
-                .Where(t => currentGroup.tasks.Contains(t.TaskData))
-                .All(t => t.State == TaskState.CompletedSuccess || t.State == TaskState.CompletedFailure || t.State == TaskState.CompletedSuccessButUnsafe);
+            bool allDone = true;
+            for (int i = 0; i < _sessionTasks.Count; i++)
+            {
+                var t = _sessionTasks[i];
+                if (!currentGroup.tasks.Contains(t.TaskData)) continue;
+
+                var s = t.State;
+                if (s != TaskState.CompletedSuccess &&
+                    s != TaskState.CompletedFailure &&
+                    s != TaskState.CompletedSuccessButUnsafe)
+                {
+                    allDone = false;
+                    break;
+                }
+            }
 
             if (allDone)
             {
@@ -277,12 +307,22 @@ namespace SafetyProto.Gameplay.Task
 
         private async Awaitable WaitAndStartNextTask(float delay)
         {
-            await Awaitable.WaitForSecondsAsync(delay, destroyCancellationToken);
-            if (this == null || _currentTask != null)
+            _taskDelayCts?.Cancel();
+            _taskDelayCts?.Dispose();
+            _taskDelayCts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
+
+            try
+            {
+                await Awaitable.WaitForSecondsAsync(delay, _taskDelayCts.Token);
+            }
+            catch (OperationCanceledException)
             {
                 return;
             }
 
+            // Only advance if no task is currently running.
+            // _currentTask is nulled out in HandleTaskCompletion/HandleTaskTimeout before this await completes.
+            if (_currentTask != null) return;
             StartNextTask();
         }
 
@@ -294,10 +334,18 @@ namespace SafetyProto.Gameplay.Task
             float totalTime = FindFirstObjectByType<TimerSystem>()?.GetTotalSessionTime() ?? 0f;
             int totalScore = _scoreService.CurrentScore;
 
+            int tasksCompletedCount = 0;
+            for (int i = 0; i < _sessionTasks.Count; i++)
+            {
+                var s = _sessionTasks[i].State;
+                if (s == TaskState.CompletedSuccess || s == TaskState.CompletedSuccessButUnsafe)
+                    tasksCompletedCount++;
+            }
+
             var summary = new SessionCompletedEventArgs(
                 totalElapsedTime: totalTime,
                 totalScore: totalScore,
-                tasksCompleted: _sessionTasks.Count(t => t.State == TaskState.CompletedSuccess || t.State == TaskState.CompletedSuccessButUnsafe),
+                tasksCompleted: tasksCompletedCount,
                 totalTasks: _sessionTasks.Count,
                 orderViolationCount: _orderViolations.Count
             );
@@ -337,11 +385,15 @@ namespace SafetyProto.Gameplay.Task
                 return null;
             }
 
-            return _sessionTasks
-                .Where(t =>
-                    (t.State == TaskState.NotStarted || t.State == TaskState.InProgress) &&
-                    currentGroup.tasks.Contains(t.TaskData))
-                .FirstOrDefault(t => MatchesAction(t, normalized));
+            for (int i = 0; i < _sessionTasks.Count; i++)
+            {
+                var t = _sessionTasks[i];
+                var s = t.State;
+                if (s != TaskState.NotStarted && s != TaskState.InProgress) continue;
+                if (!currentGroup.tasks.Contains(t.TaskData)) continue;
+                if (MatchesAction(t, normalized)) return t;
+            }
+            return null;
         }
 
         private static bool MatchesAction(RuntimeSafetyTask task, string actionId)
@@ -390,6 +442,9 @@ namespace SafetyProto.Gameplay.Task
 
         public void ResetSession()
         {
+            _taskDelayCts?.Cancel();
+            _taskDelayCts?.Dispose();
+            _taskDelayCts = null;
             _completedGroups.Clear();
             _orderViolations.Clear();
             _lastSessionSummary = null;

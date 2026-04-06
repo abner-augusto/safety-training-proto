@@ -10,7 +10,6 @@ namespace SafetyProto.UI
     public class ScoreHUD : MonoBehaviour
     {
         private TextMeshProUGUI _scoreText;
-        private int _currentScore;
 
         private void Start()
         {
@@ -23,7 +22,7 @@ namespace SafetyProto.UI
             _scoreText = GetComponent<TextMeshProUGUI>();
 
             EventBus.Instance.onScoreChanged.AddListener(OnScoreChanged);
-            UpdateScoreDisplay(_currentScore);
+            UpdateScoreDisplay(0);
         }
 
         private void OnDestroy()
@@ -36,8 +35,7 @@ namespace SafetyProto.UI
 
         private void OnScoreChanged(ScoreChangedEventArgs args)
         {
-            _currentScore = args.TotalScore;
-            UpdateScoreDisplay(_currentScore);
+            UpdateScoreDisplay(args.TotalScore);
         }
 
         private void UpdateScoreDisplay(int score)

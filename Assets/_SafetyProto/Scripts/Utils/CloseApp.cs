@@ -19,9 +19,9 @@ namespace SafetyProto.Core
         // For convenience, link in inspector
         private void Reset()
         {
-            if (onQuitApp == null)
-                onQuitApp = new UnityEvent();
-            onQuitApp.AddListener(QuitApp);
+            onQuitApp ??= new UnityEvent();
+            if (onQuitApp.GetPersistentEventCount() == 0)
+                onQuitApp.AddListener(QuitApp);
         }
     }
 }

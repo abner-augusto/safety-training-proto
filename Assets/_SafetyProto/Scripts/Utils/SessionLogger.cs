@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
@@ -104,7 +105,7 @@ namespace SafetyProto.Utils
                 tasksCompleted = args.tasksCompleted,
                 totalTasks = args.totalTasks
             };
-            WriteLogToFile();
+            _ = WriteLogToFileAsync(); // fire and forget; errors caught inside
         }
 
         private void OnActionAttempt(ActionAttemptedEvent args)
@@ -146,19 +147,21 @@ namespace SafetyProto.Utils
             });
         }
 
-        private void WriteLogToFile()
+        private async Awaitable WriteLogToFileAsync()
         {
+            var json = JsonUtility.ToJson(_sessionLog, prettyPrint: true);
+            var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
+            var fileName = $"session_log_{timestamp}.json";
+            var path = Path.Combine(Application.persistentDataPath, fileName);
+
             try
             {
-                string json = JsonUtility.ToJson(_sessionLog, prettyPrint: true);
-                string filename = $"session_log_{DateTime.Now:yyyyMMdd_HHmmss}.json";
-                string path = Path.Combine(Application.persistentDataPath, filename);
-                File.WriteAllText(path, json);
-                SafetyLog.Info($"ComprehensiveSessionLogger: Log saved to {path}", this);
+                await File.WriteAllTextAsync(path, json);
+                SafetyLog.Info($"[SessionLogger] Log written to: {path}", this);
             }
             catch (Exception ex)
             {
-                SafetyLog.Error($"ComprehensiveSessionLogger: Failed to write log. {ex.Message}", this);
+                SafetyLog.Error($"[SessionLogger] Failed to write log: {ex.Message}", this);
             }
         }
         
@@ -171,7 +174,7 @@ namespace SafetyProto.Utils
                 EventContext.CurrentPlayerId,
                 EventContext.CurrentScenarioId,
                 EventContext.NowUnixMs());
-            WriteLogToFile();
+            _ = WriteLogToFileAsync();
             _sessionLog.entries.Clear();
             _sessionLog.summary = null;
         }

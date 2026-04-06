@@ -70,6 +70,7 @@ namespace SafetyProto.UI
 
         private void OnDisable()
         {
+            _cachedArgs = null;
             if (EventBus.Instance != null)
                 EventBus.Instance.onSessionCompleted.RemoveListener(OnSessionCompleted);
         }

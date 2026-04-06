@@ -47,6 +47,8 @@ namespace SafetyProto.Gameplay.PPE
         [Header("Misc")]
         [SerializeField] private int interactorId = 0;
 
+        private readonly HashSet<string> _compliantActionIds = new HashSet<string>();
+
         private void Start()
         {
             if (!this.IsEventBusReady())
@@ -75,6 +77,7 @@ namespace SafetyProto.Gameplay.PPE
 
         private void OnDestroy()
         {
+            _compliantActionIds.Clear();
             if (EventBus.Instance != null)
             {
                 EventBus.Instance.onPpeStateChanged.RemoveListener(OnPpeStateChanged);
@@ -95,16 +98,26 @@ namespace SafetyProto.Gameplay.PPE
                 if (string.IsNullOrEmpty(actionId))
                     continue;
 
-                if (!ppeManager.VerifyPPECompliance(mapping.requiredPpe))
-                    continue;
+                bool isCompliant = ppeManager.VerifyPPECompliance(mapping.requiredPpe);
 
-                var pending = taskManager.FindPendingTaskByActionId(actionId);
-                if (pending == null)
-                    continue;
+                if (isCompliant && _compliantActionIds.Add(actionId))
+                {
+                    // Only publish if this is a new compliance (wasn't compliant before)
+                    var pending = taskManager.FindPendingTaskByActionId(actionId);
+                    if (pending == null)
+                    {
+                        _compliantActionIds.Remove(actionId); // not pending, don't cache
+                        continue;
+                    }
 
-                var position = playerTransform != null ? playerTransform.position : transform.position;
-                var sourceId = string.IsNullOrWhiteSpace(mapping.name) ? nameof(PpeTaskMapping) : mapping.name.Trim();
-                ActionEvents.PublishActionAttempt(actionId, sourceId, "ppe_mapping", position, interactorId);
+                    var position = playerTransform != null ? playerTransform.position : transform.position;
+                    var sourceId = string.IsNullOrWhiteSpace(mapping.name) ? nameof(PpeTaskMapping) : mapping.name.Trim();
+                    ActionEvents.PublishActionAttempt(actionId, sourceId, "ppe_mapping", position, interactorId);
+                }
+                else if (!isCompliant)
+                {
+                    _compliantActionIds.Remove(actionId); // reset so it can fire again when re-compliant
+                }
             }
         }
 

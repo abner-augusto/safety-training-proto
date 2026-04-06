@@ -1,7 +1,7 @@
 using System;
-using System.Collections;
 using System.Net;
 using System.Net.NetworkInformation;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 
@@ -28,27 +28,26 @@ namespace SafetyProto.UI
 
         private void OnEnable()
         {
-            UpdateLabel();
+            if (targetLabel == null) return;
+            targetLabel.text = $"{prefix}..."; // placeholder while resolving
+            _ = RefreshAsync();
         }
 
         public void Refresh()
         {
-            UpdateLabel();
+            _ = RefreshAsync();
         }
 
-        private void UpdateLabel()
+        private async Awaitable RefreshAsync()
         {
-            if (targetLabel == null)
-                return;
+            if (targetLabel == null) return;
 
-            if (string.IsNullOrEmpty(_cachedIp))
-            {
-                _cachedIp = TryGetLocalIPv4();
-            }
+            // Offload blocking network interface enumeration to a background thread
+            string ip = await Task.Run(TryGetLocalIPv4);
 
-            targetLabel.text = string.IsNullOrEmpty(prefix)
-                ? _cachedIp
-                : $"{prefix}{_cachedIp}";
+            // Back on main thread
+            _cachedIp = ip;
+            targetLabel.text = string.IsNullOrEmpty(prefix) ? _cachedIp : $"{prefix}{_cachedIp}";
         }
 
         private static string TryGetLocalIPv4()

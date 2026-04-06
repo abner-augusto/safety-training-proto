@@ -20,6 +20,8 @@ namespace SafetyProto.Gameplay.PPE
         [Header("Snap")]
         [Tooltip("Fallback radius to search for a compatible slot on release (helps if trigger exit happens right as you let go).")]
         [SerializeField] private float snapSearchRadius = 0.12f;
+        [Tooltip("Set this to the PPE/Snap layer only for performance. Avoid ~0 (all layers) in production.")]
+        [SerializeField] private LayerMask snapSearchMask = ~0;
 
         [Tooltip("Optional transform on this item that should align to the slot when snapped (lets you override the snap 'center' and rotation).")]
         [SerializeField] private Transform snapPoseOverride;
@@ -185,7 +187,7 @@ namespace SafetyProto.Gameplay.PPE
 
             if (snapSearchRadius <= 0f) return null;
 
-            Collider[] hits = Physics.OverlapSphere(transform.position, snapSearchRadius, ~0, QueryTriggerInteraction.Collide);
+            Collider[] hits = Physics.OverlapSphere(transform.position, snapSearchRadius, snapSearchMask, QueryTriggerInteraction.Collide);
             PPESnapSlot best = null;
             float bestDistSq = float.PositiveInfinity;
 

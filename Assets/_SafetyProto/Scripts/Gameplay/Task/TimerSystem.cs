@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
@@ -153,8 +154,9 @@ namespace SafetyProto.Gameplay.Task
             _elapsedTime = 0f;
             while (_timeRemaining > 0)
             {
-                if (token.IsCancellationRequested || this == null)
+                if (token.IsCancellationRequested)
                 {
+                    SafetyLog.Info("[TimerSystem] Countdown cancelled cleanly.", this);
                     return;
                 }
 
@@ -166,12 +168,20 @@ namespace SafetyProto.Gameplay.Task
                     onTimeUpdated.Invoke(_timeRemaining);
                 }
 
-                await Awaitable.NextFrameAsync(token);
+                try
+                {
+                    await Awaitable.NextFrameAsync(token);
+                }
+                catch (OperationCanceledException)
+                {
+                    SafetyLog.Info("[TimerSystem] Countdown cancelled cleanly.", this);
+                    return;
+                }
             }
 
             onTimeUpdated.Invoke(0);
             _timerCts = null;
-            if (EventBus.Instance != null && _timedGroup != null && !token.IsCancellationRequested && this != null)
+            if (EventBus.Instance != null && _timedGroup != null && !token.IsCancellationRequested)
             {
                 onTimerTimeout.Invoke();
             }

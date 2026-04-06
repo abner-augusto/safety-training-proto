@@ -42,6 +42,9 @@ namespace SafetyProto.Core
         /// </summary>
         public void ResetManagers()
         {
+            // TODO [PERF-05]: Replace with a static registry. Each ISessionResettable should call
+            // SceneLoader.Register(this) in Awake and SceneLoader.Unregister(this) in OnDestroy
+            // to avoid scanning all MonoBehaviours in the scene on every reset.
             var resettableObjects = Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
                 .OfType<ISessionResettable>()
                 .ToList();

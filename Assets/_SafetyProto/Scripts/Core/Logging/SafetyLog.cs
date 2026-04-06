@@ -23,7 +23,6 @@ namespace SafetyProto.Core.Logging
             Debug.LogWarning(Prefix + message, context);
         }
 
-        [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
         public static void Error(string message, Object context = null)
         {
             Debug.LogError(Prefix + message, context);

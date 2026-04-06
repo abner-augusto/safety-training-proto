@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using SafetyProto.Core;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.Enums;
@@ -32,8 +31,10 @@ namespace SafetyProto.UI
         private Dictionary<SafetyTask, TaskEntryUI>  _taskToEntry        = new();
         private Dictionary<SafetyTask, GameObject>   _taskToGO           = new();
         private Dictionary<SafetyTask, Coroutine>    _removalCoroutines  = new();
+        private int _completedVisibleCount = 0;
+        private readonly AnimationCurve _scaleCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
-        private void Start()
+        private void Awake()
         {
             if (taskListContainer == null || taskEntryPrefab == null)
             {
@@ -87,6 +88,7 @@ namespace SafetyProto.UI
             _activeGroup  = args.Group;
             _groupTasks   = new List<SafetyTask>(args.Group.tasks);
             _pendingTasks = new List<SafetyTask>(_groupTasks);
+            _completedVisibleCount = 0;
 
             FillWindow();
             UpdateRemainingText();
@@ -156,6 +158,7 @@ namespace SafetyProto.UI
             if (_taskToEntry.TryGetValue(task, out var entry))
                 entry.UpdateState(state);
 
+            _completedVisibleCount++;
             _removalCoroutines[task] = StartCoroutine(RemoveAfterLinger(task));
             UpdateRemainingText();
         }
@@ -165,6 +168,8 @@ namespace SafetyProto.UI
         private IEnumerator RemoveAfterLinger(SafetyTask task)
         {
             yield return new WaitForSeconds(completedLingerDuration);
+
+            _completedVisibleCount = Mathf.Max(0, _completedVisibleCount - 1);
 
             if (_taskToGO.TryGetValue(task, out var go) && go != null)
                 yield return AnimateScale(go.transform, Vector3.one, Vector3.zero);
@@ -183,14 +188,13 @@ namespace SafetyProto.UI
 
         private IEnumerator AnimateScale(Transform t, Vector3 from, Vector3 to)
         {
-            var curve   = AnimationCurve.EaseInOut(0, 0, 1, 1);
             float elapsed = 0f;
             t.localScale  = from;
 
             while (elapsed < entryAnimDuration)
             {
                 elapsed      += Time.deltaTime;
-                float pct     = curve.Evaluate(Mathf.Clamp01(elapsed / entryAnimDuration));
+                float pct     = _scaleCurve.Evaluate(Mathf.Clamp01(elapsed / entryAnimDuration));
                 t.localScale  = Vector3.LerpUnclamped(from, to, pct);
                 yield return null;
             }
@@ -204,8 +208,7 @@ namespace SafetyProto.UI
         {
             if (remainingTasksText == null) return;
 
-            int completedVisible = _visibleTasks.Count(t => _removalCoroutines.ContainsKey(t));
-            int remaining        = _pendingTasks.Count + (_visibleTasks.Count - completedVisible);
+            int remaining = _pendingTasks.Count + (_visibleTasks.Count - _completedVisibleCount);
 
             remainingTasksText.text = remaining > 0
                 ? $"Tarefas restantes: {remaining}"
