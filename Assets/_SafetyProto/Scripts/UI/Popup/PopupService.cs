@@ -1,3 +1,4 @@
+using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
 using UnityEngine;
 using UnityEngine.Events;
@@ -9,6 +10,8 @@ namespace SafetyProto.UI
         public static PopupService Instance { get; private set; }
 
         [SerializeField] private PopupPanel popupPanel;
+
+        private bool _sessionPausedByUs = false;
 
         private void Awake()
         {
@@ -30,6 +33,11 @@ namespace SafetyProto.UI
         public void Show(PopupData data)
         {
             if (popupPanel == null) return;
+            if (!_sessionPausedByUs)
+            {
+                SessionEvents.RaiseSessionPaused();
+                _sessionPausedByUs = true;
+            }
             popupPanel.Show(data);
         }
 
@@ -37,6 +45,11 @@ namespace SafetyProto.UI
         {
             if (popupPanel == null) return;
             popupPanel.Hide();
+            if (_sessionPausedByUs)
+            {
+                SessionEvents.RaiseSessionResumed();
+                _sessionPausedByUs = false;
+            }
         }
 
         public void ShowNormal(string title, string body)
