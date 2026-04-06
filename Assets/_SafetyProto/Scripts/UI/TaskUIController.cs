@@ -1,200 +1,215 @@
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using SafetyProto.Core;
+using SafetyProto.Core.Logging;
 using SafetyProto.Data.Enums;
 using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Gameplay.Task;
-using SafetyProto.Utils;
 using TMPro;
 using UnityEngine;
-using SafetyProto.Core.Logging;
 
 namespace SafetyProto.UI
 {
-    /// <summary>
-    /// Displays the list of tasks and the current task details.
-    /// </summary>
     public class TaskUIController : MonoBehaviour
     {
         [Header("References")]
         [SerializeField] private Transform taskListContainer;
         [SerializeField] private GameObject taskEntryPrefab;
 
-        [Header("Task Definitions")]
-        [Tooltip("Optional static list of task groups to render. If empty, the controller will copy them from the provided TaskManager once.")]
-        [SerializeField] private List<TaskGroup> taskGroups = new List<TaskGroup>();
-        [Tooltip("Optional reference used only at startup to pull task definitions and initial task state.")]
-        [SerializeField] private TaskManager initialTaskProvider;
+        [Header("Janela Deslizante")]
+        [SerializeField] private int maxVisibleTasks = 5;
+        [SerializeField] private float completedLingerDuration = 1.5f;
+        [SerializeField] private float entryAnimDuration = 0.2f;
 
-        [Header("Current Task Detail Panel")]
-        [SerializeField] private TMP_Text currentTaskOrderText;
-        [SerializeField] private TMP_Text currentTaskNameText;
-        [SerializeField] private TMP_Text currentTaskDescriptionText;
-        [Header("Hint UI")]
-        [SerializeField] private TMP_Text currentTaskHintText;
+        [Header("Rodapé")]
+        [SerializeField] private TMP_Text remainingTasksText;
 
-        private readonly Dictionary<SafetyTask, TaskEntryUI> _taskToEntryUI = new();
-        private readonly Dictionary<SafetyTask, int> _taskOrderLookup = new();
-        private SafetyTask _currentFocusedTask;
+        private TaskGroup _activeGroup;
+        private List<SafetyTask> _groupTasks       = new();
+        private List<SafetyTask> _pendingTasks     = new();
+        private List<SafetyTask> _visibleTasks     = new();
+        private Dictionary<SafetyTask, TaskEntryUI>  _taskToEntry        = new();
+        private Dictionary<SafetyTask, GameObject>   _taskToGO           = new();
+        private Dictionary<SafetyTask, Coroutine>    _removalCoroutines  = new();
 
         private void Start()
         {
             if (taskListContainer == null || taskEntryPrefab == null)
             {
-                SafetyLog.Error("TaskUIController is missing references.", this);
+                SafetyLog.Error("[TaskUIController] Referências obrigatórias não atribuídas.", this);
                 enabled = false;
                 return;
             }
 
-            if (!this.IsEventBusReady())
+            if (EventBus.Instance == null)
             {
+                SafetyLog.Warning("[TaskUIController] EventBus.Instance não encontrado.", this);
                 return;
             }
 
-            SeedTaskDefinitionsFromProvider();
-            PopulateTaskList();
-
+            EventBus.Instance.onGroupStarted.AddListener(OnGroupStarted);
             EventBus.Instance.onTaskStarted.AddListener(OnTaskStarted);
             EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
             EventBus.Instance.onTaskTimeout.AddListener(OnTaskTimeout);
-            EventBus.Instance.onGroupStarted.AddListener(OnGroupStarted);
-            EventBus.Instance.onSafetyViolation.AddListener(OnSafetyViolation);
-
-            var initial = initialTaskProvider != null ? initialTaskProvider.GetCurrentTaskData() : null;
-            if (initial != null)
-            {
-                OnTaskStarted(new TaskEventArgs(initial));
-            }
-
-            initialTaskProvider = null;
         }
 
         private void OnDestroy()
         {
-            if (EventBus.Instance != null)
-            {
-                EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStarted);
-                EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
-                EventBus.Instance.onTaskTimeout.RemoveListener(OnTaskTimeout);
-                EventBus.Instance.onGroupStarted.RemoveListener(OnGroupStarted);
-                EventBus.Instance.onSafetyViolation.RemoveListener(OnSafetyViolation);
-            }
+            if (EventBus.Instance == null) return;
+            EventBus.Instance.onGroupStarted.RemoveListener(OnGroupStarted);
+            EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStarted);
+            EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
+            EventBus.Instance.onTaskTimeout.RemoveListener(OnTaskTimeout);
         }
 
-        private void PopulateTaskList()
-        {
-            int order = 1;
-            foreach (var group in taskGroups)
-            {
-                if (group == null) continue;
-                foreach (var task in group.tasks)
-                {
-                    var go = Instantiate(taskEntryPrefab, taskListContainer);
-                    var entry = go.GetComponent<TaskEntryUI>();
-                    entry.Setup(order, task.taskName);
-                    _taskToEntryUI[task] = entry;
-                    _taskOrderLookup[task] = order;
-                    order++;
-                }
-            }
-        }
-
-        private void SeedTaskDefinitionsFromProvider()
-        {
-            if (taskGroups.Count == 0 && initialTaskProvider != null)
-            {
-                taskGroups = new List<TaskGroup>(initialTaskProvider.taskGroups);
-            }
-        }
+        // ── Group ────────────────────────────────────────────────────────────
 
         private void OnGroupStarted(TaskGroupEventArgs args)
         {
-            if (args.Group == null)
-            {
-                return;
-            }
+            if (args.Group == null) return;
 
-            if (args.Group.executionMode == TaskExecutionMode.FreeOrder)
+            // Cancelar remoções pendentes
+            foreach (var kvp in _removalCoroutines)
+                if (kvp.Value != null) StopCoroutine(kvp.Value);
+            _removalCoroutines.Clear();
+
+            // Destruir entradas existentes
+            foreach (var go in _taskToGO.Values)
+                if (go != null) Destroy(go);
+
+            _taskToEntry.Clear();
+            _taskToGO.Clear();
+            _visibleTasks.Clear();
+            _pendingTasks.Clear();
+            _groupTasks.Clear();
+
+            _activeGroup  = args.Group;
+            _groupTasks   = new List<SafetyTask>(args.Group.tasks);
+            _pendingTasks = new List<SafetyTask>(_groupTasks);
+
+            FillWindow();
+            UpdateRemainingText();
+        }
+
+        // ── Window ───────────────────────────────────────────────────────────
+
+        private void FillWindow()
+        {
+            while (_visibleTasks.Count < maxVisibleTasks && _pendingTasks.Count > 0)
             {
-                foreach (var task in args.Group.tasks)
+                var task = _pendingTasks[0];
+                _pendingTasks.RemoveAt(0);
+                _visibleTasks.Add(task);
+
+                int globalOrder = _groupTasks.IndexOf(task) + 1;
+                var go    = Instantiate(taskEntryPrefab, taskListContainer);
+                var entry = go.GetComponent<TaskEntryUI>();
+
+                if (entry == null)
                 {
-                    if (_taskToEntryUI.TryGetValue(task, out var entryUI))
-                    {
-                        entryUI.UpdateState(TaskState.InProgress);
-                    }
+                    SafetyLog.Warning("[TaskUIController] taskEntryPrefab não tem TaskEntryUI.", this);
+                    Destroy(go);
+                    continue;
                 }
+
+                entry.Setup(globalOrder, task.taskName);
+                _taskToEntry[task] = entry;
+                _taskToGO[task]    = go;
+
+                StartCoroutine(AnimateScale(go.transform, Vector3.zero, Vector3.one));
             }
         }
+
+        // ── Task events ──────────────────────────────────────────────────────
 
         private void OnTaskStarted(TaskEventArgs args)
         {
             if (args.Task == null) return;
+            if (_activeGroup == null || _activeGroup.executionMode != TaskExecutionMode.Sequential) return;
 
-            _currentFocusedTask = args.Task;
-
-            if (_taskToEntryUI.TryGetValue(args.Task, out var entryUI))
-                entryUI.UpdateState(TaskState.InProgress);
-
-            UpdateCurrentTaskPanel(args.Task);
-
-            if (currentTaskHintText != null) currentTaskHintText.text = string.Empty;
+            if (_taskToEntry.TryGetValue(args.Task, out var entry))
+                entry.UpdateState(TaskState.InProgress);
         }
 
         private void OnTaskCompleted(TaskEventArgs args)
         {
             if (args.Task == null) return;
-            if (_taskToEntryUI.TryGetValue(args.Task, out var entryUI))
-            {
-                var state = args.RuntimeTask?.State ?? TaskState.CompletedSuccess;
-                entryUI.UpdateState(state);
-            }
+            if (!_visibleTasks.Contains(args.Task)) return;
+
+            var state = args.RuntimeTask?.State ?? TaskState.CompletedSuccess;
+            ScheduleRemoval(args.Task, state);
         }
 
         private void OnTaskTimeout(TaskEventArgs args)
         {
             if (args.Task == null) return;
-            if (_taskToEntryUI.TryGetValue(args.Task, out var entryUI))
-                entryUI.UpdateState(TaskState.CompletedFailure);
+            if (!_visibleTasks.Contains(args.Task)) return;
 
-            if (currentTaskHintText != null && args.Task == _currentFocusedTask)
-            {
-                currentTaskHintText.text = string.IsNullOrEmpty(args.Task.hintText)
-                    ? "Time ran out!"
-                    : $"Time Up: {args.Task.hintText}";
-                currentTaskHintText.color = Color.red;
-            }
+            ScheduleRemoval(args.Task, TaskState.CompletedFailure);
         }
 
-        private void OnSafetyViolation(SafetyViolationEventArgs args)
+        private void ScheduleRemoval(SafetyTask task, TaskState state)
         {
-            if (_currentFocusedTask == null || args.TaskId != _currentFocusedTask.taskName)
-            {
-                return;
-            }
+            if (_removalCoroutines.ContainsKey(task)) return; // já agendado
 
-            if (currentTaskHintText != null)
-            {
-                string message = string.IsNullOrEmpty(_currentFocusedTask.hintText)
-                    ? args.Message
-                    : _currentFocusedTask.hintText;
+            if (_taskToEntry.TryGetValue(task, out var entry))
+                entry.UpdateState(state);
 
-                currentTaskHintText.text = message;
-                currentTaskHintText.color = Color.yellow;
-            }
+            _removalCoroutines[task] = StartCoroutine(RemoveAfterLinger(task));
+            UpdateRemainingText();
         }
 
-        private void UpdateCurrentTaskPanel(SafetyTask task)
+        // ── Coroutines ───────────────────────────────────────────────────────
+
+        private IEnumerator RemoveAfterLinger(SafetyTask task)
         {
-            if (_taskOrderLookup.TryGetValue(task, out var order))
+            yield return new WaitForSeconds(completedLingerDuration);
+
+            if (_taskToGO.TryGetValue(task, out var go) && go != null)
+                yield return AnimateScale(go.transform, Vector3.one, Vector3.zero);
+
+            if (_taskToGO.TryGetValue(task, out var goToDestroy) && goToDestroy != null)
+                Destroy(goToDestroy);
+
+            _visibleTasks.Remove(task);
+            _taskToEntry.Remove(task);
+            _taskToGO.Remove(task);
+            _removalCoroutines.Remove(task);
+
+            FillWindow();
+            UpdateRemainingText();
+        }
+
+        private IEnumerator AnimateScale(Transform t, Vector3 from, Vector3 to)
+        {
+            var curve   = AnimationCurve.EaseInOut(0, 0, 1, 1);
+            float elapsed = 0f;
+            t.localScale  = from;
+
+            while (elapsed < entryAnimDuration)
             {
-                currentTaskOrderText.text = $"{order}.";
-            }
-            else
-            {
-                currentTaskOrderText.text = string.Empty;
+                elapsed      += Time.deltaTime;
+                float pct     = curve.Evaluate(Mathf.Clamp01(elapsed / entryAnimDuration));
+                t.localScale  = Vector3.LerpUnclamped(from, to, pct);
+                yield return null;
             }
 
-            currentTaskNameText.text = task.taskName;
-            currentTaskDescriptionText.text = task.taskDescription;
+            t.localScale = to;
+        }
+
+        // ── Helpers ──────────────────────────────────────────────────────────
+
+        private void UpdateRemainingText()
+        {
+            if (remainingTasksText == null) return;
+
+            int completedVisible = _visibleTasks.Count(t => _removalCoroutines.ContainsKey(t));
+            int remaining        = _pendingTasks.Count + (_visibleTasks.Count - completedVisible);
+
+            remainingTasksText.text = remaining > 0
+                ? $"Tarefas restantes: {remaining}"
+                : string.Empty;
         }
     }
 }
