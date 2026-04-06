@@ -6,6 +6,7 @@ namespace SafetyProto.UI
 {
     public class OnboardingController : MonoBehaviour
     {
+        [SerializeField] private PopupService popupService;
         [SerializeField] private OnboardingStep[] steps;
         [SerializeField] private bool autoStartOnEnable = true;
 
@@ -61,13 +62,13 @@ namespace SafetyProto.UI
                 ShowNext();
             });
 
-            if (PopupService.Instance == null)
+            if (popupService == null)
             {
-                SafetyLog.Warning("[OnboardingController] PopupService.Instance não encontrado.", this);
+                SafetyLog.Warning("[OnboardingController] PopupService não atribuído no Inspector.", this);
                 return;
             }
 
-            PopupService.Instance.Show(data);
+            popupService.Show(data);
         }
 
         public void EndSequence()
@@ -78,7 +79,7 @@ namespace SafetyProto.UI
                 _activeHighlight = null;
             }
 
-            PopupService.Instance?.Hide();
+            if (popupService != null) popupService.Hide();
         }
     }
 }

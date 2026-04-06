@@ -47,6 +47,16 @@ namespace SafetyProto.Gameplay.PPE
         [Tooltip("Transform on the harness where the lanyard originates (D-ring on back/chest).")]
         [SerializeField] private Transform harnessAttachPoint;
 
+        [Header("Idle Follow")]
+        [Tooltip("Local offset from harnessAttachPoint where the tip rests when idle.")]
+        [SerializeField] private Vector3 idlePositionOffset = Vector3.zero;
+
+        [Tooltip("Local rotation offset from harnessAttachPoint when idle.")]
+        [SerializeField] private Vector3 idleRotationOffset = Vector3.zero;
+
+        [Tooltip("How fast the tip follows the harness attach point. 0 = instant (snap).")]
+        [SerializeField, Range(0f, 30f)] private float idleFollowSpeed = 20f;
+
         [Header("Grab Detection")]
         [Tooltip("Grabbable on the lanyard tip. Auto-found if null.")]
         [SerializeField] private Grabbable grabbable;
@@ -95,10 +105,6 @@ namespace SafetyProto.Gameplay.PPE
         private Rigidbody _rb;
         private LineRenderer _lineRenderer;
 
-        private Vector3 _idleLocalPosition;
-        private Quaternion _idleLocalRotation;
-        private Transform _idleParent;
-
         private bool _isGrabbed;
         private Coroutine _retractCoroutine;
         private AnchorPoint _lockedAnchor;
@@ -117,11 +123,6 @@ namespace SafetyProto.Gameplay.PPE
             if (handGrabInteractable == null)
                 handGrabInteractable = GetComponentInChildren<HandGrabInteractable>();
 
-            // Cache idle pose (before anything moves it)
-            _idleParent = transform.parent;
-            _idleLocalPosition = transform.localPosition;
-            _idleLocalRotation = transform.localRotation;
-
             // Ensure VerletLanyard exists
             _verletLanyard = GetComponent<VerletLanyard>();
             if (_verletLanyard == null)
@@ -137,7 +138,7 @@ namespace SafetyProto.Gameplay.PPE
                 SafetyLog.Warning(
                     "RetractableLanyardController: harnessAttachPoint não atribuído! " +
                     "Usando parent transform como fallback.", this);
-                harnessAttachPoint = _idleParent;
+                harnessAttachPoint = transform.parent;
             }
 
             // Subscribe to grab events
@@ -162,8 +163,40 @@ namespace SafetyProto.Gameplay.PPE
 
         private void LateUpdate()
         {
-            if (state == LanyardState.Pulling)
-                UpdatePullingVisual();
+            switch (state)
+            {
+                case LanyardState.Idle:
+                    FollowHarnessAttachPoint();
+                    break;
+                case LanyardState.Pulling:
+                    UpdatePullingVisual();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Smoothly follows the harnessAttachPoint transform with the configured offset.
+        /// Same pattern as PPESnapItem following its PPESnapSlot.
+        /// </summary>
+        private void FollowHarnessAttachPoint()
+        {
+            if (harnessAttachPoint == null) return;
+
+            Quaternion offsetRot = Quaternion.Euler(idleRotationOffset);
+            Vector3 targetPos = harnessAttachPoint.TransformPoint(idlePositionOffset);
+            Quaternion targetRot = harnessAttachPoint.rotation * offsetRot;
+
+            if (idleFollowSpeed <= 0f)
+            {
+                // Instant snap
+                transform.SetPositionAndRotation(targetPos, targetRot);
+            }
+            else
+            {
+                float t = Mathf.Clamp01(idleFollowSpeed * Time.deltaTime);
+                transform.position = Vector3.Lerp(transform.position, targetPos, t);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, t);
+            }
         }
 
         // ── Grab Detection ────────────────────────────────────────
@@ -241,15 +274,26 @@ namespace SafetyProto.Gameplay.PPE
             if (_lineRenderer != null)
                 _lineRenderer.enabled = false;
 
-            // Re-parent tip to harness
-            transform.SetParent(_idleParent);
-            transform.localPosition = _idleLocalPosition;
-            transform.localRotation = _idleLocalRotation;
+            // Un-parent so the tip lives at scene root — follow logic in LateUpdate
+            // keeps it glued to harnessAttachPoint without inheriting the harness Grabbable chain.
+            transform.SetParent(null);
+
+            // Snap to harness immediately (no lerp pop on first frame)
+            if (harnessAttachPoint != null)
+            {
+                Quaternion offsetRot = Quaternion.Euler(idleRotationOffset);
+                transform.SetPositionAndRotation(
+                    harnessAttachPoint.TransformPoint(idlePositionOffset),
+                    harnessAttachPoint.rotation * offsetRot);
+            }
 
             // Kinematic while idle (no physics jitter)
+            if (!_rb.isKinematic)
+            {
+                _rb.linearVelocity = Vector3.zero;
+                _rb.angularVelocity = Vector3.zero;
+            }
             _rb.isKinematic = true;
-            _rb.linearVelocity = Vector3.zero;
-            _rb.angularVelocity = Vector3.zero;
 
             _lockedAnchor = null;
         }
@@ -351,12 +395,13 @@ namespace SafetyProto.Gameplay.PPE
             // Phase 1: Hold at current length for a beat
             yield return new WaitForSeconds(retractDelay);
 
-            // Phase 2: Smoothly move tip back to harness
+            // Phase 2: Smoothly move tip back to harness attach point
             Vector3 startPos = transform.position;
             Quaternion startRot = transform.rotation;
             _rb.isKinematic = true;
             _rb.linearVelocity = Vector3.zero;
 
+            Quaternion offsetRot = Quaternion.Euler(idleRotationOffset);
             float elapsed = 0f;
 
             while (elapsed < retractDuration)
@@ -364,11 +409,12 @@ namespace SafetyProto.Gameplay.PPE
                 elapsed += Time.deltaTime;
                 float t = retractCurve.Evaluate(Mathf.Clamp01(elapsed / retractDuration));
 
-                Vector3 targetPos = _idleParent != null
-                    ? _idleParent.TransformPoint(_idleLocalPosition)
+                // Recompute target every frame — harness moves with the player
+                Vector3 targetPos = harnessAttachPoint != null
+                    ? harnessAttachPoint.TransformPoint(idlePositionOffset)
                     : startPos;
-                Quaternion targetRot = _idleParent != null
-                    ? _idleParent.rotation * _idleLocalRotation
+                Quaternion targetRot = harnessAttachPoint != null
+                    ? harnessAttachPoint.rotation * offsetRot
                     : startRot;
 
                 transform.position = Vector3.Lerp(startPos, targetPos, t);
@@ -477,18 +523,13 @@ namespace SafetyProto.Gameplay.PPE
             Gizmos.color = new Color(0f, 1f, 0.5f, 0.25f);
             Gizmos.DrawWireSphere(transform.position, anchorSearchRadius);
 
-            // Show idle position
-            if (_idleParent != null)
+            // Show follow target (harness D-ring)
+            if (harnessAttachPoint != null)
             {
-                Gizmos.color = Color.white;
-                Vector3 idleWorld = _idleParent.TransformPoint(_idleLocalPosition);
-                Gizmos.DrawWireSphere(idleWorld, 0.015f);
-                Gizmos.DrawLine(transform.position, idleWorld);
-            }
-            else if (harnessAttachPoint != null)
-            {
+                Vector3 idleWorld = harnessAttachPoint.TransformPoint(idlePositionOffset);
                 Gizmos.color = Color.green;
-                Gizmos.DrawWireSphere(harnessAttachPoint.position, 0.02f);
+                Gizmos.DrawWireSphere(idleWorld, 0.02f);
+                Gizmos.DrawLine(transform.position, idleWorld);
             }
         }
 #endif

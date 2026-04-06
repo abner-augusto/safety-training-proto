@@ -34,11 +34,11 @@ namespace SafetyProto.UI
 
         private PopupData _currentData;
         private Coroutine _animCoroutine;
+        private Vector3 _openScale;
 
         private void Awake()
         {
-            gameObject.SetActive(false);
-            transform.localScale = Vector3.zero;
+            _openScale = transform.localScale;
         }
 
         public void Show(PopupData data)
@@ -76,6 +76,7 @@ namespace SafetyProto.UI
                 actionButtonLabel.text = data.actionButtonLabel;
 
             StopAnim();
+            transform.localScale = Vector3.zero;
             gameObject.SetActive(true);
             IsVisible = true;
             _animCoroutine = StartCoroutine(ShowWithRebuild());
@@ -87,7 +88,7 @@ namespace SafetyProto.UI
 
             StopAnim();
             IsVisible = false;
-            _animCoroutine = StartCoroutine(AnimateScaleAndDeactivate(Vector3.one, Vector3.zero, shrinkCurve));
+            _animCoroutine = StartCoroutine(AnimateScaleAndDeactivate(_openScale, Vector3.zero, shrinkCurve));
         }
 
         /// <summary>Chamado pelo botão de ação via Inspector.</summary>
@@ -110,7 +111,7 @@ namespace SafetyProto.UI
             var root = layoutRoot != null ? layoutRoot : (RectTransform)transform;
             LayoutRebuilder.ForceRebuildLayoutImmediate(root);
 
-            yield return AnimateScale(Vector3.zero, Vector3.one, growCurve);
+            yield return AnimateScale(Vector3.zero, _openScale, growCurve);
         }
 
         private void StopAnim()

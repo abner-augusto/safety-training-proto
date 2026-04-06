@@ -8,8 +8,8 @@
   <Project Path="UnityEngine.TestRunner.csproj" />
   <Project Path="Unity.UnifiedRayTracing.Runtime.csproj" />
   <Project Path="UnityEditor.TestRunner.csproj" />
-  <Project Path="Unity.TextMeshPro.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="Unity.TextMeshPro.csproj" />
   <Project Path="Unity.TextMeshPro.Editor.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="UnityEditor.UI.csproj" />
