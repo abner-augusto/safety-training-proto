@@ -206,10 +206,10 @@ RectTransform:
   - {fileID: 7045202931443461999}
   m_Father: {fileID: 8576592097836007723}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 64}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 290, y: -369.18}
+  m_SizeDelta: {x: 500, y: 64}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2827652341819614688
 CanvasRenderer:
@@ -376,7 +376,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 290, y: -279.59}
-  m_SizeDelta: {x: 500, y: 0}
+  m_SizeDelta: {x: 500, y: 75.18}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &774748382280424216
 CanvasRenderer:
@@ -537,7 +537,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 433.18}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &3560123793681597352
 MonoBehaviour:
@@ -777,10 +777,10 @@ RectTransform:
   - {fileID: 8898076398482566265}
   m_Father: {fileID: 3254671505074182501}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 250, y: -32}
+  m_SizeDelta: {x: 200, y: 64}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1951512657401213507
 CanvasRenderer:
@@ -963,10 +963,10 @@ RectTransform:
   - {fileID: 4745829490212327641}
   m_Father: {fileID: 8576592097836007723}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 120}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 290, y: -92}
+  m_SizeDelta: {x: 500, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3397416577907486951
 CanvasRenderer:
@@ -1038,10 +1038,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 8576592097836007723}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 50}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 290, y: -197}
+  m_SizeDelta: {x: 500, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3079197691289066514
 CanvasRenderer:
@@ -1500,14 +1500,14 @@ GameObject:
   - component: {fileID: 5862384572726555438}
   - component: {fileID: 7612859617129770983}
   - component: {fileID: 3830821183301202349}
-  - component: {fileID: 4388243367454337763}
+  - component: {fileID: 6790112744555838503}
   m_Layer: 3
   m_Name: PopUpCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &6697498993311953659
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1722,7 +1722,7 @@ MonoBehaviour:
   positionLerpSpeed: 5
   rotationLerpSpeed: 7
   rotationDeadzoneDegrees: 15
---- !u!114 &4388243367454337763
+--- !u!114 &6790112744555838503
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1735,12 +1735,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Oculus.VR::OVROverlayCanvas
   _mipmapMode: 0
-  _dynamicResolution: 1
+  _dynamicResolution: 0
   _redrawResolutionThreshold: 2147483647
   rectTransform: {fileID: 6697498993311953659}
   maxTextureSize: 2048
   manualRedraw: 0
-  renderInterval: 2
+  renderInterval: 1
   renderIntervalFrameOffset: 0
   superSample: 0
   layer: 5
