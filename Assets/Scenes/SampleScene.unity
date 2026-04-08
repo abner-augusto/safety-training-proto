@@ -47329,7 +47329,7 @@ GameObject:
   - component: {fileID: 1471752796}
   - component: {fileID: 1471752797}
   m_Layer: 0
-  m_Name: XRSessionManager
+  m_Name: TrainingSessionManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

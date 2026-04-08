@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 
 namespace SafetyProto.Core
 {
-    public class XRSessionManager : MonoBehaviour
+    public class TrainingSessionManager : MonoBehaviour
     {
         private bool _isPaused;
 
@@ -24,7 +24,7 @@ namespace SafetyProto.Core
                 SceneManager.GetActiveScene().name);
 
             SessionEvents.RaiseSessionStarted();
-            SafetyLog.Info("XRSessionManager: Session Started event raised.", this);
+            SafetyLog.Info("TrainingSessionManager: Session Started event raised.", this);
         }
 
         private void OnApplicationPause(bool pauseStatus)
@@ -33,7 +33,7 @@ namespace SafetyProto.Core
             {
                 _isPaused = true;
                 SessionEvents.RaiseSessionPaused();
-                SafetyLog.Info("XRSessionManager: Session Paused event raised.", this);
+                SafetyLog.Info("TrainingSessionManager: Session Paused event raised.", this);
             }
         }
 
@@ -43,13 +43,13 @@ namespace SafetyProto.Core
             {
                 _isPaused = false;
                 SessionEvents.RaiseSessionResumed();
-                SafetyLog.Info("XRSessionManager: Session Resumed event raised.", this);
+                SafetyLog.Info("TrainingSessionManager: Session Resumed event raised.", this);
             }
             else if (!hasFocus && !_isPaused)
             {
                 _isPaused = true;
                 SessionEvents.RaiseSessionPaused();
-                SafetyLog.Info("XRSessionManager: Session Paused (due to focus loss) event raised.", this);
+                SafetyLog.Info("TrainingSessionManager: Session Paused (due to focus loss) event raised.", this);
             }
         }
 
@@ -58,7 +58,7 @@ namespace SafetyProto.Core
             if (EventBus.Instance != null)
             {
                 SessionEvents.RaiseSessionEnded();
-                SafetyLog.Info("XRSessionManager: Session Ended event raised.", this);
+                SafetyLog.Info("TrainingSessionManager: Session Ended event raised.", this);
             }
 
             EventContext.Clear();
