@@ -3,11 +3,6 @@ using UnityEngine;
 
 namespace SafetyProto.Gameplay.Interactables
 {
-    /// <summary>
-    /// Returns a Grabbable object to a home pose when released.
-    /// Optionally set a custom home Transform; otherwise the initial pose is used.
-    /// Drop alongside Grabbable + Rigidbody. No other configuration needed.
-    /// </summary>
     [RequireComponent(typeof(Grabbable))]
     public class ReturnObjectHome : MonoBehaviour
     {
@@ -59,15 +54,8 @@ namespace SafetyProto.Gameplay.Interactables
             }
         }
 
-        private void OnEnable()
-        {
-            _grabbable.WhenPointerEventRaised += OnPointerEvent;
-        }
-
-        private void OnDisable()
-        {
-            _grabbable.WhenPointerEventRaised -= OnPointerEvent;
-        }
+        private void OnEnable() => _grabbable.WhenPointerEventRaised += OnPointerEvent;
+        private void OnDisable() => _grabbable.WhenPointerEventRaised -= OnPointerEvent;
 
         public void CancelReturn()
         {
@@ -79,9 +67,7 @@ namespace SafetyProto.Gameplay.Interactables
                 _delayCoroutine = null;
             }
 
-            // If we were returning, we likely forced kinematic. Let the grab system/physics take over again.
-            if (_rb != null)
-                _rb.isKinematic = false;
+            if (_rb != null) _rb.isKinematic = false;
         }
 
         public void BeginReturnNow()
@@ -93,11 +79,8 @@ namespace SafetyProto.Gameplay.Interactables
         public void RequestReturn()
         {
             CancelReturn();
-
-            if (returnDelay > 0f)
-                _delayCoroutine = StartCoroutine(ReturnAfterDelay());
-            else
-                BeginReturn();
+            _delayCoroutine = returnDelay > 0f ? StartCoroutine(ReturnAfterDelay()) : null;
+            BeginReturn();
         }
 
         private void OnPointerEvent(PointerEvent evt)
@@ -133,7 +116,6 @@ namespace SafetyProto.Gameplay.Interactables
             _returnProgress = 0f;
             _returning = true;
 
-            // Kill physics momentum so it doesn't fight the return
             if (_rb != null)
             {
                 _rb.linearVelocity = Vector3.zero;
@@ -165,15 +147,10 @@ namespace SafetyProto.Gameplay.Interactables
                 transform.SetPositionAndRotation(_homePosition, _homeRotation);
                 _returning = false;
 
-                if (_rb != null)
-                    _rb.isKinematic = false;
+                if (_rb != null) _rb.isKinematic = false;
             }
         }
 
-        /// <summary>Call this to re-read the home pose (from homeOverride if set, otherwise current transform).</summary>
-        public void SetHomeToCurrentPose()
-        {
-            CacheHomePose();
-        }
+        public void SetHomeToCurrentPose() => CacheHomePose();
     }
 }

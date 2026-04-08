@@ -1,6 +1,3 @@
-// ISessionResettable.cs
-// Interface for components that need to reset their state when starting a new training session
-
 namespace SafetyProto.Core.Interfaces
 {
     /// <summary>

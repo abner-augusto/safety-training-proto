@@ -51,7 +51,6 @@ namespace SafetyProto.Gameplay.Actions
 #if UNITY_EDITOR
         private void OnValidate()
         {
-            // Auto-migrate old data in the editor so users don't lose references when updating.
             if (legacyTarget != null)
             {
                 if (targets == null || targets.Length == 0)

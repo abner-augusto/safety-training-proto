@@ -27,7 +27,7 @@ namespace SafetyProto.Gameplay.PPE
         public void ReportPPEStateChange(PPEType ppeType, bool isNowInsideZone, GameObject ppeObject)
         {
             bool previouslyWorn = _wornPPE.ContainsKey(ppeType);
-            GameObject currentWornObject = previouslyWorn ? _wornPPE[ppeType] : null;
+            _wornPPE.TryGetValue(ppeType, out GameObject currentWornObject);
 
             if (isNowInsideZone)
             {
@@ -38,14 +38,11 @@ namespace SafetyProto.Gameplay.PPE
                     SafetyLog.Info($"PPEManager: {ppeType} is now WORN (Item: {ppeObject.name}).", this);
                 }
             }
-            else
+            else if (previouslyWorn && currentWornObject == ppeObject)
             {
-                if (previouslyWorn && currentWornObject == ppeObject)
-                {
-                    _wornPPE.Remove(ppeType);
-                    PPEEvents.RaisePpeStateChanged(new PPEStateChangedEventArgs(ppeType, false));
-                    SafetyLog.Info($"PPEManager: {ppeType} is now NOT WORN (Item: {ppeObject.name} exited).", this);
-                }
+                _wornPPE.Remove(ppeType);
+                PPEEvents.RaisePpeStateChanged(new PPEStateChangedEventArgs(ppeType, false));
+                SafetyLog.Info($"PPEManager: {ppeType} is now NOT WORN (Item: {ppeObject.name} exited).", this);
             }
         }
 

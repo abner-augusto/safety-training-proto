@@ -1,15 +1,12 @@
 using SafetyProto.Core;
-using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Events;
+using SafetyProto.Core.Interfaces;
 using SafetyProto.Data.Enums;
 using SafetyProto.Utils;
 using UnityEngine;
 
 namespace SafetyProto.Gameplay.Feedback
 {
-    /// <summary>
-    /// Plays audio cues for task completions and safety violations.
-    /// </summary>
     [RequireComponent(typeof(AudioSource))]
     public class AudioFeedbackManager : MonoBehaviour, ISessionResettable
     {
@@ -20,13 +17,7 @@ namespace SafetyProto.Gameplay.Feedback
         [SerializeField, Range(0f, 1f)] private float successVolume = 0.6f;
         [SerializeField, Range(0f, 1f)] private float failureVolume = 0.8f;
 
-        private void Awake()
-        {
-            if (audioSource == null)
-            {
-                audioSource = GetComponent<AudioSource>();
-            }
-        }
+        private void Awake() => audioSource ??= GetComponent<AudioSource>();
 
         private void OnEnable()
         {
@@ -53,43 +44,22 @@ namespace SafetyProto.Gameplay.Feedback
 
         private void OnTaskCompleted(TaskEventArgs args)
         {
-            if (args.RuntimeTask != null && args.RuntimeTask.State == TaskState.CompletedFailure)
-            {
-                return;
-            }
-
+            if (args.RuntimeTask?.State == TaskState.CompletedFailure) return;
             PlayClip(successClip, successVolume);
         }
 
-        private void OnSafetyViolation(SafetyViolationEventArgs _)
-        {
-            PlayClip(failureClip, failureVolume);
-        }
-
-        private void OnCriticalFailure(CriticalSafetyFailureEventArgs _)
-        {
-            PlayClip(failureClip, failureVolume);
-        }
+        private void OnSafetyViolation(SafetyViolationEventArgs _) => PlayClip(failureClip, failureVolume);
+        private void OnCriticalFailure(CriticalSafetyFailureEventArgs _) => PlayClip(failureClip, failureVolume);
 
         public void PlaySuccessClip() => PlayClip(successClip, successVolume);
         public void PlayFailureClip() => PlayClip(failureClip, failureVolume);
 
         private void PlayClip(AudioClip clip, float volume)
         {
-            if (clip == null || audioSource == null)
-            {
-                return;
-            }
-
+            if (clip == null || audioSource == null) return;
             audioSource.PlayOneShot(clip, volume);
         }
 
-        public void ResetSession()
-        {
-            if (audioSource != null)
-            {
-                audioSource.Stop();
-            }
-        }
+        public void ResetSession() => audioSource?.Stop();
     }
 }

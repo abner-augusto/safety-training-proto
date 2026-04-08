@@ -9,8 +9,6 @@ using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace SafetyProto.Core
 {
-    // The CreateAssetMenu attribute is still useful for initial creation,
-    // but the singleton pattern will enforce a single instance loaded from Resources.
     [CreateAssetMenu(fileName = "EventBus", menuName = "VRSafetyTraining/EventBus", order = 0)]
     public class EventBus : ScriptableObject
     {
@@ -28,10 +26,7 @@ namespace SafetyProto.Core
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void Preload()
-        {
-            EnsureLoaded();
-        }
+        private static void Preload() => EnsureLoaded();
 
         private static void EnsureLoaded()
         {
@@ -85,11 +80,7 @@ namespace SafetyProto.Core
 
         private void Enqueue(Action action)
         {
-            if (action == null)
-            {
-                return;
-            }
-
+            if (action == null) return;
             _eventQueue.Enqueue(action);
         }
 
@@ -97,10 +88,7 @@ namespace SafetyProto.Core
 
         public void ProcessEvents(double maxMillis = 2)
         {
-            if (_eventQueue.Count == 0)
-            {
-                return;
-            }
+            if (_eventQueue.Count == 0) return;
 
             if (_eventQueue.Count > MaxQueueWarningThreshold)
             {
@@ -131,10 +119,7 @@ namespace SafetyProto.Core
                     });
                 }
 
-                if (_stopwatch.Elapsed.TotalMilliseconds >= maxMillis)
-                {
-                    break;
-                }
+                if (_stopwatch.Elapsed.TotalMilliseconds >= maxMillis) break;
             }
 
             _stopwatch.Stop();
@@ -151,7 +136,6 @@ namespace SafetyProto.Core
         [Header("Debug")]
         public bool verboseLogging;
 
-        // --- C# Events (optional, but good for non-MonoBehaviour systems) ---
         public static event Action<SessionStartedEventArgs> OnSessionStartedCSharp;
         public static event Action<SessionPausedEventArgs> OnSessionPausedCSharp;
         public static event Action<SessionResumedEventArgs> OnSessionResumedCSharp;
@@ -168,7 +152,6 @@ namespace SafetyProto.Core
         public static event Action<CriticalSafetyFailureEventArgs> OnCriticalSafetyFailureCSharp;
         public static event Action<SafetyErrorEventArgs> OnSafetyErrorCSharp;
 
-        // --- UnityEvents (for Inspector assignment) ---
         [Header("Session Events")]
         public UnityEvent<SessionStartedEventArgs> onSessionStarted;
         public UnityEvent<SessionPausedEventArgs> onSessionPaused;
@@ -180,15 +163,16 @@ namespace SafetyProto.Core
         public UnityEvent<PPEStateChangedEventArgs> onPpeStateChanged;
         public UnityEvent<TaskEventArgs> onTaskStarted;
         public UnityEvent<TaskEventArgs> onTaskCompleted;
-        public UnityEvent<TaskEventArgs> onTaskTimeout; // TaskEventArgs will contain the timed-out task
+        public UnityEvent<TaskEventArgs> onTaskTimeout;
         public UnityEvent<ScoreChangedEventArgs> onScoreChanged;
 
-        [Header("Group Events")] // NEW
+        [Header("Group Events")]
         public UnityEvent<TaskGroupEventArgs> onGroupStarted;
         public UnityEvent<TaskGroupEventArgs> onGroupCompleted;
 
         [Header("End of Session")]
         public UnityEvent<SessionCompletedEventArgs> onSessionCompleted;
+
         [Header("Safety Events")]
         public UnityEvent<SafetyViolationEventArgs> onSafetyViolation;
         public UnityEvent<CriticalSafetyFailureEventArgs> onCriticalSafetyFailure;

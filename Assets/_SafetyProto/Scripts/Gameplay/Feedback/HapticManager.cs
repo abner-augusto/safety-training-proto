@@ -1,18 +1,16 @@
 using System.Collections;
 using SafetyProto.Core;
+using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.Enums;
+using SafetyProto.Gameplay.Events;
 using SafetyProto.Gameplay.Task;
 using SafetyProto.Utils;
 using UnityEngine;
-using SafetyProto.Gameplay.Events;
 
 namespace SafetyProto.Gameplay.Feedback
 {
-    /// <summary>
-    /// Provides controller haptic cues for task outcomes and safety violations.
-    /// </summary>
     public class HapticManager : MonoBehaviour, ISessionResettable
     {
         [Header("Click Haptic")]
@@ -48,29 +46,21 @@ namespace SafetyProto.Gameplay.Feedback
             }
         }
 
-        private void CacheInteractor(ActionAttemptedEvent args)
-        {
-            _lastInteractorId = args.InteractorId;
-        }
+        private void CacheInteractor(ActionAttemptedEvent args) => _lastInteractorId = args.InteractorId;
 
         private void OnTaskCompleted(TaskEventArgs args)
         {
-            if (args.RuntimeTask == null)
-            {
-                return;
-            }
+            if (args.RuntimeTask == null) return;
 
-            if (args.RuntimeTask.State == TaskState.CompletedSuccess ||
-                args.RuntimeTask.State == TaskState.CompletedSuccessButUnsafe)
+            var state = args.RuntimeTask.State;
+            if (state == TaskState.CompletedSuccess || state == TaskState.CompletedSuccessButUnsafe)
             {
                 TriggerHaptics(clickAmplitude, clickDuration);
             }
         }
 
         private void OnSafetyViolation(SafetyViolationEventArgs _)
-        {
-            TriggerHaptics(errorAmplitude, errorDuration);
-        }
+            => TriggerHaptics(errorAmplitude, errorDuration);
 
         private void TriggerHaptics(float amplitude, float duration)
         {
@@ -85,16 +75,8 @@ namespace SafetyProto.Gameplay.Feedback
 #if USING_META_XR
         private OVRInput.Controller ResolveController(int interactorId)
         {
-            if (interactorId > 0)
-            {
-                return OVRInput.Controller.RTouch;
-            }
-
-            if (interactorId < 0)
-            {
-                return OVRInput.Controller.LTouch;
-            }
-
+            if (interactorId > 0) return OVRInput.Controller.RTouch;
+            if (interactorId < 0) return OVRInput.Controller.LTouch;
             return OVRInput.Controller.Active;
         }
 

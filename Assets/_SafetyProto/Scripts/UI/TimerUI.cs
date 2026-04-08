@@ -1,9 +1,10 @@
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
-using SafetyProto.Gameplay.Task;
 using SafetyProto.Core.Logging;
-using UnityEngine;
+using SafetyProto.Gameplay.Task;
+using SafetyProto.Utils;
 using TMPro;
+using UnityEngine;
 
 namespace SafetyProto.UI
 {
@@ -11,6 +12,7 @@ namespace SafetyProto.UI
     {
         [Tooltip("Assign your TimerSystem here (not EventBus).")]
         public TimerSystem timerSystem;
+
         private TextMeshProUGUI _timerText;
         private int _lastDisplayedSecond = -1;
         private bool _lastPauseState;
@@ -59,10 +61,7 @@ namespace SafetyProto.UI
             if (timeRemaining > 0f)
             {
                 var totalSeconds = Mathf.FloorToInt(timeRemaining);
-                if (totalSeconds == _lastDisplayedSecond)
-                {
-                    return;
-                }
+                if (totalSeconds == _lastDisplayedSecond) return;
 
                 _lastDisplayedSecond = totalSeconds;
                 int minutes = totalSeconds / 60;
@@ -99,10 +98,7 @@ namespace SafetyProto.UI
             _timerText.color = color;
         }
 
-        private string FormatLabel(string text, bool paused)
-        {
-            return paused ? $"{text} [Paused]" : text;
-        }
+        private string FormatLabel(string text, bool paused) => paused ? $"{text} [Paused]" : text;
 
         private void OnSessionPaused(SessionPausedEventArgs obj)
         {
@@ -118,9 +114,7 @@ namespace SafetyProto.UI
         {
             _lastPauseState = false;
             if (_timerText != null)
-            {
                 _timerText.text = FormatLabel(_baseLabel, false);
-            }
         }
     }
 }

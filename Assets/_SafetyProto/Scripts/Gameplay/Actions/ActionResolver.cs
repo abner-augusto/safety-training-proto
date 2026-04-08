@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
 using UnityEngine;
 
@@ -18,24 +19,19 @@ namespace SafetyProto.Gameplay.Actions
         private const int MaxMissingWarnings = 10;
         private static int _missingWarningCount;
 
-        /// <summary>
-        /// Overrides the registry used for lookups. Useful for tests or bootstrap code.
-        /// </summary>
         public static void Configure(ActionRegistry registry)
         {
             _registry = registry;
             _hasLoggedMissingRegistry = false;
             MissingActions.Clear();
             _missingWarningCount = 0;
-        }
+}
 
         /// <summary>
         /// Resolves an action ID to its definition. Returns null when not found.
         /// </summary>
         public static ActionTypeSO Resolve(string actionId)
-        {
-            return TryResolve(actionId, out var definition) ? definition : null;
-        }
+            => TryResolve(actionId, out var definition) ? definition : null;
 
         /// <summary>
         /// Attempts to resolve an action ID to its definition.
@@ -44,10 +40,7 @@ namespace SafetyProto.Gameplay.Actions
         {
             definition = null;
 
-            if (string.IsNullOrWhiteSpace(actionId))
-            {
-                return false;
-            }
+            if (string.IsNullOrWhiteSpace(actionId)) return false;
 
             var normalized = actionId.Trim();
 
@@ -57,10 +50,7 @@ namespace SafetyProto.Gameplay.Actions
                 return false;
             }
 
-            if (_registry.TryGet(normalized, out definition))
-            {
-                return true;
-            }
+            if (_registry.TryGet(normalized, out definition)) return true;
 
             WarnMissingAction(normalized, $"Action '{normalized}' not found in registry.");
             return false;
@@ -68,16 +58,13 @@ namespace SafetyProto.Gameplay.Actions
 
         private static bool EnsureRegistryLoaded()
         {
-            if (_registry != null)
-            {
-                return true;
-            }
+            if (_registry != null) return true;
 
             _registry = Resources.Load<ActionRegistry>(DefaultRegistryResourcePath);
 
             if (_registry == null && !_hasLoggedMissingRegistry)
             {
-                Debug.LogWarning($"[ActionResolver] Could not locate ActionRegistry at Resources/{DefaultRegistryResourcePath}. Action lookups will fail until it is created or configured.");
+                SafetyLog.Warning($"[ActionResolver] Could not locate ActionRegistry at Resources/{DefaultRegistryResourcePath}.");
                 _hasLoggedMissingRegistry = true;
             }
 
@@ -86,28 +73,21 @@ namespace SafetyProto.Gameplay.Actions
 
         private static void WarnMissingAction(string actionId, string message)
         {
-            if (string.IsNullOrEmpty(actionId))
-            {
-                return;
-            }
-
-            if (!MissingActions.Add(actionId))
-            {
-                return;
-            }
+            if (string.IsNullOrEmpty(actionId)) return;
+            if (!MissingActions.Add(actionId)) return;
 
             if (_missingWarningCount >= MaxMissingWarnings)
             {
                 if (_missingWarningCount == MaxMissingWarnings)
                 {
-                    Debug.LogWarning("[ActionResolver] Additional missing action warnings suppressed.");
+                    SafetyLog.Warning("[ActionResolver] Additional missing action warnings suppressed.");
                     _missingWarningCount++;
                 }
                 return;
             }
 
             _missingWarningCount++;
-            Debug.LogWarning($"[ActionResolver] {message}");
+            SafetyLog.Warning($"[ActionResolver] {message}");
         }
     }
 }

@@ -41,7 +41,7 @@ namespace SafetyProto.Gameplay.Events
 
         public ActionTypeSO ResolveDefinition()
         {
-            return string.IsNullOrWhiteSpace(ActionId) ? null : ActionResolver.Resolve(ActionId);
+            return string.IsNullOrEmpty(ActionId) ? null : ActionResolver.Resolve(ActionId);
         }
     }
 }

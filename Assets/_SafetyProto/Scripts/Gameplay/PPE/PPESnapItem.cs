@@ -78,7 +78,6 @@ namespace SafetyProto.Gameplay.PPE
 
         private void Start()
         {
-            // Prefer Grabbable pointer events because they fire for any grab mode (hand grab, distance grab, etc).
             if (_grabbable != null)
             {
                 _grabbable.WhenPointerEventRaised += OnPointerEvent;
@@ -92,11 +91,6 @@ namespace SafetyProto.Gameplay.PPE
                 return;
             }
 
-            // WhenStateChanged fires whenever the interactable's state changes
-            // (Normal → Hover → Select → Normal)
-            // Verify this event name exists in your SDK version by checking
-            // HandGrabInteractable.cs — it inherits from Interactable<> which
-            // defines WhenStateChanged in Interactable.cs
             handGrabInteractable.WhenStateChanged += OnGrabStateChanged;
         }
 
@@ -141,7 +135,6 @@ namespace SafetyProto.Gameplay.PPE
 
         private void OnPickedUp()
         {
-            // Prevent ReturnObjectHome from receiving the upcoming Unselect event; we'll decide what to do on release.
             if (returnObjectHome != null)
             {
                 returnObjectHome.CancelReturn();
@@ -149,35 +142,23 @@ namespace SafetyProto.Gameplay.PPE
             }
 
             if (_isSnapped)
-            {
-                // Keep snapped until pull threshold is reached — handled in LateUpdate
                 SafetyLog.Info($"PPESnapItem [{name}]: grabbed while snapped, monitoring pull distance.", this);
-            }
         }
 
         private void OnReleased()
         {
-            if (_isSnapped) return; // Already snapped, release doesn't unsnap
+            if (_isSnapped) return;
 
-            // Try to snap to a nearby compatible slot.
             PPESnapSlot slot = FindSlotToSnap();
             if (slot != null && slot.TryAcceptSnap(this))
-            {
                 SnapTo(slot);
+            else if (returnObjectHome != null)
+            {
+                returnObjectHome.enabled = true;
+                returnObjectHome.RequestReturn();
             }
             else
-            {
-                // No slot — either return home (if configured) or revert to normal physics.
-                if (returnObjectHome != null)
-                {
-                    returnObjectHome.enabled = true;
-                    returnObjectHome.RequestReturn();
-                }
-                else
-                {
-                    SetPhysicsEnabled(true);
-                }
-            }
+                SetPhysicsEnabled(true);
         }
 
         private PPESnapSlot FindSlotToSnap()
@@ -239,40 +220,29 @@ namespace SafetyProto.Gameplay.PPE
                 returnObjectHome.enabled = true;
                 returnObjectHome.RequestReturn();
             }
-
-            SafetyLog.Info($"PPESnapItem [{name}]: unsnapped.", this);
         }
 
         private void LateUpdate()
         {
-            if (_isSnapped && _currentSlot != null)
+            if (!_isSnapped || _currentSlot == null) return;
+
+            if (_isGrabbed)
             {
-                if (_isGrabbed)
-                {
-                    if (_currentSlot.IsLocked) return;
+                if (_currentSlot.IsLocked) return;
 
-                    // Check if hand has pulled far enough to unsnap
-                    float dist = Vector3.Distance(transform.position, _currentSlot.transform.position);
-                    if (dist >= unsnapDistance)
-                    {
-                        Unsnap();
-                        return;
-                    }
-                }
-
-                if (trackSnapPoseOverrideEveryFrame && snapPoseOverride != null)
-                    CacheSnapOverrideLocalPose();
-
-                // Follow slot transform
-                if (followSpeed <= 0f)
+                float dist = Vector3.Distance(transform.position, _currentSlot.transform.position);
+                if (dist >= unsnapDistance)
                 {
-                    ApplySnapPose(_currentSlot.transform.position, _currentSlot.transform.rotation, true);
-                }
-                else
-                {
-                    ApplySnapPose(_currentSlot.transform.position, _currentSlot.transform.rotation, false);
+                    Unsnap();
+                    return;
                 }
             }
+
+            if (trackSnapPoseOverrideEveryFrame && snapPoseOverride != null)
+                CacheSnapOverrideLocalPose();
+
+            bool instant = followSpeed <= 0f;
+            ApplySnapPose(_currentSlot.transform.position, _currentSlot.transform.rotation, instant);
         }
 
         private void CacheSnapOverrideLocalPose()
@@ -283,7 +253,6 @@ namespace SafetyProto.Gameplay.PPE
                 return;
             }
 
-            // Cache override pose relative to this root (works even if override is nested deeper in the hierarchy).
             _snapOverrideLocalPos = transform.InverseTransformPoint(snapPoseOverride.position);
             _snapOverrideLocalRot = Quaternion.Inverse(transform.rotation) * snapPoseOverride.rotation;
             _useSnapPoseOverride = true;

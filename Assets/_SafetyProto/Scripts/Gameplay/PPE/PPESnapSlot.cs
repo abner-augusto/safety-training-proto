@@ -41,11 +41,9 @@ namespace SafetyProto.Gameplay.PPE
         [SerializeField] private Color hoverColor = new Color(0.2f, 0.8f, 0.2f, 0.5f);
         [SerializeField] private Color occupiedColor = new Color(0.2f, 0.4f, 1f, 0.5f);
 
-        // Currently snapped item — null if slot is empty
         public PPESnapItem SnappedItem { get; private set; }
         public bool IsOccupied => SnappedItem != null && SnappedItem.gameObject != null;
 
-        // Track overlap counts per item to avoid flicker with compound colliders / multiple trigger pairs.
         private readonly Dictionary<PPESnapItem, int> _hoverCounts = new Dictionary<PPESnapItem, int>();
         private Material _highlightMaterial;
         private PPEManager _ppeManager;
@@ -85,8 +83,6 @@ namespace SafetyProto.Gameplay.PPE
                 if (t == type) return true;
             return false;
         }
-
-        // Called by PPESnapItem when it enters this trigger
         public void OnItemEntered(PPESnapItem item)
         {
             if (item == null) return;
@@ -98,7 +94,6 @@ namespace SafetyProto.Gameplay.PPE
             UpdateHighlight();
         }
 
-        // Called by PPESnapItem when it exits this trigger
         public void OnItemExited(PPESnapItem item)
         {
             if (item == null) return;
@@ -114,8 +109,6 @@ namespace SafetyProto.Gameplay.PPE
             UpdateHighlight();
         }
 
-        // Called by PPESnapItem on release — returns true if snap was accepted.
-        // Proximity validation is the item's responsibility; the slot only gates on type and occupancy.
         public bool TryAcceptSnap(PPESnapItem item)
         {
             if (item == null) return false;
@@ -125,8 +118,7 @@ namespace SafetyProto.Gameplay.PPE
                 if (ppeItem != null && ppeItem.isDistractor)
                 {
                     onDistractorSnapAttempted?.Invoke(item.PpeType);
-                    SafetyLog.Info(
-                        $"PPESnapSlot [{name}]: distrator '{item.name}' ({item.PpeType}) rejeitado.", this);
+                    SafetyLog.Info($"PPESnapSlot [{name}]: distrator '{item.name}' ({item.PpeType}) rejeitado.", this);
                 }
                 return false;
             }
@@ -154,7 +146,6 @@ namespace SafetyProto.Gameplay.PPE
             SafetyLog.Info($"PPESnapSlot [{name}]: desbloqueado manualmente.", this);
         }
 
-        // Called by PPESnapItem when it unsnaps
         public void OnItemUnsnapped(PPESnapItem item)
         {
             if (SnappedItem != item) return;

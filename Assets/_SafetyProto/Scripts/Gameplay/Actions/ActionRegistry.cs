@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
 using UnityEngine;
 
@@ -14,10 +15,7 @@ namespace SafetyProto.Gameplay.Actions
 
         public IReadOnlyList<ActionTypeSO> Actions => actions;
 
-        private void OnEnable()
-        {
-            RebuildLookup();
-        }
+        private void OnEnable() => RebuildLookup();
 
         private void OnValidate()
         {
@@ -28,11 +26,7 @@ namespace SafetyProto.Gameplay.Actions
         public bool TryGet(string actionId, out ActionTypeSO action)
         {
             action = null;
-
-            if (string.IsNullOrWhiteSpace(actionId))
-            {
-                return false;
-            }
+            if (string.IsNullOrWhiteSpace(actionId)) return false;
 
             EnsureLookupIsReady();
             return _lookup.TryGetValue(NormalizeId(actionId), out action);
@@ -40,11 +34,7 @@ namespace SafetyProto.Gameplay.Actions
 
         public ActionTypeSO GetOrThrow(string actionId)
         {
-            if (TryGet(actionId, out var action))
-            {
-                return action;
-            }
-
+            if (TryGet(actionId, out var action)) return action;
             throw new KeyNotFoundException($"Action '{actionId}' is not registered in {name}.");
         }
 
@@ -58,20 +48,20 @@ namespace SafetyProto.Gameplay.Actions
 
                 if (entry == null)
                 {
-                    Debug.LogError($"[ActionRegistry] Null entry detected at index {i} in registry '{name}'.", this);
+                    SafetyLog.Error($"[ActionRegistry] Null entry at index {i} in registry '{name}'.", this);
                     continue;
                 }
 
                 if (string.IsNullOrWhiteSpace(entry.ActionId))
                 {
-                    Debug.LogError($"[ActionRegistry] Action '{entry.name}' has an empty ActionId in registry '{name}'.", entry);
+                    SafetyLog.Error($"[ActionRegistry] Action '{entry.name}' has an empty ActionId in registry '{name}'.", entry);
                     continue;
                 }
 
                 var normalized = NormalizeId(entry.ActionId);
                 if (!seenIds.Add(normalized))
                 {
-                    Debug.LogError($"[ActionRegistry] Duplicate ActionId '{normalized}' detected in registry '{name}'.", this);
+                    SafetyLog.Error($"[ActionRegistry] Duplicate ActionId '{normalized}' detected in registry '{name}'.", this);
                 }
             }
         }
@@ -82,17 +72,10 @@ namespace SafetyProto.Gameplay.Actions
 
             foreach (var action in actions)
             {
-                if (action == null || string.IsNullOrWhiteSpace(action.ActionId))
-                {
-                    continue;
-                }
+                if (action == null || string.IsNullOrWhiteSpace(action.ActionId)) continue;
 
                 var normalized = NormalizeId(action.ActionId);
-
-                if (_lookup.ContainsKey(normalized))
-                {
-                    continue;
-                }
+                if (_lookup.ContainsKey(normalized)) continue;
 
                 _lookup.Add(normalized, action);
             }
@@ -106,9 +89,6 @@ namespace SafetyProto.Gameplay.Actions
             }
         }
 
-        private static string NormalizeId(string rawId)
-        {
-            return rawId.Trim();
-        }
+        private static string NormalizeId(string rawId) => rawId.Trim();
     }
 }

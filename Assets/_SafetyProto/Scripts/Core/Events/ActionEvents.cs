@@ -8,9 +8,7 @@ namespace SafetyProto.Core.Events
     public static class ActionEvents
     {
         public static void Publish(ActionAttemptedEvent payload)
-        {
-            EventBus.Instance.RaiseActionAttempt(payload);
-        }
+            => EventBus.Instance.RaiseActionAttempt(payload);
 
         public static void PublishActionAttempt(string actionId, string sourceId = null, string context = null, Vector3? position = null, int interactorId = 0)
         {

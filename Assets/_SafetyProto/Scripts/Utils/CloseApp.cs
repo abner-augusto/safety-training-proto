@@ -16,7 +16,6 @@ namespace SafetyProto.Core
 #endif
         }
 
-        // For convenience, link in inspector
         private void Reset()
         {
             onQuitApp ??= new UnityEvent();

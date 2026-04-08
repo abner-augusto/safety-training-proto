@@ -102,11 +102,10 @@ namespace SafetyProto.Gameplay.PPE
 
                 if (isCompliant && _compliantActionIds.Add(actionId))
                 {
-                    // Only publish if this is a new compliance (wasn't compliant before)
                     var pending = taskManager.FindPendingTaskByActionId(actionId);
                     if (pending == null)
                     {
-                        _compliantActionIds.Remove(actionId); // not pending, don't cache
+                        _compliantActionIds.Remove(actionId);
                         continue;
                     }
 
@@ -116,7 +115,7 @@ namespace SafetyProto.Gameplay.PPE
                 }
                 else if (!isCompliant)
                 {
-                    _compliantActionIds.Remove(actionId); // reset so it can fire again when re-compliant
+                    _compliantActionIds.Remove(actionId);
                 }
             }
         }

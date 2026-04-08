@@ -46,11 +46,6 @@ namespace SafetyProto.Gameplay.Analytics
 
         private void Update()
         {
-            if (_detector == null)
-            {
-                return;
-            }
-
             _detector.Prune(Time.time);
 
             if (_thresholdRaised && _detector.CurrentCount < violationThreshold)
@@ -61,7 +56,7 @@ namespace SafetyProto.Gameplay.Analytics
 
         private void OnSafetyViolation(SafetyViolationEventArgs args)
         {
-            if (_detector == null || windowSeconds <= 0f || violationThreshold <= 0)
+            if (windowSeconds <= 0f || violationThreshold <= 0)
             {
                 return;
             }

@@ -1,21 +1,22 @@
+using SafetyProto.Utils;
 using UnityEngine;
 
 public sealed class GogglesOverlayController : MonoBehaviour
 {
     [SerializeField] private Material mat;
-    [SerializeField] private float fadeInSeconds = 0.15f;
+    [SerializeField] private float fadeInSeconds = 0.25f;
     [SerializeField] private float fadeOutSeconds = 0.10f;
 
-    float _alpha;
-    float _target;
+    private float _alpha;
+    private float _target;
 
-    void Reset()
+    private void Reset()
     {
         var img = GetComponent<UnityEngine.UI.Graphic>();
         if (img != null) mat = img.material;
     }
 
-    void Update()
+    private void Update()
     {
         if (mat == null) return;
 

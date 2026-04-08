@@ -1,10 +1,10 @@
-using SafetyProto.Data.Enums;
 using SafetyProto.Core.Logging;
+using SafetyProto.Data.Enums;
 using UnityEngine;
 
 namespace SafetyProto.Gameplay.PPE
 {
-    [RequireComponent(typeof(Collider))] // Ensure it has a collider to be detected
+    [RequireComponent(typeof(Collider))]
     public class PPEItem : MonoBehaviour
     {
         public PPEType ppeType = PPEType.None;
@@ -14,7 +14,7 @@ namespace SafetyProto.Gameplay.PPE
                  "Distradores disparam popup educativo ao tentar encaixar num slot.")]
         public bool isDistractor = false;
 
-        private void Start()
+        private void Awake()
         {
             if (ppeType == PPEType.None)
             {
@@ -22,23 +22,13 @@ namespace SafetyProto.Gameplay.PPE
             }
         }
 
-        private void OnDisable()
-        {
-            UnregisterFromManager();
-        }
+        private void OnDisable() => UnregisterFromManager();
 
-        private void OnDestroy()
-        {
-            UnregisterFromManager();
-        }
+        private void OnDestroy() => UnregisterFromManager();
 
         private void UnregisterFromManager()
         {
-            var manager = FindFirstObjectByType<PPEManager>();
-            if (manager != null)
-            {
-                manager.UnregisterIfOwned(ppeType, gameObject);
-            }
+            FindFirstObjectByType<PPEManager>()?.UnregisterIfOwned(ppeType, gameObject);
         }
     }
 }

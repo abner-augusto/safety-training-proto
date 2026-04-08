@@ -34,12 +34,15 @@ namespace SafetyProto.Gameplay
 
         private void Start()
         {
-            ValidateReferences();
-
-            if (EventBus.Instance != null)
-                EventBus.Instance.onGroupCompleted.AddListener(OnGroupCompleted);
-            else
+            if (EventBus.Instance == null)
+            {
                 SafetyLog.Error("[PhaseController] EventBus.Instance is null — transição não será registrada.", this);
+                enabled = false;
+                return;
+            }
+
+            ValidateReferences();
+            EventBus.Instance.onGroupCompleted.AddListener(OnGroupCompleted);
         }
 
         private void OnDestroy()
@@ -61,7 +64,6 @@ namespace SafetyProto.Gameplay
         {
             var ovr = OVRScreenFade.instance;
 
-            // 1. Fade out
             if (ovr != null)
             {
                 ovr.fadeTime = fadeOutDuration;
@@ -73,20 +75,17 @@ namespace SafetyProto.Gameplay
                 SafetyLog.Warning("[PhaseController] OVRScreenFade.instance é null — etapas de fade serão ignoradas.", this);
             }
 
-            // 2. Trocar zonas
             foreach (var obj in objectsToHide)
                 if (obj != null) obj.SetActive(false);
             foreach (var obj in objectsToShow)
                 if (obj != null) obj.SetActive(true);
 
-            // 3. Reposicionar player rig
             if (playerRig != null && spawnPointAndaime != null)
             {
                 playerRig.position = spawnPointAndaime.position;
                 playerRig.rotation = Quaternion.Euler(0f, spawnPointAndaime.rotation.eulerAngles.y, 0f);
             }
 
-            // 4. Painel de contexto durante hold
             if (transitionPanel != null)
             {
                 transitionPanel.SetActive(true);
@@ -98,7 +97,6 @@ namespace SafetyProto.Gameplay
                 yield return new WaitForSeconds(holdBlackDuration);
             }
 
-            // 5. Fade in
             if (ovr != null)
             {
                 ovr.fadeTime = fadeInDuration;

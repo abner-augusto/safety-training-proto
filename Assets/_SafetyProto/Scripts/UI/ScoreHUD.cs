@@ -20,7 +20,6 @@ namespace SafetyProto.UI
             }
 
             _scoreText = GetComponent<TextMeshProUGUI>();
-
             EventBus.Instance.onScoreChanged.AddListener(OnScoreChanged);
             UpdateScoreDisplay(0);
         }
@@ -28,22 +27,14 @@ namespace SafetyProto.UI
         private void OnDestroy()
         {
             if (EventBus.Instance != null)
-            {
                 EventBus.Instance.onScoreChanged.RemoveListener(OnScoreChanged);
-            }
         }
 
-        private void OnScoreChanged(ScoreChangedEventArgs args)
-        {
-            UpdateScoreDisplay(args.TotalScore);
-        }
+        private void OnScoreChanged(ScoreChangedEventArgs args) => UpdateScoreDisplay(args.TotalScore);
 
         private void UpdateScoreDisplay(int score)
         {
-            if (_scoreText != null)
-            {
-                _scoreText.text = $"Score: {score}";
-            }
+            if (_scoreText != null) _scoreText.text = $"Score: {score}";
         }
     }
 }

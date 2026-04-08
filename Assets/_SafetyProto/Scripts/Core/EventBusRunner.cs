@@ -7,20 +7,8 @@ namespace SafetyProto.Core
         [SerializeField]
         private EventBus eventBus;
 
-        private void Awake()
-        {
-            if (eventBus == null)
-            {
-                eventBus = EventBus.Instance;
-            }
-        }
+        private void Awake() => eventBus ??= EventBus.Instance;
 
-        private void Update()
-        {
-            if (eventBus != null)
-            {
-                eventBus.ProcessEvents(0.5f);
-            }
-        }
+        private void Update() => eventBus?.ProcessEvents(0.5f);
     }
 }

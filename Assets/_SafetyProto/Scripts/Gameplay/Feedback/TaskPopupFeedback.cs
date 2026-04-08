@@ -1,8 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using SafetyProto.Core;
-using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Events;
+using SafetyProto.Core.Interfaces;
 using SafetyProto.Data.Enums;
 using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Utils;
@@ -11,9 +11,6 @@ using UnityEngine;
 
 namespace SafetyProto.Gameplay.Feedback
 {
-    /// <summary>
-    /// Displays transient popups for task completions and safety violations.
-    /// </summary>
     public class TaskPopupFeedback : MonoBehaviour, ISessionResettable
     {
         [Header("UI References")]
@@ -23,12 +20,9 @@ namespace SafetyProto.Gameplay.Feedback
         [SerializeField] private TMP_Text bodyText;
 
         [Header("Animation")]
-        [SerializeField, Tooltip("Total time the popup remains visible (seconds).")]
-        private float popupDuration = 1.0f;
-        [SerializeField, Tooltip("Distance in UI units for the popup to rise.")]
-        private float popupRiseDistance = 25f;
-        [SerializeField, Tooltip("Seconds at the end of the popup duration devoted to fading out.")]
-        private float popupFadeOutTime = 0.3f;
+        [SerializeField] private float popupDuration = 1.0f;
+        [SerializeField] private float popupRiseDistance = 25f;
+        [SerializeField] private float popupFadeOutTime = 0.3f;
         [SerializeField] private Color successColor = Color.cyan;
         [SerializeField] private Color warningColor = Color.yellow;
 
@@ -47,11 +41,7 @@ namespace SafetyProto.Gameplay.Feedback
 
         private void Awake()
         {
-            if (popupTransform != null)
-            {
-                _initialLocalPosition = popupTransform.localPosition;
-            }
-
+            _initialLocalPosition = popupTransform?.localPosition ?? Vector3.zero;
             BuildLookup();
             HideImmediate();
         }
@@ -84,31 +74,19 @@ namespace SafetyProto.Gameplay.Feedback
             _taskLookup.Clear();
             foreach (var task in knownTasks)
             {
-                if (task == null || string.IsNullOrEmpty(task.taskName))
-                {
-                    continue;
-                }
-
+                if (task == null || string.IsNullOrEmpty(task.taskName)) continue;
                 if (!_taskLookup.ContainsKey(task.taskName))
-                {
                     _taskLookup.Add(task.taskName, task);
-                }
             }
         }
 
-        private void OnScoreChanged(ScoreChangedEventArgs args)
-        {
-            _lastScoreDelta = args.Delta;
-        }
+        private void OnScoreChanged(ScoreChangedEventArgs args) => _lastScoreDelta = args.Delta;
 
         private void OnTaskCompleted(TaskEventArgs args)
         {
-            if (args.RuntimeTask != null && args.RuntimeTask.State == TaskState.CompletedFailure)
-            {
-                return;
-            }
+            if (args.RuntimeTask?.State == TaskState.CompletedFailure) return;
 
-            string taskName = args.Task != null ? args.Task.taskName : "Tarefa concluída";
+            string taskName = args.Task?.taskName ?? "Tarefa concluída";
             int points = _lastScoreDelta != 0 ? _lastScoreDelta : args.Task?.successPoints ?? 0;
             _lastScoreDelta = 0;
 
@@ -133,46 +111,26 @@ namespace SafetyProto.Gameplay.Feedback
 
         private string GetHint(string taskId)
         {
-            if (string.IsNullOrEmpty(taskId))
-            {
-                return string.Empty;
-            }
-
-            if (_taskLookup.TryGetValue(taskId, out var task) && task != null)
-            {
-                return task.hintText;
-            }
-
-            return string.Empty;
+            if (string.IsNullOrEmpty(taskId)) return string.Empty;
+            return _taskLookup.TryGetValue(taskId, out var task) ? task.hintText : string.Empty;
         }
 
         private void ShowPopup(string title, string body, Color bodyColor)
         {
-            if (titleText != null)
-            {
-                titleText.text = title;
-            }
-
+            if (titleText != null) titleText.text = title;
             if (bodyText != null)
             {
                 bodyText.text = body;
                 bodyText.color = bodyColor;
             }
 
-            if (_popupRoutine != null)
-            {
-                StopCoroutine(_popupRoutine);
-            }
-
+            if (_popupRoutine != null) StopCoroutine(_popupRoutine);
             _popupRoutine = StartCoroutine(AnimatePopup());
         }
 
         private IEnumerator AnimatePopup()
         {
-            if (canvasGroup == null || popupTransform == null)
-            {
-                yield break;
-            }
+            if (canvasGroup == null || popupTransform == null) yield break;
 
             popupTransform.localPosition = _initialLocalPosition;
             canvasGroup.alpha = 0f;
@@ -214,9 +172,7 @@ namespace SafetyProto.Gameplay.Feedback
             }
 
             if (popupTransform != null)
-            {
                 popupTransform.localPosition = _initialLocalPosition;
-            }
         }
 
         public void ResetSession()

@@ -11,11 +11,6 @@ namespace SafetyProto.Core.Events
         public string MappingId;
     }
 
-    /// <summary>
-    /// Decoupled events for consequence animations and VFX.
-    /// Animators, particle systems, and secondary cameras can subscribe here
-    /// without needing a direct reference to InspectionGateValidator.
-    /// </summary>
     public static class ConsequenceEvents
     {
         public static event Action<ConsequenceStartedEventArgs> OnConsequenceStarted;

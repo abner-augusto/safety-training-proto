@@ -18,12 +18,7 @@ namespace SafetyProto.Gameplay.PPE
             if (zoneCollider == null)
             {
                 SafetyLog.Error($"The 'zoneCollider' on {gameObject.name} is not assigned in the inspector!", this);
-                SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
-                {
-                    Source = nameof(PPEZone),
-                    Message = "Zone collider missing",
-                    Details = $"GameObject '{gameObject.name}' has no zoneCollider assigned."
-                });
+                SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs { Source = nameof(PPEZone), Message = "Zone collider missing", Details = $"GameObject '{gameObject.name}' has no zoneCollider assigned." });
                 enabled = false;
                 return;
             }
@@ -43,12 +38,7 @@ namespace SafetyProto.Gameplay.PPE
             if (_ppeManager == null)
             {
                 SafetyLog.Error($"PPEZone on {gameObject.name} could not find PPEManager in scene!", this);
-                SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
-                {
-                    Source = nameof(PPEZone),
-                    Message = "PPEManager missing",
-                    Details = $"PPEZone '{gameObject.name}' could not locate a PPEManager in the scene."
-                });
+                SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs { Source = nameof(PPEZone), Message = "PPEManager missing", Details = $"PPEZone '{gameObject.name}' could not locate a PPEManager in the scene." });
                 enabled = false;
             }
         }

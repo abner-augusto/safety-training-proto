@@ -16,7 +16,7 @@ namespace SafetyProto.UI
         [Header("Títulos dos popups")]
         [SerializeField] private string hintTitle    = "Dica";
         [SerializeField] private string failureTitle = "Atenção";
-        [SerializeField] private string ppeTitle     = "EPI Incorreto";
+        [SerializeField] private string ppeTitle = "EPI Incorreto";
 
         private TaskManager _taskManager;
 
@@ -24,7 +24,7 @@ namespace SafetyProto.UI
         {
             _taskManager = FindFirstObjectByType<TaskManager>();
             if (_taskManager == null)
-                SafetyLog.Warning("[TaskFeedbackController] TaskManager não encontrado.", this);
+                SafetyLog.Warning("[TaskFeedbackController] TaskManager not found.", this);
 
             if (!this.IsEventBusReady()) return;
 

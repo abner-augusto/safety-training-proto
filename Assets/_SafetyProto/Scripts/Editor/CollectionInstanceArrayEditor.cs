@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using SafetyProto.Utils;
 
 [CustomEditor(typeof(CollectionInstanceArray))]
 public class CollectionInstanceArrayEditor : Editor
