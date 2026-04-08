@@ -10,8 +10,11 @@ namespace SafetyProto.UI
         [SerializeField] private PopupService popupService;
         [SerializeField] private OnboardingStep[] steps;
         [SerializeField] private bool autoStartOnEnable = true;
-        [Tooltip("Frames to wait before showing the first popup, giving OVR time to initialize stereo matrices.")]
-        [SerializeField, Min(0)] private int startDelayFrames = 3;
+        [Tooltip("Frames to wait before showing the first popup, giving OVR time to initialize stereo matrices.\n" +
+                 "Quest 3 precisa de ~10 frames para inicializar stereo matrices e OVROverlayCanvas.")]
+        // Fix C: raised from 3 to 10 — Quest 3 needs more frames to initialise stereo matrices
+        // before showing a popup backed by OVROverlayCanvas without stalling the compositor.
+        [SerializeField, Min(0)] private int startDelayFrames = 10;
 
         private int _currentIndex = -1;
         private GameObject _activeHighlight;
@@ -23,6 +26,8 @@ namespace SafetyProto.UI
         {
             for (int i = 0; i < startDelayFrames; i++)
                 yield return null;
+
+            SafetyLog.Info($"[OnboardingController] StartDelayed() — delay concluído no frame {Time.frameCount}, iniciando sequência.", this);
             StartSequence();
         }
 
@@ -44,11 +49,13 @@ namespace SafetyProto.UI
 
             if (_currentIndex >= steps.Length)
             {
+                SafetyLog.Info($"[OnboardingController] ShowNext() — índice {_currentIndex} fora dos steps ({steps.Length}), encerrando sequência.", this);
                 EndSequence();
                 return;
             }
 
             var step = steps[_currentIndex];
+            SafetyLog.Info($"[OnboardingController] ShowNext() — índice {_currentIndex}, título: '{step.title}'", this);
 
             if (step.highlightTarget != null)
             {

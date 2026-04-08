@@ -34,19 +34,45 @@ namespace SafetyProto.UI
 
         private PopupData _currentData;
         private Coroutine _animCoroutine;
-        private Vector3 _openScale;
+        private Vector3   _openScale;
+
+        // MenuFollowHmd no mesmo GameObject ou no pai — pausado durante animação de entrada
+        // para evitar que mover o transform enquanto OVROverlayCanvas está inicializando
+        // gere um segundo CopyTexture com coordenadas inválidas.
+        private MenuFollowHmd _followHmd;
+
+        // ── Lifecycle ─────────────────────────────────────────────────────────
 
         private void Awake()
         {
             _openScale = transform.localScale;
+
+            // Busca MenuFollowHmd neste GameObject ou no pai imediato (PopUpCanvas está
+            // diretamente no [UI_Popup] que não tem o componente, mas o canvas raiz tem).
+            _followHmd = GetComponent<MenuFollowHmd>()
+                      ?? GetComponentInParent<MenuFollowHmd>();
+
+            // Validação de referências — erros visíveis no Console em vez de NullRef silencioso.
+            if (titleText == null)
+                SafetyLog.Error("[PopupPanel] titleText não atribuído no Inspector!", this);
+            if (bodyText == null)
+                SafetyLog.Error("[PopupPanel] bodyText não atribuído no Inspector!", this);
+            if (backgroundImage == null)
+                SafetyLog.Error("[PopupPanel] backgroundImage não atribuído no Inspector!", this);
+            if (layoutRoot == null)
+                SafetyLog.Warning("[PopupPanel] layoutRoot null — usará transform raiz.", this);
         }
+
+        // ── API pública ───────────────────────────────────────────────────────
 
         public void Show(PopupData data)
         {
+            SafetyLog.Info($"[PopupPanel] Show() — tipo: {data.type}, título: '{data.title}'", this);
+
             _currentData = data;
 
             if (titleText != null) titleText.text = data.title;
-            if (bodyText != null) bodyText.text = data.body;
+            if (bodyText  != null) bodyText.text  = data.body;
 
             if (backgroundImage != null)
             {
@@ -86,34 +112,56 @@ namespace SafetyProto.UI
         {
             if (!gameObject.activeSelf) return;
 
+            SafetyLog.Info("[PopupPanel] Hide()", this);
+
             StopAnim();
             IsVisible = false;
-            // Snap to open scale before shrinking, in case Show's grow animation was interrupted
-            transform.localScale = _openScale;
             _animCoroutine = StartCoroutine(AnimateScaleAndDeactivate(_openScale, Vector3.zero, shrinkCurve));
         }
 
-        /// <summary>Chamado pelo botão de ação via Inspector.</summary>
+        /// <summary>Chamado pelo botão de ação via Inspector ou UnityEvent.</summary>
         public void OnActionButtonPressed()
         {
+            SafetyLog.Info("[PopupPanel] OnActionButtonPressed()", this);
             _currentData?.onActionPressed?.Invoke();
         }
 
         /// <summary>Chamado pelo botão X via Inspector.</summary>
         public void OnCloseButtonPressed()
         {
+            SafetyLog.Info("[PopupPanel] OnCloseButtonPressed()", this);
             Hide();
         }
 
+        // ── Coroutines ────────────────────────────────────────────────────────
+
         private IEnumerator ShowWithRebuild()
         {
-            // Aguarda um frame para o Canvas processar os textos antes de reconstruir o layout
+            // Para o MenuFollowHmd durante a inicialização/animação de entrada.
+            // Mover o transform enquanto OVROverlayCanvas está calculando a RenderTexture
+            // pode gerar coordenadas de CopyTexture inválidas (y negativo).
+            if (_followHmd != null) _followHmd.enabled = false;
+
+            // Frame 1: Canvas processa os textos e ativa/desativa filhos.
             yield return null;
 
+            // Usa MarkLayoutForRebuild + aguarda 1 frame em vez de ForceRebuildLayoutImmediate.
+            // ForceRebuildLayoutImmediate no meio de uma coroutine com OVROverlayCanvas ativo
+            // força o compositor a resubmeter o swapchain no mesmo frame → stall no render thread.
+            SafetyLog.Info("[PopupPanel] MarkLayoutForRebuild — aguardando frame de layout...", this);
             var root = layoutRoot != null ? layoutRoot : (RectTransform)transform;
-            LayoutRebuilder.ForceRebuildLayoutImmediate(root);
+            LayoutRebuilder.MarkLayoutForRebuild(root);
+
+            // Frame 2: layout reconstruído organicamente pelo Canvas.
+            yield return null;
+            SafetyLog.Info("[PopupPanel] Layout concluído — iniciando animação de entrada.", this);
 
             yield return AnimateScale(Vector3.zero, _openScale, growCurve);
+
+            // Reativa MenuFollowHmd após animação concluída.
+            if (_followHmd != null) _followHmd.enabled = true;
+
+            SafetyLog.Info("[PopupPanel] Animação de entrada concluída.", this);
         }
 
         private void StopAnim()
@@ -122,6 +170,9 @@ namespace SafetyProto.UI
             {
                 StopCoroutine(_animCoroutine);
                 _animCoroutine = null;
+
+                // Garante reativar MenuFollowHmd se animação foi interrompida.
+                if (_followHmd != null) _followHmd.enabled = true;
             }
         }
 
@@ -144,8 +195,14 @@ namespace SafetyProto.UI
 
         private IEnumerator AnimateScaleAndDeactivate(Vector3 from, Vector3 to, AnimationCurve curve)
         {
+            if (_followHmd != null) _followHmd.enabled = false;
+
             yield return AnimateScale(from, to, curve);
+
+            SafetyLog.Info("[PopupPanel] AnimateScaleAndDeactivate — SetActive(false)", this);
             gameObject.SetActive(false);
+
+            if (_followHmd != null) _followHmd.enabled = true;
         }
     }
 }
