@@ -4,6 +4,7 @@
 
 # Claude Code
 CLAUDE.md
+.claude/*
 
 # ============================================================
 # UNITY ENGINE CACHE & GENERATED DIRS
@@ -25,6 +26,8 @@ bin/
 # ============================================================
 repomix-output.*
 !repomix.config.json
+
+scene_dump_*.md
 
 # ============================================================
 # SENSITIVE / LARGE DATA

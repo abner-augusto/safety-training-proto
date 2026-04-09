@@ -17,6 +17,8 @@ public class SceneDumper : EditorWindow
     private bool filterSdkInternals = true;
     private bool collapseAnchorOnly = true;
     private bool filterSelfRefs = true;
+    private bool filterIgnoreSuffix = true;
+    private string ignoreSuffix = "_ignore";
 
     private Dictionary<int, List<RefEdge>> refGraph;
     private Dictionary<int, string> idToName;
@@ -183,9 +185,12 @@ public class SceneDumper : EditorWindow
 
         GUILayout.Space(4);
         GUILayout.Label("Noise Reduction", EditorStyles.miniBoldLabel);
-        filterSdkInternals = EditorGUILayout.Toggle("Filter SDK Internals (OVR/XR bones)", filterSdkInternals);
-        collapseAnchorOnly = EditorGUILayout.Toggle("Collapse Anchor-Only Nodes",          collapseAnchorOnly);
-        filterSelfRefs     = EditorGUILayout.Toggle("Filter Self-References",               filterSelfRefs);
+        filterSdkInternals  = EditorGUILayout.Toggle("Filter SDK Internals (OVR/XR bones)", filterSdkInternals);
+        collapseAnchorOnly  = EditorGUILayout.Toggle("Collapse Anchor-Only Nodes",          collapseAnchorOnly);
+        filterSelfRefs      = EditorGUILayout.Toggle("Filter Self-References",               filterSelfRefs);
+        filterIgnoreSuffix  = EditorGUILayout.Toggle("Skip Objects with Ignore Suffix",      filterIgnoreSuffix);
+        if (filterIgnoreSuffix)
+            ignoreSuffix = EditorGUILayout.TextField("  Ignore Suffix", ignoreSuffix);
 
         GUILayout.Space(10);
         if (GUILayout.Button("Dump to File"))      Dump(toClipboard: false);
@@ -239,8 +244,9 @@ public class SceneDumper : EditorWindow
 
     bool ShouldSkipObject(GameObject go)
     {
-        if (!filterSdkInternals) return false;
         string name = go.name;
+        if (filterIgnoreSuffix && !string.IsNullOrEmpty(ignoreSuffix) && name.EndsWith(ignoreSuffix)) return true;
+        if (!filterSdkInternals) return false;
         if (SkipNameExact.Any(e => name == e)) return true;
         if (SkipNamePatterns.Any(p => p.StartsWith("_") ? name.EndsWith(p) : name.StartsWith(p))) return true;
         return false;
