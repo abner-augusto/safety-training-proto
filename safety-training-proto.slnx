@@ -8,7 +8,9 @@
   <Project Path="Unity.TextMeshPro.Editor.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="UnityEditor.UI.csproj" />
+  <Project Path="Unity.2D.Sprite.Editor.csproj" />
   <Project Path="Unity.Multiplayer.Center.Common.csproj" />
   <Project Path="UnityEditor.UI.Analytics.csproj" />
   <Project Path="Unity.InternalAPIEngineBridge.004.csproj" />
+  <Project Path="Unity.2D.Sprite.AIIntegration.Editor.csproj" />
 </Solution>
