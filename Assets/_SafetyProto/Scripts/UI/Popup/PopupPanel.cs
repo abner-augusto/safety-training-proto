@@ -15,6 +15,7 @@ namespace SafetyProto.UI
         [SerializeField] private Image iconImage;
         [SerializeField] private GameObject actionButtonRoot;
         [SerializeField] private TextMeshProUGUI actionButtonLabel;
+        [SerializeField] private GameObject closeButtonRoot;
         [Tooltip("Root do layout a reconstruir após mudar o conteúdo (geralmente o background ou este próprio RectTransform).")]
         [SerializeField] private RectTransform layoutRoot;
 
@@ -26,26 +27,18 @@ namespace SafetyProto.UI
         [SerializeField] private Sprite infoIcon;
 
         [Header("Animação")]
-        [SerializeField] private float animDuration = 0.2f;
-        [SerializeField] private AnimationCurve growCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
-        [SerializeField] private AnimationCurve shrinkCurve = AnimationCurve.EaseInOut(0, 1, 1, 0);
+        [SerializeField] private float fadeDuration = 0.25f;
 
         public bool IsVisible { get; private set; }
 
         private PopupData _currentData;
-        private Coroutine _animCoroutine;
-        private Vector3 _openScale;
-
-        // Paused during entrance animation to avoid moving transform while OVROverlayCanvas
-        // is initializing, which can cause a second CopyTexture with invalid coordinates.
-        private MenuFollowHmd _followHmd;
+        private Coroutine _fadeCoroutine;
+        private CanvasGroup _canvasGroup;
 
         private void Awake()
         {
-            _openScale = transform.localScale;
-
-            _followHmd = GetComponent<MenuFollowHmd>()
-                      ?? GetComponentInParent<MenuFollowHmd>();
+            _canvasGroup = GetComponent<CanvasGroup>()
+                        ?? gameObject.AddComponent<CanvasGroup>();
 
             if (titleText == null)
                 SafetyLog.Error("[PopupPanel] titleText not assigned in Inspector!", this);
@@ -70,9 +63,9 @@ namespace SafetyProto.UI
             {
                 backgroundImage.color = data.type switch
                 {
-                    PopupType.Warning => warningColor,
+                    PopupType.Warning     => warningColor,
                     PopupType.Interactive => interactiveColor,
-                    _ => normalColor
+                    _                     => normalColor
                 };
             }
 
@@ -93,11 +86,21 @@ namespace SafetyProto.UI
             if (isInteractive && actionButtonLabel != null)
                 actionButtonLabel.text = data.actionButtonLabel;
 
-            StopAnim();
-            transform.localScale = Vector3.zero;
+            if (closeButtonRoot != null)
+                closeButtonRoot.SetActive(!isInteractive);
+
+            StopFade();
+
+            var root = layoutRoot ?? (RectTransform)transform;
+            LayoutRebuilder.MarkLayoutForRebuild(root);
+
+            _canvasGroup.alpha = 0f;
+            _canvasGroup.interactable = false;
+            _canvasGroup.blocksRaycasts = false;
+
             gameObject.SetActive(true);
             IsVisible = true;
-            _animCoroutine = StartCoroutine(ShowWithRebuild());
+            _fadeCoroutine = StartCoroutine(FadeAlpha(0f, 1f));
         }
 
         public void Hide()
@@ -106,9 +109,13 @@ namespace SafetyProto.UI
 
             SafetyLog.Info("[PopupPanel] Hide()", this);
 
-            StopAnim();
+            StopFade();
+
+            _canvasGroup.interactable = false;
+            _canvasGroup.blocksRaycasts = false;
+
             IsVisible = false;
-            _animCoroutine = StartCoroutine(AnimateScaleAndDeactivate(_openScale, Vector3.zero, shrinkCurve));
+            _fadeCoroutine = StartCoroutine(FadeAlphaAndDeactivate(_canvasGroup.alpha, 0f));
         }
 
         public void OnActionButtonPressed()
@@ -123,59 +130,42 @@ namespace SafetyProto.UI
             Hide();
         }
 
-        private IEnumerator ShowWithRebuild()
-        {
-            // Disable follow during entrance animation to avoid OVROverlayCanvas coordinate issues.
-            if (_followHmd != null) _followHmd.enabled = false;
-
-            yield return null;
-
-            var root = layoutRoot ?? (RectTransform)transform;
-            LayoutRebuilder.MarkLayoutForRebuild(root);
-
-            yield return null;
-
-            yield return AnimateScale(Vector3.zero, _openScale, growCurve);
-
-            if (_followHmd != null) _followHmd.enabled = true;
-        }
-
-        private void StopAnim()
-        {
-            if (_animCoroutine != null)
-            {
-                StopCoroutine(_animCoroutine);
-                _animCoroutine = null;
-
-                if (_followHmd != null) _followHmd.enabled = true;
-            }
-        }
-
-        private IEnumerator AnimateScale(Vector3 from, Vector3 to, AnimationCurve curve)
+        private IEnumerator FadeAlpha(float from, float to)
         {
             float elapsed = 0f;
-            transform.localScale = from;
+            _canvasGroup.alpha = from;
 
-            while (elapsed < animDuration)
+            while (elapsed < fadeDuration)
             {
                 elapsed += Time.deltaTime;
-                float t = curve.Evaluate(Mathf.Clamp01(elapsed / animDuration));
-                transform.localScale = Vector3.LerpUnclamped(from, to, t);
+                _canvasGroup.alpha = Mathf.Lerp(from, to, elapsed / fadeDuration);
                 yield return null;
             }
 
-            transform.localScale = to;
-            _animCoroutine = null;
+            _canvasGroup.alpha = to;
+
+            if (to >= 1f)
+            {
+                _canvasGroup.interactable = true;
+                _canvasGroup.blocksRaycasts = true;
+            }
+
+            _fadeCoroutine = null;
         }
 
-        private IEnumerator AnimateScaleAndDeactivate(Vector3 from, Vector3 to, AnimationCurve curve)
+        private IEnumerator FadeAlphaAndDeactivate(float from, float to)
         {
-            if (_followHmd != null) _followHmd.enabled = false;
-
-            yield return AnimateScale(from, to, curve);
+            yield return FadeAlpha(from, to);
             gameObject.SetActive(false);
+        }
 
-            if (_followHmd != null) _followHmd.enabled = true;
+        private void StopFade()
+        {
+            if (_fadeCoroutine != null)
+            {
+                StopCoroutine(_fadeCoroutine);
+                _fadeCoroutine = null;
+            }
         }
     }
 }
