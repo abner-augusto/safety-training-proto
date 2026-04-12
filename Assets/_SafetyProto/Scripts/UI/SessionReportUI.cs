@@ -26,9 +26,9 @@ namespace SafetyProto.UI
         [SerializeField] private TMP_Text scoreText;
         [SerializeField] private TMP_Text timeText;
         [SerializeField] private Image medalIcon;
-        [SerializeField] private Sprite medalGold;
-        [SerializeField] private Sprite medalSilver;
-        [SerializeField] private Sprite medalBronze;
+        [SerializeField] private Color goldColor = new Color(1f, 0.84f, 0f);
+        [SerializeField] private Color silverColor = new Color(0.75f, 0.75f, 0.75f);
+        [SerializeField] private Color bronzeColor = new Color(0.80f, 0.50f, 0.20f);
 
         [Header("Task Breakdown")]
         [SerializeField] private Transform taskListParent;
@@ -38,9 +38,7 @@ namespace SafetyProto.UI
         [SerializeField] private Transform improvementListParent;
         [SerializeField] private GameObject improvementRowPrefab;
         [SerializeField] private GameObject improvementSection;
-
-        [Header("Footer")]
-        [SerializeField] private GameObject certificateIcon;
+        [SerializeField] private GameObject noWarningText;
 
         [Header("Audio")]
         [SerializeField] private AudioSource audioSource;
@@ -122,19 +120,11 @@ namespace SafetyProto.UI
 
             float pct = max > 0 ? (float)score / max : 0f;
 
-            if (pct >= 0.90f && medalGold != null)
+            if (pct >= 0.50f)
             {
-                medalIcon.sprite = medalGold;
-                medalIcon.enabled = true;
-            }
-            else if (pct >= 0.70f && medalSilver != null)
-            {
-                medalIcon.sprite = medalSilver;
-                medalIcon.enabled = true;
-            }
-            else if (pct >= 0.50f && medalBronze != null)
-            {
-                medalIcon.sprite = medalBronze;
+                medalIcon.color = pct >= 0.90f ? goldColor
+                                : pct >= 0.70f ? silverColor
+                                : bronzeColor;
                 medalIcon.enabled = true;
             }
             else
@@ -182,11 +172,16 @@ namespace SafetyProto.UI
                     "Na obra real, isso equivale a começar o trabalho com condições inseguras.");
             }
 
-            if (messages.Count == 0)
-            {
-                AddImprovementRow("✅ Excelente! Todas as tarefas foram concluídas corretamente com EPIs adequados.");
+            bool hasImprovements = messages.Count > 0;
+
+            if (noWarningText != null)
+                noWarningText.SetActive(!hasImprovements);
+
+            if (improvementSection != null)
+                improvementSection.SetActive(hasImprovements);
+
+            if (!hasImprovements)
                 return;
-            }
 
             foreach (var msg in messages)
                 AddImprovementRow(msg);

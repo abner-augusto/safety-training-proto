@@ -8,7 +8,7 @@ using SafetyProto.Core.Logging;
 using SafetyProto.Data.Enums;
 using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Gameplay.Task;
-using TMPro;
+using SafetyProto.UI;
 using UnityEngine;
 
 namespace SafetyProto.Gameplay.Safety
@@ -67,10 +67,6 @@ namespace SafetyProto.Gameplay.Safety
 
         [Header("Consequence Definitions")]
         [SerializeField] private List<ConsequenceMapping> consequenceMappings;
-
-        [Header("Feedback UI")]
-        [SerializeField] private GameObject consequenceFeedbackPanel;
-        [SerializeField] private TMP_Text consequenceFeedbackText;
 
         [Header("Audio")]
         [SerializeField] private AudioSource audioSource;
@@ -212,7 +208,7 @@ namespace SafetyProto.Gameplay.Safety
                 {
                     // Fallback: generic warning + hintText
                     PlaySound(warningSound);
-                    ShowConsequenceFeedback(task.TaskData?.hintText ?? task.taskName);
+                    ShowConsequenceFeedback(task.taskName, task.TaskData?.hintText ?? task.taskName);
                     yield return new WaitForSeconds(delayBetweenConsequences);
                     continue;
                 }
@@ -246,7 +242,7 @@ namespace SafetyProto.Gameplay.Safety
                 }
 
                 PlaySound(mapping.consequenceSound != null ? mapping.consequenceSound : warningSound);
-                ShowConsequenceFeedback(mapping.feedbackMessage);
+                ShowConsequenceFeedback(mapping.displayName, mapping.feedbackMessage);
                 ConsequenceEvents.RaiseConsequenceEnded();
 
                 yield return new WaitForSeconds(delayBetweenConsequences);
@@ -331,19 +327,26 @@ namespace SafetyProto.Gameplay.Safety
                 audioSource.PlayOneShot(clip);
         }
 
-        private void ShowConsequenceFeedback(string message)
+        private void ShowConsequenceFeedback(string title, string message)
         {
-            if (consequenceFeedbackPanel != null)
-                consequenceFeedbackPanel.SetActive(true);
+            if (PopupService.Instance == null)
+            {
+                SafetyLog.Warning("[InspectionGateValidator] PopupService not found — consequence feedback skipped.", this);
+                return;
+            }
 
-            if (consequenceFeedbackText != null)
-                consequenceFeedbackText.text = message;
+            PopupService.Instance.ShowWarning(title, message);
         }
 
         private void HideConsequenceFeedback()
         {
-            if (consequenceFeedbackPanel != null)
-                consequenceFeedbackPanel.SetActive(false);
+            if (PopupService.Instance == null)
+            {
+                SafetyLog.Warning("[InspectionGateValidator] PopupService not found — cannot hide feedback.", this);
+                return;
+            }
+
+            PopupService.Instance.Hide();
         }
 
         private void OnDestroy()
