@@ -76,8 +76,8 @@ namespace SafetyProto.Gameplay.PPE
         [SerializeField, Range(0.5f, 2f)] private float lockedRopeLength = 1.5f;
 
         [Header("Retract Behavior")]
-        [Tooltip("Seconds the rope stays visible at release length before retracting.")]
-        [SerializeField, Range(0f, 3f)] private float retractDelay = 1.5f;
+        [Tooltip("Seconds with gravity enabled before the retract begins.")]
+        [SerializeField, Range(0f, 2f)] private float gravityDuration = 0.5f;
 
         [Tooltip("Seconds for the tip to travel back to the harness.")]
         [SerializeField, Range(0.1f, 1.5f)] private float retractDuration = 0.6f;
@@ -392,16 +392,41 @@ namespace SafetyProto.Gameplay.PPE
 
         private IEnumerator RetractSequence()
         {
-            // Phase 1: Hold at current length for a beat
-            yield return new WaitForSeconds(retractDelay);
+            // Phase 1: Enable gravity and Verlet rope, let it fall naturally
+            _rb.isKinematic = false;
+            _rb.useGravity = true;
 
-            // Phase 2: Smoothly move tip back to harness attach point
+            // Hide simple line and enable Verlet rope physics
+            if (_lineRenderer != null)
+                _lineRenderer.positionCount = 0;
+
+            _verletLanyard.SetStartAnchor(harnessAttachPoint);
+            _verletLanyard.SetEndAnchor(null);
+            _verletLanyard.enabled = true;
+
+            float gravityElapsed = 0f;
+            while (gravityElapsed < gravityDuration)
+            {
+                gravityElapsed += Time.deltaTime;
+                _verletLanyard.RopeLength = Vector3.Distance(transform.position, harnessAttachPoint.position);
+                _verletLanyard.SetManualEndPosition(transform.position);
+                yield return null;
+            }
+
+            // Phase 2: Disable gravity, stop all velocity, then go kinematic and retract
+            _rb.useGravity = false;
+            _rb.linearVelocity = Vector3.zero;
+            _rb.angularVelocity = Vector3.zero;
+            _rb.isKinematic = true;
+
+            float holdRopeLength = _verletLanyard.RopeLength;
+
+            // Phase 3: Smoothly retract
             Vector3 startPos = transform.position;
             Quaternion startRot = transform.rotation;
-            _rb.isKinematic = true;
-            _rb.linearVelocity = Vector3.zero;
 
             Quaternion offsetRot = Quaternion.Euler(idleRotationOffset);
+            float targetRopeLength = Vector3.Distance(harnessAttachPoint.TransformPoint(idlePositionOffset), harnessAttachPoint.position);
             float elapsed = 0f;
 
             while (elapsed < retractDuration)
@@ -409,7 +434,6 @@ namespace SafetyProto.Gameplay.PPE
                 elapsed += Time.deltaTime;
                 float t = retractCurve.Evaluate(Mathf.Clamp01(elapsed / retractDuration));
 
-                // Recompute target every frame — harness moves with the player
                 Vector3 targetPos = harnessAttachPoint != null
                     ? harnessAttachPoint.TransformPoint(idlePositionOffset)
                     : startPos;
@@ -420,12 +444,8 @@ namespace SafetyProto.Gameplay.PPE
                 transform.position = Vector3.Lerp(startPos, targetPos, t);
                 transform.rotation = Quaternion.Slerp(startRot, targetRot, t);
 
-                // Update the simple line to shrink with the tip
-                if (_lineRenderer != null && _lineRenderer.enabled && harnessAttachPoint != null)
-                {
-                    _lineRenderer.SetPosition(0, harnessAttachPoint.position);
-                    _lineRenderer.SetPosition(1, transform.position);
-                }
+                _verletLanyard.RopeLength = Mathf.Lerp(holdRopeLength, targetRopeLength, t);
+                _verletLanyard.SetManualEndPosition(transform.position);
 
                 yield return null;
             }
@@ -433,6 +453,7 @@ namespace SafetyProto.Gameplay.PPE
             _retractCoroutine = null;
 
             // Back to idle
+            _verletLanyard.enabled = false;
             EnterIdle();
             onLanyardRetracted?.Invoke();
 

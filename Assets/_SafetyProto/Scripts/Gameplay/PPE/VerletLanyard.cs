@@ -79,6 +79,11 @@ namespace SafetyProto.Gameplay.PPE
 
         private bool _initialized;
 
+        // Manual end position override (used when endAnchor is null but the tip
+        // should still follow a specific transform, e.g. during retracting)
+        private bool _useManualEndPosition;
+        private Vector3 _manualEndPosition;
+
         // ── Public API ────────────────────────────────────────────
 
         /// <summary>
@@ -87,6 +92,7 @@ namespace SafetyProto.Gameplay.PPE
         /// </summary>
         public void SetEndAnchor(Transform anchor)
         {
+            _useManualEndPosition = false;
             endAnchor = anchor;
 
             if (anchor != null && _initialized)
@@ -94,6 +100,23 @@ namespace SafetyProto.Gameplay.PPE
                 // Snap last node to new anchor so there's no pop
                 _nodes[_nodes.Length - 1].Position = anchor.position;
                 _nodes[_nodes.Length - 1].PreviousPosition = anchor.position;
+            }
+        }
+
+        /// <summary>
+        /// When endAnchor is null, manually pin the rope's last node to a world position.
+        /// Useful during the retracting phase so the rope tip follows the lanyard tip.
+        /// </summary>
+        public void SetManualEndPosition(Vector3 worldPos)
+        {
+            _useManualEndPosition = true;
+            _manualEndPosition = worldPos;
+
+            if (_initialized && _nodes != null && _nodes.Length > 0)
+            {
+                int last = _nodes.Length - 1;
+                _nodes[last].Position = worldPos;
+                _nodes[last].PreviousPosition = worldPos;
             }
         }
 
@@ -109,6 +132,20 @@ namespace SafetyProto.Gameplay.PPE
         /// Whether the lanyard currently has both ends anchored.
         /// </summary>
         public bool IsConnected => endAnchor != null;
+
+        /// <summary>
+        /// Manually pin the last rope node to a world position (used when endAnchor is null
+        /// but the rope tip should follow a specific transform, like the lanyard carabiner).
+        /// </summary>
+        public void SetEndPosition(Vector3 worldPosition)
+        {
+            if (!_initialized || _nodes == null || _nodes.Length == 0)
+                return;
+
+            int last = _nodes.Length - 1;
+            _nodes[last].Position = worldPosition;
+            _nodes[last].PreviousPosition = worldPosition;
+        }
 
         /// <summary>
         /// Current rest length of the rope.
@@ -255,10 +292,17 @@ namespace SafetyProto.Gameplay.PPE
                 _nodes[last].Position = endAnchor.position;
                 _nodes[last].PreviousPosition = endAnchor.position;
             }
+            // Or use manual end position override (e.g. during retracting)
+            else if (_useManualEndPosition)
+            {
+                int last = _nodes.Length - 1;
+                _nodes[last].Position = _manualEndPosition;
+                _nodes[last].PreviousPosition = _manualEndPosition;
+            }
 
             // Integrate free nodes (skip pinned endpoints)
             int startIdx = 1;
-            int endIdx = endAnchor != null ? _nodes.Length - 2 : _nodes.Length - 1;
+            int endIdx = (endAnchor != null || _useManualEndPosition) ? _nodes.Length - 2 : _nodes.Length - 1;
 
             for (int i = startIdx; i <= endIdx; i++)
             {
@@ -308,9 +352,9 @@ namespace SafetyProto.Gameplay.PPE
 
             // Determine which nodes are pinned
             bool aPinned = (idxA == 0 && startAnchor != null)
-                        || (idxA == _nodes.Length - 1 && endAnchor != null);
+                        || (idxA == _nodes.Length - 1 && IsEndPinned());
             bool bPinned = (idxB == 0 && startAnchor != null)
-                        || (idxB == _nodes.Length - 1 && endAnchor != null);
+                        || (idxB == _nodes.Length - 1 && IsEndPinned());
 
             if (aPinned && bPinned)
             {
@@ -343,6 +387,15 @@ namespace SafetyProto.Gameplay.PPE
             {
                 _nodes[_nodes.Length - 1].Position = endAnchor.position;
             }
+            else if (_useManualEndPosition)
+            {
+                _nodes[_nodes.Length - 1].Position = _manualEndPosition;
+            }
+        }
+
+        private bool IsEndPinned()
+        {
+            return endAnchor != null || _useManualEndPosition;
         }
 
         // ── Visual ────────────────────────────────────────────────
