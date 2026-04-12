@@ -129,6 +129,9 @@ namespace SafetyProto.Gameplay.PPE
             UpdateHighlight();
             _ppeManager.ReportPPEStateChange(item.PpeType, true, item.gameObject);
 
+            if (IsLocked)
+                SnappedItem.SetGrabEnabled(false);
+
             if (hideWhenEquipped)
                 item.gameObject.SetActive(false);
 
@@ -143,6 +146,10 @@ namespace SafetyProto.Gameplay.PPE
         public void Unlock()
         {
             _unlocked = true;
+
+            if (IsOccupied && SnappedItem != null)
+                SnappedItem.SetGrabEnabled(true);
+
             SafetyLog.Info($"PPESnapSlot [{name}]: desbloqueado manualmente.", this);
         }
 
@@ -152,6 +159,9 @@ namespace SafetyProto.Gameplay.PPE
 
             if (hideWhenEquipped)
                 item.gameObject.SetActive(true);
+
+            if (SnappedItem != null)
+                SnappedItem.SetGrabEnabled(true);
 
             SnappedItem = null;
             _unlocked = false;

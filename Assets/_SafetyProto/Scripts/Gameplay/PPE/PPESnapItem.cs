@@ -57,6 +57,7 @@ namespace SafetyProto.Gameplay.PPE
 
         private bool _isGrabbed;
         private bool _isSnapped;
+        private bool _grabDisabled;
 
         // Cached pose of snapPoseOverride in this root's local space, used to keep a stable offset while following a slot.
         private bool _useSnapPoseOverride;
@@ -133,8 +134,41 @@ namespace SafetyProto.Gameplay.PPE
                 OnReleased();
         }
 
+        public void SetGrabEnabled(bool enabled)
+        {
+            _grabDisabled = !enabled;
+
+            if (handGrabInteractable != null)
+                handGrabInteractable.enabled = enabled;
+
+            if (_grabbable != null)
+                _grabbable.enabled = enabled;
+
+            if (!enabled && _isGrabbed)
+                ForceRelease();
+        }
+
+        private void ForceRelease()
+        {
+            if (handGrabInteractable != null)
+            {
+                _isGrabbed = false;
+                OnReleased();
+            }
+            else
+            {
+                _isGrabbed = false;
+            }
+        }
+
         private void OnPickedUp()
         {
+            if (_grabDisabled)
+            {
+                ForceRelease();
+                return;
+            }
+
             if (returnObjectHome != null)
             {
                 returnObjectHome.CancelReturn();
