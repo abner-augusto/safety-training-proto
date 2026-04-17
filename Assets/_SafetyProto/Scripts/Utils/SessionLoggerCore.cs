@@ -12,6 +12,25 @@ namespace SafetyProto.Utils
 {
     public sealed class SessionLoggerCore : IDisposable
     {
+        /// <summary>
+        /// JSON DTOs use public fields (not properties) and carry the
+        /// <c>[Serializable]</c> attribute for compatibility with
+        /// <c>UnityEngine.JsonUtility</c>, which the Unity wrapper injects as
+        /// its serializer via the <c>Func&lt;SessionLog, string&gt;</c> constructor
+        /// parameter. Unity ships a restricted <c>System.Text.Json</c> assembly
+        /// where <c>JsonSerializerOptions</c> is inaccessible, forcing this
+        /// injection-based design.
+        ///
+        /// When the CLI harness (net10.0 target, Part 8) serializes these types
+        /// via <c>System.Text.Json.JsonSerializer</c>, it MUST configure:
+        ///
+        /// <code>
+        /// new JsonSerializerOptions { IncludeFields = true, WriteIndented = true }
+        /// </code>
+        ///
+        /// because <c>System.Text.Json</c> ignores fields by default. Without this
+        /// flag the harness would silently emit empty objects.
+        /// </summary>
         [Serializable]
         public sealed class LogEntry
         {
