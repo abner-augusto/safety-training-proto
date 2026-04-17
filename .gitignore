@@ -155,3 +155,4 @@ packages-microsoft-prod.deb
 # ============================================================
 Tools/**/bin/
 Tools/**/obj/
+harness-output/

@@ -1,6 +1,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using SafetyProto.Core;
@@ -163,8 +164,10 @@ namespace SafetyProto.Utils
 
         private void OnSessionCompleted(SessionCompletedEventArgs args)
         {
-            LogEvent("SessionCompleted",
-                $"Time={args.totalElapsedTime}, Score={args.totalScore}, Completed={args.tasksCompleted}/{args.totalTasks}",
+            var details = string.Format(CultureInfo.InvariantCulture,
+                "Time={0}, Score={1}, Completed={2}/{3}",
+                args.totalElapsedTime, args.totalScore, args.tasksCompleted, args.totalTasks);
+            LogEvent("SessionCompleted", details,
                 args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
 
             _log.summary = new SessionSummary

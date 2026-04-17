@@ -1,0 +1,43 @@
+{
+  "name": "ppe_check",
+  "participantId": "P001",
+  "groups": [
+    {
+      "name": "PPE Check",
+      "executionMode": "Sequential",
+      "tasks": [
+        {
+          "name": "Put On Glove",
+          "actionId": "ppe.putongloves",
+          "successPoints": 100,
+          "requiredPPE": ["Gloves"]
+        },
+        {
+          "name": "Head Gear",
+          "actionId": "ppe.putonhelmet",
+          "successPoints": 100,
+          "requiredPPE": ["Helmet"]
+        }
+      ]
+    },
+    {
+      "name": "Press Button",
+      "executionMode": "Sequential",
+      "tasks": [
+        {
+          "name": "Interact with Button",
+          "actionId": "action.button",
+          "successPoints": 100,
+          "requiredPPE": []
+        }
+      ]
+    }
+  ],
+  "script": [
+    { "kind": "ppe",    "ppeType": "Gloves",  "isWearing": true,  "delayMs": 200 },
+    { "kind": "action", "actionId": "ppe.putongloves",            "delayMs": 50  },
+    { "kind": "ppe",    "ppeType": "Helmet",  "isWearing": true,  "delayMs": 300 },
+    { "kind": "action", "actionId": "ppe.putonhelmet",            "delayMs": 50  },
+    { "kind": "action", "actionId": "action.button",              "delayMs": 500 }
+  ]
+}

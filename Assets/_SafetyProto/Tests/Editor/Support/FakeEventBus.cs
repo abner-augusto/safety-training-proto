@@ -7,6 +7,8 @@ namespace SafetyProto.Tests.Editor.Support
     public sealed class FakeEventBus : IEventBus
     {
         private readonly Dictionary<Type, Delegate> _subscribers = new Dictionary<Type, Delegate>();
+        private readonly Queue<Action> _queue = new Queue<Action>();
+        private bool _draining;
 
         public List<(Type type, object payload)> PublishedEvents { get; } = new List<(Type, object)>();
 
@@ -33,9 +35,35 @@ namespace SafetyProto.Tests.Editor.Support
         public void Publish<T>(T payload)
         {
             PublishedEvents.Add((typeof(T), payload));
-            if (_subscribers.TryGetValue(typeof(T), out var raw) && raw is Action<T> handlers)
+
+            _queue.Enqueue(() =>
             {
-                handlers.Invoke(payload);
+                if (_subscribers.TryGetValue(typeof(T), out var raw) && raw is Action<T> handlers)
+                {
+                    handlers.Invoke(payload);
+                }
+            });
+
+            if (!_draining)
+            {
+                Drain();
+            }
+        }
+
+        private void Drain()
+        {
+            _draining = true;
+            try
+            {
+                while (_queue.Count > 0)
+                {
+                    var action = _queue.Dequeue();
+                    action.Invoke();
+                }
+            }
+            finally
+            {
+                _draining = false;
             }
         }
 
@@ -43,6 +71,8 @@ namespace SafetyProto.Tests.Editor.Support
         {
             _subscribers.Clear();
             PublishedEvents.Clear();
+            _queue.Clear();
+            _draining = false;
         }
     }
 }
