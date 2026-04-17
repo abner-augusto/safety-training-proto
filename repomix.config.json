@@ -28,7 +28,9 @@
     }
   },
   "include": [
-    "Assets/_SafetyProto/**/*.cs"
+    "Assets/_SafetyProto/**/*.cs",
+    "Tools/**/*.cs",
+    "Tools/**/*.csproj"
   ],
   "ignore": {
     "useGitignore": true,

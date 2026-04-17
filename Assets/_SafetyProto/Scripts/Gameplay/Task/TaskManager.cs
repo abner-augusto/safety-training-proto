@@ -135,7 +135,7 @@ namespace SafetyProto.Gameplay.Task
             }
         }
 
-        private void ReportInvalidTask(SafetyTask task, string reason)
+        private void ReportInvalidTask(ISafetyTask task, string reason)
         {
             var taskName = task != null ? task.taskName : "<null>";
             var message = $"Task '{taskName}' invalid: {reason}";
@@ -259,7 +259,7 @@ namespace SafetyProto.Gameplay.Task
 
             int nextIndex = _sessionTasks.FindIndex(t =>
                 (t.State == TaskState.NotStarted || t.State == TaskState.InProgress) &&
-                currentGroup.tasks.Contains(t.TaskData));
+                currentGroup.tasks.Any(x => ReferenceEquals(x, t.TaskData)));
 
             if (nextIndex >= 0)
             {
@@ -286,7 +286,7 @@ namespace SafetyProto.Gameplay.Task
             for (int i = 0; i < _sessionTasks.Count; i++)
             {
                 var t = _sessionTasks[i];
-                if (!currentGroup.tasks.Contains(t.TaskData)) continue;
+                if (!currentGroup.tasks.Any(x => ReferenceEquals(x, t.TaskData))) continue;
 
                 var s = t.State;
                 if (s != TaskState.CompletedSuccess &&
@@ -355,7 +355,7 @@ namespace SafetyProto.Gameplay.Task
 
         public IReadOnlyList<RuntimeSafetyTask> GetSessionTasks() => _sessionTasks.AsReadOnly();
 
-        public SafetyTask GetCurrentTaskData() => _currentTask?.TaskData;
+        public ISafetyTask GetCurrentTaskData() => _currentTask?.TaskData;
         public TaskGroup GetCurrentGroup() =>
             (_currentGroupIndex >= 0 && _currentGroupIndex < taskGroups.Count)
                 ? taskGroups[_currentGroupIndex]
@@ -390,7 +390,7 @@ namespace SafetyProto.Gameplay.Task
                 var t = _sessionTasks[i];
                 var s = t.State;
                 if (s != TaskState.NotStarted && s != TaskState.InProgress) continue;
-                if (!currentGroup.tasks.Contains(t.TaskData)) continue;
+                if (!currentGroup.tasks.Any(x => ReferenceEquals(x, t.TaskData))) continue;
                 if (MatchesAction(t, normalized)) return t;
             }
             return null;
@@ -410,7 +410,7 @@ namespace SafetyProto.Gameplay.Task
 
         private RuntimeSafetyTask GetRuntimeTask(TaskEventArgs args)
         {
-            var runtimeTask = _sessionTasks.FirstOrDefault(t => t.TaskData == args.Task);
+            var runtimeTask = _sessionTasks.FirstOrDefault(t => ReferenceEquals(t.TaskData, args.Task));
             if (runtimeTask != null)
             {
                 return runtimeTask;

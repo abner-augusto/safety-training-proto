@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
@@ -22,7 +23,7 @@ namespace SafetyProto.Gameplay.Task
         public UnityEvent onTimerTimeout = new UnityEvent();
 
         private CancellationTokenSource _timerCts;
-        private TaskGroup _timedGroup;
+        private ITaskGroup _timedGroup;
         private float _timeRemaining;
         private float _elapsedTime;
         private float _sessionStartTime = -1f;
@@ -86,7 +87,7 @@ namespace SafetyProto.Gameplay.Task
                 TaskGroup current = taskManager.GetCurrentGroup();
                 if (current != null &&
                     current.executionMode == TaskExecutionMode.FreeOrder &&
-                    current.tasks.Contains(args.Task))
+                    current.tasks.Any(x => ReferenceEquals(x, args.Task)))
                 {
                     StartTimerForGroup(new TaskGroupEventArgs(current));
                 }
@@ -98,7 +99,7 @@ namespace SafetyProto.Gameplay.Task
             var group = args.Group;
             if (group == null) return;
 
-            if (group.executionMode == TaskExecutionMode.Sequential)
+            if (group.executionMode == TaskExecutionModeShared.Sequential)
             {
                 StartTimerForGroup(args);
             }
@@ -109,7 +110,7 @@ namespace SafetyProto.Gameplay.Task
             var group = args.Group;
             if (group == null) return;
 
-            if (_timedGroup == group)
+            if (ReferenceEquals(_timedGroup, group))
             {
                 StopCurrentTimer();
                 _timedGroup = null;

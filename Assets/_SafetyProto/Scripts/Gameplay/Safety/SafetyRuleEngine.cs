@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
+using SafetyProto.Core.Interfaces;
 using SafetyProto.Data.Enums;
-using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Gameplay.PPE;
 using SafetyProto.Gameplay.Task;
 using SafetyProto.Utils;
@@ -26,9 +26,9 @@ namespace SafetyProto.Gameplay.Safety
         [SerializeField] private bool verboseLogging;
 
         private readonly Dictionary<PPEType, bool> _ppeStates = new Dictionary<PPEType, bool>();
-        private TaskGroup _activeGroup;
-        private SafetyTask _activeSequentialTask;
-        private readonly List<SafetyTask> _activeFreeOrderTasks = new List<SafetyTask>();
+        private ITaskGroup _activeGroup;
+        private ISafetyTask _activeSequentialTask;
+        private readonly List<ISafetyTask> _activeFreeOrderTasks = new List<ISafetyTask>();
 
         private void Start()
         {
@@ -72,7 +72,7 @@ namespace SafetyProto.Gameplay.Safety
             _activeSequentialTask = null;
             _activeFreeOrderTasks.Clear();
 
-            if (_activeGroup != null && _activeGroup.executionMode == TaskExecutionMode.FreeOrder)
+            if (_activeGroup != null && _activeGroup.executionMode == TaskExecutionModeShared.FreeOrder)
             {
                 _activeFreeOrderTasks.AddRange(_activeGroup.tasks);
             }
@@ -80,7 +80,7 @@ namespace SafetyProto.Gameplay.Safety
 
         private void OnGroupCompleted(TaskGroupEventArgs args)
         {
-            if (_activeGroup == args.Group)
+            if (ReferenceEquals(_activeGroup, args.Group))
             {
                 ClearActiveContext();
             }
@@ -93,7 +93,7 @@ namespace SafetyProto.Gameplay.Safety
                 return;
             }
 
-            if (_activeGroup.executionMode == TaskExecutionMode.Sequential)
+            if (_activeGroup.executionMode == TaskExecutionModeShared.Sequential)
             {
                 _activeSequentialTask = args.Task;
             }
@@ -128,9 +128,9 @@ namespace SafetyProto.Gameplay.Safety
                 return;
             }
 
-            SafetyTask targetTask = null;
+            ISafetyTask targetTask = null;
 
-            if (_activeGroup.executionMode == TaskExecutionMode.Sequential)
+            if (_activeGroup.executionMode == TaskExecutionModeShared.Sequential)
             {
                 if (_activeSequentialTask == null)
                 {
@@ -190,7 +190,7 @@ namespace SafetyProto.Gameplay.Safety
                    _activeFreeOrderTasks.All(t => !MatchesAction(t, actionId));
         }
 
-        private void ProcessTaskAttempt(SafetyTask task, TaskGroup currentGroup)
+        private void ProcessTaskAttempt(ISafetyTask task, ITaskGroup currentGroup)
         {
             if (task == null)
             {
@@ -218,7 +218,7 @@ namespace SafetyProto.Gameplay.Safety
                 SafetyLog.Info($"SafetyRuleEngine: Task '{task.taskName}' completed. PPE compliant={compliant}", this);
             }
 
-            if (currentGroup != null && currentGroup.executionMode == TaskExecutionMode.FreeOrder)
+            if (currentGroup != null && currentGroup.executionMode == TaskExecutionModeShared.FreeOrder)
             {
                 _activeFreeOrderTasks.Remove(task);
             }
@@ -249,7 +249,7 @@ namespace SafetyProto.Gameplay.Safety
             return true;
         }
 
-        private void RaiseViolation(string code, string message, SafetyTask task, TaskGroup group)
+        private void RaiseViolation(string code, string message, ISafetyTask task, ITaskGroup group)
         {
             SafetyEvents.RaiseSafetyViolation(new SafetyViolationEventArgs
             {
@@ -260,7 +260,7 @@ namespace SafetyProto.Gameplay.Safety
             });
         }
 
-        private static bool MatchesAction(SafetyTask task, string actionId)
+        private static bool MatchesAction(ISafetyTask task, string actionId)
         {
             if (task == null || string.IsNullOrWhiteSpace(actionId))
             {

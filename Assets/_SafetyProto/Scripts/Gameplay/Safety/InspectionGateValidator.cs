@@ -133,7 +133,7 @@ namespace SafetyProto.Gameplay.Safety
 
             var sessionTasks = taskManager.GetSessionTasks();
             var pendingTasks = sessionTasks
-                .Where(t => currentGroup.tasks.Contains(t.TaskData))
+                .Where(t => currentGroup.tasks.Any(x => ReferenceEquals(x, t.TaskData)))
                 .Where(t => t.State == TaskState.NotStarted || t.State == TaskState.InProgress)
                 .ToList();
 

@@ -162,7 +162,9 @@ namespace SafetyProto.UI
 
         private void OnActionAttempt(ActionAttemptedEvent args)
         {
-            var positionText = args.Position?.ToString() ?? "<no position>";
+            var positionText = args.Position.HasValue
+                ? $"({args.Position.Value.X:F2}, {args.Position.Value.Y:F2}, {args.Position.Value.Z:F2})"
+                : "<no position>";
             AppendLog($"[Action] {args.ActionId} @ {positionText}");
         }
 

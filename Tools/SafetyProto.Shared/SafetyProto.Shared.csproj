@@ -26,5 +26,10 @@
          Safe to link now — they already have zero Unity references. -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Data\Enums\PPEType.cs"            Link="Data\Enums\PPEType.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Data\Enums\TaskState.cs"          Link="Data\Enums\TaskState.cs" />
+
+    <!-- Part 3: event payloads + runtime task wrapper. Now engine-independent. -->
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\EventPayloads.cs"                 Link="Core\EventPayloads.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Gameplay\Events\ActionAttemptedEvent.cs" Link="Gameplay\Events\ActionAttemptedEvent.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Gameplay\Task\RuntimeSafetyTask.cs"    Link="Gameplay\Task\RuntimeSafetyTask.cs" />
   </ItemGroup>
 </Project>

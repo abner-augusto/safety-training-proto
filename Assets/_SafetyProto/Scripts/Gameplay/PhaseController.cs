@@ -54,7 +54,7 @@ namespace SafetyProto.Gameplay
         private void OnGroupCompleted(TaskGroupEventArgs args)
         {
             if (_transitionExecuted) return;
-            if (triggerGroup == null || args.Group != triggerGroup) return;
+            if (triggerGroup == null || !ReferenceEquals(args.Group, triggerGroup)) return;
 
             _transitionExecuted = true;
             StartCoroutine(ExecutePhaseTransition());

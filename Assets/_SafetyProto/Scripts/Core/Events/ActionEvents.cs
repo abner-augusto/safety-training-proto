@@ -10,7 +10,16 @@ namespace SafetyProto.Core.Events
         public static void Publish(ActionAttemptedEvent payload)
             => EventBus.Instance.RaiseActionAttempt(payload);
 
-        public static void PublishActionAttempt(string actionId, string sourceId = null, string context = null, Vector3? position = null, int interactorId = 0)
+        /// <summary>
+        /// Unity-friendly overload: accepts Vector3? and converts to the engine-independent
+        /// tuple form before publishing.
+        /// </summary>
+        public static void PublishActionAttempt(
+            string actionId,
+            string sourceId = null,
+            string context = null,
+            Vector3? position = null,
+            int interactorId = 0)
         {
             if (string.IsNullOrWhiteSpace(actionId))
             {
@@ -20,7 +29,12 @@ namespace SafetyProto.Core.Events
 
             var normalized = actionId.Trim();
             ActionResolver.TryResolve(normalized, out _);
-            Publish(new ActionAttemptedEvent(normalized, sourceId, context, position, interactorId));
+
+            (float X, float Y, float Z)? tuplePos = position.HasValue
+                ? (position.Value.x, position.Value.y, position.Value.z)
+                : null;
+
+            Publish(new ActionAttemptedEvent(normalized, sourceId, context, tuplePos, interactorId));
         }
     }
 }

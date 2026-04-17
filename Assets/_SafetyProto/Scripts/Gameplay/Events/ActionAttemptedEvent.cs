@@ -1,13 +1,14 @@
 using System;
-using SafetyProto.Data.ScriptableObjects;
-using SafetyProto.Gameplay.Actions;
-using UnityEngine;
 
 namespace SafetyProto.Gameplay.Events
 {
     /// <summary>
     /// Payload emitted whenever an action attempt occurs in gameplay.
     /// Captures canonical action IDs plus optional spatial/source context.
+    ///
+    /// Engine-independent: Position is a plain tuple rather than Vector3, and no
+    /// Unity-only API is referenced. Use the Unity-side ActionEvents adapter
+    /// to convert Vector3 positions into the tuple form.
     /// </summary>
     [Serializable]
     public struct ActionAttemptedEvent
@@ -18,13 +19,20 @@ namespace SafetyProto.Gameplay.Events
         public long TimestampMs;
 
         public string ActionId;
-        public string SourceId;
-        public string Context;
-        public Vector3? Position;
-        public int InteractorId;
-        public float Time;
+        public string? SourceId;
+        public string? Context;
 
-        public ActionAttemptedEvent(string actionId, string sourceId = null, string context = null, Vector3? position = null, int interactorId = 0)
+        /// <summary>Spatial position as (X, Y, Z), engine-independent.</summary>
+        public (float X, float Y, float Z)? Position;
+
+        public int InteractorId;
+
+        public ActionAttemptedEvent(
+            string actionId,
+            string? sourceId = null,
+            string? context = null,
+            (float X, float Y, float Z)? position = null,
+            int interactorId = 0)
         {
             SessionId = string.Empty;
             PlayerId = string.Empty;
@@ -36,12 +44,6 @@ namespace SafetyProto.Gameplay.Events
             Context = context;
             Position = position;
             InteractorId = interactorId;
-            Time = UnityEngine.Time.time;
-        }
-
-        public ActionTypeSO ResolveDefinition()
-        {
-            return string.IsNullOrEmpty(ActionId) ? null : ActionResolver.Resolve(ActionId);
         }
     }
 }

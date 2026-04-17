@@ -68,7 +68,7 @@ namespace SafetyProto.UI
 
         private void OnGroupStarted(TaskGroupEventArgs args)
         {
-            if (args.Group == null) return;
+            if (args.Group is not TaskGroup group) return;
 
             // Cancelar remoções pendentes
             foreach (var kvp in _removalCoroutines)
@@ -85,8 +85,8 @@ namespace SafetyProto.UI
             _pendingTasks.Clear();
             _groupTasks.Clear();
 
-            _activeGroup  = args.Group;
-            _groupTasks   = new List<SafetyTask>(args.Group.tasks);
+            _activeGroup  = group;
+            _groupTasks   = new List<SafetyTask>(group.tasks);
             _pendingTasks = new List<SafetyTask>(_groupTasks);
             _completedVisibleCount = 0;
 
@@ -127,28 +127,28 @@ namespace SafetyProto.UI
 
         private void OnTaskStarted(TaskEventArgs args)
         {
-            if (args.Task == null) return;
+            if (args.Task is not SafetyTask task) return;
             if (_activeGroup == null || _activeGroup.executionMode != TaskExecutionMode.Sequential) return;
 
-            if (_taskToEntry.TryGetValue(args.Task, out var entry))
+            if (_taskToEntry.TryGetValue(task, out var entry))
                 entry.UpdateState(TaskState.InProgress);
         }
 
         private void OnTaskCompleted(TaskEventArgs args)
         {
-            if (args.Task == null) return;
-            if (!_visibleTasks.Contains(args.Task)) return;
+            if (args.Task is not SafetyTask task) return;
+            if (!_visibleTasks.Contains(task)) return;
 
             var state = args.RuntimeTask?.State ?? TaskState.CompletedSuccess;
-            ScheduleRemoval(args.Task, state);
+            ScheduleRemoval(task, state);
         }
 
         private void OnTaskTimeout(TaskEventArgs args)
         {
-            if (args.Task == null) return;
-            if (!_visibleTasks.Contains(args.Task)) return;
+            if (args.Task is not SafetyTask task) return;
+            if (!_visibleTasks.Contains(task)) return;
 
-            ScheduleRemoval(args.Task, TaskState.CompletedFailure);
+            ScheduleRemoval(task, TaskState.CompletedFailure);
         }
 
         private void ScheduleRemoval(SafetyTask task, TaskState state)

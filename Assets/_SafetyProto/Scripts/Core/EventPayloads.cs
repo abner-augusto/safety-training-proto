@@ -1,7 +1,6 @@
+using SafetyProto.Core.Interfaces;
 using SafetyProto.Data.Enums;
-using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Gameplay.Task;
-using UnityEngine;
 
 namespace SafetyProto.Core
 {
@@ -35,10 +34,10 @@ namespace SafetyProto.Core
         public string ScenarioId;
         public long TimestampMs;
 
-        public SafetyTask Task; // Base task data
-        public RuntimeSafetyTask RuntimeTask; // Runtime instance when available
+        public ISafetyTask Task;                  // was SafetyTask
+        public RuntimeSafetyTask? RuntimeTask;
 
-        public TaskEventArgs(SafetyTask task, RuntimeSafetyTask runtimeTask = null)
+        public TaskEventArgs(ISafetyTask task, RuntimeSafetyTask? runtimeTask = null)
         {
             SessionId = string.Empty;
             PlayerId = string.Empty;
@@ -50,16 +49,16 @@ namespace SafetyProto.Core
     }
 
     [System.Serializable]
-    public struct TaskGroupEventArgs // for group-started / group-completed
+    public struct TaskGroupEventArgs
     {
         public string SessionId;
         public string PlayerId;
         public string ScenarioId;
         public long TimestampMs;
 
-        public TaskGroup Group;
+        public ITaskGroup? Group;                  // was TaskGroup
 
-        public TaskGroupEventArgs(TaskGroup group)
+        public TaskGroupEventArgs(ITaskGroup? group)
         {
             SessionId = string.Empty;
             PlayerId = string.Empty;
@@ -170,7 +169,6 @@ namespace SafetyProto.Core
         }
     }
 
-    // Basic session events might not need payloads, but can be structs for consistency
     [System.Serializable]
     public struct SessionStartedEventArgs
     {

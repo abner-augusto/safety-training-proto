@@ -211,15 +211,16 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
 
         private void OnGroupStarted(TaskGroupEventArgs args)
         {
+            var group = args.Group as TaskGroup;
             var dto = new GroupDto
             {
                 sessionId = args.SessionId,
-                groupId = args.Group != null ? args.Group.groupName : string.Empty,
-                groupName = args.Group != null ? args.Group.groupName : string.Empty,
+                groupId = group != null ? group.groupName : string.Empty,
+                groupName = group != null ? group.groupName : string.Empty,
                 timestampMs = ResolveTimestamp(args.TimestampMs)
             };
-            if (args.Group != null && !_knownGroups.Contains(args.Group))
-                _knownGroups.Add(args.Group);
+            if (group != null && !_knownGroups.Contains(group))
+                _knownGroups.Add(group);
 
             Broadcast("GroupStarted", dto);
             Broadcast("SessionManifest", BuildSessionManifest(args.SessionId));
@@ -227,11 +228,12 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
 
         private void OnGroupCompleted(TaskGroupEventArgs args)
         {
+            var group = args.Group as TaskGroup;
             var dto = new GroupDto
             {
                 sessionId = args.SessionId,
-                groupId = args.Group != null ? args.Group.groupName : string.Empty,
-                groupName = args.Group != null ? args.Group.groupName : string.Empty,
+                groupId = group != null ? group.groupName : string.Empty,
+                groupName = group != null ? group.groupName : string.Empty,
                 timestampMs = ResolveTimestamp(args.TimestampMs)
             };
             Broadcast("GroupCompleted", dto);
@@ -283,7 +285,9 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
         {
             if (!verboseEvents)
                 return;
-            var position = args.Position ?? Vector3.zero;
+            var position = args.Position.HasValue
+                ? new Vector3(args.Position.Value.X, args.Position.Value.Y, args.Position.Value.Z)
+                : Vector3.zero;
 
             var dto = new ActionAttemptDto
             {
@@ -296,7 +300,7 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
                 py = position.y,
                 pz = position.z,
                 hasPosition = args.Position.HasValue,
-                time = args.Time,
+                time = args.TimestampMs / 1000f,
                 timestampMs = ResolveTimestamp(args.TimestampMs)
             };
             Broadcast("ActionAttempt", dto);
@@ -346,9 +350,10 @@ namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
 
         private TaskDto BuildTaskDto(TaskEventArgs args, string status)
         {
-            var name = args.Task != null ? args.Task.taskName : string.Empty;
-            var id = args.Task != null ? args.Task.taskName : string.Empty;
-            var meta = BuildTaskMetadata(args.Task);
+            var task = args.Task as SafetyTask;
+            var name = task != null ? task.taskName : string.Empty;
+            var id = task != null ? task.taskName : string.Empty;
+            var meta = BuildTaskMetadata(task);
             return new TaskDto
             {
                 sessionId = args.SessionId,
