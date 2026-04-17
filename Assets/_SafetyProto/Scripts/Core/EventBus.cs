@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using SafetyProto.Core.Events;
+using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Gameplay.Events;
 using UnityEngine;
@@ -10,11 +11,12 @@ using Stopwatch = System.Diagnostics.Stopwatch;
 namespace SafetyProto.Core
 {
     [CreateAssetMenu(fileName = "EventBus", menuName = "VRSafetyTraining/EventBus", order = 0)]
-    public class EventBus : ScriptableObject
+    public class EventBus : ScriptableObject, IEventBus
     {
         private static EventBus _instance;
         private readonly Queue<Action> _eventQueue = new Queue<Action>();
         private readonly Stopwatch _stopwatch = new Stopwatch();
+        private readonly Dictionary<Type, Delegate> _typedSubscribers = new Dictionary<Type, Delegate>();
 
         public static EventBus Instance
         {
@@ -125,6 +127,96 @@ namespace SafetyProto.Core
             _stopwatch.Stop();
         }
 
+        private void InvokeTyped<T>(T payload)
+        {
+            if (!_typedSubscribers.TryGetValue(typeof(T), out var raw)) return;
+            if (raw is Action<T> handlers)
+            {
+                try { handlers.Invoke(payload); }
+                catch (Exception ex)
+                {
+                    SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
+                    {
+                        Source = "EventBus.InvokeTyped",
+                        Message = "Typed subscriber threw",
+                        Details = ex.ToString()
+                    });
+                }
+            }
+        }
+
+        // ---------- IEventBus surface ----------
+        //
+        // Subscribers added via Subscribe<T> are invoked in addition to any UnityEvent
+        // bindings. Dispatch is queued (via Enqueue) to preserve frame-boundary semantics
+        // with the rest of the bus.
+
+        public void Subscribe<T>(Action<T> handler)
+        {
+            if (handler == null) return;
+            var key = typeof(T);
+            _typedSubscribers.TryGetValue(key, out var existing);
+            _typedSubscribers[key] = existing == null
+                ? (Delegate)handler
+                : Delegate.Combine(existing, handler);
+        }
+
+        public void Unsubscribe<T>(Action<T> handler)
+        {
+            if (handler == null) return;
+            var key = typeof(T);
+            if (!_typedSubscribers.TryGetValue(key, out var existing)) return;
+            var remaining = Delegate.Remove(existing, handler);
+            if (remaining == null) _typedSubscribers.Remove(key);
+            else _typedSubscribers[key] = remaining;
+        }
+
+        public void Publish<T>(T payload)
+        {
+            switch (payload)
+            {
+                case SessionStartedEventArgs s:          RaiseSessionStarted(s); return;
+                case SessionPausedEventArgs s:           RaiseSessionPaused(s); return;
+                case SessionResumedEventArgs s:          RaiseSessionResumed(s); return;
+                case SessionEndedEventArgs s:            RaiseSessionEnded(s); return;
+                case SessionCompletedEventArgs s:        RaiseSessionCompleted(s); return;
+                case ActionAttemptedEvent a:             RaiseActionAttempt(a); return;
+                case PPEStateChangedEventArgs p:         RaisePpeStateChanged(p); return;
+                case TaskEventArgs t:
+                    RaiseTaskCompleted(t); return;
+                case TaskGroupEventArgs g:
+                    RaiseGroupStarted(g); return;
+                case ScoreChangedEventArgs sc:           RaiseScoreChanged(sc); return;
+                case SafetyViolationEventArgs v:         RaiseSafetyViolation(v); return;
+                case CriticalSafetyFailureEventArgs c:   RaiseCriticalSafetyFailure(c); return;
+                case SafetyErrorEventArgs e:             RaiseSafetyError(e); return;
+                default:
+                    DispatchTyped(payload);
+                    return;
+            }
+        }
+
+        internal void DispatchTyped<T>(T payload)
+        {
+            if (!_typedSubscribers.TryGetValue(typeof(T), out var raw)) return;
+            if (raw is Action<T> handlers)
+            {
+                Enqueue(() =>
+                {
+                    try { handlers.Invoke(payload); }
+                    catch (Exception ex)
+                    {
+                        SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
+                        {
+                            Source = "EventBus.DispatchTyped",
+                            Message = "Typed subscriber threw",
+                            Details = ex.ToString()
+                        });
+                    }
+                });
+            }
+        }
+
         private static void StampMetadata(ref string sessionId, ref string playerId, ref string scenarioId, ref long timestampMs)
         {
             sessionId = EventContext.CurrentSessionId;
@@ -188,6 +280,7 @@ namespace SafetyProto.Core
                 if (verboseLogging) SafetyLog.Info("[EventBus] SessionStarted");
                 OnSessionStartedCSharp?.Invoke(payload);
                 onSessionStarted?.Invoke(payload);
+                InvokeTyped(payload);
             });
         }
 
@@ -200,6 +293,7 @@ namespace SafetyProto.Core
                 if (verboseLogging) SafetyLog.Info("[EventBus] SessionPaused");
                 OnSessionPausedCSharp?.Invoke(payload);
                 onSessionPaused?.Invoke(payload);
+                InvokeTyped(payload);
             });
         }
 
@@ -212,6 +306,7 @@ namespace SafetyProto.Core
                 if (verboseLogging) SafetyLog.Info("[EventBus] SessionResumed");
                 OnSessionResumedCSharp?.Invoke(payload);
                 onSessionResumed?.Invoke(payload);
+                InvokeTyped(payload);
             });
         }
 
@@ -224,6 +319,7 @@ namespace SafetyProto.Core
                 if (verboseLogging) SafetyLog.Info("[EventBus] SessionEnded");
                 OnSessionEndedCSharp?.Invoke(payload);
                 onSessionEnded?.Invoke(payload);
+                InvokeTyped(payload);
             });
         }
 
@@ -240,6 +336,7 @@ namespace SafetyProto.Core
                 }
                 OnActionAttemptCSharp?.Invoke(payload);
                 onActionAttempt?.Invoke(payload);
+                InvokeTyped(payload);
             });
         }
 
@@ -252,6 +349,7 @@ namespace SafetyProto.Core
                 if (verboseLogging) SafetyLog.Info($"[EventBus] PPEStateChanged: {payload.PpeType}, Wearing: {payload.IsWearing}");
                 OnPpeStateChangedCSharp?.Invoke(payload);
                 onPpeStateChanged?.Invoke(payload);
+                InvokeTyped(payload);
             });
         }
 
@@ -264,6 +362,7 @@ namespace SafetyProto.Core
                 if (verboseLogging && payload.Task != null) SafetyLog.Info($"[EventBus] TaskStarted: {payload.Task.taskName}");
                 OnTaskStartedCSharp?.Invoke(payload);
                 onTaskStarted?.Invoke(payload);
+                InvokeTyped(payload);
             });
         }
 
@@ -276,6 +375,7 @@ namespace SafetyProto.Core
                 if (verboseLogging && payload.Task != null) SafetyLog.Info($"[EventBus] TaskCompleted: {payload.Task.taskName}");
                 OnTaskCompletedCSharp?.Invoke(payload);
                 onTaskCompleted?.Invoke(payload);
+                InvokeTyped(payload);
             });
         }
 
@@ -288,6 +388,7 @@ namespace SafetyProto.Core
                 if (verboseLogging && payload.Task != null) SafetyLog.Info($"[EventBus] TaskTimeout: {payload.Task.taskName}");
                 OnTaskTimeoutCSharp?.Invoke(payload);
                 onTaskTimeout?.Invoke(payload);
+                InvokeTyped(payload);
             });
         }
 
@@ -300,6 +401,7 @@ namespace SafetyProto.Core
                 if (verboseLogging) SafetyLog.Info($"[EventBus] ScoreChanged: Total {payload.TotalScore}, Delta {payload.Delta}");
                 OnScoreChangedCSharp?.Invoke(payload);
                 onScoreChanged?.Invoke(payload);
+                InvokeTyped(payload);
             });
         }
 
@@ -312,6 +414,7 @@ namespace SafetyProto.Core
                 if (verboseLogging && payload.Group != null) SafetyLog.Info($"[EventBus] GroupStarted: {payload.Group.groupName}");
                 OnGroupStartedCSharp?.Invoke(payload);
                 onGroupStarted?.Invoke(payload);
+                InvokeTyped(payload);
             });
         }
 
@@ -324,6 +427,7 @@ namespace SafetyProto.Core
                 if (verboseLogging && payload.Group != null) SafetyLog.Info($"[EventBus] GroupCompleted: {payload.Group.groupName}");
                 OnGroupCompletedCSharp?.Invoke(payload);
                 onGroupCompleted?.Invoke(payload);
+                InvokeTyped(payload);
             });
         }
 
@@ -335,6 +439,7 @@ namespace SafetyProto.Core
             {
                 if (verboseLogging) SafetyLog.Info($"[EventBus] SessionCompleted: {payload.tasksCompleted} tasks, {payload.totalElapsedTime:F2}s, Score: {payload.totalScore}");
                 onSessionCompleted?.Invoke(payload);
+                InvokeTyped(payload);
             });
         }
 
@@ -347,6 +452,7 @@ namespace SafetyProto.Core
                 if (verboseLogging) SafetyLog.Info($"[EventBus] SafetyViolation: {payload.ViolationCode} - {payload.Message}");
                 OnSafetyViolationCSharp?.Invoke(payload);
                 onSafetyViolation?.Invoke(payload);
+                InvokeTyped(payload);
             });
         }
 
@@ -359,6 +465,7 @@ namespace SafetyProto.Core
                 if (verboseLogging) SafetyLog.Info($"[EventBus] CriticalSafetyFailure: {payload.Reason} ({payload.ViolationCount} in {payload.WindowSeconds}s)");
                 OnCriticalSafetyFailureCSharp?.Invoke(payload);
                 onCriticalSafetyFailure?.Invoke(payload);
+                InvokeTyped(payload);
             });
         }
 
@@ -371,6 +478,7 @@ namespace SafetyProto.Core
                 if (verboseLogging) SafetyLog.Info($"[EventBus] SafetyError: {payload.Source} - {payload.Message}");
                 OnSafetyErrorCSharp?.Invoke(payload);
                 onSafetyError?.Invoke(payload);
+                InvokeTyped(payload);
             });
         }
     }

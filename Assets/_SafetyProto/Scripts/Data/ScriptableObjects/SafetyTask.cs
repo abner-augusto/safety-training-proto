@@ -1,11 +1,12 @@
 using System.Collections.Generic;
+using SafetyProto.Core.Interfaces;
 using SafetyProto.Data.Enums;
 using UnityEngine;
 
 namespace SafetyProto.Data.ScriptableObjects
 {
     [CreateAssetMenu(fileName = "NewSafetyTask", menuName = "VRSafetyTraining/SafetyTask", order = 1)]
-    public class SafetyTask : ScriptableObject
+    public class SafetyTask : ScriptableObject, ISafetyTask
     {
         [Header("Task Details")]
         public string taskName = "Untitled Task";
@@ -57,5 +58,18 @@ namespace SafetyProto.Data.ScriptableObjects
                 expectedActionId = expectedActionId.Trim();
             }
         }
+
+        #region ISafetyTask explicit implementation
+        string ISafetyTask.taskName => taskName;
+        string ISafetyTask.taskDescription => taskDescription;
+        int ISafetyTask.successPoints => successPoints;
+        int ISafetyTask.failurePenalty => failurePenalty;
+        int ISafetyTask.ppePenalty => ppePenalty;
+        System.Collections.Generic.IReadOnlyList<SafetyProto.Data.Enums.PPEType> ISafetyTask.requiredPPE => requiredPPE;
+        string ISafetyTask.hintText => hintText;
+        string ISafetyTask.failureAdvice => failureAdvice;
+        string ISafetyTask.ppeAdvice => ppeAdvice;
+        string ISafetyTask.ResolveExpectedActionId() => ResolveExpectedActionId();
+        #endregion
     }
 }

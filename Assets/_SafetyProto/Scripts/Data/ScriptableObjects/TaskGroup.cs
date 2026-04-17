@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using SafetyProto.Core.Interfaces;
 using UnityEngine;
 
 namespace SafetyProto.Data.ScriptableObjects
@@ -10,7 +12,7 @@ namespace SafetyProto.Data.ScriptableObjects
     }
 
     [CreateAssetMenu(fileName = "NewTaskGroup", menuName = "VRSafetyTraining/TaskGroup", order = 2)]
-    public class TaskGroup : ScriptableObject
+    public class TaskGroup : ScriptableObject, ITaskGroup
     {
         [Header("Group Settings")]
         public string groupName = "New Task Group";
@@ -26,5 +28,12 @@ namespace SafetyProto.Data.ScriptableObjects
         [Header("Dependencies")]
         [Tooltip("This group cannot start until these groups are fully completed.")]
         public List<TaskGroup> requiredGroups = new List<TaskGroup>();
+
+        #region ITaskGroup explicit implementation
+        string ITaskGroup.groupName => groupName;
+        TaskExecutionModeShared ITaskGroup.executionMode => (TaskExecutionModeShared)(int)executionMode;
+        float ITaskGroup.timeLimit => timeLimit;
+        System.Collections.Generic.IReadOnlyList<ISafetyTask> ITaskGroup.tasks => tasks;
+        #endregion
     }
 }
