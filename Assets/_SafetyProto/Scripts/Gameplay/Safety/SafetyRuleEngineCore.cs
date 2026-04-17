@@ -26,9 +26,8 @@ namespace SafetyProto.Gameplay.Safety
 
         private readonly Action<ActionAttemptedEvent>    _onActionAttempt;
         private readonly Action<PPEStateChangedEventArgs> _onPpeStateChanged;
-        private readonly Action<TaskGroupEventArgs>       _onGroupStarted;
-        private readonly Action<TaskGroupEventArgs>       _onGroupCompleted;
-        private readonly Action<TaskEventArgs>            _onTaskStarted;
+        private readonly Action<TaskGroupEventArgs>       _onGroupLifecycle;
+        private readonly Action<TaskEventArgs>            _onTaskLifecycle;
 
         private bool _subscribed;
         private bool _disposed;
@@ -46,11 +45,10 @@ namespace SafetyProto.Gameplay.Safety
             _logger = logger;
             _verboseLogging = verboseLogging;
 
-            _onActionAttempt    = HandleActionAttempt;
-            _onPpeStateChanged  = HandlePpeStateChanged;
-            _onGroupStarted     = OnGroupStarted;
-            _onGroupCompleted   = OnGroupCompleted;
-            _onTaskStarted      = OnTaskStarted;
+            _onActionAttempt = HandleActionAttempt;
+            _onPpeStateChanged = HandlePpeStateChanged;
+            _onGroupLifecycle = HandleGroupLifecycle;
+            _onTaskLifecycle = HandleTaskLifecycle;
         }
 
         public void Subscribe()
@@ -58,9 +56,8 @@ namespace SafetyProto.Gameplay.Safety
             if (_subscribed) return;
             _bus.Subscribe(_onActionAttempt);
             _bus.Subscribe(_onPpeStateChanged);
-            _bus.Subscribe(_onGroupStarted);
-            _bus.Subscribe(_onGroupCompleted);
-            _bus.Subscribe(_onTaskStarted);
+            _bus.Subscribe(_onGroupLifecycle);
+            _bus.Subscribe(_onTaskLifecycle);
             _subscribed = true;
         }
 
@@ -69,16 +66,34 @@ namespace SafetyProto.Gameplay.Safety
             if (!_subscribed) return;
             _bus.Unsubscribe(_onActionAttempt);
             _bus.Unsubscribe(_onPpeStateChanged);
-            _bus.Unsubscribe(_onGroupStarted);
-            _bus.Unsubscribe(_onGroupCompleted);
-            _bus.Unsubscribe(_onTaskStarted);
+            _bus.Unsubscribe(_onGroupLifecycle);
+            _bus.Unsubscribe(_onTaskLifecycle);
             _subscribed = false;
+        }
+
+        private void HandleGroupLifecycle(TaskGroupEventArgs args)
+        {
+            switch (args.Phase)
+            {
+                case TaskGroupPhase.Started:
+                    OnGroupStarted(args);
+                    break;
+                case TaskGroupPhase.Completed:
+                    OnGroupCompleted(args);
+                    break;
+            }
+        }
+
+        private void HandleTaskLifecycle(TaskEventArgs args)
+        {
+            if (args.Phase == TaskPhase.Started)
+            {
+                OnTaskStarted(args);
+            }
         }
 
         private void OnGroupStarted(TaskGroupEventArgs args)
         {
-            _logger?.Info($"[DEBUG] OnGroupStarted called, setting _activeGroup to {(args.Group != null ? args.Group.groupName : "NULL")}");
-
             _activeGroup = args.Group;
             _activeSequentialTask = null;
             _activeFreeOrderTasks.Clear();
@@ -121,8 +136,6 @@ namespace SafetyProto.Gameplay.Safety
 
         private void HandleActionAttempt(ActionAttemptedEvent args)
         {
-            _logger?.Info($"[DEBUG] HandleActionAttempt: _activeGroup = {(_activeGroup != null ? _activeGroup.groupName : "NULL")}");
-
             var actionId = args.ActionId;
             if (string.IsNullOrWhiteSpace(actionId))
             {
@@ -228,7 +241,7 @@ namespace SafetyProto.Gameplay.Safety
                 _activeFreeOrderTasks.Remove(task);
             }
 
-            _bus.Publish(new TaskEventArgs(task, runtimeTask));
+            _bus.Publish(new TaskEventArgs(task, runtimeTask, TaskPhase.Completed));
         }
 
         private bool IsPpeCompliant(IReadOnlyCollection<PPEType>? requiredPpe)
@@ -277,11 +290,11 @@ namespace SafetyProto.Gameplay.Safety
                    string.Equals(expectedId, actionId, StringComparison.OrdinalIgnoreCase);
         }
 
-        public void NotifyGroupStarted(TaskGroupEventArgs args) => OnGroupStarted(args);
+        public void NotifyGroupStarted(TaskGroupEventArgs args) => HandleGroupLifecycle(args);
 
-        public void NotifyGroupCompleted(TaskGroupEventArgs args) => OnGroupCompleted(args);
+        public void NotifyGroupCompleted(TaskGroupEventArgs args) => HandleGroupLifecycle(args);
 
-        public void NotifyTaskStarted(TaskEventArgs args) => OnTaskStarted(args);
+        public void NotifyTaskStarted(TaskEventArgs args) => HandleTaskLifecycle(args);
 
         public void Dispose()
         {

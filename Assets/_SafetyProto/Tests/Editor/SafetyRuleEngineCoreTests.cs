@@ -25,7 +25,13 @@ namespace SafetyProto.Tests.Editor
             _taskCompletions = new List<TaskEventArgs>();
             _violations = new List<SafetyViolationEventArgs>();
 
-            _bus.Subscribe<TaskEventArgs>(args => _taskCompletions.Add(args));
+            _bus.Subscribe<TaskEventArgs>(args =>
+            {
+                if (args.Phase == TaskPhase.Completed)
+                {
+                    _taskCompletions.Add(args);
+                }
+            });
             _bus.Subscribe<SafetyViolationEventArgs>(args => _violations.Add(args));
 
             _engine = new SafetyRuleEngineCore(_bus);
@@ -44,8 +50,8 @@ namespace SafetyProto.Tests.Editor
             var task = _tasks.Task("ppe_helmet", "equip_helmet", PPEType.Helmet);
             var group = _tasks.Group("Sequential group", TaskExecutionModeShared.Sequential, task);
 
-            _engine.NotifyGroupStarted(new TaskGroupEventArgs(group));
-            _engine.NotifyTaskStarted(new TaskEventArgs(task));
+            _bus.Publish(new TaskGroupEventArgs(group));
+            _bus.Publish(new TaskEventArgs(task));
             _bus.Publish(new PPEStateChangedEventArgs(PPEType.Helmet, isWearing: true));
             _bus.Publish(new ActionAttemptedEvent("equip_helmet"));
 
@@ -63,8 +69,8 @@ namespace SafetyProto.Tests.Editor
             var task = _tasks.Task("ppe_helmet", "equip_helmet", PPEType.Helmet);
             var group = _tasks.Group("g", TaskExecutionModeShared.Sequential, task);
 
-            _engine.NotifyGroupStarted(new TaskGroupEventArgs(group));
-            _engine.NotifyTaskStarted(new TaskEventArgs(task));
+            _bus.Publish(new TaskGroupEventArgs(group));
+            _bus.Publish(new TaskEventArgs(task));
             _bus.Publish(new ActionAttemptedEvent("equip_boots"));
 
             Assert.AreEqual(1, _violations.Count);
@@ -134,6 +140,11 @@ namespace SafetyProto.Tests.Editor
         [Test]
         public void InjectedPpeChecker_OverridesEventState()
         {
+            // Tear down the default engine from SetUp so only the injected-checker
+            // engine receives events — otherwise both engines process the same action
+            // and the default one emits PPE_MISSING because no helmet-worn event fires.
+            _engine.Dispose();
+
             var engine = new SafetyRuleEngineCore(
                 _bus,
                 ppeChecker: new AlwaysCompliantChecker());

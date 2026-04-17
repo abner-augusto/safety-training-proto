@@ -83,8 +83,7 @@ namespace SafetyProto.Tests.Editor
             var group = _tasks.Group("g", TaskExecutionModeShared.Sequential, task);
 
             _bus.Publish(new TaskGroupEventArgs(group));
-
-            _bus.Publish(new TaskGroupEventArgs(group));
+            _bus.Publish(new TaskGroupEventArgs(group, TaskGroupPhase.Completed));
 
             _bus.Publish(new ActionAttemptedEvent("a"));
 

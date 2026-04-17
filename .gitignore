@@ -2,7 +2,9 @@
 # Unity .gitignore — Safety Training Proto
 # ============================================================
 
-# Claude Code
+# ============================================================
+# AI / TOOLING
+# ============================================================
 CLAUDE.md
 .claude/*
 
@@ -54,6 +56,7 @@ ExportedObj/
 .vs/
 .idea/
 .gradle/
+.dotnet-home/*
 *.iml
 *.csproj
 !Tools/**/*.csproj
@@ -88,6 +91,7 @@ desktop.ini
 *.utmp
 sysinfo.txt
 crashlytics-build.properties
+TestResults_*.xml
 
 # ============================================================
 # DEBUG SYMBOL META FILES
@@ -146,6 +150,8 @@ Assets/_SafetyProto/Scripts/repomix-output.txt.meta
 # ============================================================
 packages-microsoft-prod.deb
 
-# .NET harness build artifacts (added in refactor Part 1)
+# ============================================================
+# .NET / HARNESS BUILD ARTIFACTS
+# ============================================================
 Tools/**/bin/
 Tools/**/obj/

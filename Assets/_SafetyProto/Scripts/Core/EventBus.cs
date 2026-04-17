@@ -183,9 +183,30 @@ namespace SafetyProto.Core
                 case ActionAttemptedEvent a:             RaiseActionAttempt(a); return;
                 case PPEStateChangedEventArgs p:         RaisePpeStateChanged(p); return;
                 case TaskEventArgs t:
-                    RaiseTaskCompleted(t); return;
+                    switch (t.Phase)
+                    {
+                        case TaskPhase.Started:
+                            RaiseTaskStarted(t);
+                            return;
+                        case TaskPhase.Timeout:
+                            RaiseTaskTimeout(t);
+                            return;
+                        case TaskPhase.Completed:
+                        default:
+                            RaiseTaskCompleted(t);
+                            return;
+                    }
                 case TaskGroupEventArgs g:
-                    RaiseGroupStarted(g); return;
+                    switch (g.Phase)
+                    {
+                        case TaskGroupPhase.Completed:
+                            RaiseGroupCompleted(g);
+                            return;
+                        case TaskGroupPhase.Started:
+                        default:
+                            RaiseGroupStarted(g);
+                            return;
+                    }
                 case ScoreChangedEventArgs sc:           RaiseScoreChanged(sc); return;
                 case SafetyViolationEventArgs v:         RaiseSafetyViolation(v); return;
                 case CriticalSafetyFailureEventArgs c:   RaiseCriticalSafetyFailure(c); return;
@@ -357,6 +378,7 @@ namespace SafetyProto.Core
         {
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            payload.Phase = TaskPhase.Started;
             Enqueue(() =>
             {
                 if (verboseLogging && payload.Task != null) SafetyLog.Info($"[EventBus] TaskStarted: {payload.Task.taskName}");
@@ -370,6 +392,7 @@ namespace SafetyProto.Core
         {
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            payload.Phase = TaskPhase.Completed;
             Enqueue(() =>
             {
                 if (verboseLogging && payload.Task != null) SafetyLog.Info($"[EventBus] TaskCompleted: {payload.Task.taskName}");
@@ -383,6 +406,7 @@ namespace SafetyProto.Core
         {
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            payload.Phase = TaskPhase.Timeout;
             Enqueue(() =>
             {
                 if (verboseLogging && payload.Task != null) SafetyLog.Info($"[EventBus] TaskTimeout: {payload.Task.taskName}");
@@ -409,6 +433,7 @@ namespace SafetyProto.Core
         {
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            payload.Phase = TaskGroupPhase.Started;
             Enqueue(() =>
             {
                 if (verboseLogging && payload.Group != null) SafetyLog.Info($"[EventBus] GroupStarted: {payload.Group.groupName}");
@@ -422,6 +447,7 @@ namespace SafetyProto.Core
         {
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            payload.Phase = TaskGroupPhase.Completed;
             Enqueue(() =>
             {
                 if (verboseLogging && payload.Group != null) SafetyLog.Info($"[EventBus] GroupCompleted: {payload.Group.groupName}");

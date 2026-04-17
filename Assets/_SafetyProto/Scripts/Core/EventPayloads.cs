@@ -5,6 +5,19 @@ using SafetyProto.Gameplay.Task;
 
 namespace SafetyProto.Core
 {
+    public enum TaskGroupPhase
+    {
+        Started,
+        Completed
+    }
+
+    public enum TaskPhase
+    {
+        Started,
+        Completed,
+        Timeout
+    }
+
     [System.Serializable]
     public struct PPEStateChangedEventArgs
     {
@@ -37,6 +50,7 @@ namespace SafetyProto.Core
 
         public ISafetyTask Task;                  // was SafetyTask
         public RuntimeSafetyTask? RuntimeTask;
+        public TaskPhase Phase;
 
         public TaskEventArgs(ISafetyTask task, RuntimeSafetyTask? runtimeTask = null)
         {
@@ -46,6 +60,18 @@ namespace SafetyProto.Core
             TimestampMs = 0L;
             Task = task;
             RuntimeTask = runtimeTask;
+            Phase = TaskPhase.Started;
+        }
+
+        public TaskEventArgs(ISafetyTask task, RuntimeSafetyTask? runtimeTask, TaskPhase phase)
+        {
+            SessionId = string.Empty;
+            PlayerId = string.Empty;
+            ScenarioId = string.Empty;
+            TimestampMs = 0L;
+            Task = task;
+            RuntimeTask = runtimeTask;
+            Phase = phase;
         }
     }
 
@@ -58,6 +84,7 @@ namespace SafetyProto.Core
         public long TimestampMs;
 
         public ITaskGroup? Group;                  // was TaskGroup
+        public TaskGroupPhase Phase;
 
         public TaskGroupEventArgs(ITaskGroup? group)
         {
@@ -66,6 +93,17 @@ namespace SafetyProto.Core
             ScenarioId = string.Empty;
             TimestampMs = 0L;
             Group = group;
+            Phase = TaskGroupPhase.Started;
+        }
+
+        public TaskGroupEventArgs(ITaskGroup? group, TaskGroupPhase phase)
+        {
+            SessionId = string.Empty;
+            PlayerId = string.Empty;
+            ScenarioId = string.Empty;
+            TimestampMs = 0L;
+            Group = group;
+            Phase = phase;
         }
     }
 

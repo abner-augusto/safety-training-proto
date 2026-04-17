@@ -24,11 +24,8 @@ namespace SafetyProto.Gameplay.Safety
 
         private void Awake()
         {
-            SafetyLog.Info($"[DEBUG] SafetyRuleEngine.Awake START, EventBus.Instance={(EventBus.Instance != null ? "OK" : "NULL")}");
-
             if (!this.IsEventBusReady())
             {
-                SafetyLog.Info("[DEBUG] SafetyRuleEngine.Awake: EventBus NOT ready, disabling");
                 enabled = false;
                 return;
             }
@@ -69,21 +66,6 @@ namespace SafetyProto.Gameplay.Safety
             eventBus.onGroupStarted.AddListener(_core.NotifyGroupStarted);
             eventBus.onGroupCompleted.AddListener(_core.NotifyGroupCompleted);
             eventBus.onTaskStarted.AddListener(_core.NotifyTaskStarted);
-
-            SafetyLog.Info("[DEBUG] SafetyRuleEngine.Awake: _core.Subscribe() + UnityEvent bridges registered");
-        }
-
-        private void Start()
-        {
-            if (_core != null)
-            {
-                SafetyLog.Info("[DEBUG] SafetyRuleEngine.Start: calling _core.Subscribe() as safety net");
-                _core.Subscribe();
-            }
-            else
-            {
-                SafetyLog.Warning("[DEBUG] SafetyRuleEngine.Start: _core is NULL — Awake did not complete successfully");
-            }
         }
 
         private void OnDestroy()
