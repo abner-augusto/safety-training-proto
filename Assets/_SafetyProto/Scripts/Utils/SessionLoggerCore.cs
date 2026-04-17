@@ -72,12 +72,9 @@ namespace SafetyProto.Utils
         private readonly Action<SessionCompletedEventArgs>        _onSessionCompleted;
         private readonly Action<ActionAttemptedEvent>             _onActionAttempt;
         private readonly Action<PPEStateChangedEventArgs>         _onPpeStateChanged;
-        private readonly Action<TaskEventArgs>                    _onTaskStarted;
-        private readonly Action<TaskEventArgs>                    _onTaskCompleted;
-        private readonly Action<TaskEventArgs>                    _onTaskTimeout;
+        private readonly Action<TaskEventArgs>                    _onTaskLifecycle;
         private readonly Action<ScoreChangedEventArgs>            _onScoreChanged;
-        private readonly Action<TaskGroupEventArgs>               _onGroupStarted;
-        private readonly Action<TaskGroupEventArgs>               _onGroupCompleted;
+        private readonly Action<TaskGroupEventArgs>               _onGroupLifecycle;
         private readonly Action<SafetyViolationEventArgs>         _onSafetyViolation;
         private readonly Action<SafetyErrorEventArgs>             _onSafetyError;
         private readonly Action<CriticalSafetyFailureEventArgs>   _onCriticalSafetyFailure;
@@ -98,12 +95,31 @@ namespace SafetyProto.Utils
             _onSessionCompleted      = OnSessionCompleted;
             _onActionAttempt         = args => LogEvent("ActionAttempt",     args.ActionId ?? string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
             _onPpeStateChanged       = args => LogEvent("PpeStateChanged",   $"PPE={args.PpeType}, Wearing={args.IsWearing}", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
-            _onTaskStarted           = args => LogEvent("TaskStarted",       args.Task?.taskName ?? string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
-            _onTaskCompleted         = args => LogEvent("TaskCompleted",     args.Task?.taskName ?? string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
-            _onTaskTimeout           = args => LogEvent("TaskTimeout",       args.Task?.taskName ?? string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
-            _onScoreChanged          = args => LogEvent("ScoreChanged",      $"Delta={args.Delta}, Total={args.TotalScore}", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
-            _onGroupStarted          = args => LogEvent("GroupStarted",      args.Group?.groupName ?? string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
-            _onGroupCompleted        = args => LogEvent("GroupCompleted",    args.Group?.groupName ?? string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
+            _onTaskLifecycle = args =>
+            {
+                string eventName = args.Phase switch
+                {
+                    TaskPhase.Started => "TaskStarted",
+                    TaskPhase.Completed => "TaskCompleted",
+                    TaskPhase.Timeout => "TaskTimeout",
+                    _ => "TaskUnknown"
+                };
+                LogEvent(eventName, args.Task?.taskName ?? string.Empty,
+                    args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
+            };
+            _onScoreChanged = args => LogEvent("ScoreChanged", $"Delta={args.Delta}, Total={args.TotalScore}",
+                args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
+            _onGroupLifecycle = args =>
+            {
+                string eventName = args.Phase switch
+                {
+                    TaskGroupPhase.Started => "GroupStarted",
+                    TaskGroupPhase.Completed => "GroupCompleted",
+                    _ => "GroupUnknown"
+                };
+                LogEvent(eventName, args.Group?.groupName ?? string.Empty,
+                    args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
+            };
             _onSafetyViolation       = args => LogEvent("SafetyViolation",   $"{args.ViolationCode} | {args.Message} (Task={args.TaskId}, Group={args.GroupId})", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
             _onSafetyError           = args => LogEvent("SafetyError",       $"{args.Source}: {args.Message} ({args.Details})", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
             _onCriticalSafetyFailure = args => LogEvent("CriticalSafetyFailure", $"{args.Reason} [{args.ViolationCount} in {args.WindowSeconds}s]", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
@@ -118,12 +134,9 @@ namespace SafetyProto.Utils
             _eventBus.Subscribe(_onSessionCompleted);
             _eventBus.Subscribe(_onActionAttempt);
             _eventBus.Subscribe(_onPpeStateChanged);
-            _eventBus.Subscribe(_onTaskStarted);
-            _eventBus.Subscribe(_onTaskCompleted);
-            _eventBus.Subscribe(_onTaskTimeout);
+            _eventBus.Subscribe(_onTaskLifecycle);
             _eventBus.Subscribe(_onScoreChanged);
-            _eventBus.Subscribe(_onGroupStarted);
-            _eventBus.Subscribe(_onGroupCompleted);
+            _eventBus.Subscribe(_onGroupLifecycle);
             _eventBus.Subscribe(_onSafetyViolation);
             _eventBus.Subscribe(_onSafetyError);
             _eventBus.Subscribe(_onCriticalSafetyFailure);
@@ -139,12 +152,9 @@ namespace SafetyProto.Utils
             _eventBus.Unsubscribe(_onSessionCompleted);
             _eventBus.Unsubscribe(_onActionAttempt);
             _eventBus.Unsubscribe(_onPpeStateChanged);
-            _eventBus.Unsubscribe(_onTaskStarted);
-            _eventBus.Unsubscribe(_onTaskCompleted);
-            _eventBus.Unsubscribe(_onTaskTimeout);
+            _eventBus.Unsubscribe(_onTaskLifecycle);
             _eventBus.Unsubscribe(_onScoreChanged);
-            _eventBus.Unsubscribe(_onGroupStarted);
-            _eventBus.Unsubscribe(_onGroupCompleted);
+            _eventBus.Unsubscribe(_onGroupLifecycle);
             _eventBus.Unsubscribe(_onSafetyViolation);
             _eventBus.Unsubscribe(_onSafetyError);
             _eventBus.Unsubscribe(_onCriticalSafetyFailure);

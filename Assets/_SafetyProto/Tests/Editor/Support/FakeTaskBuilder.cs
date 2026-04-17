@@ -50,8 +50,10 @@ namespace SafetyProto.Tests.Editor.Support
             public TaskExecutionModeShared executionMode { get; set; } = TaskExecutionModeShared.Sequential;
             public float timeLimit { get; set; } = 0f;
             public List<ISafetyTask> tasks { get; set; } = new List<ISafetyTask>();
+            public List<ITaskGroup> requiredGroups { get; set; } = new List<ITaskGroup>();
 
             IReadOnlyList<ISafetyTask> ITaskGroup.tasks => tasks;
+            IReadOnlyList<ITaskGroup> ITaskGroup.requiredGroups => requiredGroups;
         }
     }
 }

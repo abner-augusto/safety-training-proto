@@ -21,5 +21,6 @@ namespace SafetyProto.Core.Interfaces
         TaskExecutionModeShared executionMode { get; }
         float timeLimit { get; }
         IReadOnlyList<ISafetyTask> tasks { get; }
+        IReadOnlyList<ITaskGroup> requiredGroups { get; }
     }
 }

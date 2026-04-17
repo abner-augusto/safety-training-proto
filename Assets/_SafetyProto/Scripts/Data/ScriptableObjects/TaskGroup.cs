@@ -34,6 +34,7 @@ namespace SafetyProto.Data.ScriptableObjects
         TaskExecutionModeShared ITaskGroup.executionMode => (TaskExecutionModeShared)(int)executionMode;
         float ITaskGroup.timeLimit => timeLimit;
         System.Collections.Generic.IReadOnlyList<ISafetyTask> ITaskGroup.tasks => tasks;
+        System.Collections.Generic.IReadOnlyList<ITaskGroup> ITaskGroup.requiredGroups => requiredGroups;
         #endregion
     }
 }

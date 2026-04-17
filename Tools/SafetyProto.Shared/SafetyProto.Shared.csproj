@@ -40,5 +40,8 @@
     <!-- Part 6 additions -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\IPPEComplianceChecker.cs" Link="Core\Interfaces\IPPEComplianceChecker.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Gameplay\Safety\SafetyRuleEngineCore.cs"  Link="Gameplay\Safety\SafetyRuleEngineCore.cs" />
+
+    <!-- Part 7 additions -->
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Gameplay\Task\TaskManagerCore.cs"        Link="Gameplay\Task\TaskManagerCore.cs" />
   </ItemGroup>
 </Project>
