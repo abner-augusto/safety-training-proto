@@ -7,9 +7,9 @@ namespace SafetyProto.Core.Events
     /// </summary>
     public static class EventContext
     {
-        public static string CurrentSessionId { get; private set; }
-        public static string CurrentPlayerId { get; private set; }
-        public static string CurrentScenarioId { get; private set; }
+        public static string? CurrentSessionId { get; private set; }
+        public static string? CurrentPlayerId { get; private set; }
+        public static string? CurrentScenarioId { get; private set; }
 
         public static void StartSession(string sessionId, string playerId, string scenarioId)
         {

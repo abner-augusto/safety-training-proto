@@ -13,23 +13,28 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Part 1: interfaces only. Every file linked here MUST compile in plain .NET 8
-         without any UnityEngine reference. -->
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\IEventBus.cs"     Link="Core\Interfaces\IEventBus.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\ISafetyTask.cs"   Link="Core\Interfaces\ISafetyTask.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\ITaskGroup.cs"    Link="Core\Interfaces\ITaskGroup.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\ITimerSource.cs"  Link="Core\Interfaces\ITimerSource.cs" />
+    <!-- Interfaces (Part 1) -->
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\IEventBus.cs"       Link="Core\Interfaces\IEventBus.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\IScoreService.cs"   Link="Core\Interfaces\IScoreService.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\ISafetyTask.cs"     Link="Core\Interfaces\ISafetyTask.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\ITaskGroup.cs"      Link="Core\Interfaces\ITaskGroup.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\ITimerSource.cs"    Link="Core\Interfaces\ITimerSource.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\IAsyncScheduler.cs" Link="Core\Interfaces\IAsyncScheduler.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Logging\IHarnessLogger.cs"   Link="Core\Logging\IHarnessLogger.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\ISessionResettable.cs" Link="Core\Interfaces\ISessionResettable.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Logging\IHarnessLogger.cs"     Link="Core\Logging\IHarnessLogger.cs" />
 
-    <!-- Existing pure-C# files that ISafetyTask depends on transitively.
-         Safe to link now — they already have zero Unity references. -->
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Data\Enums\PPEType.cs"            Link="Data\Enums\PPEType.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Data\Enums\TaskState.cs"          Link="Data\Enums\TaskState.cs" />
+    <!-- Enums (Part 1) -->
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Data\Enums\PPEType.cs"              Link="Data\Enums\PPEType.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Data\Enums\TaskState.cs"            Link="Data\Enums\TaskState.cs" />
 
-    <!-- Part 3: event payloads + runtime task wrapper. Now engine-independent. -->
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\EventPayloads.cs"                 Link="Core\EventPayloads.cs" />
+    <!-- Payloads (Part 3) -->
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\EventPayloads.cs"              Link="Core\EventPayloads.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Gameplay\Events\ActionAttemptedEvent.cs" Link="Gameplay\Events\ActionAttemptedEvent.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Gameplay\Task\RuntimeSafetyTask.cs"    Link="Gameplay\Task\RuntimeSafetyTask.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Gameplay\Task\RuntimeSafetyTask.cs" Link="Gameplay\Task\RuntimeSafetyTask.cs" />
+
+    <!-- Part 4 additions -->
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Events\EventContext.cs"        Link="Core\Events\EventContext.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\ScoreService.cs"               Link="Core\ScoreService.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Utils\SessionLoggerCore.cs"         Link="Utils\SessionLoggerCore.cs" />
   </ItemGroup>
 </Project>
