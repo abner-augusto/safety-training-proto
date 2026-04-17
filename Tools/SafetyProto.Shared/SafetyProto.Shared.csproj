@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <LangVersion>latest</LangVersion>
+    <!-- Suppress IDE1006 (naming rule) globally — the ISafetyTask / ITaskGroup interfaces
+         intentionally use lowercase property names to match existing Unity field names.
+         This allows explicit interface implementation in Part 2 without renaming the SO
+         fields, which would break every Inspector reference in the project. -->
+    <NoWarn>IDE1006</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Part 1: interfaces only. Every file linked here MUST compile in plain .NET 8
+         without any UnityEngine reference. -->
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\IEventBus.cs"     Link="Core\Interfaces\IEventBus.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\ISafetyTask.cs"   Link="Core\Interfaces\ISafetyTask.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\ITaskGroup.cs"    Link="Core\Interfaces\ITaskGroup.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\ITimerSource.cs"  Link="Core\Interfaces\ITimerSource.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\IAsyncScheduler.cs" Link="Core\Interfaces\IAsyncScheduler.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Logging\IHarnessLogger.cs"   Link="Core\Logging\IHarnessLogger.cs" />
+
+    <!-- Existing pure-C# files that ISafetyTask depends on transitively.
+         Safe to link now — they already have zero Unity references. -->
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Data\Enums\PPEType.cs"            Link="Data\Enums\PPEType.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Data\Enums\TaskState.cs"          Link="Data\Enums\TaskState.cs" />
+  </ItemGroup>
+</Project>

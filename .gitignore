@@ -56,6 +56,7 @@ ExportedObj/
 .gradle/
 *.iml
 *.csproj
+!Tools/**/*.csproj
 *.unityproj
 *.sln
 *.suo
@@ -144,3 +145,7 @@ Assets/_SafetyProto/Scripts/repomix-output.txt.meta
 # LINUX PACKAGE ARTIFACTS
 # ============================================================
 packages-microsoft-prod.deb
+
+# .NET harness build artifacts (added in refactor Part 1)
+Tools/**/bin/
+Tools/**/obj/
