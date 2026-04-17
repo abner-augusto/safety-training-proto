@@ -1,34 +1,26 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+#nullable enable
 using SafetyProto.Core;
-using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
-using SafetyProto.Data.Enums;
+using SafetyProto.Core.Logging;
 using SafetyProto.Gameplay.PPE;
 using SafetyProto.Gameplay.Task;
 using SafetyProto.Utils;
 using UnityEngine;
-using SafetyProto.Core.Logging;
-using SafetyProto.Gameplay.Events;
 
 namespace SafetyProto.Gameplay.Safety
 {
-    /// <summary>
-    /// Evaluates player actions against the active task and emits task completions or safety violations.
-    /// </summary>
     public class SafetyRuleEngine : MonoBehaviour
     {
         [Header("References")]
-        [SerializeField] private PPEManager ppeManager;
+        [SerializeField] private PPEManager? ppeManager;
 
         [Header("Settings")]
         [SerializeField] private bool verboseLogging;
 
-        private readonly Dictionary<PPEType, bool> _ppeStates = new Dictionary<PPEType, bool>();
-        private ITaskGroup _activeGroup;
-        private ISafetyTask _activeSequentialTask;
-        private readonly List<ISafetyTask> _activeFreeOrderTasks = new List<ISafetyTask>();
+        [Header("Timing")]
+        [SerializeField] private TimerSystem? timerSystem;
+
+        private SafetyRuleEngineCore? _core;
 
         private void Start()
         {
@@ -47,229 +39,33 @@ namespace SafetyProto.Gameplay.Safety
                 }
             }
 
-            EventBus.Instance.onActionAttempt.AddListener(HandleActionAttempt);
-            EventBus.Instance.onPpeStateChanged.AddListener(HandlePpeStateChanged);
-            EventBus.Instance.onGroupStarted.AddListener(OnGroupStarted);
-            EventBus.Instance.onGroupCompleted.AddListener(OnGroupCompleted);
-            EventBus.Instance.onTaskStarted.AddListener(OnTaskStarted);
+            if (timerSystem == null)
+            {
+                timerSystem = FindFirstObjectByType<TimerSystem>();
+            }
+
+            IPPEComplianceChecker? ppeChecker = ppeManager != null
+                ? new PPEComplianceAdapter(ppeManager)
+                : null;
+
+            ITimerSource? timerSource = timerSystem != null
+                ? new TimerSystemAdapter(timerSystem)
+                : null;
+
+            _core = new SafetyRuleEngineCore(
+                bus: EventBus.Instance,
+                ppeChecker: ppeChecker,
+                timer: timerSource,
+                logger: new SafetyLogAdapter(),
+                verboseLogging: verboseLogging);
+
+            _core.Subscribe();
         }
 
         private void OnDestroy()
         {
-            if (EventBus.Instance != null)
-            {
-                EventBus.Instance.onActionAttempt.RemoveListener(HandleActionAttempt);
-                EventBus.Instance.onPpeStateChanged.RemoveListener(HandlePpeStateChanged);
-                EventBus.Instance.onGroupStarted.RemoveListener(OnGroupStarted);
-                EventBus.Instance.onGroupCompleted.RemoveListener(OnGroupCompleted);
-                EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStarted);
-            }
-        }
-
-        private void OnGroupStarted(TaskGroupEventArgs args)
-        {
-            _activeGroup = args.Group;
-            _activeSequentialTask = null;
-            _activeFreeOrderTasks.Clear();
-
-            if (_activeGroup != null && _activeGroup.executionMode == TaskExecutionModeShared.FreeOrder)
-            {
-                _activeFreeOrderTasks.AddRange(_activeGroup.tasks);
-            }
-        }
-
-        private void OnGroupCompleted(TaskGroupEventArgs args)
-        {
-            if (ReferenceEquals(_activeGroup, args.Group))
-            {
-                ClearActiveContext();
-            }
-        }
-
-        private void OnTaskStarted(TaskEventArgs args)
-        {
-            if (_activeGroup == null || args.Task == null)
-            {
-                return;
-            }
-
-            if (_activeGroup.executionMode == TaskExecutionModeShared.Sequential)
-            {
-                _activeSequentialTask = args.Task;
-            }
-        }
-
-        private void ClearActiveContext()
-        {
-            _activeGroup = null;
-            _activeSequentialTask = null;
-            _activeFreeOrderTasks.Clear();
-        }
-
-        private void HandlePpeStateChanged(PPEStateChangedEventArgs args)
-        {
-            _ppeStates[args.PpeType] = args.IsWearing;
-        }
-
-        private void HandleActionAttempt(ActionAttemptedEvent args)
-        {
-            var actionId = args.ActionId;
-            if (string.IsNullOrWhiteSpace(actionId))
-            {
-                RaiseViolation("ACTION_ID_MISSING", "Received action attempt without a valid ActionId.", null, null);
-                return;
-            }
-
-            actionId = actionId.Trim();
-
-            if (_activeGroup == null)
-            {
-                RaiseViolation("NO_ACTIVE_GROUP", "Action attempted with no active task group.", null, null);
-                return;
-            }
-
-            ISafetyTask targetTask = null;
-
-            if (_activeGroup.executionMode == TaskExecutionModeShared.Sequential)
-            {
-                if (_activeSequentialTask == null)
-                {
-                    if (verboseLogging)
-                    {
-                        SafetyLog.Warning("SafetyRuleEngine: Sequential group active but no current task set.", this);
-                    }
-                    return;
-                }
-
-                if (!MatchesAction(_activeSequentialTask, actionId))
-                {
-                    RaiseViolation(
-                        "WRONG_ACTION",
-                        $"Expected {_activeSequentialTask.ResolveExpectedActionId()} but received {actionId}.",
-                        _activeSequentialTask,
-                        _activeGroup);
-                    return;
-                }
-
-                targetTask = _activeSequentialTask;
-            }
-            else
-            {
-                targetTask = _activeFreeOrderTasks.FirstOrDefault(t => MatchesAction(t, actionId));
-                if (targetTask == null)
-                {
-                    if (IsActionAlreadyCompleted(actionId))
-                    {
-                        if (verboseLogging)
-                        {
-                            SafetyLog.Info($"SafetyRuleEngine: Ignoring repeat action {actionId} (already completed).", this);
-                        }
-                        return;
-                    }
-
-                    RaiseViolation(
-                        "WRONG_ACTION",
-                        $"Action {actionId} does not match any pending task in '{_activeGroup.groupName}'.",
-                        null,
-                        _activeGroup);
-                    return;
-                }
-            }
-
-            ProcessTaskAttempt(targetTask, _activeGroup);
-        }
-
-        private bool IsActionAlreadyCompleted(string actionId)
-        {
-            if (_activeGroup == null || string.IsNullOrWhiteSpace(actionId))
-            {
-                return false;
-            }
-
-            return _activeGroup.tasks.Any(t => MatchesAction(t, actionId)) &&
-                   _activeFreeOrderTasks.All(t => !MatchesAction(t, actionId));
-        }
-
-        private void ProcessTaskAttempt(ISafetyTask task, ITaskGroup currentGroup)
-        {
-            if (task == null)
-            {
-                return;
-            }
-
-            var runtimeTask = new RuntimeSafetyTask(task);
-
-            bool compliant = IsPpeCompliant(task.requiredPPE);
-            runtimeTask.State = compliant ? TaskState.CompletedSuccess : TaskState.CompletedSuccessButUnsafe;
-            runtimeTask.HasMissedPPEOnce = !compliant;
-            runtimeTask.CompletionTime = Time.time;
-
-            if (!compliant)
-            {
-                RaiseViolation(
-                    "PPE_MISSING",
-                    $"Required PPE missing for task '{task.taskName}'.",
-                    task,
-                    currentGroup);
-            }
-
-            if (verboseLogging)
-            {
-                SafetyLog.Info($"SafetyRuleEngine: Task '{task.taskName}' completed. PPE compliant={compliant}", this);
-            }
-
-            if (currentGroup != null && currentGroup.executionMode == TaskExecutionModeShared.FreeOrder)
-            {
-                _activeFreeOrderTasks.Remove(task);
-            }
-
-            TaskEvents.RaiseTaskCompleted(new TaskEventArgs(task, runtimeTask));
-        }
-
-        private bool IsPpeCompliant(IReadOnlyCollection<PPEType> requiredPpe)
-        {
-            if (requiredPpe == null || requiredPpe.Count == 0)
-            {
-                return true;
-            }
-
-            if (ppeManager != null)
-            {
-                return ppeManager.VerifyPPECompliance(requiredPpe.ToList());
-            }
-
-            foreach (var ppe in requiredPpe)
-            {
-                if (!_ppeStates.TryGetValue(ppe, out var isWearing) || !isWearing)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        private void RaiseViolation(string code, string message, ISafetyTask task, ITaskGroup group)
-        {
-            SafetyEvents.RaiseSafetyViolation(new SafetyViolationEventArgs
-            {
-                ViolationCode = code,
-                Message = message,
-                TaskId = task != null ? task.taskName : string.Empty,
-                GroupId = group != null ? group.groupName : string.Empty
-            });
-        }
-
-        private static bool MatchesAction(ISafetyTask task, string actionId)
-        {
-            if (task == null || string.IsNullOrWhiteSpace(actionId))
-            {
-                return false;
-            }
-
-            var expectedId = task.ResolveExpectedActionId();
-            return !string.IsNullOrEmpty(expectedId) &&
-                   string.Equals(expectedId, actionId, StringComparison.OrdinalIgnoreCase);
+            _core?.Dispose();
+            _core = null;
         }
     }
 }
