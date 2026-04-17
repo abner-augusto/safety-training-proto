@@ -9,7 +9,7 @@ namespace SafetyProto.Utils
     {
         private SessionLoggerCore _core;
 
-        private void Start()
+        private void Awake()
         {
             if (!this.IsEventBusReady())
             {

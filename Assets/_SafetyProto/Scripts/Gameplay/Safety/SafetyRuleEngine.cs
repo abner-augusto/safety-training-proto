@@ -22,13 +22,18 @@ namespace SafetyProto.Gameplay.Safety
 
         private SafetyRuleEngineCore? _core;
 
-        private void Start()
+        private void Awake()
         {
+            SafetyLog.Info($"[DEBUG] SafetyRuleEngine.Awake START, EventBus.Instance={(EventBus.Instance != null ? "OK" : "NULL")}");
+
             if (!this.IsEventBusReady())
             {
+                SafetyLog.Info("[DEBUG] SafetyRuleEngine.Awake: EventBus NOT ready, disabling");
                 enabled = false;
                 return;
             }
+
+            var eventBus = EventBus.Instance!;
 
             if (ppeManager == null)
             {
@@ -53,17 +58,43 @@ namespace SafetyProto.Gameplay.Safety
                 : null;
 
             _core = new SafetyRuleEngineCore(
-                bus: EventBus.Instance,
+                bus: eventBus,
                 ppeChecker: ppeChecker,
                 timer: timerSource,
                 logger: new SafetyLogAdapter(),
                 verboseLogging: verboseLogging);
 
             _core.Subscribe();
+
+            eventBus.onGroupStarted.AddListener(_core.NotifyGroupStarted);
+            eventBus.onGroupCompleted.AddListener(_core.NotifyGroupCompleted);
+            eventBus.onTaskStarted.AddListener(_core.NotifyTaskStarted);
+
+            SafetyLog.Info("[DEBUG] SafetyRuleEngine.Awake: _core.Subscribe() + UnityEvent bridges registered");
+        }
+
+        private void Start()
+        {
+            if (_core != null)
+            {
+                SafetyLog.Info("[DEBUG] SafetyRuleEngine.Start: calling _core.Subscribe() as safety net");
+                _core.Subscribe();
+            }
+            else
+            {
+                SafetyLog.Warning("[DEBUG] SafetyRuleEngine.Start: _core is NULL — Awake did not complete successfully");
+            }
         }
 
         private void OnDestroy()
         {
+            var eventBus = EventBus.Instance;
+            if (eventBus != null && _core != null)
+            {
+                eventBus.onGroupStarted.RemoveListener(_core.NotifyGroupStarted);
+                eventBus.onGroupCompleted.RemoveListener(_core.NotifyGroupCompleted);
+                eventBus.onTaskStarted.RemoveListener(_core.NotifyTaskStarted);
+            }
             _core?.Dispose();
             _core = null;
         }

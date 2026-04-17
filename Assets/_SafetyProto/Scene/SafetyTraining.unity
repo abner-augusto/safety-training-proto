@@ -43863,6 +43863,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.Safety.SafetyRuleEngine
   ppeManager: {fileID: 5142919890472588727}
   verboseLogging: 1
+  timerSystem: {fileID: 0}
 --- !u!4 &454046776473597089
 Transform:
   m_ObjectHideFlags: 0
@@ -51037,7 +51038,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PpeTaskMapping
   ppeManager: {fileID: 5142919890472588727}
   taskManager: {fileID: 339111214494552573}
-  playerTransform: {fileID: 0}
+  playerTransform: {fileID: 516857788}
   mappings:
   - name: Equipar Botas
     action: {fileID: 11400000, guid: 520a16e786f4fdc47a7fe2233463896a, type: 2}

@@ -44,8 +44,8 @@ namespace SafetyProto.Tests.Editor
             var task = _tasks.Task("ppe_helmet", "equip_helmet", PPEType.Helmet);
             var group = _tasks.Group("Sequential group", TaskExecutionModeShared.Sequential, task);
 
-            _bus.Publish(new TaskGroupEventArgs(group));
-            _bus.Publish(new TaskEventArgs(task));
+            _engine.NotifyGroupStarted(new TaskGroupEventArgs(group));
+            _engine.NotifyTaskStarted(new TaskEventArgs(task));
             _bus.Publish(new PPEStateChangedEventArgs(PPEType.Helmet, isWearing: true));
             _bus.Publish(new ActionAttemptedEvent("equip_helmet"));
 
@@ -63,8 +63,8 @@ namespace SafetyProto.Tests.Editor
             var task = _tasks.Task("ppe_helmet", "equip_helmet", PPEType.Helmet);
             var group = _tasks.Group("g", TaskExecutionModeShared.Sequential, task);
 
-            _bus.Publish(new TaskGroupEventArgs(group));
-            _bus.Publish(new TaskEventArgs(task));
+            _engine.NotifyGroupStarted(new TaskGroupEventArgs(group));
+            _engine.NotifyTaskStarted(new TaskEventArgs(task));
             _bus.Publish(new ActionAttemptedEvent("equip_boots"));
 
             Assert.AreEqual(1, _violations.Count);

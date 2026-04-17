@@ -30,8 +30,7 @@
   "include": [
     "Assets/_SafetyProto/**/*.cs",
     "Tools/**/*.cs",
-    "Tools/**/*.csproj",
-    "Tests/Editor/**/*.cs"
+    "Tools/**/*.csproj"
   ],
   "ignore": {
     "useGitignore": true,

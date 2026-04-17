@@ -77,6 +77,8 @@ namespace SafetyProto.Gameplay.Safety
 
         private void OnGroupStarted(TaskGroupEventArgs args)
         {
+            _logger?.Info($"[DEBUG] OnGroupStarted called, setting _activeGroup to {(args.Group != null ? args.Group.groupName : "NULL")}");
+
             _activeGroup = args.Group;
             _activeSequentialTask = null;
             _activeFreeOrderTasks.Clear();
@@ -119,6 +121,8 @@ namespace SafetyProto.Gameplay.Safety
 
         private void HandleActionAttempt(ActionAttemptedEvent args)
         {
+            _logger?.Info($"[DEBUG] HandleActionAttempt: _activeGroup = {(_activeGroup != null ? _activeGroup.groupName : "NULL")}");
+
             var actionId = args.ActionId;
             if (string.IsNullOrWhiteSpace(actionId))
             {
@@ -272,6 +276,12 @@ namespace SafetyProto.Gameplay.Safety
             return !string.IsNullOrEmpty(expectedId) &&
                    string.Equals(expectedId, actionId, StringComparison.OrdinalIgnoreCase);
         }
+
+        public void NotifyGroupStarted(TaskGroupEventArgs args) => OnGroupStarted(args);
+
+        public void NotifyGroupCompleted(TaskGroupEventArgs args) => OnGroupCompleted(args);
+
+        public void NotifyTaskStarted(TaskEventArgs args) => OnTaskStarted(args);
 
         public void Dispose()
         {
