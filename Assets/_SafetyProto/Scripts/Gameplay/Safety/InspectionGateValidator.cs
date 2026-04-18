@@ -53,7 +53,6 @@ namespace SafetyProto.Gameplay.Safety
     {
         [Header("References")]
         [SerializeField] private TaskManager taskManager;
-        [SerializeField] private ScoreServiceSO scoreService;
 
         [Header("Gate Configuration")]
         [SerializeField] private int penaltyPerAttempt = 100;
@@ -149,10 +148,7 @@ namespace SafetyProto.Gameplay.Safety
             _lastPendingTaskIds.Clear();
             _lastPendingTaskIds.AddRange(pendingTasks.Select(t => t.ExpectedActionId));
 
-            if (scoreService?.Service != null)
-                scoreService.Service.SubtractPoints(penaltyPerAttempt, "GATE_PENALTY");
-            else
-                SafetyLog.Warning("[InspectionGateValidator] ScoreService is null — skipping penalty.", this);
+            ScoreService.Instance.SubtractPoints(penaltyPerAttempt, "GATE_PENALTY");
 
             StartCoroutine(ExecuteConsequencesSequence(pendingTasks, currentGroup));
         }

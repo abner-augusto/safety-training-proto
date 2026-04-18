@@ -3,15 +3,30 @@ using SafetyProto.Core.Interfaces;
 
 namespace SafetyProto.Core
 {
-    /// <summary>
-    /// Pure C# implementation of <see cref="IScoreService"/>.
-    /// No UnityEngine references so it runs in headless tests.
-    /// </summary>
     public sealed class ScoreService : IScoreService, ISessionResettable
     {
+        private static ScoreService _instance;
+
+        public static ScoreService Instance
+        {
+            get
+            {
+                if (_instance == null)
+                    _instance = new ScoreService();
+                return _instance;
+            }
+        }
+
+        public static void DestroyInstance()
+        {
+            _instance = null!;
+        }
+
         public int CurrentScore { get; private set; }
 
         public event Action<int, int, string> ScoreChanged = delegate { };
+
+        public ScoreService() { }
 
         public void AddPoints(int amount, string reason)
         {

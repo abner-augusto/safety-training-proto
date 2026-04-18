@@ -18,6 +18,8 @@ namespace SafetyProto.Core
                 return;
             }
 
+            ScoreService.Instance.ResetSession();
+
             EventContext.StartSession(
                 Guid.NewGuid().ToString(),
                 "Player1",
@@ -61,6 +63,7 @@ namespace SafetyProto.Core
                 SafetyLog.Info("TrainingSessionManager: Session Ended event raised.", this);
             }
 
+            ScoreService.DestroyInstance();
             EventContext.Clear();
         }
     }

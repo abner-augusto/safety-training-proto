@@ -18,10 +18,6 @@ namespace SafetyProto.Gameplay.Task
         public bool startTasksAutomatically = true;
         public float delayBetweenTasks = 2.0f;
 
-        [Header("Scoring")]
-        public ScoreServiceSO? scoreServiceAsset;
-        public ScoreManagerAdapter? scoreManagerAdapter;
-
         [Header("Timing")]
         [SerializeField] private TimerSystem? timerSystem;
 
@@ -35,19 +31,7 @@ namespace SafetyProto.Gameplay.Task
         {
             if (!this.IsEventBusReady()) return;
 
-            var scoreService = scoreServiceAsset?.Service;
-            if (scoreService == null)
-            {
-                SafetyLog.Error("TaskManager requires a ScoreService asset.", this);
-                SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
-                {
-                    Source = nameof(TaskManager),
-                    Message = "ScoreService asset missing",
-                    Details = $"TaskManager '{name}' requires a ScoreServiceSO reference."
-                });
-                enabled = false;
-                return;
-            }
+            IScoreService scoreService = ScoreService.Instance;
 
             ValidateActions();
 
