@@ -10,12 +10,14 @@
           "name": "Put On Glove",
           "actionId": "ppe.putongloves",
           "successPoints": 100,
+          "ppePenalty": 20,
           "requiredPPE": ["Gloves"]
         },
         {
           "name": "Head Gear",
           "actionId": "ppe.putonhelmet",
           "successPoints": 100,
+          "ppePenalty": 20,
           "requiredPPE": ["Helmet"]
         }
       ]

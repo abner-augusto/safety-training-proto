@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using SafetyProto.Core;
@@ -19,12 +20,15 @@ public static class Program
     {
         if (args.Length < 1)
         {
-            Console.Error.WriteLine("Usage: CliHarness <scenario.json> [output-dir]");
+            Console.Error.WriteLine("Usage: CliHarness <scenario.json> [output-dir] [--interactive]");
             return 1;
         }
 
         var scenarioPath = args[0];
-        var outputDir = args.Length >= 2 ? args[1] : "harness-output";
+        var positionalArgs = args.Skip(1).Where(a => !a.StartsWith("--", StringComparison.Ordinal)).ToArray();
+        var outputDir = positionalArgs.Length > 0 ? positionalArgs[0] : "harness-output";
+        bool interactive = args.Any(a =>
+            string.Equals(a, "--interactive", StringComparison.OrdinalIgnoreCase));
 
         if (!File.Exists(scenarioPath))
         {
@@ -63,7 +67,26 @@ public static class Program
         bus.Subscribe<TaskEventArgs>(args =>
         {
             if (args.Phase != TaskPhase.Completed || args.Task == null) return;
+
             scoreService.AddPoints(args.Task.successPoints, $"Task '{args.Task.taskName}' completed");
+
+            if (args.RuntimeTask != null &&
+                args.RuntimeTask.State == TaskState.CompletedSuccessButUnsafe)
+            {
+                int penalty = args.Task.ppePenalty;
+                if (penalty > 0)
+                {
+                    scoreService.SubtractPoints(
+                        penalty,
+                        $"PPE missing during '{args.Task.taskName}'");
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine($"  [WARN] PPE_MISSING on '{args.Task.taskName}' but ppePenalty=0. Set ppePenalty in scenario JSON.");
+                    Console.ResetColor();
+                }
+            }
         });
 
         var taskManager = new TaskManagerCore(
@@ -99,8 +122,19 @@ public static class Program
         Console.WriteLine("--- Transcript ---");
         taskManager.StartSession();
 
-        var scriptedActor = new ScriptedActor(bus, scenario.script);
-        await scriptedActor.PlayAsync();
+        if (interactive)
+        {
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.WriteLine("[Interactive mode — type your choices at each prompt]");
+            Console.ResetColor();
+            var actor = new InteractiveActor(bus, taskGroups);
+            await actor.PlayAsync();
+        }
+        else
+        {
+            var actor = new ScriptedActor(bus, scenario.script ?? new List<ScriptedActor.Step>());
+            await actor.PlayAsync();
+        }
 
         await Task.Delay(200);
 
@@ -159,6 +193,7 @@ public static class Program
         public string name { get; set; } = "unnamed";
         public string actionId { get; set; } = string.Empty;
         public int successPoints { get; set; } = 100;
+        public int ppePenalty { get; set; } = 20;
         public List<string> requiredPPE { get; set; } = new();
     }
 
@@ -203,6 +238,7 @@ public static class Program
                     taskName = t.name,
                     ExpectedActionId = t.actionId,
                     successPoints = t.successPoints,
+                    ppePenalty = t.ppePenalty,
                     requiredPPE = ppeList
                 });
             }
