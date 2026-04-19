@@ -1,0 +1,16 @@
+{
+  "name": "SafetyProto.EventBus.Core",
+  "rootNamespace": "SafetyProto.Core",
+  "references": [
+    "SafetyProto.Domain.Core"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

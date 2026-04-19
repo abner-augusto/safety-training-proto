@@ -1,0 +1,17 @@
+{
+  "name": "SafetyProto.Runtime.Unity",
+  "rootNamespace": "SafetyProto.Runtime",
+  "references": [
+    "SafetyProto.EventBus.Core",
+    "SafetyProto.Domain.Core"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
