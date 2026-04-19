@@ -15,6 +15,8 @@ Prof. Dr. Joaquim Bento.
 
 ## Architecture at a glance
 
+<img src="Assets/_SafetyProto/Art/event_driven_unity_architecture.svg" alt="Architecture Diagram" width="800"/>
+
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
 │  Unity runtime (Meta Quest 3)                                          │
