@@ -2,15 +2,19 @@
   <Project Path="Unity.Multiplayer.Center.Editor.csproj" />
   <Project Path="UnityEngine.UI.csproj" />
   <Project Path="UnityEngine.TestRunner.csproj" />
+  <Project Path="SafetyProto.Runtime.Unity.csproj" />
+  <Project Path="SafetyProto.Domain.Core.csproj" />
   <Project Path="UnityEditor.TestRunner.csproj" />
   <Project Path="Unity.TextMeshPro.csproj" />
-  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Unity.TextMeshPro.Editor.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="UnityEditor.UI.csproj" />
+  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Unity.2D.Sprite.Editor.csproj" />
   <Project Path="Unity.Multiplayer.Center.Common.csproj" />
+  <Project Path="SafetyProto.EventBus.Core.csproj" />
   <Project Path="UnityEditor.UI.Analytics.csproj" />
+  <Project Path="SafetyProto.Networking.Unity.csproj" />
   <Project Path="Unity.InternalAPIEngineBridge.004.csproj" />
   <Project Path="Unity.2D.Sprite.AIIntegration.Editor.csproj" />
 </Solution>
