@@ -29,6 +29,7 @@
   },
   "include": [
     "Assets/_SafetyProto/**/*.cs",
+    "Assets/_SafetyProto/**/*.asmdef",
     "Tools/**/*.cs",
     "Tools/**/*.csproj"
   ],

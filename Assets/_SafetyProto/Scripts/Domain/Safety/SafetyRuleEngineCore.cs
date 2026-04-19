@@ -5,9 +5,8 @@ using System.Linq;
 using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
-using SafetyProto.Data.Enums;
 using SafetyProto.Core.Events;
-using SafetyProto.Runtime.Task;
+using RuntimeSafetyTask = SafetyProto.Core.RuntimeSafetyTask;
 
 namespace SafetyProto.Domain.Safety
 {

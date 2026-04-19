@@ -1,7 +1,6 @@
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
-using SafetyProto.Data.Enums;
 using SafetyProto.Utils;
 using UnityEngine;
 

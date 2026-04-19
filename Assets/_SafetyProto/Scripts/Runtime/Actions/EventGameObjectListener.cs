@@ -1,6 +1,5 @@
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
-using SafetyProto.Core.Events;
 using SafetyProto.Utils;
 using System.Collections.Generic;
 using UnityEngine;

@@ -1,5 +1,5 @@
+using SafetyProto.Core;
 using SafetyProto.Core.Logging;
-using SafetyProto.Data.Enums;
 using UnityEngine;
 
 namespace SafetyProto.Runtime.PPE

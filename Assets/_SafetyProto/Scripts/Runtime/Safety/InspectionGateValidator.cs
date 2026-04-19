@@ -4,27 +4,17 @@ using System.Collections.Generic;
 using System.Linq;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
+using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
-using SafetyProto.Data.Enums;
 using SafetyProto.Data.ScriptableObjects;
+using SafetyProto.Domain.Scoring;
 using SafetyProto.Runtime.Task;
-using SafetyProto.UI;
+using RuntimeSafetyTask = SafetyProto.Core.RuntimeSafetyTask;
+using ConsequenceType = SafetyProto.Core.Events.ConsequenceType;
 using UnityEngine;
 
 namespace SafetyProto.Runtime.Safety
 {
-    public enum ConsequenceType
-    {
-        /// <summary>Activates a Rigidbody and applies lateral force (missing guardrail/toeboard).</summary>
-        ObjectFall,
-
-        /// <summary>Vignette + screen fade via OVRScreenFade (disconnected harness).</summary>
-        PlayerFallSimulation,
-
-        /// <summary>World-space alert panel near the problematic object.</summary>
-        VisualAlert,
-    }
-
     [Serializable]
     public class ConsequenceMapping
     {
@@ -53,6 +43,9 @@ namespace SafetyProto.Runtime.Safety
     {
         [Header("References")]
         [SerializeField] private TaskManager taskManager;
+        [SerializeField] private MonoBehaviour popupFeedbackProvider;
+
+        private IPopupFeedback _popupFeedback;
 
         [Header("Gate Configuration")]
         [SerializeField] private int penaltyPerAttempt = 100;
@@ -97,6 +90,8 @@ namespace SafetyProto.Runtime.Safety
 
             if (taskManager == null)
                 SafetyLog.Error("[InspectionGateValidator] TaskManager not found.", this);
+
+            _popupFeedback = popupFeedbackProvider as IPopupFeedback;
 
             FailedAttemptCount = 0;
             HideConsequenceFeedback();
@@ -325,24 +320,18 @@ namespace SafetyProto.Runtime.Safety
 
         private void ShowConsequenceFeedback(string title, string message)
         {
-            if (PopupService.Instance == null)
+            if (_popupFeedback == null)
             {
-                SafetyLog.Warning("[InspectionGateValidator] PopupService not found — consequence feedback skipped.", this);
+                SafetyLog.Warning("[InspectionGateValidator] IPopupFeedback not assigned — consequence feedback skipped.", this);
                 return;
             }
 
-            PopupService.Instance.ShowWarning(title, message);
+            _popupFeedback.ShowWarning(title, message);
         }
 
         private void HideConsequenceFeedback()
         {
-            if (PopupService.Instance == null)
-            {
-                SafetyLog.Warning("[InspectionGateValidator] PopupService not found — cannot hide feedback.", this);
-                return;
-            }
-
-            PopupService.Instance.Hide();
+            _popupFeedback?.Hide();
         }
 
         private void OnDestroy()

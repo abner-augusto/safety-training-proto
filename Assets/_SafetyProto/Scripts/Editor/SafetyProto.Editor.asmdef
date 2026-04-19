@@ -1,13 +1,16 @@
 {
-  "name": "SafetyProto.Utils.Unity",
-  "rootNamespace": "SafetyProto.Utils",
+  "name": "SafetyProto.Editor",
+  "rootNamespace": "SafetyProto.Editor",
   "references": [
     "SafetyProto.EventBus.Core",
-    "SafetyProto.Domain.Core",
-    "Oculus.Interaction",
-    "Oculus.Interaction.OVR"
+    "SafetyProto.Data.Unity",
+    "SafetyProto.Utils.Unity",
+    "SafetyProto.Runtime.Unity",
+    "SafetyProto.Domain.Core"
   ],
-  "includePlatforms": [],
+  "includePlatforms": [
+    "Editor"
+  ],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
   "overrideReferences": false,

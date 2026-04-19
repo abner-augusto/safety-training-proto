@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using SafetyProto.Core.Interfaces;
-using SafetyProto.Data.Enums;
+using SafetyProto.Core;
 
 namespace SafetyProto.CliHarness;
 

@@ -3,7 +3,6 @@ using System;
 using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
-using SafetyProto.Data.Enums;
 
 namespace SafetyProto.Domain.Scoring
 {

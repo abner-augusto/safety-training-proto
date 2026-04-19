@@ -1,7 +1,10 @@
 {
   "name": "SafetyProto.Domain.Core",
   "rootNamespace": "SafetyProto.Domain",
-  "references": [],
+  "references": [
+    "SafetyProto.EventBus.Core",
+    "SafetyProto.Data.Unity"
+  ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

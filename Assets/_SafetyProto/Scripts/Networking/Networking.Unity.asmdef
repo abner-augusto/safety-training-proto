@@ -4,6 +4,8 @@
   "references": [
     "SafetyProto.EventBus.Core",
     "SafetyProto.Domain.Core",
+    "SafetyProto.Data.Unity",
+    "SafetyProto.Utils.Unity",
     "SafetyProto.Runtime.Unity"
   ],
   "includePlatforms": [],

@@ -8,7 +8,6 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
-using SafetyProto.Core.Events;
 
 namespace SafetyProto.Domain.Sessions
 {

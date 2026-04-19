@@ -2,6 +2,7 @@
 using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Safety;
 using SafetyProto.Runtime.PPE;
 using SafetyProto.Runtime.Task;
 using SafetyProto.Utils;

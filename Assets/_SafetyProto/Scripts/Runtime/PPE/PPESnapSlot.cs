@@ -1,6 +1,6 @@
 using System.Collections.Generic;
+using SafetyProto.Core;
 using SafetyProto.Core.Logging;
-using SafetyProto.Data.Enums;
 using UnityEngine;
 using UnityEngine.Events;
 

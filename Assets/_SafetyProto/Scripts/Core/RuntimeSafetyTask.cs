@@ -1,14 +1,13 @@
 using SafetyProto.Core.Interfaces;
-using SafetyProto.Data.Enums;
 
-namespace SafetyProto.Domain.Tasks
+namespace SafetyProto.Core
 {
     /// <summary>
     /// A runtime wrapper for a task definition. Holds instance-specific state
     /// (progress, completion time, flags) during a session.
     ///
     /// Engine-independent: holds an <see cref="ISafetyTask"/> reference rather
-    /// than the Unity <c>SafetyTask</c> SO, so this type compiles in Shared.
+    /// than the Unity <c>SafetyTask</c> SO, so this type compiles in Core.
     /// </summary>
     public class RuntimeSafetyTask
     {

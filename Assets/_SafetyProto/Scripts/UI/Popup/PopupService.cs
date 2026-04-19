@@ -1,11 +1,12 @@
 using SafetyProto.Core.Events;
+using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace SafetyProto.UI
 {
-    public class PopupService : MonoBehaviour
+    public class PopupService : MonoBehaviour, IPopupFeedback
     {
         public static PopupService Instance { get; private set; }
 

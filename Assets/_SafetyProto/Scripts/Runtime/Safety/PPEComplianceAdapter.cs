@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
+using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
-using SafetyProto.Data.Enums;
 using SafetyProto.Runtime.PPE;
 
 namespace SafetyProto.Runtime.Safety

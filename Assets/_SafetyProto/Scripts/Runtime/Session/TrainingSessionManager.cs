@@ -1,6 +1,8 @@
 using System;
+using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Scoring;
 using SafetyProto.Utils;
 using UnityEngine;
 using UnityEngine.SceneManagement;

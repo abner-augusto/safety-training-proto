@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using SafetyProto.Core;
-using SafetyProto.Core.Interfaces;
-using SafetyProto.Data.Enums;
 using SafetyProto.Core.Events;
+using SafetyProto.Core.Interfaces;
+using SafetyProto.Domain.Safety;
 using SafetyProto.Runtime.Safety;
 using SafetyProto.Tests.Editor.Support;
 

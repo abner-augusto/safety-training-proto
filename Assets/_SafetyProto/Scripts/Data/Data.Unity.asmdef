@@ -1,13 +1,13 @@
 {
   "name": "SafetyProto.Data.Unity",
   "rootNamespace": "SafetyProto.Data",
-  "references": ["SafetyProto.Domain.Core", "SafetyProto.EventBus.Core"],
+  "references": ["SafetyProto.EventBus.Core"],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
   "overrideReferences": false,
   "precompiledReferences": [],
-  "autoReferenced": false,
+  "autoReferenced": true,
   "defineConstraints": [],
   "versionDefines": [],
   "noEngineReferences": false

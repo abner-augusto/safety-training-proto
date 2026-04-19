@@ -5,7 +5,6 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
-using SafetyProto.Core.Events;
 using UnityEngine;
 using UnityEngine.Events;
 

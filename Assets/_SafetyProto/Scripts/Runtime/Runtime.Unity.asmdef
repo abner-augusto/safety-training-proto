@@ -5,7 +5,11 @@
     "SafetyProto.EventBus.Core",
     "SafetyProto.Domain.Core",
     "SafetyProto.Data.Unity",
-    "SafetyProto.Utils.Unity"
+    "SafetyProto.Utils.Unity",
+    "Oculus.Interaction",
+    "Oculus.Interaction.OVR",
+    "Oculus.VR",
+    "Unity.TextMeshPro"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

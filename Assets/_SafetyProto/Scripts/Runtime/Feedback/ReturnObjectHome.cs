@@ -1,7 +1,7 @@
 using Oculus.Interaction;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.Interactables
+namespace SafetyProto.Runtime.Feedback
 {
     [RequireComponent(typeof(Grabbable))]
     public class ReturnObjectHome : MonoBehaviour

@@ -1,7 +1,8 @@
-namespace SafetyProto.Data.Enums
+namespace SafetyProto.Core
 {
     /// <summary>
     /// Defines the possible states for a single SafetyTask during its lifecycle.
+    /// Primary definition in Core (previously in SafetyProto.Data.Enums).
     /// </summary>
     public enum TaskState
     {

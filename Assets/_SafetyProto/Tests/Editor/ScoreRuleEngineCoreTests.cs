@@ -1,7 +1,7 @@
 using NUnit.Framework;
 using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
-using SafetyProto.Data.Enums;
+using SafetyProto.Domain.Scoring;
 using SafetyProto.Runtime.Safety;
 using SafetyProto.Runtime.Task;
 using SafetyProto.Tests.Editor.Support;

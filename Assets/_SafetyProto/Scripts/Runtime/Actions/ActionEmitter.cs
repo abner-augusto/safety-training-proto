@@ -1,7 +1,6 @@
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
-using SafetyProto.Core.Events;
 using SafetyProto.Utils;
 using UnityEngine;
 

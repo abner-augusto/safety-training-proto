@@ -1,9 +1,19 @@
 using System;
-using SafetyProto.Runtime.Safety;
 using UnityEngine;
 
 namespace SafetyProto.Core.Events
 {
+    /// <summary>
+    /// Minimal consequence type enum in Core to avoid Runtime dependency.
+    /// Mirrors the values in Runtime.Safety.ConsequenceType.
+    /// </summary>
+    public enum ConsequenceType
+    {
+        ObjectFall = 0,
+        PlayerFallSimulation = 1,
+        VisualAlert = 2,
+    }
+
     public class ConsequenceStartedEventArgs
     {
         public ConsequenceType ConsequenceType;

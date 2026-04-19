@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
-using SafetyProto.Core.Events;
 using UnityEngine;
 using UnityEngine.Events;
 using Stopwatch = System.Diagnostics.Stopwatch;

@@ -1,14 +1,12 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SafetyProto.Core;
-using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
-using SafetyProto.Data.Enums;
+using RuntimeSafetyTask = SafetyProto.Core.RuntimeSafetyTask;
 
 namespace SafetyProto.Domain.Tasks
 {

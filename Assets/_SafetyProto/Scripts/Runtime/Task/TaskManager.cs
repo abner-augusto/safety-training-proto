@@ -5,9 +5,13 @@ using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
+using SafetyProto.Domain.Scoring;
+using SafetyProto.Domain.Tasks;
 using SafetyProto.Runtime.Actions;
 using SafetyProto.Utils;
 using UnityEngine;
+
+using RuntimeSafetyTask = SafetyProto.Core.RuntimeSafetyTask;
 
 namespace SafetyProto.Runtime.Task
 {

@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
-using SafetyProto.Data.Enums;
 using SafetyProto.Data.ScriptableObjects;
+using SafetyProto.Runtime.PPE;
 using SafetyProto.Runtime.Task;
 using SafetyProto.Utils;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.PPE
+namespace SafetyProto.Runtime.Actions
 {
     [Serializable]
     public class PpeTaskMappingEntry

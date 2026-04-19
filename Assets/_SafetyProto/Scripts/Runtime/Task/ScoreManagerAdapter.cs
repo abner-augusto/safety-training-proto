@@ -2,6 +2,7 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Scoring;
 using SafetyProto.Runtime.Safety;
 using SafetyProto.Utils;
 using UnityEngine;
