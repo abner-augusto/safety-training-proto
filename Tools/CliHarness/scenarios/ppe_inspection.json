@@ -3,67 +3,77 @@
   "participantId": "P001",
   "groups": [
     {
-      "name": "Selecao de EPIs",
-      "executionMode": "FreeOrder",
+      "name": "Sele\u00e7\u00e3o de EPIs",
+      "executionMode": "Sequential",
       "timeLimit": 270,
       "tasks": [
         {
-          "name": "Equipar Botina de Seguranca",
+          "name": "Equipar Botina de Seguran\u00e7a",
           "actionId": "equip_boots",
           "successPoints": 100,
-          "failurePenalty": 0,
+          "failurePenalty": 30,
           "ppePenalty": 0,
           "requiredPPE": [],
-          "hintText": "Botina deve ser fechada com biqueira de aço (CA)",
-          "ppeAdvice": ""
+          "hintText": "A botina deve ser fechada e com bico de prote\u00e7\u00e3o. Verifique o CA.",
+          "ppeAdvice": "",
+          "failureAdvice": "A botina de seguran\u00e7a protege contra perfura\u00e7\u00f5es e quedas de objetos nos p\u00e9s. NR-18 exige cal\u00e7ado fechado em canteiro.",
+          "taskDescription": "Selecione a botina de seguran\u00e7a correta e equipe nos p\u00e9s."
         },
         {
-          "name": "Equipar Luvas de Protecao",
+          "name": "Equipar Luvas de Prote\u00e7\u00e3o",
           "actionId": "equip_gloves",
           "successPoints": 100,
-          "failurePenalty": 0,
+          "failurePenalty": 30,
           "ppePenalty": 0,
           "requiredPPE": ["Boots"],
-          "hintText": "Usar luvas de couro raspa para estruturas metalicas",
-          "ppeAdvice": "EPIs necessarios: Botina, Luvas"
+          "hintText": "Use luvas de raspa de couro para estruturas met\u00e1licas \u2014 n\u00e3o luvas de l\u00e1tex.",
+          "ppeAdvice": "",
+          "failureAdvice": "Luvas de raspa de couro s\u00e3o obrigat\u00f3rias para manuseio de estruturas met\u00e1licas em altura.",
+          "taskDescription": "Selecione as luvas adequadas para estruturas met\u00e1licas e equipe nas m\u00e3os."
         },
         {
-          "name": "Equipar Oculos de Protecao",
+          "name": "Equipar \u00d3culos de Prote\u00e7\u00e3o",
           "actionId": "equip_goggles",
           "successPoints": 100,
-          "failurePenalty": 0,
+          "failurePenalty": 30,
           "ppePenalty": 0,
           "requiredPPE": ["Boots", "Gloves"],
-          "hintText": "Oculos protegem contra particulas",
-          "ppeAdvice": "EPIs necessarios: Botina, Luvas, Oculos"
+          "hintText": "Os \u00f3culos de prote\u00e7\u00e3o protegem contra part\u00edculas e respingos durante o trabalho.",
+          "ppeAdvice": "",
+          "failureAdvice": "Os \u00f3culos de prote\u00e7\u00e3o s\u00e3o equipamentos obrigat\u00f3rios em ambientes de constru\u00e7\u00e3o civil.",
+          "taskDescription": "Selecione os \u00f3culos de prote\u00e7\u00e3o e equipe no rosto."
         },
         {
           "name": "Equipar Capacete com Jugular",
           "actionId": "equip_helmet",
           "successPoints": 150,
-          "failurePenalty": 0,
+          "failurePenalty": 30,
           "ppePenalty": 0,
           "requiredPPE": ["Boots", "Gloves", "Goggles"],
-          "hintText": "O capacete deve ter jugular (NR-35)",
-          "ppeAdvice": "EPIs necessarios: Botina, Luvas, Oculos, Capacete"
+          "hintText": "O capacete DEVE ter jugular para trabalho em altura. Sem ela, o capacete pode cair durante a atividade.",
+          "ppeAdvice": "",
+          "failureAdvice": "O capacete com jugular \u00e9 obrigat\u00f3rio em qualquer trabalho em altura (NR-35). Sem jugular, o capacete pode cair durante a atividade.",
+          "taskDescription": "Selecione o capacete CORRETO (com jugular) e equipe na cabe\u00e7a."
         },
         {
           "name": "Equipar Cinto Paraquedista",
           "actionId": "equip_harness",
           "successPoints": 200,
-          "failurePenalty": 0,
+          "failurePenalty": 30,
           "ppePenalty": 0,
           "requiredPPE": ["Boots", "Gloves", "Goggles", "Helmet"],
-          "hintText": "Somente cinto tipo paraquedista aceito (NR-35)",
-          "ppeAdvice": "EPIs necessarios: Botina, Luvas, Oculos, Capacete, Cinto"
+          "hintText": "Use APENAS o cinto tipo paraquedista. Cintos abdominais n\u00e3o s\u00e3o aceitos para trabalho em altura.",
+          "ppeAdvice": "",
+          "failureAdvice": "O cinto tipo paraquedista \u00e9 o \u00fanico modelo aceito para trabalho em altura (NR-35). Cintos abdominais n\u00e3o distribuem a for\u00e7a de queda adequadamente.",
+          "taskDescription": "Selecione o cinto tipo paraquedista e vista corretamente."
         }
       ]
     },
     {
-      "name": "Inspecao em Andaime Fachadeiro",
-      "executionMode": "Sequential",
+      "name": "Inspe\u00e7\u00e3o em Andaime Fachadeiro",
+      "executionMode": "FreeOrder",
       "timeLimit": 300,
-      "requiredGroups": ["Selecao de EPIs"],
+      "requiredGroups": ["Sele\u00e7\u00e3o de EPIs"],
       "tasks": [
         {
           "name": "Conectar Talabarte ao Ponto de Ancoragem",
@@ -72,8 +82,10 @@
           "failurePenalty": 50,
           "ppePenalty": 50,
           "requiredPPE": ["Harness", "Helmet"],
-          "hintText": "Conectar talabarte antes de qualquer atividade",
-          "ppeAdvice": "EPIs necessarios: Cinto, Capacete"
+          "hintText": "O talabarte deve estar conectado ao ponto de ancoragem certificado ANTES de qualquer atividade.",
+          "ppeAdvice": "Voc\u00ea conectou o talabarte, mas estava sem algum EPI obrigat\u00f3rio. Verifique todos os equipamentos ANTES de subir.",
+          "failureAdvice": "Conectar o talabarte ao ponto de ancoragem certificado \u00e9 a primeira a\u00e7\u00e3o ao chegar na plataforma. Trabalhar desconectado \u00e9 a principal causa de quedas fatais.",
+          "taskDescription": "Conecte o talabarte do cinto ao ponto de ancoragem certificado na estrutura."
         },
         {
           "name": "Instalar Guarda-corpo",
@@ -81,29 +93,35 @@
           "successPoints": 200,
           "failurePenalty": 50,
           "ppePenalty": 50,
-          "requiredPPE": ["Helmet", "Gloves", "Harness"],
-          "hintText": "Altura 1.20m com travessa intermediaria e rodape (NR-18 18.15)",
-          "ppeAdvice": "EPIs necessarios: Capacete, Luvas, Cinto"
+          "requiredPPE": ["Harness", "Helmet", "Gloves"],
+          "hintText": "O guarda-corpo deve ter 1,20m de altura com travess\u00e3o intermedi\u00e1rio e rodap\u00e9 (NR-18 \u00a718.15).",
+          "ppeAdvice": "Instalar o guarda-corpo sem luvas de prote\u00e7\u00e3o e/ou capacete exp\u00f5e suas m\u00e3os a cortes nas estruturas met\u00e1licas.",
+          "failureAdvice": "O guarda-corpo deve estar presente em todos os lados abertos da plataforma (NR-18 \u00a718.15). Sua aus\u00eancia exp\u00f5e trabalhadores a queda direta.",
+          "taskDescription": "Instale a se\u00e7\u00e3o de guarda-corpo faltante no lado direito da plataforma."
         },
         {
-          "name": "Instalar Rodape",
+          "name": "Instalar Rodap\u00e9",
           "actionId": "install_toeboard",
           "successPoints": 150,
           "failurePenalty": 50,
           "ppePenalty": 50,
-          "requiredPPE": ["Helmet", "Gloves", "Harness"],
-          "hintText": "Rodape de 20cm impede queda de ferramentas",
-          "ppeAdvice": "EPIs necessarios: Capacete, Luvas, Cinto"
+          "requiredPPE": ["Harness", "Helmet", "Gloves"],
+          "hintText": "O rodap\u00e9 de 20cm impede que ferramentas e materiais caiam sobre trabalhadores abaixo.",
+          "ppeAdvice": "Manipular pe\u00e7as met\u00e1licas sem luvas \u00e9 uma viola\u00e7\u00e3o de seguran\u00e7a.",
+          "failureAdvice": "O rodap\u00e9 de 20cm impede que ferramentas e materiais caiam da plataforma sobre trabalhadores abaixo (NR-18 \u00a718.15).",
+          "taskDescription": "Instale o rodap\u00e9 de 20cm na se\u00e7\u00e3o faltante da plataforma."
         },
         {
-          "name": "Sinalizar Tela de Protecao",
+          "name": "Sinalizar Tela de Prote\u00e7\u00e3o",
           "actionId": "flag_safety_net",
           "successPoints": 100,
           "failurePenalty": 30,
           "ppePenalty": 30,
-          "requiredPPE": ["Helmet", "Harness"],
-          "hintText": "Interagir com placa de alerta perto da tela solta",
-          "ppeAdvice": "EPIs necessarios: Capacete, Cinto"
+          "requiredPPE": ["Harness", "Helmet"],
+          "hintText": "Interaja com a placa de alerta pr\u00f3xima \u00e0 tela solta para registrar a irregularidade.",
+          "ppeAdvice": "",
+          "failureAdvice": "A tela de prote\u00e7\u00e3o \u00e9 obrigat\u00f3ria para prevenir queda de objetos. Sinalizar sua aus\u00eancia \u00e9 um procedimento cr\u00edtico antes de iniciar qualquer atividade.",
+          "taskDescription": "Identifique a tela de prote\u00e7\u00e3o ca\u00edda e sinalize a irregularidade."
         }
       ]
     }

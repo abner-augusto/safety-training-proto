@@ -183,6 +183,7 @@ public static class Program
         public string hintText { get; set; } = string.Empty;
         public string failureAdvice { get; set; } = string.Empty;
         public string ppeAdvice { get; set; } = string.Empty;
+        public string taskDescription { get; set; } = string.Empty;
     }
 
     private static Scenario LoadScenario(string path)
@@ -242,7 +243,7 @@ public static class Program
                 group.tasks.Add(new InMemorySafetyTask
                 {
                     taskName = t.name,
-                    taskDescription = string.Empty,
+                    taskDescription = t.taskDescription,
                     ExpectedActionId = t.actionId,
                     successPoints = t.successPoints,
                     failurePenalty = t.failurePenalty,
