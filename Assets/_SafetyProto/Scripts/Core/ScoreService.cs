@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using SafetyProto.Core.Interfaces;
 
@@ -5,7 +6,7 @@ namespace SafetyProto.Core
 {
     public sealed class ScoreService : IScoreService, ISessionResettable
     {
-        private static ScoreService _instance;
+        private static ScoreService? _instance;
 
         public static ScoreService Instance
         {

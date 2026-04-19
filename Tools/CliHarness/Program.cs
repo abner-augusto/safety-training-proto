@@ -61,33 +61,14 @@ public static class Program
             verboseLogging: false);
         ruleEngine.Subscribe();
 
+        var scoreRuleEngine = new ScoreRuleEngineCore(
+            bus: bus,
+            scoreService: scoreService,
+            logger: logger);
+        scoreRuleEngine.Subscribe();
+
         scoreService.ScoreChanged += (newScore, delta, reason) =>
             bus.Publish(new ScoreChangedEventArgs(newScore, delta));
-
-        bus.Subscribe<TaskEventArgs>(args =>
-        {
-            if (args.Phase != TaskPhase.Completed || args.Task == null) return;
-
-            scoreService.AddPoints(args.Task.successPoints, $"Task '{args.Task.taskName}' completed");
-
-            if (args.RuntimeTask != null &&
-                args.RuntimeTask.State == TaskState.CompletedSuccessButUnsafe)
-            {
-                int penalty = args.Task.ppePenalty;
-                if (penalty > 0)
-                {
-                    scoreService.SubtractPoints(
-                        penalty,
-                        $"PPE missing during '{args.Task.taskName}'");
-                }
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine($"  [WARN] PPE_MISSING on '{args.Task.taskName}' but ppePenalty=0. Set ppePenalty in scenario JSON.");
-                    Console.ResetColor();
-                }
-            }
-        });
 
         var taskManager = new TaskManagerCore(
             bus: bus,
@@ -165,6 +146,7 @@ public static class Program
 
         transcript.Dispose();
         sessionLogger.Dispose();
+        scoreRuleEngine.Dispose();
         taskManager.Dispose();
         ruleEngine.Dispose();
         ppeManager.Dispose();
@@ -185,6 +167,8 @@ public static class Program
     {
         public string name { get; set; } = "unnamed";
         public string executionMode { get; set; } = "Sequential";
+        public float timeLimit { get; set; } = 0f;
+        public List<string> requiredGroups { get; set; } = new();
         public List<ScenarioTask> tasks { get; set; } = new();
     }
 
@@ -193,8 +177,12 @@ public static class Program
         public string name { get; set; } = "unnamed";
         public string actionId { get; set; } = string.Empty;
         public int successPoints { get; set; } = 100;
+        public int failurePenalty { get; set; } = 0;
         public int ppePenalty { get; set; } = 20;
         public List<string> requiredPPE { get; set; } = new();
+        public string hintText { get; set; } = string.Empty;
+        public string failureAdvice { get; set; } = string.Empty;
+        public string ppeAdvice { get; set; } = string.Empty;
     }
 
     private static Scenario LoadScenario(string path)
@@ -210,17 +198,28 @@ public static class Program
         return scenario;
     }
 
+    private static TaskExecutionModeShared ParseExecutionMode(string value, string groupName)
+    {
+        if (Enum.TryParse<TaskExecutionModeShared>(value, ignoreCase: true, out var mode))
+            return mode;
+
+        var valid = string.Join(", ", Enum.GetNames(typeof(TaskExecutionModeShared)));
+        throw new InvalidDataException(
+            $"Unknown executionMode '{value}' in group '{groupName}'. Valid values: {valid}");
+    }
+
     private static IReadOnlyList<ITaskGroup> BuildTaskGroups(Scenario scenario)
     {
         var result = new List<ITaskGroup>();
+        var groupMap = new Dictionary<string, InMemoryTaskGroup>();
+
         foreach (var g in scenario.groups)
         {
             var group = new InMemoryTaskGroup
             {
                 groupName = g.name,
-                executionMode = Enum.TryParse<TaskExecutionModeShared>(g.executionMode, ignoreCase: true, out var m)
-                    ? m
-                    : TaskExecutionModeShared.Sequential,
+                executionMode = ParseExecutionMode(g.executionMode, g.name),
+                timeLimit = g.timeLimit,
             };
             foreach (var t in g.tasks)
             {
@@ -231,19 +230,46 @@ public static class Program
                     {
                         ppeList.Add(ppe);
                     }
+                    else
+                    {
+                        var valid = string.Join(", ", Enum.GetNames(typeof(PPEType)));
+                        throw new InvalidDataException(
+                            $"Unknown PPE type '{ppeStr}' in task '{t.name}' (group '{g.name}'). " +
+                            $"Valid values: {valid}");
+                    }
                 }
 
                 group.tasks.Add(new InMemorySafetyTask
                 {
                     taskName = t.name,
+                    taskDescription = string.Empty,
                     ExpectedActionId = t.actionId,
                     successPoints = t.successPoints,
+                    failurePenalty = t.failurePenalty,
                     ppePenalty = t.ppePenalty,
-                    requiredPPE = ppeList
+                    requiredPPE = ppeList,
+                    hintText = t.hintText,
+                    failureAdvice = t.failureAdvice,
+                    ppeAdvice = t.ppeAdvice
                 });
             }
             result.Add(group);
+            groupMap[g.name] = group;
         }
+
+        foreach (var g in scenario.groups)
+        {
+            if (g.requiredGroups == null || g.requiredGroups.Count == 0) continue;
+            if (!groupMap.TryGetValue(g.name, out var group)) continue;
+            foreach (var reqName in g.requiredGroups)
+            {
+                if (groupMap.TryGetValue(reqName, out var reqGroup))
+                {
+                    group.requiredGroups.Add(reqGroup);
+                }
+            }
+        }
+
         return result;
     }
 }

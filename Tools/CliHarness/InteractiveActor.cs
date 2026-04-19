@@ -56,6 +56,12 @@ public sealed class InteractiveActor
 
         Console.WriteLine($"│  Action ID  : {task.ResolveExpectedActionId()}");
         Console.WriteLine($"│  Points     : +{task.successPoints}");
+        if (task.failurePenalty > 0)
+            Console.WriteLine($"│  Fail Penalty: -{task.failurePenalty}");
+        if (task.ppePenalty > 0)
+            Console.WriteLine($"│  PPE Penalty : -{task.ppePenalty}");
+        if (!string.IsNullOrWhiteSpace(task.hintText))
+            Console.WriteLine($"│  Hint       : {task.hintText}");
 
         bool hasPPE = task.requiredPPE != null && task.requiredPPE.Count > 0;
 
