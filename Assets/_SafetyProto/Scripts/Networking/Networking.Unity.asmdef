@@ -3,14 +3,15 @@
   "rootNamespace": "SafetyProto.Networking",
   "references": [
     "SafetyProto.EventBus.Core",
-    "SafetyProto.Domain.Core"
+    "SafetyProto.Domain.Core",
+    "SafetyProto.Runtime.Unity"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
   "overrideReferences": false,
   "precompiledReferences": [],
-  "autoReferenced": false,
+  "autoReferenced": true,
   "defineConstraints": [],
   "versionDefines": [],
   "noEngineReferences": false
