@@ -1,0 +1,79 @@
+{
+  "name": "PPEEquip",
+  "participantId": "P001",
+  "groups": [
+    {
+      "name": "Selecao de EPIs",
+      "executionMode": "FreeOrder",
+      "timeLimit": 270,
+      "tasks": [
+        {
+          "name": "Equipar Botina de Seguranca",
+          "actionId": "equip_boots",
+          "successPoints": 100,
+          "failurePenalty": 0,
+          "ppePenalty": 0,
+          "requiredPPE": [],
+          "hintText": "Botina deve ser fechada com biqueira de aco (CA)",
+          "ppeAdvice": ""
+        },
+        {
+          "name": "Equipar Luvas de Protecao",
+          "actionId": "equip_gloves",
+          "successPoints": 100,
+          "failurePenalty": 0,
+          "ppePenalty": 0,
+          "requiredPPE": ["Boots"],
+          "hintText": "Usar luvas de couro raspa para estruturas metalicas",
+          "ppeAdvice": "EPIs necessarios: Botina, Luvas"
+        },
+        {
+          "name": "Equipar Oculos de Protecao",
+          "actionId": "equip_goggles",
+          "successPoints": 100,
+          "failurePenalty": 0,
+          "ppePenalty": 0,
+          "requiredPPE": ["Boots", "Gloves"],
+          "hintText": "Oculos protegem contra particulas",
+          "ppeAdvice": "EPIs necessarios: Botina, Luvas, Oculos"
+        },
+        {
+          "name": "Equipar Capacete com Jugular",
+          "actionId": "equip_helmet",
+          "successPoints": 150,
+          "failurePenalty": 0,
+          "ppePenalty": 0,
+          "requiredPPE": ["Boots", "Gloves", "Goggles"],
+          "hintText": "O capacete deve ter jugular (NR-35)",
+          "ppeAdvice": "EPIs necessarios: Botina, Luvas, Oculos, Capacete"
+        },
+        {
+          "name": "Equipar Cinto Paraquedista",
+          "actionId": "equip_harness",
+          "successPoints": 200,
+          "failurePenalty": 0,
+          "ppePenalty": 0,
+          "requiredPPE": ["Boots", "Gloves", "Goggles", "Helmet"],
+          "hintText": "Somente cinto tipo paraquedista aceito (NR-35)",
+          "ppeAdvice": "EPIs necessarios: Botina, Luvas, Oculos, Capacete, Cinto"
+        }
+      ]
+    }
+  ],
+  "script": [
+    { "kind": "ppe",    "ppeType": "Boots",   "isWearing": true, "delayMs": 200 },
+    { "kind": "action", "actionId": "equip_boots",   "delayMs": 50 },
+
+    { "kind": "ppe",    "ppeType": "Gloves",  "isWearing": true, "delayMs": 200 },
+    { "kind": "action", "actionId": "equip_gloves",  "delayMs": 50 },
+
+    { "kind": "ppe",    "ppeType": "Goggles", "isWearing": true, "delayMs": 200 },
+    { "kind": "action", "actionId": "equip_goggles", "delayMs": 50 },
+
+    { "kind": "ppe",    "ppeType": "Helmet",  "isWearing": true, "delayMs": 200 },
+    { "kind": "action", "actionId": "equip_helmet",  "delayMs": 50 },
+
+    { "kind": "ppe",    "ppeType": "Harness", "isWearing": true, "delayMs": 200 },
+    { "kind": "action", "actionId": "equip_harness", "delayMs": 50 }
+  ]
+}

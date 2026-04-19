@@ -1,0 +1,132 @@
+{
+  "name": "PPEInspection",
+  "participantId": "P001",
+  "groups": [
+    {
+      "name": "Selecao de EPIs",
+      "executionMode": "FreeOrder",
+      "timeLimit": 270,
+      "tasks": [
+        {
+          "name": "Equipar Botina de Seguranca",
+          "actionId": "equip_boots",
+          "successPoints": 100,
+          "failurePenalty": 0,
+          "ppePenalty": 0,
+          "requiredPPE": [],
+          "hintText": "Botina deve ser fechada com biqueira de aço (CA)",
+          "ppeAdvice": ""
+        },
+        {
+          "name": "Equipar Luvas de Protecao",
+          "actionId": "equip_gloves",
+          "successPoints": 100,
+          "failurePenalty": 0,
+          "ppePenalty": 0,
+          "requiredPPE": ["Boots"],
+          "hintText": "Usar luvas de couro raspa para estruturas metalicas",
+          "ppeAdvice": "EPIs necessarios: Botina, Luvas"
+        },
+        {
+          "name": "Equipar Oculos de Protecao",
+          "actionId": "equip_goggles",
+          "successPoints": 100,
+          "failurePenalty": 0,
+          "ppePenalty": 0,
+          "requiredPPE": ["Boots", "Gloves"],
+          "hintText": "Oculos protegem contra particulas",
+          "ppeAdvice": "EPIs necessarios: Botina, Luvas, Oculos"
+        },
+        {
+          "name": "Equipar Capacete com Jugular",
+          "actionId": "equip_helmet",
+          "successPoints": 150,
+          "failurePenalty": 0,
+          "ppePenalty": 0,
+          "requiredPPE": ["Boots", "Gloves", "Goggles"],
+          "hintText": "O capacete deve ter jugular (NR-35)",
+          "ppeAdvice": "EPIs necessarios: Botina, Luvas, Oculos, Capacete"
+        },
+        {
+          "name": "Equipar Cinto Paraquedista",
+          "actionId": "equip_harness",
+          "successPoints": 200,
+          "failurePenalty": 0,
+          "ppePenalty": 0,
+          "requiredPPE": ["Boots", "Gloves", "Goggles", "Helmet"],
+          "hintText": "Somente cinto tipo paraquedista aceito (NR-35)",
+          "ppeAdvice": "EPIs necessarios: Botina, Luvas, Oculos, Capacete, Cinto"
+        }
+      ]
+    },
+    {
+      "name": "Inspecao em Andaime Fachadeiro",
+      "executionMode": "Sequential",
+      "timeLimit": 300,
+      "requiredGroups": ["Selecao de EPIs"],
+      "tasks": [
+        {
+          "name": "Conectar Talabarte ao Ponto de Ancoragem",
+          "actionId": "connect_harness",
+          "successPoints": 200,
+          "failurePenalty": 50,
+          "ppePenalty": 50,
+          "requiredPPE": ["Harness", "Helmet"],
+          "hintText": "Conectar talabarte antes de qualquer atividade",
+          "ppeAdvice": "EPIs necessarios: Cinto, Capacete"
+        },
+        {
+          "name": "Instalar Guarda-corpo",
+          "actionId": "install_guardrail",
+          "successPoints": 200,
+          "failurePenalty": 50,
+          "ppePenalty": 50,
+          "requiredPPE": ["Helmet", "Gloves", "Harness"],
+          "hintText": "Altura 1.20m com travessa intermediaria e rodape (NR-18 18.15)",
+          "ppeAdvice": "EPIs necessarios: Capacete, Luvas, Cinto"
+        },
+        {
+          "name": "Instalar Rodape",
+          "actionId": "install_toeboard",
+          "successPoints": 150,
+          "failurePenalty": 50,
+          "ppePenalty": 50,
+          "requiredPPE": ["Helmet", "Gloves", "Harness"],
+          "hintText": "Rodape de 20cm impede queda de ferramentas",
+          "ppeAdvice": "EPIs necessarios: Capacete, Luvas, Cinto"
+        },
+        {
+          "name": "Sinalizar Tela de Protecao",
+          "actionId": "flag_safety_net",
+          "successPoints": 100,
+          "failurePenalty": 30,
+          "ppePenalty": 30,
+          "requiredPPE": ["Helmet", "Harness"],
+          "hintText": "Interagir com placa de alerta perto da tela solta",
+          "ppeAdvice": "EPIs necessarios: Capacete, Cinto"
+        }
+      ]
+    }
+  ],
+  "script": [
+    { "kind": "ppe",    "ppeType": "Boots",   "isWearing": true,  "delayMs": 200 },
+    { "kind": "action", "actionId": "equip_boots",   "delayMs": 50 },
+
+    { "kind": "ppe",    "ppeType": "Gloves",  "isWearing": true,  "delayMs": 200 },
+    { "kind": "action", "actionId": "equip_gloves",  "delayMs": 50 },
+
+    { "kind": "ppe",    "ppeType": "Goggles", "isWearing": true,  "delayMs": 200 },
+    { "kind": "action", "actionId": "equip_goggles", "delayMs": 50 },
+
+    { "kind": "ppe",    "ppeType": "Helmet",  "isWearing": true,  "delayMs": 200 },
+    { "kind": "action", "actionId": "equip_helmet",  "delayMs": 50 },
+
+    { "kind": "ppe",    "ppeType": "Harness", "isWearing": true,  "delayMs": 200 },
+    { "kind": "action", "actionId": "equip_harness", "delayMs": 50 },
+
+    { "kind": "action", "actionId": "connect_harness",   "delayMs": 200 },
+    { "kind": "action", "actionId": "install_guardrail",  "delayMs": 200 },
+    { "kind": "action", "actionId": "install_toeboard",   "delayMs": 200 },
+    { "kind": "action", "actionId": "flag_safety_net",    "delayMs": 200 }
+  ]
+}
