@@ -1,11 +1,11 @@
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
-using SafetyProto.Gameplay.Events;
+using SafetyProto.Core.Events;
 using SafetyProto.Utils;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.Actions
+namespace SafetyProto.Runtime.Actions
 {
     /// <summary>
     /// Helper component that emits action attempts with optional context metadata.

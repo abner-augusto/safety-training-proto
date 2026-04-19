@@ -1,7 +1,7 @@
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Data.Enums;
 
-namespace SafetyProto.Gameplay.Task
+namespace SafetyProto.Domain.Tasks
 {
     /// <summary>
     /// A runtime wrapper for a task definition. Holds instance-specific state

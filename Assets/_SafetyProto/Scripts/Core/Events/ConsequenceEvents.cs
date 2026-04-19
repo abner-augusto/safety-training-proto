@@ -1,5 +1,5 @@
 using System;
-using SafetyProto.Gameplay.Safety;
+using SafetyProto.Runtime.Safety;
 using UnityEngine;
 
 namespace SafetyProto.Core.Events

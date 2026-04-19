@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using System.Linq;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Data.Enums;
-using SafetyProto.Gameplay.PPE;
+using SafetyProto.Runtime.PPE;
 
-namespace SafetyProto.Gameplay.Safety
+namespace SafetyProto.Runtime.Safety
 {
     internal sealed class PPEComplianceAdapter : IPPEComplianceChecker
     {

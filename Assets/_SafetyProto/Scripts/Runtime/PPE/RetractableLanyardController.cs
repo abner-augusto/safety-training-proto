@@ -5,11 +5,11 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
-using SafetyProto.Gameplay.Events;
+using SafetyProto.Core.Events;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace SafetyProto.Gameplay.PPE
+namespace SafetyProto.Runtime.PPE
 {
     /// <summary>
     /// Orchestrates the retractable lanyard interaction for the safety harness.

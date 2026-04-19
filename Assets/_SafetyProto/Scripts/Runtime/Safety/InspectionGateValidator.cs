@@ -7,11 +7,11 @@ using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.Enums;
 using SafetyProto.Data.ScriptableObjects;
-using SafetyProto.Gameplay.Task;
+using SafetyProto.Runtime.Task;
 using SafetyProto.UI;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.Safety
+namespace SafetyProto.Runtime.Safety
 {
     public enum ConsequenceType
     {

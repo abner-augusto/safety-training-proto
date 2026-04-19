@@ -2,7 +2,7 @@ using System.Threading;
 using SafetyProto.Core.Interfaces;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.Task
+namespace SafetyProto.Runtime.Task
 {
     internal sealed class AwaitableAsyncSchedulerAdapter : IAsyncScheduler
     {

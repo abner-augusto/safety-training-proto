@@ -4,7 +4,7 @@ using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay
+namespace SafetyProto.Runtime
 {
     public class PhaseController : MonoBehaviour
     {

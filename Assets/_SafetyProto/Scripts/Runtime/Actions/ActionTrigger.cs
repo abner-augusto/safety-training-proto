@@ -5,7 +5,7 @@ using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Utils;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.Actions
+namespace SafetyProto.Runtime.Actions
 {
     public class ActionTrigger : MonoBehaviour
     {

@@ -4,12 +4,12 @@ using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.Enums;
-using SafetyProto.Gameplay.Events;
-using SafetyProto.Gameplay.Task;
+using SafetyProto.Core.Events;
+using SafetyProto.Runtime.Task;
 using SafetyProto.Utils;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.Feedback
+namespace SafetyProto.Runtime.Feedback
 {
     public class HapticManager : MonoBehaviour, ISessionResettable
     {

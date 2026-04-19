@@ -9,13 +9,13 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
-using SafetyProto.Gameplay.Events;
+using SafetyProto.Core.Events;
 using SafetyProto.Utils;
 using UnityEngine;
 using System.IO;
 using System.Collections.Generic;
 
-namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
+namespace SafetyProto.Networking.Dashboard
 {
     /// <summary>
     /// Bootstraps the on-device evaluator dashboard servers (HTTP + WebSocket) and event streaming.

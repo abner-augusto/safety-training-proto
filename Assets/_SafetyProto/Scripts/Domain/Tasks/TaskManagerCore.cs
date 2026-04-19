@@ -10,7 +10,7 @@ using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.Enums;
 
-namespace SafetyProto.Gameplay.Task
+namespace SafetyProto.Domain.Tasks
 {
     public sealed class TaskManagerCore : IDisposable
     {

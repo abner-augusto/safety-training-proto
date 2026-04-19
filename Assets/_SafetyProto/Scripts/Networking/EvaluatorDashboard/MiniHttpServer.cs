@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 
-namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
+namespace SafetyProto.Networking.Dashboard
 {
     /// <summary>
     /// Ultra-small HTTP server to serve embedded dashboard files directly from Resources.

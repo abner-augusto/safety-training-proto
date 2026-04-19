@@ -5,7 +5,7 @@ using SafetyProto.Data.Enums;
 using SafetyProto.Utils;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.Feedback
+namespace SafetyProto.Runtime.Feedback
 {
     [RequireComponent(typeof(AudioSource))]
     public class AudioFeedbackManager : MonoBehaviour, ISessionResettable

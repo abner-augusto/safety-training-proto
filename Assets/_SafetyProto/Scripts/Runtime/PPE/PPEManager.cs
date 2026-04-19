@@ -7,7 +7,7 @@ using SafetyProto.Utils;
 using UnityEngine;
 using SafetyProto.Core.Logging;
 
-namespace SafetyProto.Gameplay.PPE
+namespace SafetyProto.Runtime.PPE
 {
     public class PPEManager : MonoBehaviour, ISessionResettable
     {

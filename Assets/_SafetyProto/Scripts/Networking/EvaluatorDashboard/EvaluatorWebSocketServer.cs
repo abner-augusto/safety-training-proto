@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
+namespace SafetyProto.Networking.Dashboard
 {
     /// <summary>
     /// Lightweight WebSocket server intended for on-device evaluator dashboards.

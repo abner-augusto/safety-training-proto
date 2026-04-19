@@ -4,7 +4,7 @@ using SafetyProto.Core.Logging;
 using SafetyProto.Data.Enums;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.PPE
+namespace SafetyProto.Runtime.PPE
 {
     public class PPEZone : MonoBehaviour
     {

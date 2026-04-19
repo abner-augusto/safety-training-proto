@@ -1,7 +1,7 @@
 #nullable enable
 using System;
 
-namespace SafetyProto.Gameplay.Events
+namespace SafetyProto.Core.Events
 {
     /// <summary>
     /// Payload emitted whenever an action attempt occurs in gameplay.

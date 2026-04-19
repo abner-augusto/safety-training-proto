@@ -2,12 +2,12 @@
 using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
-using SafetyProto.Gameplay.PPE;
-using SafetyProto.Gameplay.Task;
+using SafetyProto.Runtime.PPE;
+using SafetyProto.Runtime.Task;
 using SafetyProto.Utils;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.Safety
+namespace SafetyProto.Runtime.Safety
 {
     public class SafetyRuleEngine : MonoBehaviour
     {

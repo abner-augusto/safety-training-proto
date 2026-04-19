@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.PPE
+namespace SafetyProto.Runtime.PPE
 {
     /// <summary>
     /// Tag component placed on anchor point GameObjects in the scene.

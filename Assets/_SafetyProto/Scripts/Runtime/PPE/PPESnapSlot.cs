@@ -4,7 +4,7 @@ using SafetyProto.Data.Enums;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace SafetyProto.Gameplay.PPE
+namespace SafetyProto.Runtime.PPE
 {
     /// <summary>
     /// Placed on each body slot (head, hand, chest, hips).

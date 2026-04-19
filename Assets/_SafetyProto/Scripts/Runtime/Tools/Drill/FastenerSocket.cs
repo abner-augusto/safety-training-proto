@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace SafetyProto.Gameplay.Tools.Drill
+namespace SafetyProto.Runtime.Tools.Drill
 {
     public class FastenerSocket : MonoBehaviour
     {

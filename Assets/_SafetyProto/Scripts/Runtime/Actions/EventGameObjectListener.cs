@@ -1,13 +1,13 @@
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
-using SafetyProto.Gameplay.Events;
+using SafetyProto.Core.Events;
 using SafetyProto.Utils;
 using System.Collections.Generic;
 using UnityEngine;
 using SafetyProto.Core.Logging;
 using UnityEngine.Serialization;
 
-namespace SafetyProto.Gameplay.Actions
+namespace SafetyProto.Runtime.Actions
 {
     public class EventGameObjectToggleListener : MonoBehaviour
     {

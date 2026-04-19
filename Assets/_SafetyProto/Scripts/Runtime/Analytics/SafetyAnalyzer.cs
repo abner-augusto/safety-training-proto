@@ -4,7 +4,7 @@ using SafetyProto.Core.Logging;
 using SafetyProto.Utils;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.Analytics
+namespace SafetyProto.Runtime.Analytics
 {
     /// SafetyAnalyzer
     /// Listens to safety violation events and uses SafetyPatternDetector (CEP core)

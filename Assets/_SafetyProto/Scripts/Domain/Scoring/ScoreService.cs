@@ -2,7 +2,7 @@
 using System;
 using SafetyProto.Core.Interfaces;
 
-namespace SafetyProto.Core
+namespace SafetyProto.Domain.Scoring
 {
     public sealed class ScoreService : IScoreService, ISessionResettable
     {

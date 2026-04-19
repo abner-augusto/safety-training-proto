@@ -5,11 +5,11 @@ using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
-using SafetyProto.Gameplay.Actions;
+using SafetyProto.Runtime.Actions;
 using SafetyProto.Utils;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.Task
+namespace SafetyProto.Runtime.Task
 {
     public class TaskManager : MonoBehaviour, ISessionResettable
     {

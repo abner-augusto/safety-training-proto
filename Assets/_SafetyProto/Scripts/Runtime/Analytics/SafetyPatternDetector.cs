@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace SafetyProto.Gameplay.Analytics
+namespace SafetyProto.Runtime.Analytics
 {
     /// Pure C# sliding-window detector for repeated events.
     /// Used by SafetyAnalyzer but independent of Unity, so it can be unit tested.

@@ -6,10 +6,10 @@ using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.Enums;
-using SafetyProto.Gameplay.Events;
-using SafetyProto.Gameplay.Task;
+using SafetyProto.Core.Events;
+using SafetyProto.Runtime.Task;
 
-namespace SafetyProto.Gameplay.Safety
+namespace SafetyProto.Domain.Safety
 {
     public sealed class SafetyRuleEngineCore : IDisposable
     {

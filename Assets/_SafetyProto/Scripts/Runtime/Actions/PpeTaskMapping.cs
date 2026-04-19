@@ -4,7 +4,7 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Data.Enums;
 using SafetyProto.Data.ScriptableObjects;
-using SafetyProto.Gameplay.Task;
+using SafetyProto.Runtime.Task;
 using SafetyProto.Utils;
 using UnityEngine;
 

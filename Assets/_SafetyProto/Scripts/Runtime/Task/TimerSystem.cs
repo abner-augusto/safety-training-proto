@@ -10,7 +10,7 @@ using SafetyProto.Utils;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace SafetyProto.Gameplay.Task
+namespace SafetyProto.Runtime.Task
 {
     public class TimerSystem : MonoBehaviour, ISessionResettable
     {

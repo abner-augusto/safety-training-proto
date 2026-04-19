@@ -4,7 +4,7 @@ using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.Actions
+namespace SafetyProto.Runtime.Actions
 {
     /// <summary>
     /// Runtime helper that resolves action IDs to their associated ActionTypeSO assets.

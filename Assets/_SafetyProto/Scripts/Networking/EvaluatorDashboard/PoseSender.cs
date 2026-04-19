@@ -4,7 +4,7 @@ using System.Text;
 using SafetyProto.Core;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.Networking.EvaluatorDashboard
+namespace SafetyProto.Networking.Dashboard
 {
     internal class PoseSender
     {

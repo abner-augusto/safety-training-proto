@@ -1,5 +1,5 @@
 using SafetyProto.Data.Enums;
-using SafetyProto.Gameplay.Task;
+using SafetyProto.Runtime.Task;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;

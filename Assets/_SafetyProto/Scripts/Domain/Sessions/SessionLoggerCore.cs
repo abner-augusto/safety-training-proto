@@ -8,9 +8,9 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
-using SafetyProto.Gameplay.Events;
+using SafetyProto.Core.Events;
 
-namespace SafetyProto.Utils
+namespace SafetyProto.Domain.Sessions
 {
     public sealed class SessionLoggerCore : IDisposable
     {

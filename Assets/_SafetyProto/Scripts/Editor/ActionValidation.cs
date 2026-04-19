@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using SafetyProto.Data.ScriptableObjects;
-using SafetyProto.Gameplay.Actions;
+using SafetyProto.Runtime.Actions;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;

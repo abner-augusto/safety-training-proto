@@ -4,7 +4,7 @@ using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.Actions
+namespace SafetyProto.Runtime.Actions
 {
     [CreateAssetMenu(fileName = "ActionRegistry", menuName = "SafetyProto/Actions/ActionRegistry", order = 1)]
     public class ActionRegistry : ScriptableObject

@@ -2,11 +2,11 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
-using SafetyProto.Gameplay.Safety;
+using SafetyProto.Runtime.Safety;
 using SafetyProto.Utils;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.Task
+namespace SafetyProto.Runtime.Task
 {
     public class ScoreManagerAdapter : MonoBehaviour
     {

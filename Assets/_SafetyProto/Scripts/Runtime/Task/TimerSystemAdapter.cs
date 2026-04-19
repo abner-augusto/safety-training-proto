@@ -1,6 +1,6 @@
 using SafetyProto.Core.Interfaces;
 
-namespace SafetyProto.Gameplay.Task
+namespace SafetyProto.Runtime.Task
 {
     internal sealed class TimerSystemAdapter : ITimerSource
     {

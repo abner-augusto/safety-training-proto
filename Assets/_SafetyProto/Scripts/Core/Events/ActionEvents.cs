@@ -1,6 +1,6 @@
 using SafetyProto.Core.Logging;
-using SafetyProto.Gameplay.Actions;
-using SafetyProto.Gameplay.Events;
+using SafetyProto.Runtime.Actions;
+using SafetyProto.Core.Events;
 using UnityEngine;
 
 namespace SafetyProto.Core.Events

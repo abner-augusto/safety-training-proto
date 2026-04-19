@@ -1,7 +1,7 @@
 using SafetyProto.Core.Logging;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.PPE
+namespace SafetyProto.Runtime.PPE
 {
     public class FollowHeadPosition : MonoBehaviour
     {

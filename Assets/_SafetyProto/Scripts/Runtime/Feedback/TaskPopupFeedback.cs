@@ -9,7 +9,7 @@ using SafetyProto.Utils;
 using TMPro;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.Feedback
+namespace SafetyProto.Runtime.Feedback
 {
     public class TaskPopupFeedback : MonoBehaviour, ISessionResettable
     {

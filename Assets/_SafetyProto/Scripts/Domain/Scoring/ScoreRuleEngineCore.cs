@@ -5,7 +5,7 @@ using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.Enums;
 
-namespace SafetyProto.Gameplay.Safety
+namespace SafetyProto.Domain.Scoring
 {
     public sealed class ScoreRuleEngineCore : IDisposable
     {

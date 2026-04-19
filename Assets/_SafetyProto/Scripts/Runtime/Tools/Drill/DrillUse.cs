@@ -1,7 +1,7 @@
 using Oculus.Interaction.HandGrab;
 using UnityEngine;
 
-namespace SafetyProto.Gameplay.Tools.Drill
+namespace SafetyProto.Runtime.Tools.Drill
 {
     public class DrillUse : MonoBehaviour, IHandGrabUseDelegate
     {

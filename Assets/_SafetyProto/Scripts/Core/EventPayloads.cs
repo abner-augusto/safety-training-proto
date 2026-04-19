@@ -1,7 +1,7 @@
 #nullable enable
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Data.Enums;
-using SafetyProto.Gameplay.Task;
+using SafetyProto.Runtime.Task;
 
 namespace SafetyProto.Core
 {

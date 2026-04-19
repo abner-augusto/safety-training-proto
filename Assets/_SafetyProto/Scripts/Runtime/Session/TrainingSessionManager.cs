@@ -5,7 +5,7 @@ using SafetyProto.Utils;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace SafetyProto.Core
+namespace SafetyProto.Runtime.Session
 {
     public class TrainingSessionManager : MonoBehaviour
     {
