@@ -24,25 +24,25 @@
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Logging\IHarnessLogger.cs"     Link="Core\Logging\IHarnessLogger.cs" />
 
     <!-- Enums (Part 1) -->
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Data\Enums\PPEType.cs"              Link="Data\Enums\PPEType.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Data\Enums\TaskState.cs"            Link="Data\Enums\TaskState.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\PPEType.cs"                    Link="Core\PPEType.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\TaskState.cs"                  Link="Core\TaskState.cs" />
 
     <!-- Payloads (Part 3) -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\EventPayloads.cs"              Link="Core\EventPayloads.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Gameplay\Events\ActionAttemptedEvent.cs" Link="Gameplay\Events\ActionAttemptedEvent.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Gameplay\Task\RuntimeSafetyTask.cs" Link="Gameplay\Task\RuntimeSafetyTask.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Events\ActionAttemptedEvent.cs" Link="Core\Events\ActionAttemptedEvent.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\RuntimeSafetyTask.cs" Link="Core\RuntimeSafetyTask.cs" />
 
     <!-- Part 4 additions -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Events\EventContext.cs"        Link="Core\Events\EventContext.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\ScoreService.cs"               Link="Core\ScoreService.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Utils\SessionLoggerCore.cs"         Link="Utils\SessionLoggerCore.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scoring\ScoreService.cs"               Link="Domain\Scoring\ScoreService.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Sessions\SessionLoggerCore.cs"         Link="Domain\Sessions\SessionLoggerCore.cs" />
 
     <!-- Part 6 additions -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\IPPEComplianceChecker.cs" Link="Core\Interfaces\IPPEComplianceChecker.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Gameplay\Safety\SafetyRuleEngineCore.cs"  Link="Gameplay\Safety\SafetyRuleEngineCore.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Safety\SafetyRuleEngineCore.cs"  Link="Domain\Safety\SafetyRuleEngineCore.cs" />
 
     <!-- Part 7 additions -->
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Gameplay\Task\TaskManagerCore.cs"        Link="Gameplay\Task\TaskManagerCore.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Gameplay\Safety\ScoreRuleEngineCore.cs"  Link="Gameplay\Safety\ScoreRuleEngineCore.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Tasks\TaskManagerCore.cs"        Link="Domain\Tasks\TaskManagerCore.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scoring\ScoreRuleEngineCore.cs"  Link="Domain\Scoring\ScoreRuleEngineCore.cs" />
   </ItemGroup>
 </Project>

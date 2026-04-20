@@ -2533,9 +2533,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 050d34fb4bf07fb4f80891b9dea5fb0f, type: 2}
   startTasksAutomatically: 1
   delayBetweenTasks: 2
-  scoreServiceAsset: {fileID: 11400000, guid: 1fdaac493842392498f1e485c6aba38b, type: 2}
-  scoreManagerAdapter: {fileID: 969453660}
-  timerSystem: {fileID: 0}
+  timerSystem: {fileID: 742429413}
 --- !u!1 &602230598
 GameObject:
   m_ObjectHideFlags: 0
@@ -11316,7 +11314,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a9760bebbbf58c4d84a34f6ae0bb094, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  scoreServiceAsset: {fileID: 11400000, guid: 1fdaac493842392498f1e485c6aba38b, type: 2}
 --- !u!65 &1000445168
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -13426,7 +13423,6 @@ MonoBehaviour:
   onReloadScene:
     m_PersistentCalls:
       m_Calls: []
-  scoreService: {fileID: 11400000, guid: 1fdaac493842392498f1e485c6aba38b, type: 2}
 --- !u!1 &1560521560
 GameObject:
   m_ObjectHideFlags: 0

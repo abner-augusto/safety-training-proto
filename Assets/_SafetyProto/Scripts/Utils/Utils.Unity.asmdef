@@ -1,0 +1,19 @@
+{
+  "name": "SafetyProto.Utils.Unity",
+  "rootNamespace": "SafetyProto.Utils",
+  "references": [
+    "SafetyProto.EventBus.Core",
+    "SafetyProto.Domain.Core",
+    "Oculus.Interaction",
+    "Oculus.Interaction.OVR"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

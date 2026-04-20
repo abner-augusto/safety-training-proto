@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using SafetyProto.Core;
+using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
-using SafetyProto.Data.Enums;
-using SafetyProto.Gameplay.Events;
-using SafetyProto.Gameplay.Safety;
+using SafetyProto.Domain.Safety;
+using SafetyProto.Runtime.Safety;
 using SafetyProto.Tests.Editor.Support;
 
 namespace SafetyProto.Tests.Editor

@@ -1,0 +1,34 @@
+using SafetyProto.Core;
+using SafetyProto.Core.Logging;
+using UnityEngine;
+
+namespace SafetyProto.Runtime.PPE
+{
+    [RequireComponent(typeof(Collider))]
+    public class PPEItem : MonoBehaviour
+    {
+        public PPEType ppeType = PPEType.None;
+
+        [Header("Distractor")]
+        [Tooltip("Marcar true para EPIs incorretos (ex: capacete sem jugular, cinto abdominal). " +
+                 "Distradores disparam popup educativo ao tentar encaixar num slot.")]
+        public bool isDistractor = false;
+
+        private void Awake()
+        {
+            if (ppeType == PPEType.None)
+            {
+                SafetyLog.Warning($"PPEItem on {gameObject.name} has PPEType set to None.", this);
+            }
+        }
+
+        private void OnDisable() => UnregisterFromManager();
+
+        private void OnDestroy() => UnregisterFromManager();
+
+        private void UnregisterFromManager()
+        {
+            FindFirstObjectByType<PPEManager>()?.UnregisterIfOwned(ppeType, gameObject);
+        }
+    }
+}

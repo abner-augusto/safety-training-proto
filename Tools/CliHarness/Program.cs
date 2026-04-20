@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
-using SafetyProto.Data.Enums;
-using SafetyProto.Gameplay.Safety;
-using SafetyProto.Gameplay.Task;
-using SafetyProto.Utils;
+using SafetyProto.Domain.Safety;
+using SafetyProto.Domain.Scoring;
+using SafetyProto.Domain.Sessions;
+using SafetyProto.Domain.Tasks;
 
 namespace SafetyProto.CliHarness;
 

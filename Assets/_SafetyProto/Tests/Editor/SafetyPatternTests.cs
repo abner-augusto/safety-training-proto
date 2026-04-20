@@ -1,5 +1,5 @@
 using NUnit.Framework;
-using SafetyProto.Gameplay.Analytics;
+using SafetyProto.Runtime.Analytics;
 
 namespace SafetyProto.Tests.Editor
 {

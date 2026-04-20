@@ -6,7 +6,6 @@ using SafetyProto.Core.Logging;
 using SafetyProto.Utils;
 using TMPro;
 using UnityEngine;
-using SafetyProto.Gameplay.Events;
 
 namespace SafetyProto.UI
 {

@@ -1,4 +1,4 @@
-using SafetyProto.Data.Enums;
+using SafetyProto.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;

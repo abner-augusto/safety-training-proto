@@ -1,7 +1,7 @@
 using NUnit.Framework;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
-using SafetyProto.Gameplay.Events;
+using SafetyProto.Domain.Scoring;
 
 namespace SafetyProto.Tests.Editor
 {
