@@ -148,6 +148,7 @@ Tests.meta
 /[Aa]ssets/TextMesh Pro/Examples*/
 /[Aa]ssets/TextMesh Pro/Fonts/
 /[Aa]ssets/TextMesh Pro/Resources/Font Assets/
+Assets/TextMesh Pro.meta
 
 # ============================================================
 # STRAY / ORPHANED META FILES
@@ -165,3 +166,4 @@ packages-microsoft-prod.deb
 Tools/**/bin/
 Tools/**/obj/
 harness-output/
+
