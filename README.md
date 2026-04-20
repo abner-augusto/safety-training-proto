@@ -10,8 +10,7 @@ standalone .NET 10 CLI harness.
 
 This repository is the technical artifact for a Master's project at the Federal
 University of Ceará (UFC), developed within CRAb (Computer Graphics, Virtual Reality and Animations). Dissertation topic: event-driven architecture for VR
-training systems with external participant extensibility. Advised by
-Prof. Dr. Joaquim Bento.
+training systems with external participant extensibility. Author: Abner Augusto Souza, Advised by: Prof. Dr. Joaquim Bento.
 
 ## Architecture at a glance
 
@@ -44,7 +43,7 @@ Prof. Dr. Joaquim Bento.
 │  CLI Harness (.NET 10)       │                                         │
 │                              │                                         │
 │  ┌──────────────────┐   ┌────┴─────────────┐   ┌──────────────────┐    │
-│  │ ScriptedActor    │──▶│ HarnessEventBus  │◀──│ TranscriptRecord │    │
+│  │ ScriptedActor    │──▶│ HarnessEventBus  │◀──│ TranscriptRecord │   │
 │  │ (JSON scenario)  │   │ (queued, sync)   │   │ (stdout observer)│    │
 │  └──────────────────┘   └──────────┬───────┘   └──────────────────┘    │
 │                                    │                                   │
@@ -68,21 +67,39 @@ protocol without coupling to the engine.
 safety-training-proto/
 ├── Assets/_SafetyProto/
 │   ├── Scripts/
-│   │   ├── Core/              # EventBus, interfaces, payloads, ScoreService
-│   │   ├── Gameplay/          # Task/Safety/PPE modules + adapters
-│   │   ├── Data/              # ScriptableObjects (TaskGroup, SafetyTask, ...)
-│   │   ├── UI/                # ScoreHUD, LogHUD, TaskUIController, etc.
-│   │   ├── Utils/             # SessionLogger, helpers
-│   │   └── Networking/        # Evaluator dashboard (HTTP/WebSocket)
+│   │   ├── Core/              # EventBus, EventPayloads, RuntimeSafetyTask, PPEType, TaskState
+│   │   │   ├── Events/        # Event facades: SessionEvents, TaskEvents, PPEEvents, ...
+│   │   │   ├── Interfaces/    # IEventBus, IScoreService, ISafetyTask, ISessionResettable, ...
+│   │   │   └── Logging/       # IHarnessLogger, SafetyLog
+│   │   ├── Data/              # ScriptableObjects: ActionTypeSO, SafetyTask, TaskGroup
+│   │   ├── Domain/            # Pure C# business logic (no UnityEngine), shared with harness
+│   │   │   ├── Safety/        # SafetyRuleEngineCore
+│   │   │   ├── Scoring/       # ScoreService, ScoreRuleEngineCore
+│   │   │   ├── Sessions/      # SessionLoggerCore
+│   │   │   └── Tasks/         # TaskManagerCore
+│   │   ├── Runtime/           # MonoBehaviour adapters and scene-side systems
+│   │   │   ├── Actions/       # ActionEmitter, ActionTrigger, ActionResolver
+│   │   │   ├── Analytics/     # SafetyAnalyzer, SafetyPatternDetector
+│   │   │   ├── Feedback/      # AudioFeedbackManager, HapticManager, TaskPopupFeedback
+│   │   │   ├── PPE/           # PPEManager, PPEItem, PPESnapItem, PPEZone, ...
+│   │   │   ├── Safety/        # SafetyRuleEngine (Mono wrapper), PPEComplianceAdapter
+│   │   │   ├── Session/       # TrainingSessionManager
+│   │   │   ├── Task/          # TaskManager (Mono wrapper), TimerSystem, ScoreManagerAdapter
+│   │   │   └── Tools/         # DrillUse, FastenerSocket
+│   │   ├── Networking/        # Evaluator dashboard (HTTP/WebSocket server)
+│   │   │   └── EvaluatorDashboard/
+│   │   ├── UI/                # ScoreHUD, LogHUD, TaskUIController, Popup system
+│   │   │   └── Popup/
+│   │   ├── Utils/             # SessionLogger, MonoBehaviourExtensions, helpers
+│   │   └── Editor/            # ComponentFinder, SceneDumper, ActionValidation
 │   ├── Scenes/
 │   │   └── SafetyTraining.unity
 │   ├── Prefabs/
-│   ├── Resources/             # EventBus.asset, ActionRegistry.asset
+│   ├── Resources/             # EventBus.asset, ActionRegistry.asset, PoseChannel.asset
 │   └── Tests/Editor/          # NUnit edit-mode tests (28 tests)
 │
 ├── Tools/
-│   ├── SafetyProto.Shared/    # .NET 10 library, links pure-C# source files
-│   │                            from Assets/_SafetyProto/Scripts
+│   ├── SafetyProto.Shared/    # .NET 10 library, links Core/ + Domain/ source files
 │   └── CliHarness/            # .NET 10 console app consuming Shared.dll
 │       └── scenarios/         # JSON scenario files
 │
