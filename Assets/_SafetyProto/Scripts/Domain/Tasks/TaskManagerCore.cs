@@ -96,18 +96,23 @@ namespace SafetyProto.Domain.Tasks
 
             if (args.RuntimeTask != null)
             {
+                // External caller provided complete instance — copy state.
                 runtimeTask.State = args.RuntimeTask.State;
                 runtimeTask.CompletionTime = args.RuntimeTask.CompletionTime;
                 runtimeTask.HasMissedPPEOnce = args.RuntimeTask.HasMissedPPEOnce;
             }
             else
             {
+                // No external instance — determine state from payload.
+                runtimeTask.CompletionTime = _timer?.ElapsedSeconds ?? 0f;
                 if (runtimeTask.State == TaskState.NotStarted ||
                     runtimeTask.State == TaskState.InProgress)
                 {
-                    runtimeTask.State = TaskState.CompletedSuccess;
+                    runtimeTask.State = args.WasPpeCompliant
+                        ? TaskState.CompletedSuccess
+                        : TaskState.CompletedSuccessButUnsafe;
                 }
-                runtimeTask.CompletionTime = _timer?.ElapsedSeconds ?? 0f;
+                runtimeTask.HasMissedPPEOnce = !args.WasPpeCompliant;
             }
 
             if (ReferenceEquals(_currentTask, runtimeTask))

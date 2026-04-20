@@ -50,6 +50,13 @@ namespace SafetyProto.Core
         public RuntimeSafetyTask? RuntimeTask;
         public TaskPhase Phase;
 
+        /// <summary>
+        /// Indicates if the worker was wearing all required PPE at the time of completion.
+        /// Used when RuntimeTask is null (the emitter does not possess the internal instance).
+        /// Default value (false) is ignored when RuntimeTask != null.
+        /// </summary>
+        public bool WasPpeCompliant;
+
         public TaskEventArgs(ISafetyTask task, RuntimeSafetyTask? runtimeTask = null)
         {
             SessionId = string.Empty;
@@ -59,6 +66,7 @@ namespace SafetyProto.Core
             Task = task;
             RuntimeTask = runtimeTask;
             Phase = TaskPhase.Started;
+            WasPpeCompliant = true;
         }
 
         public TaskEventArgs(ISafetyTask task, RuntimeSafetyTask? runtimeTask, TaskPhase phase)
@@ -70,6 +78,7 @@ namespace SafetyProto.Core
             Task = task;
             RuntimeTask = runtimeTask;
             Phase = phase;
+            WasPpeCompliant = true;
         }
     }
 

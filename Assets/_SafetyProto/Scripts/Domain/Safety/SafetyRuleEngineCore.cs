@@ -6,7 +6,6 @@ using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Core.Events;
-using RuntimeSafetyTask = SafetyProto.Core.RuntimeSafetyTask;
 
 namespace SafetyProto.Domain.Safety
 {
@@ -214,12 +213,7 @@ namespace SafetyProto.Domain.Safety
 
         private void ProcessTaskAttempt(ISafetyTask task, ITaskGroup currentGroup)
         {
-            var runtimeTask = new RuntimeSafetyTask(task);
-
             bool compliant = IsPpeCompliant(task.requiredPPE);
-            runtimeTask.State = compliant ? TaskState.CompletedSuccess : TaskState.CompletedSuccessButUnsafe;
-            runtimeTask.HasMissedPPEOnce = !compliant;
-            runtimeTask.CompletionTime = _timer?.ElapsedSeconds ?? 0f;
 
             if (!compliant)
             {
@@ -240,7 +234,10 @@ namespace SafetyProto.Domain.Safety
                 _activeFreeOrderTasks.Remove(task);
             }
 
-            _bus.Publish(new TaskEventArgs(task, runtimeTask, TaskPhase.Completed));
+            _bus.Publish(new TaskEventArgs(task, null, TaskPhase.Completed)
+            {
+                WasPpeCompliant = compliant
+            });
         }
 
         private bool IsPpeCompliant(IReadOnlyCollection<PPEType>? requiredPpe)

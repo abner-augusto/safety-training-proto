@@ -58,8 +58,7 @@ namespace SafetyProto.Tests.Editor
             Assert.That(_taskCompletions.Count, Is.GreaterThanOrEqualTo(1));
             var completion = _taskCompletions[_taskCompletions.Count - 1];
             Assert.AreEqual(task.taskName, completion.Task.taskName);
-            Assert.IsNotNull(completion.RuntimeTask);
-            Assert.AreEqual(TaskState.CompletedSuccess, completion.RuntimeTask.State);
+            Assert.IsTrue(completion.WasPpeCompliant);
             Assert.IsEmpty(_violations);
         }
 
@@ -100,8 +99,7 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual(1, _violations.Count);
             Assert.AreEqual("PPE_MISSING", _violations[0].ViolationCode);
             Assert.AreEqual(1, _taskCompletions.Count);
-            Assert.AreEqual(TaskState.CompletedSuccessButUnsafe,
-                _taskCompletions[0].RuntimeTask.State);
+            Assert.IsFalse(_taskCompletions[0].WasPpeCompliant);
         }
 
         [Test]
@@ -158,8 +156,7 @@ namespace SafetyProto.Tests.Editor
             _bus.Publish(new ActionAttemptedEvent("action"));
 
             Assert.IsEmpty(_violations);
-            Assert.AreEqual(TaskState.CompletedSuccess,
-                _taskCompletions[_taskCompletions.Count - 1].RuntimeTask.State);
+            Assert.IsTrue(_taskCompletions[_taskCompletions.Count - 1].WasPpeCompliant);
 
             engine.Dispose();
         }
