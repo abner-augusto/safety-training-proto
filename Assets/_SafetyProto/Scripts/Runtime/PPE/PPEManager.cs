@@ -97,15 +97,9 @@ namespace SafetyProto.Runtime.PPE
                     continue;
                 }
 
-                if (!obj.activeInHierarchy)
-                {
-                    _wornPPE.Remove(ppe);
-                    allValid = false;
-                    continue;
-                }
-
                 var referencePos = _playerTransform != null ? _playerTransform.position : transform.position;
-                if (complianceDistance > 0f && Vector3.Distance(referencePos, obj.transform.position) > complianceDistance)
+                if (complianceDistance > 0f && obj.activeInHierarchy &&
+                    Vector3.Distance(referencePos, obj.transform.position) > complianceDistance)
                 {
                     _wornPPE.Remove(ppe);
                     allValid = false;
