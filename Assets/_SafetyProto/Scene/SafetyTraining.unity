@@ -6144,12 +6144,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10fe65a14bd7fa647bfd1a65359d7913, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapSlot
-  acceptedTypes: 06000000
+  slotCapacity: 1
   hideWhenEquipped: 0
   lockAfterEquipped: 1
   onDistractorSnapAttempted:
     m_PersistentCalls:
       m_Calls: []
+  ppeActionMappings:
+  - ppeType: 6
+    action: {fileID: 11400000, guid: 520a16e786f4fdc47a7fe2233463896a, type: 2}
   highlightRenderer: {fileID: 306169573}
   idleColor: {r: 1, g: 1, b: 1, a: 0.043137256}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.5}
@@ -9771,12 +9774,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10fe65a14bd7fa647bfd1a65359d7913, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapSlot
-  acceptedTypes: 0100000003000000
+  slotCapacity: 2
   hideWhenEquipped: 0
   lockAfterEquipped: 0
   onDistractorSnapAttempted:
     m_PersistentCalls:
       m_Calls: []
+  ppeActionMappings:
+  - ppeType: 1
+    action: {fileID: 11400000, guid: e82f5dfff10aab54ea028b40fec6852d, type: 2}
+  - ppeType: 3
+    action: {fileID: 11400000, guid: 80f9a0cb74ac1de47ba595040e0b364e, type: 2}
   highlightRenderer: {fileID: 499804247}
   idleColor: {r: 1, g: 1, b: 1, a: 0.043137256}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.5}
@@ -12075,12 +12083,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10fe65a14bd7fa647bfd1a65359d7913, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapSlot
-  acceptedTypes: 04000000
+  slotCapacity: 1
   hideWhenEquipped: 0
   lockAfterEquipped: 1
   onDistractorSnapAttempted:
     m_PersistentCalls:
       m_Calls: []
+  ppeActionMappings:
+  - ppeType: 4
+    action: {fileID: 11400000, guid: 99900bd837460b646b2d26126b58595e, type: 2}
   highlightRenderer: {fileID: 667127736}
   idleColor: {r: 1, g: 1, b: 1, a: 0.043137256}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.5}
@@ -14543,12 +14554,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10fe65a14bd7fa647bfd1a65359d7913, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapSlot
-  acceptedTypes: 02000000
+  slotCapacity: 1
   hideWhenEquipped: 0
   lockAfterEquipped: 0
   onDistractorSnapAttempted:
     m_PersistentCalls:
       m_Calls: []
+  ppeActionMappings:
+  - ppeType: 2
+    action: {fileID: 11400000, guid: a521de0e5a59317468292ddca56d3fb2, type: 2}
   highlightRenderer: {fileID: 876599391}
   idleColor: {r: 1, g: 1, b: 1, a: 0.14117648}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.7647059}
@@ -15242,12 +15256,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10fe65a14bd7fa647bfd1a65359d7913, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapSlot
-  acceptedTypes: 02000000
+  slotCapacity: 1
   hideWhenEquipped: 0
   lockAfterEquipped: 0
   onDistractorSnapAttempted:
     m_PersistentCalls:
       m_Calls: []
+  ppeActionMappings:
+  - ppeType: 2
+    action: {fileID: 11400000, guid: a521de0e5a59317468292ddca56d3fb2, type: 2}
   highlightRenderer: {fileID: 917602395}
   idleColor: {r: 1, g: 1, b: 1, a: 0.14117648}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.7647059}
@@ -36714,7 +36731,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.Safety.InspectionGateValidator
   taskManager: {fileID: 339111214494552573}
-  scoreService: {fileID: 11400000, guid: 1fdaac493842392498f1e485c6aba38b, type: 2}
+  popupFeedbackProvider: {fileID: 5455797637335201551}
   penaltyPerAttempt: 100
   delayBetweenConsequences: 2.5
   delayAfterAllConsequences: 1.5
@@ -43656,6 +43673,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Safety_Glasses
       objectReference: {fileID: 0}
+    - target: {fileID: 6590348386747832007, guid: 6be8d278f48718b478e4b35acc3adea5, type: 3}
+      propertyPath: snapSearchRadius
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 6590348386747832007, guid: 6be8d278f48718b478e4b35acc3adea5, type: 3}
+      propertyPath: snapSearchMask.m_Bits
+      value: 8191
+      objectReference: {fileID: 0}
     - target: {fileID: 7418877302980936100, guid: 6be8d278f48718b478e4b35acc3adea5, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.20700002
@@ -43823,8 +43848,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: ab0049cb9754fe54781c32950259bf5f, type: 2}
   startTasksAutomatically: 1
   delayBetweenTasks: 1
-  scoreServiceAsset: {fileID: 11400000, guid: 1fdaac493842392498f1e485c6aba38b, type: 2}
-  scoreManagerAdapter: {fileID: 1298872664820151212}
+  timerSystem: {fileID: 6117016471838572653}
 --- !u!1 &385482952621054957
 GameObject:
   m_ObjectHideFlags: 0
@@ -43863,7 +43887,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.Safety.SafetyRuleEngine
   ppeManager: {fileID: 5142919890472588727}
   verboseLogging: 1
-  timerSystem: {fileID: 0}
+  timerSystem: {fileID: 6117016471838572653}
 --- !u!4 &454046776473597089
 Transform:
   m_ObjectHideFlags: 0
@@ -44795,7 +44819,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a9760bebbbf58c4d84a34f6ae0bb094, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.Task.ScoreManagerAdapter
-  scoreServiceAsset: {fileID: 11400000, guid: 1fdaac493842392498f1e485c6aba38b, type: 2}
 --- !u!4 &1312015194175481347
 Transform:
   m_ObjectHideFlags: 0
@@ -45116,7 +45139,6 @@ MonoBehaviour:
   onReloadScene:
     m_PersistentCalls:
       m_Calls: []
-  scoreService: {fileID: 11400000, guid: 1fdaac493842392498f1e485c6aba38b, type: 2}
 --- !u!23 &1699865124801136180
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -46029,22 +46051,6 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
---- !u!1 &3007152051693039694
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 3764148704931209893}
-  m_Layer: 0
-  m_Name: TeleportInteractable
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
 --- !u!23 &3024417876547165689
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -46569,21 +46575,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 1
   m_IsActive: 1
---- !u!4 &3764148704931209893
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3007152051693039694}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 7322035375745015844}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &3818423307414104227
 Transform:
   m_ObjectHideFlags: 0
@@ -47881,9 +47872,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce0ec8c87868a6b49be8cf7975606730, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Core.PoseReporter
-  headTransform: {fileID: 0}
-  leftHandTransform: {fileID: 0}
-  rightHandTransform: {fileID: 0}
+  headTransform: {fileID: 1586613345}
+  leftHandTransform: {fileID: 826881402}
+  rightHandTransform: {fileID: 1194578008}
   ppeObjects:
   - {fileID: 1515773941}
   - {fileID: 709275775}
@@ -47894,8 +47885,8 @@ MonoBehaviour:
   ppeIds:
   - Botas
   - "\xD3culos de Prote\xE7\xE3o"
-  - Luva
-  - Luva
+  - Luva Esq.
+  - Luva Dir.
   - Cinto Paraquedista
   - Capacete
   useWorldSpace: 1
@@ -48433,11 +48424,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.UI.TaskFeedbackController
   snapSlots:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 499804248}
+  - {fileID: 667127737}
+  - {fileID: 306169574}
+  - {fileID: 917602396}
+  - {fileID: 876599392}
   hintTitle: Dica
   failureTitle: "ATEN\xC7\xC3O"
   ppeTitle: EPI Incorreto
@@ -49673,7 +49664,6 @@ Transform:
   - {fileID: 3698558185898172484}
   - {fileID: 1838856040700332909}
   - {fileID: 7543211892067580043}
-  - {fileID: 3764148704931209893}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &7328727151093172279
@@ -50287,7 +50277,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &8027587201033726834
 Transform:
   m_ObjectHideFlags: 0
@@ -51042,24 +51032,29 @@ MonoBehaviour:
   mappings:
   - name: Equipar Botas
     action: {fileID: 11400000, guid: 520a16e786f4fdc47a7fe2233463896a, type: 2}
-    actionIdOverride: 
-    requiredPpe: 
+    actionIdOverride: equip_boots
+    equipPpe: 6
+    additionalRequiredPpe: 
   - name: Equipar Luvas
     action: {fileID: 11400000, guid: a521de0e5a59317468292ddca56d3fb2, type: 2}
-    actionIdOverride: 
-    requiredPpe: 06000000
+    actionIdOverride: equip_gloves
+    equipPpe: 2
+    additionalRequiredPpe: 06000000
   - name: "Equipar \xD3culos"
     action: {fileID: 11400000, guid: 80f9a0cb74ac1de47ba595040e0b364e, type: 2}
-    actionIdOverride: 
-    requiredPpe: 0600000002000000
+    actionIdOverride: equip_goggles
+    equipPpe: 3
+    additionalRequiredPpe: 0600000002000000
   - name: Equipar Capacete
     action: {fileID: 11400000, guid: e82f5dfff10aab54ea028b40fec6852d, type: 2}
-    actionIdOverride: 
-    requiredPpe: 060000000200000003000000
+    actionIdOverride: equip_helmet
+    equipPpe: 1
+    additionalRequiredPpe: 060000000200000003000000
   - name: Equipar Cinto Paraquedista
     action: {fileID: 11400000, guid: 99900bd837460b646b2d26126b58595e, type: 2}
-    actionIdOverride: 
-    requiredPpe: 06000000020000000300000001000000
+    actionIdOverride: equip_harness
+    equipPpe: 4
+    additionalRequiredPpe: 06000000020000000300000001000000
   interactorId: 0
 --- !u!4 &8688868458789039960
 Transform:
