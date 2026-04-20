@@ -1,10 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using SafetyProto.Core;
-using SafetyProto.Data.Enums;
-using SafetyProto.Gameplay.Safety;
-using SafetyProto.Gameplay.Task;
+using SafetyProto.Runtime.Safety;
+using SafetyProto.Runtime.Task;
 using SafetyProto.Utils;
+// RuntimeSafetyTask has been moved to Core for clean dependency layering
+using RuntimeSafetyTask = SafetyProto.Core.RuntimeSafetyTask;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;

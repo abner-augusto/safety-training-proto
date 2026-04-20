@@ -2,9 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using SafetyProto.Core;
 using SafetyProto.Core.Logging;
-using SafetyProto.Data.Enums;
 using SafetyProto.Data.ScriptableObjects;
-using SafetyProto.Gameplay.Task;
+using SafetyProto.Runtime.Task;
 using TMPro;
 using UnityEngine;
 

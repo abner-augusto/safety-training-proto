@@ -1,6 +1,5 @@
 using SafetyProto.Core.Logging;
-using SafetyProto.Gameplay.Actions;
-using SafetyProto.Gameplay.Events;
+using SafetyProto.Core.Events;
 using UnityEngine;
 
 namespace SafetyProto.Core.Events
@@ -28,7 +27,6 @@ namespace SafetyProto.Core.Events
             }
 
             var normalized = actionId.Trim();
-            ActionResolver.TryResolve(normalized, out _);
 
             (float X, float Y, float Z)? tuplePos = position.HasValue
                 ? (position.Value.x, position.Value.y, position.Value.z)

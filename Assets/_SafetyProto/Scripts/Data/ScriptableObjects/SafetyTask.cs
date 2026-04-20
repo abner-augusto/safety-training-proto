@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using SafetyProto.Core.Interfaces;
-using SafetyProto.Data.Enums;
 using UnityEngine;
 
 namespace SafetyProto.Data.ScriptableObjects
@@ -24,7 +23,7 @@ namespace SafetyProto.Data.ScriptableObjects
         public int ppePenalty;    // Additional penalty if PPE is missing during an action
 
         [Header("Requirements")]
-        public List<PPEType> requiredPPE = new List<PPEType>();
+        public List<SafetyProto.Core.PPEType> requiredPPE = new List<SafetyProto.Core.PPEType>();
 
         [Header("Guidance")]
         [TextArea(2, 4)]
@@ -65,7 +64,7 @@ namespace SafetyProto.Data.ScriptableObjects
         int ISafetyTask.successPoints => successPoints;
         int ISafetyTask.failurePenalty => failurePenalty;
         int ISafetyTask.ppePenalty => ppePenalty;
-        System.Collections.Generic.IReadOnlyList<SafetyProto.Data.Enums.PPEType> ISafetyTask.requiredPPE => requiredPPE;
+        System.Collections.Generic.IReadOnlyList<SafetyProto.Core.PPEType> ISafetyTask.requiredPPE => requiredPPE;
         string ISafetyTask.hintText => hintText;
         string ISafetyTask.failureAdvice => failureAdvice;
         string ISafetyTask.ppeAdvice => ppeAdvice;

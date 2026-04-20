@@ -1,5 +1,5 @@
 using SafetyProto.Core;
-using SafetyProto.Gameplay.Task;
+using SafetyProto.Runtime.Task;
 using SafetyProto.Utils;
 using TMPro;
 using UnityEngine;

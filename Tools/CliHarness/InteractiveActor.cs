@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using SafetyProto.Core;
+using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
-using SafetyProto.Data.Enums;
-using SafetyProto.Gameplay.Events;
 
 namespace SafetyProto.CliHarness;
 

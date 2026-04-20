@@ -1,6 +1,6 @@
 using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
-using SafetyProto.Gameplay.Events;
+using SafetyProto.Core.Events;
 
 namespace SafetyProto.CliHarness;
 

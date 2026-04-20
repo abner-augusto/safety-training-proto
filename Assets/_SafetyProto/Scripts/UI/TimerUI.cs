@@ -1,7 +1,7 @@
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
-using SafetyProto.Gameplay.Task;
+using SafetyProto.Runtime.Task;
 using SafetyProto.Utils;
 using TMPro;
 using UnityEngine;

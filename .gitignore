@@ -7,6 +7,11 @@
 # ============================================================
 CLAUDE.md
 .claude/*
+.vscode/
+.vsconfig
+before-structure.txt
+.repomixignore
+repomix.config.json
 
 # ============================================================
 # UNITY ENGINE CACHE & GENERATED DIRS
@@ -27,7 +32,6 @@ bin/
 # REPOMIX — ignore outputs, keep settings
 # ============================================================
 repomix-output.*
-!repomix.config.json
 
 scene_dump_*.md
 
@@ -62,6 +66,7 @@ ExportedObj/
 !Tools/**/*.csproj
 *.unityproj
 *.sln
+*.slnx
 *.suo
 *.tmp
 *.user
@@ -134,6 +139,10 @@ TestResults_*.xml
 /Assets/TextMesh Pro/
 /Assets/TutorialInfo/
 /[Aa]ssets/[Ss]amples/
+/Assets/Scenes/SampleScene.unity
+/Assets/Scenes/SampleScene.meta
+/Assets/Thirdparty/Ciathyza/Gridbox Prototype Materials/Demo/
+Tests.meta
 
 # TextMesh Pro generated noise
 /[Aa]ssets/TextMesh Pro/Examples*/

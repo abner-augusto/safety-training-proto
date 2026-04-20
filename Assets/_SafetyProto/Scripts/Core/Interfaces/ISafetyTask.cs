@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using SafetyProto.Data.Enums;
 
 namespace SafetyProto.Core.Interfaces
 {

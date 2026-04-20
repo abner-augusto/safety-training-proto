@@ -1,0 +1,20 @@
+{
+  "name": "SafetyProto.Networking.Unity",
+  "rootNamespace": "SafetyProto.Networking",
+  "references": [
+    "SafetyProto.EventBus.Core",
+    "SafetyProto.Domain.Core",
+    "SafetyProto.Data.Unity",
+    "SafetyProto.Utils.Unity",
+    "SafetyProto.Runtime.Unity"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

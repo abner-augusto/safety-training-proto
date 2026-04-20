@@ -48,9 +48,6 @@ namespace SafetyProto.Core
                 }
             }
 
-            SafetyLog.Info("[SceneLoader] Resetting ScoreService singleton.", this);
-            ScoreService.Instance.ResetSession();
-
             SafetyLog.Info("[SceneLoader] All resettable managers processed.", this);
         }
 
