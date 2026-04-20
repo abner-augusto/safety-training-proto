@@ -1,22 +1,23 @@
 using System.Collections.Generic;
 using SafetyProto.Core;
+using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
+using SafetyProto.Data.ScriptableObjects;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace SafetyProto.Runtime.PPE
 {
-    /// <summary>
-    /// Placed on each body slot (head, hand, chest, hips).
-    /// Detects hovering PPE items via trigger, confirms snap on item release,
-    /// and reports worn state to PPEManager.
-    /// </summary>
     [RequireComponent(typeof(Collider))]
     public class PPESnapSlot : MonoBehaviour
     {
-        [Header("Slot Identity")]
-        [Tooltip("PPE types this slot accepts.")]
-        [SerializeField] private PPEType[] acceptedTypes;
+        private const int MaxCapacity = 3;
+        private const int DefaultCapacity = 1;
+
+        [Header("Capacity")]
+        [Tooltip("How many items this slot can hold simultaneously (1-3).")]
+        [Range(1, 3)]
+        [SerializeField] private int slotCapacity = DefaultCapacity;
 
         [Header("Behavior")]
         [Tooltip("Esconde o item (SetActive false) quando ele é encaixado no slot.")]
@@ -24,8 +25,7 @@ namespace SafetyProto.Runtime.PPE
         [Tooltip("Impede que o item seja removido do slot após ser equipado.")]
         [SerializeField] private bool lockAfterEquipped;
 
-        /// <summary>True se o slot está ocupado e bloqueado contra remoção.</summary>
-        public bool IsLocked => lockAfterEquipped && IsOccupied && !_unlocked;
+        public bool IsLocked => lockAfterEquipped && OccupiedCount > 0 && !_unlocked;
 
         private bool _unlocked;
 
@@ -34,6 +34,17 @@ namespace SafetyProto.Runtime.PPE
                  "Passa o PPEType tentado para o TaskFeedbackController.")]
         public UnityEvent<PPEType> onDistractorSnapAttempted;
 
+        [Header("Task Integration")]
+        [Tooltip("Opcional. Mapeia PPEType → ActionTypeSO para emissão de ActionAttemptedEvent por tipo de EPI encaixado.\nSubstitui PpeTaskMapping para tarefas simples de equipar.")]
+        [SerializeField] private PPEActionMapping[] ppeActionMappings;
+
+        [System.Serializable]
+        public struct PPEActionMapping
+        {
+            public PPEType ppeType;
+            public ActionTypeSO action;
+        }
+
         [Header("Visual Feedback")]
         [Tooltip("Optional renderer to highlight when a compatible item is hovering.")]
         [SerializeField] private Renderer highlightRenderer;
@@ -41,8 +52,15 @@ namespace SafetyProto.Runtime.PPE
         [SerializeField] private Color hoverColor = new Color(0.2f, 0.8f, 0.2f, 0.5f);
         [SerializeField] private Color occupiedColor = new Color(0.2f, 0.4f, 1f, 0.5f);
 
-        public PPESnapItem SnappedItem { get; private set; }
-        public bool IsOccupied => SnappedItem != null && SnappedItem.gameObject != null;
+        private readonly List<PPESnapItem> _snappedItems = new List<PPESnapItem>();
+
+        public PPESnapItem SnappedItem => _snappedItems.Count > 0 ? _snappedItems[0] : null;
+        public IReadOnlyList<PPESnapItem> SnappedItems => _snappedItems;
+        public int OccupiedCount => _snappedItems.Count;
+        public bool IsOccupied => _snappedItems.Count >= (_slotCapacity > 0 ? _slotCapacity : slotCapacity);
+        public bool HasAvailableSpace => _snappedItems.Count < (_slotCapacity > 0 ? _slotCapacity : slotCapacity);
+
+        private int _slotCapacity;
 
         private readonly Dictionary<PPESnapItem, int> _hoverCounts = new Dictionary<PPESnapItem, int>();
         private Material _highlightMaterial;
@@ -52,6 +70,8 @@ namespace SafetyProto.Runtime.PPE
         {
             var col = GetComponent<Collider>();
             col.isTrigger = true;
+
+            EnsureCapacityInitialized();
 
             if (highlightRenderer != null)
             {
@@ -79,15 +99,20 @@ namespace SafetyProto.Runtime.PPE
 
         public bool Accepts(PPEType type)
         {
-            foreach (var t in acceptedTypes)
-                if (t == type) return true;
-            return false;
+            if (ppeActionMappings != null && ppeActionMappings.Length > 0)
+            {
+                for (int i = 0; i < ppeActionMappings.Length; i++)
+                    if (ppeActionMappings[i].ppeType == type) return true;
+                return false;
+            }
+            return true;
         }
+
         public void OnItemEntered(PPESnapItem item)
         {
             if (item == null) return;
             if (!Accepts(item.PpeType)) return;
-            if (IsOccupied) return;
+            if (!HasAvailableSpace) return;
 
             _hoverCounts.TryGetValue(item, out int count);
             _hoverCounts[item] = count + 1;
@@ -122,52 +147,93 @@ namespace SafetyProto.Runtime.PPE
                 }
                 return false;
             }
-            if (IsOccupied) return false;
+            if (!HasAvailableSpace) return false;
 
-            SnappedItem = item;
+            if (ContainsItem(item)) return false;
+
+            _snappedItems.Add(item);
             _hoverCounts.Remove(item);
             UpdateHighlight();
             _ppeManager.ReportPPEStateChange(item.PpeType, true, item.gameObject);
 
             if (IsLocked)
-                SnappedItem.SetGrabEnabled(false);
+                item.SetGrabEnabled(false);
 
             if (hideWhenEquipped)
                 item.gameObject.SetActive(false);
 
-            SafetyLog.Info($"PPESnapSlot [{name}]: accepted {item.PpeType}", this);
+            SafetyLog.Info($"PPESnapSlot [{name}]: accepted {item.PpeType} ({_snappedItems.Count}/{_slotCapacity})", this);
+
+            foreach (var mapping in ppeActionMappings)
+            {
+                if (mapping.ppeType == item.PpeType && mapping.action != null && !string.IsNullOrWhiteSpace(mapping.action.ActionId))
+                {
+                    ActionEvents.PublishActionAttempt(
+                        mapping.action.ActionId,
+                        sourceId: name,
+                        context: "ppe_snap",
+                        position: transform.position);
+                    SafetyLog.Info($"PPESnapSlot [{name}]: emitted ActionAttempt '{mapping.action.ActionId}' for {item.PpeType}", this);
+                    break;
+                }
+            }
+
             return true;
         }
 
-        /// <summary>
-        /// Destravar o slot manualmente, permitindo que o item seja removido mesmo com lockAfterEquipped ativo.
-        /// Pode ser chamado via UnityEvent no Inspector ou por outro script.
-        /// </summary>
+        public void SetSlotCapacity(int capacity)
+        {
+            _slotCapacity = Mathf.Clamp(capacity, 1, MaxCapacity);
+            slotCapacity = _slotCapacity;
+
+            while (_snappedItems.Count > _slotCapacity)
+            {
+                var excess = _snappedItems[_snappedItems.Count - 1];
+                RemoveItem(excess);
+            }
+
+            UpdateHighlight();
+            SafetyLog.Info($"PPESnapSlot [{name}]: capacity set to {_slotCapacity}.", this);
+        }
+
         public void Unlock()
         {
             _unlocked = true;
 
-            if (IsOccupied && SnappedItem != null)
-                SnappedItem.SetGrabEnabled(true);
+            foreach (var item in _snappedItems)
+            {
+                if (item != null)
+                    item.SetGrabEnabled(true);
+            }
 
             SafetyLog.Info($"PPESnapSlot [{name}]: desbloqueado manualmente.", this);
         }
 
         public void OnItemUnsnapped(PPESnapItem item)
         {
-            if (SnappedItem != item) return;
+            if (!ContainsItem(item)) return;
+
+            RemoveItem(item);
 
             if (hideWhenEquipped)
                 item.gameObject.SetActive(true);
 
-            if (SnappedItem != null)
-                SnappedItem.SetGrabEnabled(true);
+            item.SetGrabEnabled(true);
 
-            SnappedItem = null;
             _unlocked = false;
             UpdateHighlight();
             _ppeManager.ReportPPEStateChange(item.PpeType, false, item.gameObject);
-            SafetyLog.Info($"PPESnapSlot [{name}]: released {item.PpeType}", this);
+            SafetyLog.Info($"PPESnapSlot [{name}]: released {item.PpeType} ({_snappedItems.Count}/{_slotCapacity})", this);
+        }
+
+        private void RemoveItem(PPESnapItem item)
+        {
+            _snappedItems.Remove(item);
+        }
+
+        private bool ContainsItem(PPESnapItem item)
+        {
+            return _snappedItems.Contains(item);
         }
 
         private void UpdateHighlight()
@@ -188,7 +254,18 @@ namespace SafetyProto.Runtime.PPE
                 _highlightMaterial.color = color;
         }
 
+        private void EnsureCapacityInitialized()
+        {
+            if (_slotCapacity <= 0)
+                _slotCapacity = Mathf.Clamp(slotCapacity, 1, MaxCapacity);
+        }
+
 #if UNITY_EDITOR
+        private void OnValidate()
+        {
+            _slotCapacity = Mathf.Clamp(slotCapacity, 1, MaxCapacity);
+        }
+
         private void OnDrawGizmosSelected()
         {
             Gizmos.color = IsOccupied ? Color.blue : Color.green;
