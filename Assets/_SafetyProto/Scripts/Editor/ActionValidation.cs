@@ -5,13 +5,14 @@ using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Runtime.Actions;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using UnityEditor.SceneManagement;
 
 namespace SafetyProto.Editor.Actions
 {
     public static class ActionValidation
     {
-        private const string ActionIdRegex = "^[a-z0-9_\\-]+$";
+        private const string SafetyProtoScenesRoot = "Assets/_SafetyProto";
+        private const string ActionIdRegex = "^[a-z0-9_\\-.]+$";
         private static readonly Regex ActionIdPattern = new Regex(ActionIdRegex, RegexOptions.Compiled);
 
         [MenuItem("SafetyProto/Validation/Validate Actions & Tasks")]
@@ -96,7 +97,7 @@ namespace SafetyProto.Editor.Actions
         private static void ValidateEmitters(ActionRegistry registry)
         {
             ValidateEmittersInPrefabs(registry);
-            ValidateEmittersInOpenScenes(registry);
+            ValidateEmittersInProjectScenes(registry);
         }
 
         private static void ValidateEmittersInPrefabs(ActionRegistry registry)
@@ -118,21 +119,23 @@ namespace SafetyProto.Editor.Actions
             }
         }
 
-        private static void ValidateEmittersInOpenScenes(ActionRegistry registry)
+        private static void ValidateEmittersInProjectScenes(ActionRegistry registry)
         {
-            for (int i = 0; i < SceneManager.sceneCount; i++)
+            var sceneGuids = AssetDatabase.FindAssets("t:Scene");
+            foreach (var guid in sceneGuids)
             {
-                var scene = SceneManager.GetSceneAt(i);
-                if (!scene.isLoaded)
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                if (string.IsNullOrEmpty(path) || !path.StartsWith(SafetyProtoScenesRoot))
                 {
                     continue;
                 }
 
+                var scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
                 foreach (var root in scene.GetRootGameObjects())
                 {
                     foreach (var emitter in root.GetComponentsInChildren<ActionEmitter>(true))
                     {
-                        ValidateEmitterInstance(emitter, scene.path, registry);
+                        ValidateEmitterInstance(emitter, path, registry);
                     }
                 }
             }
