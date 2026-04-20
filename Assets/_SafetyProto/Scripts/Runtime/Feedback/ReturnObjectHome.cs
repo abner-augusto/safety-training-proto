@@ -79,8 +79,14 @@ namespace SafetyProto.Runtime.Feedback
         public void RequestReturn()
         {
             CancelReturn();
-            _delayCoroutine = returnDelay > 0f ? StartCoroutine(ReturnAfterDelay()) : null;
-            BeginReturn();
+            if (returnDelay > 0f)
+            {
+                _delayCoroutine = StartCoroutine(ReturnAfterDelay());
+            }
+            else
+            {
+                BeginReturn();
+            }
         }
 
         private void OnPointerEvent(PointerEvent evt)
