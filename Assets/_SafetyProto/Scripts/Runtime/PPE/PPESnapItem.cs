@@ -2,6 +2,7 @@ using Oculus.Interaction;
 using Oculus.Interaction.HandGrab;
 using SafetyProto.Core;
 using SafetyProto.Core.Logging;
+using SafetyProto.Runtime.Feedback;
 using UnityEngine;
 
 namespace SafetyProto.Runtime.PPE
