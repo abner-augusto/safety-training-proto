@@ -10,6 +10,9 @@ using UnityEngine;
 
 namespace SafetyProto.Runtime.Actions
 {
+    [Obsolete("Use PPESnapSlot.equippedAction to map snap → ActionAttempt. " +
+              "For composite conditions (multiple PPEs simultaneously), use CompositePpeCondition (future). " +
+              "Will be removed in a future version.")]
     [Serializable]
     public class PpeTaskMappingEntry
     {
@@ -41,10 +44,14 @@ namespace SafetyProto.Runtime.Actions
     /// When PPE becomes compliant for a mapping and that action is pending in the current task group,
     /// emits an action attempt so the normal task flow can complete.
     /// </summary>
+    [Obsolete("PPESnapSlot now emits ActionAttemptedEvent directly via the equippedAction field. " +
+              "This component will be removed once all scene entries are migrated. " +
+              "See PPESnapSlot.equippedAction.")]
     public class PpeTaskMapping : MonoBehaviour
     {
         [Header("References")]
         [SerializeField] private PPEManager ppeManager;
+        [Obsolete("No longer used. PpeTaskMapping now emits without consulting TaskManager.")]
         [SerializeField] private TaskManager taskManager;
         [SerializeField] private Transform playerTransform;
 
@@ -93,13 +100,10 @@ namespace SafetyProto.Runtime.Actions
             if (ppeManager == null)
                 ppeManager = FindFirst<PPEManager>();
 
-            if (taskManager == null)
-                taskManager = FindFirst<TaskManager>();
-
             if (playerTransform == null && Camera.main != null)
                 playerTransform = Camera.main.transform;
 
-            if (ppeManager == null || taskManager == null)
+            if (ppeManager == null)
             {
                 enabled = false;
                 return;
@@ -140,13 +144,6 @@ namespace SafetyProto.Runtime.Actions
 
                 if (isCompliant && _compliantActionIds.Add(actionId))
                 {
-                    var pending = taskManager.FindPendingTaskByActionId(actionId);
-                    if (pending == null)
-                    {
-                        _compliantActionIds.Remove(actionId);
-                        continue;
-                    }
-
                     var position = playerTransform != null ? playerTransform.position : transform.position;
                     var sourceId = string.IsNullOrWhiteSpace(mapping.name) ? nameof(PpeTaskMapping) : mapping.name.Trim();
                     ActionEvents.PublishActionAttempt(actionId, sourceId, "ppe_mapping", position, interactorId);
