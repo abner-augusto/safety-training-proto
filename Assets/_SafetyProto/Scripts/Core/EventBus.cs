@@ -53,6 +53,7 @@ namespace SafetyProto.Core
         private void OnDisable()
         {
             ClearStaticEvents();
+            _instance = null;
         }
 
         private void OnDestroy()
