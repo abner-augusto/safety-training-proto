@@ -9,6 +9,6 @@ namespace SafetyProto.Core
 
         private void Awake() => eventBus ??= EventBus.Instance;
 
-        private void Update() => eventBus?.ProcessEvents(0.5f);
+        private void Update() => eventBus?.ProcessEvents(2.0);
     }
 }
