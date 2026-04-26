@@ -53,7 +53,7 @@ namespace SafetyProto.Core
         /// <summary>
         /// Indicates if the worker was wearing all required PPE at the time of completion.
         /// Used when RuntimeTask is null (the emitter does not possess the internal instance).
-        /// Default value (false) is ignored when RuntimeTask != null.
+        /// Default value (true) is ignored when RuntimeTask != null.
         /// </summary>
         public bool WasPpeCompliant;
 

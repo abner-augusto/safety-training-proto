@@ -21,6 +21,12 @@ namespace SafetyProto.Core.Events
         public string MappingId;
     }
 
+    // Intentionally synchronous — not routed through EventBus. The caller
+    // (InspectionGateValidator) is a coroutine that starts an animation immediately
+    // after raising ConsequenceStarted and waits for it to finish before raising
+    // ConsequenceEnded. Deferring through the queue would fire subscribers a frame
+    // late, breaking the animation timing. Subscribers here are audio/visual only
+    // and have no ordering dependency with queued EventBus events.
     public static class ConsequenceEvents
     {
         public static event Action<ConsequenceStartedEventArgs> OnConsequenceStarted;
