@@ -78,6 +78,7 @@ namespace SafetyProto.Runtime.PPE
         private Vector3[] _linePositions; // reusable buffer for LineRenderer.SetPositions
 
         private bool _initialized;
+        private Material _runtimeMaterial;
 
         // Manual end position override (used when endAnchor is null but the tip
         // should still follow a specific transform, e.g. during retracting)
@@ -198,6 +199,12 @@ namespace SafetyProto.Runtime.PPE
             }
 
             _initialized = false;
+        }
+
+        private void OnDestroy()
+        {
+            if (_runtimeMaterial != null)
+                Destroy(_runtimeMaterial);
         }
 
         private void FixedUpdate()
@@ -412,7 +419,8 @@ namespace SafetyProto.Runtime.PPE
             // Create a runtime material if none assigned — avoids the pink "missing material"
             if (_lineRenderer.sharedMaterial == null)
             {
-                _lineRenderer.material = CreateRopeMaterial();
+                _runtimeMaterial = CreateRopeMaterial();
+                _lineRenderer.material = _runtimeMaterial;
             }
 
             _lineRenderer.startColor = ropeColor;
