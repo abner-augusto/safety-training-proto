@@ -19,7 +19,11 @@ namespace SafetyProto.Runtime.PPE
 
         private void Start()
         {
-            this.IsEventBusReady();
+            if (!this.IsEventBusReady())
+            {
+                enabled = false;
+                return;
+            }
             _playerTransform = Camera.main != null ? Camera.main.transform : null;
         }
 
@@ -81,12 +85,12 @@ namespace SafetyProto.Runtime.PPE
             return true;
         }
 
-        public bool VerifyPPECompliance(List<PPEType> requiredPpe)
+        // Checks compliance and evicts any PPE that has drifted too far from the player.
+        // Callers should expect this to modify worn PPE state as a side effect.
+        public bool CheckAndEvictPPECompliance(List<PPEType> requiredPpe)
         {
             if (requiredPpe == null || requiredPpe.Count == 0)
-            {
                 return true;
-            }
 
             bool allValid = true;
             foreach (var ppe in requiredPpe)
@@ -102,6 +106,7 @@ namespace SafetyProto.Runtime.PPE
                     Vector3.Distance(referencePos, obj.transform.position) > complianceDistance)
                 {
                     _wornPPE.Remove(ppe);
+                    PPEEvents.RaisePpeStateChanged(new PPEStateChangedEventArgs(ppe, false));
                     allValid = false;
                 }
             }
