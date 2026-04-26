@@ -4,6 +4,7 @@ using SafetyProto.Core;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Runtime.Task;
+using SafetyProto.Utils;
 using TMPro;
 using UnityEngine;
 
@@ -42,9 +43,9 @@ namespace SafetyProto.UI
                 return;
             }
 
-            if (EventBus.Instance == null)
+            if (!this.IsEventBusReady())
             {
-                SafetyLog.Warning("[TaskUIController] EventBus.Instance não encontrado.", this);
+                enabled = false;
                 return;
             }
 
