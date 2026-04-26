@@ -55,6 +55,8 @@ namespace SafetyProto.Runtime.PPE
         private PPESnapSlot _currentSlot;
         private PPESnapSlot _hoveringSlot;
 
+        private readonly Collider[] _overlapBuffer = new Collider[16];
+
         private bool _isGrabbed;
         private bool _isSnapped;
         private bool _grabDisabled;
@@ -202,12 +204,13 @@ namespace SafetyProto.Runtime.PPE
 
             if (snapSearchRadius <= 0f) return null;
 
-            Collider[] hits = Physics.OverlapSphere(transform.position, snapSearchRadius, snapSearchMask, QueryTriggerInteraction.Collide);
+            int hitCount = Physics.OverlapSphereNonAlloc(transform.position, snapSearchRadius, _overlapBuffer, snapSearchMask, QueryTriggerInteraction.Collide);
             PPESnapSlot best = null;
             float bestDistSq = float.PositiveInfinity;
 
-            foreach (var hit in hits)
+            for (int i = 0; i < hitCount; i++)
             {
+                var hit = _overlapBuffer[i];
                 if (hit == null) continue;
                 var slot = hit.GetComponentInParent<PPESnapSlot>();
                 if (slot == null) continue;

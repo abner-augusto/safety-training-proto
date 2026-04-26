@@ -154,7 +154,7 @@ namespace SafetyProto.Runtime.PPE
             _snappedItems.Add(item);
             _hoverCounts.Remove(item);
             UpdateHighlight();
-            _ppeManager.ReportPPEStateChange(item.PpeType, true, item.gameObject);
+            _ppeManager?.ReportPPEStateChange(item.PpeType, true, item.gameObject);
 
             if (IsLocked)
                 item.SetGrabEnabled(false);
@@ -222,7 +222,7 @@ namespace SafetyProto.Runtime.PPE
 
             _unlocked = false;
             UpdateHighlight();
-            _ppeManager.ReportPPEStateChange(item.PpeType, false, item.gameObject);
+            _ppeManager?.ReportPPEStateChange(item.PpeType, false, item.gameObject);
             SafetyLog.Info($"PPESnapSlot [{name}]: released {item.PpeType} ({_snappedItems.Count}/{_slotCapacity})", this);
         }
 
