@@ -1968,6 +1968,65 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 7114770130731238586, guid: df64bf5efda75be4db0c812f9277d678, type: 3}
   m_PrefabInstance: {fileID: 353092348}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &389588688
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 389588689}
+  - component: {fileID: 389588690}
+  m_Layer: 0
+  m_Name: PoseReporter
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &389588689
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 389588688}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2024512761}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &389588690
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 389588688}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce0ec8c87868a6b49be8cf7975606730, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.EventBus.Core::SafetyProto.Core.PoseReporter
+  headTransform: {fileID: 1441408791}
+  leftHandTransform: {fileID: 959968146}
+  rightHandTransform: {fileID: 1829156621}
+  ppeObjects:
+  - {fileID: 528269813}
+  - {fileID: 1272341260}
+  - {fileID: 1777499357}
+  - {fileID: 543450652573993071}
+  ppeIds:
+  - Capacete
+  - Luva Esquerda
+  - Luva Direita
+  - Colete Parquedista
+  useWorldSpace: 1
+  poseChannel: {fileID: 11400000, guid: ff3d2aaa4eace4643b524c33bf3b5634, type: 2}
 --- !u!1 &407043232
 GameObject:
   m_ObjectHideFlags: 0
@@ -2326,12 +2385,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10fe65a14bd7fa647bfd1a65359d7913, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapSlot
-  acceptedTypes: 02000000
+  slotCapacity: 1
   hideWhenEquipped: 0
   lockAfterEquipped: 0
   onDistractorSnapAttempted:
     m_PersistentCalls:
       m_Calls: []
+  ppeActionMappings: []
   highlightRenderer: {fileID: 511818483}
   idleColor: {r: 1, g: 1, b: 1, a: 0.14117648}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.7647059}
@@ -2529,7 +2589,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   taskGroups:
-  - {fileID: 11400000, guid: 0dacfa45dfa4cd3439fac204b8d724c2, type: 2}
+  - {fileID: 11400000, guid: 6e1629f57347e014c96e89e215055d55, type: 2}
   - {fileID: 11400000, guid: 050d34fb4bf07fb4f80891b9dea5fb0f, type: 2}
   startTasksAutomatically: 1
   delayBetweenTasks: 2
@@ -10487,12 +10547,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10fe65a14bd7fa647bfd1a65359d7913, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapSlot
-  acceptedTypes: 040000000500000006000000
+  slotCapacity: 1
   hideWhenEquipped: 0
   lockAfterEquipped: 0
   onDistractorSnapAttempted:
     m_PersistentCalls:
       m_Calls: []
+  ppeActionMappings: []
   highlightRenderer: {fileID: 761910479}
   idleColor: {r: 1, g: 1, b: 1, a: 0.043137256}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.5}
@@ -10638,12 +10699,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10fe65a14bd7fa647bfd1a65359d7913, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapSlot
-  acceptedTypes: 02000000
+  slotCapacity: 1
   hideWhenEquipped: 0
   lockAfterEquipped: 0
   onDistractorSnapAttempted:
     m_PersistentCalls:
       m_Calls: []
+  ppeActionMappings: []
   highlightRenderer: {fileID: 843452365}
   idleColor: {r: 1, g: 1, b: 1, a: 0.14117648}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.7647059}
@@ -11360,12 +11422,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1013818223}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2024512761}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1013818226
 MonoBehaviour:
@@ -12768,12 +12830,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10fe65a14bd7fa647bfd1a65359d7913, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapSlot
-  acceptedTypes: 0100000003000000
+  slotCapacity: 1
   hideWhenEquipped: 0
   lockAfterEquipped: 0
   onDistractorSnapAttempted:
     m_PersistentCalls:
       m_Calls: []
+  ppeActionMappings: []
   highlightRenderer: {fileID: 1334399987}
   idleColor: {r: 1, g: 1, b: 1, a: 0.043137256}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.5}
@@ -14322,12 +14385,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10fe65a14bd7fa647bfd1a65359d7913, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapSlot
-  acceptedTypes: 04000000
+  slotCapacity: 1
   hideWhenEquipped: 0
   lockAfterEquipped: 0
   onDistractorSnapAttempted:
     m_PersistentCalls:
       m_Calls: []
+  ppeActionMappings: []
   highlightRenderer: {fileID: 1781015493}
   idleColor: {r: 1, g: 1, b: 1, a: 0.043137256}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.5}
@@ -15609,7 +15673,7 @@ Transform:
   - {fileID: 1235118631}
   - {fileID: 165463879}
   - {fileID: 1051726876}
-  - {fileID: 1013818224}
+  - {fileID: 389588689}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2036791671
@@ -17054,7 +17118,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2142717466
 Transform:
   m_ObjectHideFlags: 0
@@ -17089,11 +17153,13 @@ MonoBehaviour:
   - name: Gloves
     action: {fileID: 11400000, guid: 1fe43f5981e03854c838a839de11cfbe, type: 2}
     actionIdOverride: 
-    requiredPpe: 02000000
+    equipPpe: 2
+    additionalRequiredPpe: 
   - name: Helmet
     action: {fileID: 11400000, guid: 51e0635cc8db34047a63e4b8aadeb5f3, type: 2}
     actionIdOverride: 
-    requiredPpe: 01000000
+    equipPpe: 1
+    additionalRequiredPpe: 
   interactorId: 0
 --- !u!1 &45555398029139582
 GameObject:
@@ -20400,6 +20466,7 @@ SceneRoots:
   - {fileID: 1662743330}
   - {fileID: 30915623}
   - {fileID: 2024512761}
+  - {fileID: 1013818224}
   - {fileID: 2081280874}
   - {fileID: 1817946275}
   - {fileID: 2003881906}
