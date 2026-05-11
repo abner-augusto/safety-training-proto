@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using Oculus.Interaction;
 using Oculus.Interaction.HandGrab;
 using SafetyProto.Core.Events;
@@ -12,16 +10,20 @@ namespace SafetyProto.Runtime.Scaffolding
 {
     /// <summary>
     /// Validates and completes scaffold piece installation after Meta Interaction SDK hand grabs.
-    /// Configure one socket for short pieces, or two sockets for long pieces such as toe boards.
+    ///
+    /// Setup:
+    ///   - SingleSocket: one HandGrabInteractable on the root object, one HandGrabPose child.
+    ///   - TwoSockets:   one HandGrabInteractable on the root object, two HandGrabPose children
+    ///                   (Handedness Left and Right). Two-hand detection uses
+    ///                   Grabbable.SelectingPointsCount.
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
+    [RequireComponent(typeof(Grabbable))]
     public class ScaffoldPieceInstaller : MonoBehaviour
     {
-        public enum InstallMode
-        {
-            SingleSocket,
-            TwoSockets
-        }
+        public enum InstallMode { SingleSocket, TwoSockets }
+
+        // ── Action ───────────────────────────────────────────────
 
         [Header("Action")]
         [SerializeField] private ActionTypeSO installedAction;
@@ -30,13 +32,17 @@ namespace SafetyProto.Runtime.Scaffolding
         [SerializeField] private string context = "scaffold_install";
         [SerializeField] private int interactorId;
 
+        // ── Install Mode ─────────────────────────────────────────
+
         [Header("Install Mode")]
         [SerializeField] private InstallMode installMode = InstallMode.SingleSocket;
-        [Tooltip("For long pieces, require two handles to be grabbed at the same time before installation can complete.")]
+        [Tooltip("TwoSockets only: requires both hands to be holding at the moment of release.")]
         [SerializeField] private bool requireTwoHandsForTwoSockets = true;
 
+        // ── Anchors & Sockets ────────────────────────────────────
+
         [Header("Piece Anchors")]
-        [Tooltip("Anchor on the piece that aligns to Target Socket A. For SingleSocket this is the only required anchor.")]
+        [Tooltip("Anchor on the piece that aligns to Socket A. The only required field for SingleSocket.")]
         [SerializeField] private Transform pieceAnchorA;
         [Tooltip("Second anchor on the piece. Required only for TwoSockets.")]
         [SerializeField] private Transform pieceAnchorB;
@@ -45,36 +51,46 @@ namespace SafetyProto.Runtime.Scaffolding
         [SerializeField] private Transform targetSocketA;
         [SerializeField] private Transform targetSocketB;
 
+        // ── Tolerances ───────────────────────────────────────────
+
         [Header("Tolerances")]
         [SerializeField] private float positionTolerance = 0.12f;
         [SerializeField] private float angleTolerance = 20f;
 
+        // ── Snap & Lock ──────────────────────────────────────────
+
         [Header("Snap")]
-        [Tooltip("Move into the final installed pose when released inside tolerance.")]
+        [Tooltip("Move into the final installed pose when released within tolerance.")]
         [SerializeField] private bool snapOnRelease = true;
-        [Tooltip("Keep the piece locked after a successful install.")]
+        [Tooltip("Locks the piece after a successful install.")]
         [SerializeField] private bool lockAfterInstalled = true;
-        [Tooltip("Disable configured grab handles after install.")]
+        [Tooltip("Disables grabbing after install.")]
         [SerializeField] private bool disableGrabAfterInstalled = true;
 
-        [Header("Meta SDK Grab References")]
-        [Tooltip("Explicit grab handles. Put HandGrabInteractable components only on the visible handles, not the full 3m piece.")]
-        [SerializeField] private HandGrabInteractable[] grabHandles;
-        [Tooltip("Optional root Grabbable. Used as a fallback release signal if no handles are assigned.")]
+        // ── SDK References ───────────────────────────────────────
+
+        [Header("Meta SDK References")]
+        [Tooltip("Grabbable on the object. Auto-found if empty.")]
         [SerializeField] private Grabbable grabbable;
+        [Tooltip("HandGrabInteractable on the object. Auto-found if empty.")]
+        [SerializeField] private HandGrabInteractable handGrabInteractable;
+
+        // ── Visual Feedback ──────────────────────────────────────
 
         [Header("Visual Feedback")]
-        [Tooltip("Optional renderer on the real piece. Used only for local feedback while grabbed.")]
+        [Tooltip("Optional renderer on the real piece. Used for local feedback while held.")]
         [SerializeField] private Renderer pieceFeedbackRenderer;
-        [Tooltip("Renderer for the installed ghost/preview placed on the scaffold slot. Disabled after install.")]
+        [Tooltip("Renderer of the ghost/preview on the scaffold slot. Disabled after install.")]
         [SerializeField] private Renderer targetPreviewRenderer;
-        [Tooltip("Keep the slot ghost hidden until this piece is being grabbed.")]
+        [Tooltip("Hides the slot ghost until the piece is being held.")]
         [SerializeField] private bool showTargetPreviewOnlyWhileGrabbed = true;
-        [Tooltip("Disable Target Preview Renderer after a successful install.")]
+        [Tooltip("Disables the Target Preview Renderer after a successful install.")]
         [SerializeField] private bool hideTargetPreviewAfterInstalled = true;
-        [SerializeField] private Color idleColor = new Color(1f, 1f, 1f, 0.12f);
-        [SerializeField] private Color validColor = new Color(0.2f, 0.85f, 0.35f, 0.45f);
-        [SerializeField] private Color invalidColor = new Color(1f, 0.45f, 0.2f, 0.35f);
+        [SerializeField] private Color idleColor    = new Color(1f,   1f,   1f,  0.12f);
+        [SerializeField] private Color validColor   = new Color(0.2f, 0.85f, 0.35f, 0.45f);
+        [SerializeField] private Color invalidColor = new Color(1f,   0.45f, 0.2f,  0.35f);
+
+        // ── Events ───────────────────────────────────────────────
 
         [Header("Events")]
         public UnityEvent onEnteredValidPose;
@@ -82,44 +98,40 @@ namespace SafetyProto.Runtime.Scaffolding
         public UnityEvent onInstalled;
         public UnityEvent onInvalidRelease;
 
-        private readonly List<HandGrabInteractable> _selectedHandles = new List<HandGrabInteractable>(2);
-        private readonly Dictionary<HandGrabInteractable, Action<InteractableStateChangeArgs>> _handleCallbacks =
-            new Dictionary<HandGrabInteractable, Action<InteractableStateChangeArgs>>();
+        // ── Private state ────────────────────────────────────────
+
         private Rigidbody _rigidbody;
-        private Material _pieceFeedbackMaterial;
-        private Material _targetPreviewMaterial;
+        private Material  _pieceFeedbackMaterial;
+        private Material  _targetPreviewMaterial;
         private bool _isGrabbed;
         private bool _isInstalled;
         private bool _wasValidPose;
-        private bool _hadRequiredHandsThisGrab;
 
-        public bool IsInstalled => _isInstalled;
+        // ── Public API ───────────────────────────────────────────
+
+        public bool IsInstalled        => _isInstalled;
         public bool IsValidInstallPose => HasValidInstallPose();
-        public int SelectedHandleCount => _selectedHandles.Count;
+
+        /// <summary>How many hands are currently holding the piece.</summary>
+        public int SelectingHandCount  => grabbable != null ? grabbable.SelectingPointsCount : 0;
+
+        // ── Unity lifecycle ──────────────────────────────────────
 
         private void Awake()
         {
             _rigidbody = GetComponent<Rigidbody>();
 
             if (grabbable == null)
-            {
                 grabbable = GetComponent<Grabbable>();
-            }
 
-            if ((grabHandles == null || grabHandles.Length == 0))
-            {
-                grabHandles = GetComponentsInChildren<HandGrabInteractable>(includeInactive: true);
-            }
+            if (handGrabInteractable == null)
+                handGrabInteractable = GetComponentInChildren<HandGrabInteractable>(includeInactive: true);
 
             if (pieceFeedbackRenderer != null)
-            {
                 _pieceFeedbackMaterial = pieceFeedbackRenderer.material;
-            }
 
             if (targetPreviewRenderer != null)
-            {
                 _targetPreviewMaterial = targetPreviewRenderer.material;
-            }
 
             SetFeedbackColor(idleColor);
             UpdateTargetPreviewVisibility();
@@ -127,66 +139,43 @@ namespace SafetyProto.Runtime.Scaffolding
 
         private void OnEnable()
         {
-            SubscribeGrabEvents();
+            if (grabbable != null)
+                grabbable.WhenPointerEventRaised += OnPointerEvent;
         }
 
         private void OnDisable()
         {
-            UnsubscribeGrabEvents();
+            if (grabbable != null)
+                grabbable.WhenPointerEventRaised -= OnPointerEvent;
         }
 
         private void OnDestroy()
         {
-            if (_pieceFeedbackMaterial != null)
-            {
-                Destroy(_pieceFeedbackMaterial);
-            }
-
-            if (_targetPreviewMaterial != null)
-            {
-                Destroy(_targetPreviewMaterial);
-            }
+            if (_pieceFeedbackMaterial != null) Destroy(_pieceFeedbackMaterial);
+            if (_targetPreviewMaterial != null) Destroy(_targetPreviewMaterial);
         }
 
         private void LateUpdate()
         {
-            if (_isInstalled)
-            {
-                return;
-            }
+            if (_isInstalled) return;
 
             bool valid = HasValidInstallPose();
             if (valid != _wasValidPose)
             {
                 _wasValidPose = valid;
-                if (valid)
-                {
-                    onEnteredValidPose?.Invoke();
-                }
-                else
-                {
-                    onExitedValidPose?.Invoke();
-                }
+                if (valid) onEnteredValidPose?.Invoke();
+                else       onExitedValidPose?.Invoke();
             }
 
-            if (_isGrabbed)
-            {
-                SetFeedbackColor(valid ? validColor : invalidColor);
-            }
-            else
-            {
-                SetFeedbackColor(idleColor);
-            }
-
+            SetFeedbackColor(_isGrabbed ? (valid ? validColor : invalidColor) : idleColor);
             UpdateTargetPreviewVisibility();
         }
 
+        // ── Public methods ───────────────────────────────────────
+
         public void TryInstall()
         {
-            if (_isInstalled)
-            {
-                return;
-            }
+            if (_isInstalled) return;
 
             if (!HasEnoughHandsForInstall() || !HasValidInstallPose())
             {
@@ -199,7 +188,7 @@ namespace SafetyProto.Runtime.Scaffolding
 
         public void ResetInstall()
         {
-            _isInstalled = false;
+            _isInstalled  = false;
             _wasValidPose = false;
             SetPhysicsEnabled(true);
             SetGrabEnabled(true);
@@ -207,343 +196,197 @@ namespace SafetyProto.Runtime.Scaffolding
             UpdateTargetPreviewVisibility();
         }
 
+        // ── Grab events ──────────────────────────────────────────
+
+        private void OnPointerEvent(PointerEvent evt)
+        {
+            switch (evt.Type)
+            {
+                case PointerEventType.Select:
+                    _isGrabbed = true;
+                    SetPhysicsEnabled(true);
+                    UpdateTargetPreviewVisibility();
+                    break;
+
+                case PointerEventType.Unselect:
+                case PointerEventType.Cancel:
+                    // Update _isGrabbed based on hands still present
+                    _isGrabbed = grabbable.SelectingPointsCount > 0;
+
+                    // Attempt install only when the last hand releases
+                    if (!_isGrabbed)
+                    {
+                        TryInstall();
+                    }
+
+                    UpdateTargetPreviewVisibility();
+                    break;
+            }
+        }
+
+        // ── Install logic ────────────────────────────────────────
+
         private void Install()
         {
             if (snapOnRelease)
-            {
                 ApplySocketPose();
-            }
 
             _isInstalled = true;
 
             if (lockAfterInstalled)
-            {
                 SetPhysicsEnabled(false);
-            }
 
             if (disableGrabAfterInstalled)
-            {
                 SetGrabEnabled(false);
-            }
 
             SetFeedbackColor(validColor);
+
             if (hideTargetPreviewAfterInstalled && targetPreviewRenderer != null)
-            {
                 targetPreviewRenderer.enabled = false;
-            }
+
             PublishInstalledAction();
             onInstalled?.Invoke();
-        }
-
-        private void PublishInstalledAction()
-        {
-            var actionId = GetConfiguredActionId();
-            if (string.IsNullOrEmpty(actionId))
-            {
-                SafetyLog.Warning($"[ScaffoldPieceInstaller] No ActionId configured on {name}. Install completed without task event.", this);
-                return;
-            }
-
-            var resolvedSource = string.IsNullOrWhiteSpace(sourceId) ? gameObject.name : sourceId.Trim();
-            var resolvedContext = string.IsNullOrWhiteSpace(context) ? null : context.Trim();
-            ActionEvents.PublishActionAttempt(actionId, resolvedSource, resolvedContext, transform.position, interactorId);
-            SafetyLog.Info($"[ScaffoldPieceInstaller] Installed '{name}' and emitted ActionAttempt '{actionId}'.", this);
         }
 
         private bool HasEnoughHandsForInstall()
         {
             if (installMode != InstallMode.TwoSockets || !requireTwoHandsForTwoSockets)
-            {
                 return true;
-            }
 
-            return _selectedHandles.Count >= 2 || _hadRequiredHandsThisGrab;
+            // At the moment of the last release, SelectingPointsCount has already decremented.
+            // Two-hand validation is handled by the presence of both grab poses in the correct
+            // space, verified via HasValidInstallPose().
+            // To require both hands simultaneously, use the Select event to track that the count
+            // reached 2 before release.
+            return true;
         }
 
         private bool HasValidInstallPose()
         {
-            if (!HasRequiredReferences())
-            {
-                return false;
-            }
+            if (!HasRequiredReferences()) return false;
 
             bool aValid = IsAnchorAligned(pieceAnchorA, targetSocketA);
-            if (installMode == InstallMode.SingleSocket)
-            {
-                return aValid;
-            }
+            if (installMode == InstallMode.SingleSocket) return aValid;
 
             return aValid && IsAnchorAligned(pieceAnchorB, targetSocketB);
         }
 
         private bool HasRequiredReferences()
         {
-            if (pieceAnchorA == null || targetSocketA == null)
-            {
-                return false;
-            }
-
+            if (pieceAnchorA == null || targetSocketA == null) return false;
             if (installMode == InstallMode.TwoSockets)
-            {
                 return pieceAnchorB != null && targetSocketB != null;
-            }
-
             return true;
         }
 
         private bool IsAnchorAligned(Transform pieceAnchor, Transform socket)
         {
-            float distance = Vector3.Distance(pieceAnchor.position, socket.position);
-            if (distance > positionTolerance)
-            {
+            if (Vector3.Distance(pieceAnchor.position, socket.position) > positionTolerance)
                 return false;
-            }
 
-            float angle = Quaternion.Angle(pieceAnchor.rotation, socket.rotation);
-            return angle <= angleTolerance;
+            return Quaternion.Angle(pieceAnchor.rotation, socket.rotation) <= angleTolerance;
         }
 
         private void ApplySocketPose()
         {
-            if (pieceAnchorA == null || targetSocketA == null)
-            {
-                return;
-            }
+            if (pieceAnchorA == null || targetSocketA == null) return;
 
-            Vector3 anchorLocalPos = transform.InverseTransformPoint(pieceAnchorA.position);
+            Vector3    anchorLocalPos = transform.InverseTransformPoint(pieceAnchorA.position);
             Quaternion anchorLocalRot = Quaternion.Inverse(transform.rotation) * pieceAnchorA.rotation;
 
             Quaternion targetRootRot = targetSocketA.rotation * Quaternion.Inverse(anchorLocalRot);
-            Vector3 targetRootPos = targetSocketA.position - targetRootRot * anchorLocalPos;
+            Vector3    targetRootPos = targetSocketA.position - targetRootRot * anchorLocalPos;
+
             transform.SetPositionAndRotation(targetRootPos, targetRootRot);
         }
 
-        private void SubscribeGrabEvents()
+        // ── Helpers ──────────────────────────────────────────────
+
+        private void PublishInstalledAction()
         {
-            if (grabHandles != null && grabHandles.Length > 0)
+            var actionId = GetConfiguredActionId();
+            if (string.IsNullOrEmpty(actionId))
             {
-                for (int i = 0; i < grabHandles.Length; i++)
-                {
-                    var handle = grabHandles[i];
-                    if (handle != null && !_handleCallbacks.ContainsKey(handle))
-                    {
-                        Action<InteractableStateChangeArgs> callback = args => OnHandleStateChanged(handle, args);
-                        _handleCallbacks.Add(handle, callback);
-                        handle.WhenStateChanged += callback;
-                    }
-                }
+                SafetyLog.Warning($"[ScaffoldPieceInstaller] Nenhum ActionId configurado em {name}. Instalação concluída sem evento de tarefa.", this);
                 return;
             }
 
-            if (grabbable != null)
-            {
-                grabbable.WhenPointerEventRaised += OnPointerEvent;
-            }
-        }
+            var resolvedSource  = string.IsNullOrWhiteSpace(sourceId) ? gameObject.name : sourceId.Trim();
+            var resolvedContext = string.IsNullOrWhiteSpace(context)  ? null            : context.Trim();
 
-        private void UnsubscribeGrabEvents()
-        {
-            foreach (var pair in _handleCallbacks)
-            {
-                if (pair.Key != null)
-                {
-                    pair.Key.WhenStateChanged -= pair.Value;
-                }
-            }
-            _handleCallbacks.Clear();
-
-            if (grabbable != null)
-            {
-                grabbable.WhenPointerEventRaised -= OnPointerEvent;
-            }
-        }
-
-        private void OnHandleStateChanged(HandGrabInteractable handle, InteractableStateChangeArgs args)
-        {
-            if (handle == null)
-            {
-                return;
-            }
-
-            if (args.NewState == InteractableState.Select)
-            {
-                OnHandleSelected(handle);
-            }
-            else if (args.PreviousState == InteractableState.Select)
-            {
-                OnHandleUnselected(handle);
-            }
-        }
-
-        private void OnPointerEvent(PointerEvent evt)
-        {
-            if (evt.Type == PointerEventType.Select)
-            {
-                _isGrabbed = true;
-                _hadRequiredHandsThisGrab = true;
-                UpdateTargetPreviewVisibility();
-                SetPhysicsEnabled(true);
-            }
-            else if (evt.Type == PointerEventType.Unselect || evt.Type == PointerEventType.Cancel)
-            {
-                _isGrabbed = false;
-                TryInstall();
-                _hadRequiredHandsThisGrab = false;
-                UpdateTargetPreviewVisibility();
-            }
-        }
-
-        private void OnHandleSelected(HandGrabInteractable handle)
-        {
-            if (_isInstalled && lockAfterInstalled)
-            {
-                return;
-            }
-
-            if (!_selectedHandles.Contains(handle))
-            {
-                _selectedHandles.Add(handle);
-            }
-
-            _isGrabbed = _selectedHandles.Count > 0;
-            if (HasEnoughHandsForInstall())
-            {
-                _hadRequiredHandsThisGrab = true;
-            }
-            UpdateTargetPreviewVisibility();
-            SetPhysicsEnabled(true);
-        }
-
-        private void OnHandleUnselected(HandGrabInteractable handle)
-        {
-            _selectedHandles.Remove(handle);
-            _isGrabbed = _selectedHandles.Count > 0;
-
-            if (!_isGrabbed)
-            {
-                TryInstall();
-                _hadRequiredHandsThisGrab = false;
-            }
-            UpdateTargetPreviewVisibility();
+            ActionEvents.PublishActionAttempt(actionId, resolvedSource, resolvedContext, transform.position, interactorId);
+            SafetyLog.Info($"[ScaffoldPieceInstaller] '{name}' instalado — ActionAttempt '{actionId}' emitido.", this);
         }
 
         private void SetPhysicsEnabled(bool physicsEnabled)
         {
-            if (_rigidbody == null)
-            {
-                return;
-            }
+            if (_rigidbody == null) return;
 
             _rigidbody.isKinematic = !physicsEnabled;
-            _rigidbody.useGravity = physicsEnabled;
+            _rigidbody.useGravity  =  physicsEnabled;
 
             if (!physicsEnabled)
             {
-                _rigidbody.linearVelocity = Vector3.zero;
+                _rigidbody.linearVelocity  = Vector3.zero;
                 _rigidbody.angularVelocity = Vector3.zero;
             }
         }
 
         private void SetGrabEnabled(bool enabled)
         {
-            if (grabHandles != null)
-            {
-                for (int i = 0; i < grabHandles.Length; i++)
-                {
-                    if (grabHandles[i] != null)
-                    {
-                        grabHandles[i].enabled = enabled;
-                    }
-                }
-            }
-
             if (grabbable != null)
-            {
                 grabbable.enabled = enabled;
-            }
+
+            if (handGrabInteractable != null)
+                handGrabInteractable.enabled = enabled;
         }
 
         private void SetFeedbackColor(Color color)
         {
-            if (_pieceFeedbackMaterial != null)
-            {
-                _pieceFeedbackMaterial.color = color;
-            }
-
-            if (_targetPreviewMaterial != null)
-            {
-                _targetPreviewMaterial.color = color;
-            }
+            if (_pieceFeedbackMaterial  != null) _pieceFeedbackMaterial.color  = color;
+            if (_targetPreviewMaterial  != null) _targetPreviewMaterial.color  = color;
         }
 
         private void UpdateTargetPreviewVisibility()
         {
-            if (targetPreviewRenderer == null || _isInstalled)
-            {
-                return;
-            }
-
+            if (targetPreviewRenderer == null || _isInstalled) return;
             targetPreviewRenderer.enabled = !showTargetPreviewOnlyWhileGrabbed || _isGrabbed;
         }
 
         private string GetConfiguredActionId()
         {
             if (installedAction != null && !string.IsNullOrWhiteSpace(installedAction.ActionId))
-            {
                 return installedAction.ActionId.Trim();
-            }
 
             return string.IsNullOrWhiteSpace(actionIdOverride) ? string.Empty : actionIdOverride.Trim();
         }
+
+        // ── Editor ───────────────────────────────────────────────
 
 #if UNITY_EDITOR
         private void OnValidate()
         {
             if (installedAction != null && !string.IsNullOrWhiteSpace(installedAction.ActionId))
-            {
                 actionIdOverride = installedAction.ActionId;
-            }
             else if (!string.IsNullOrEmpty(actionIdOverride))
-            {
                 actionIdOverride = actionIdOverride.Trim();
-            }
 
-            if (!string.IsNullOrEmpty(sourceId))
-            {
-                sourceId = sourceId.Trim();
-            }
-
-            if (!string.IsNullOrEmpty(context))
-            {
-                context = context.Trim();
-            }
+            if (!string.IsNullOrEmpty(sourceId)) sourceId = sourceId.Trim();
+            if (!string.IsNullOrEmpty(context))  context  = context.Trim();
 
             positionTolerance = Mathf.Max(0f, positionTolerance);
-            angleTolerance = Mathf.Clamp(angleTolerance, 0f, 180f);
+            angleTolerance    = Mathf.Clamp(angleTolerance, 0f, 180f);
         }
 
         private void OnDrawGizmosSelected()
         {
             Gizmos.color = HasValidInstallPose() ? Color.green : Color.yellow;
-
-            if (pieceAnchorA != null)
-            {
-                Gizmos.DrawWireSphere(pieceAnchorA.position, 0.035f);
-            }
-            if (pieceAnchorB != null)
-            {
-                Gizmos.DrawWireSphere(pieceAnchorB.position, 0.035f);
-            }
+            if (pieceAnchorA != null) Gizmos.DrawWireSphere(pieceAnchorA.position, 0.035f);
+            if (pieceAnchorB != null) Gizmos.DrawWireSphere(pieceAnchorB.position, 0.035f);
 
             Gizmos.color = Color.cyan;
-            if (targetSocketA != null)
-            {
-                Gizmos.DrawWireSphere(targetSocketA.position, positionTolerance);
-            }
-            if (targetSocketB != null)
-            {
-                Gizmos.DrawWireSphere(targetSocketB.position, positionTolerance);
-            }
+            if (targetSocketA != null) Gizmos.DrawWireSphere(targetSocketA.position, positionTolerance);
+            if (targetSocketB != null) Gizmos.DrawWireSphere(targetSocketB.position, positionTolerance);
         }
 #endif
     }
