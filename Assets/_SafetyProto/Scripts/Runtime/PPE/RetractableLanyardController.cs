@@ -84,6 +84,10 @@ namespace SafetyProto.Runtime.PPE
         [Tooltip("Ease curve for the retract animation.")]
         [SerializeField] private AnimationCurve retractCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
+        [Header("Carabiner Animator")]
+        [Tooltip("Animator on the carabiner mesh. Expects triggers: Open_Close and Close_Open.")]
+        [SerializeField] private Animator carabinerAnimator;
+
         [Header("Action Integration")]
         [Tooltip("ActionType SO for 'connect_harness'. If set, emits ActionAttempt on lock.")]
         [SerializeField] private ActionTypeSO connectHarnessAction;
@@ -105,8 +109,12 @@ namespace SafetyProto.Runtime.PPE
         private LineRenderer _lineRenderer;
 
         private bool _isGrabbed;
+        private bool _nearAnchor;
         private Coroutine _retractCoroutine;
         private AnchorPoint _lockedAnchor;
+
+        private static readonly int TriggerOpenClose  = Animator.StringToHash("Open_Close");
+        private static readonly int TriggerCloseOpen  = Animator.StringToHash("Close_Open");
 
         // Reusable buffer for OverlapSphere (no alloc per frame)
         private readonly Collider[] _overlapBuffer = new Collider[16];
@@ -169,6 +177,7 @@ namespace SafetyProto.Runtime.PPE
                     break;
                 case LanyardState.Pulling:
                     UpdatePullingVisual();
+                    CheckAnchorProximity();
                     break;
             }
         }
@@ -302,6 +311,7 @@ namespace SafetyProto.Runtime.PPE
         private void EnterPulling()
         {
             state = LanyardState.Pulling;
+            _nearAnchor = false;
 
             // Un-parent so the hand can move it freely
             transform.SetParent(null);
@@ -331,6 +341,24 @@ namespace SafetyProto.Runtime.PPE
             _lineRenderer.SetPosition(1, transform.position);
         }
 
+        private void CheckAnchorProximity()
+        {
+            bool isNear = FindNearestAnchor() != null;
+
+            if (isNear && !_nearAnchor)
+                FireTrigger(TriggerCloseOpen);  // gate opens as tip approaches anchor
+            else if (!isNear && _nearAnchor)
+                FireTrigger(TriggerOpenClose);  // gate closes when tip leaves without locking
+
+            _nearAnchor = isNear;
+        }
+
+        private void FireTrigger(int hash)
+        {
+            if (carabinerAnimator != null)
+                carabinerAnimator.SetTrigger(hash);
+        }
+
         // ── LOCKED ────────────────────────────────────────────────
 
         private void EnterLocked(AnchorPoint anchor)
@@ -357,6 +385,9 @@ namespace SafetyProto.Runtime.PPE
             // Emit action attempt for the task system
             EmitConnectAction(anchor);
 
+            // Snap gate closed
+            FireTrigger(TriggerOpenClose);
+
             // Notify listeners
             onLanyardLocked?.Invoke(anchor.isCorrectAnchor);
 
@@ -376,6 +407,7 @@ namespace SafetyProto.Runtime.PPE
             _verletLanyard.enabled = false;
             _lockedAnchor = null;
 
+            FireTrigger(TriggerCloseOpen);  // gate opens as player pulls tip free
             SafetyLog.Info("VerletLanyard: Unlocked from anchor.", this);
         }
 
