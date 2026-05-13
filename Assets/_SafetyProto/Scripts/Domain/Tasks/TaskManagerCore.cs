@@ -376,6 +376,22 @@ namespace SafetyProto.Domain.Tasks
             }
         }
 
+        public void ForceCompleteAllPendingTasks()
+        {
+            for (int i = 0; i < _sessionTasks.Count; i++)
+            {
+                var t = _sessionTasks[i];
+                if (t.State == TaskState.NotStarted || t.State == TaskState.InProgress)
+                {
+                    t.State = TaskState.CompletedFailure;
+                    t.CompletionTime = _timer?.ElapsedSeconds ?? 0f;
+                }
+            }
+
+            _currentTask = null;
+            _currentTaskIndex = -1;
+        }
+
         public void ResetSession()
         {
             _taskDelayCts?.Cancel();

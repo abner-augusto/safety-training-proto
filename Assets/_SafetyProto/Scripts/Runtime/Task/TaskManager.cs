@@ -31,6 +31,8 @@ namespace SafetyProto.Runtime.Task
         public RuntimeSafetyTask? CurrentRuntimeTask => _core?.CurrentRuntimeTask;
         public SessionCompletedEventArgs? LastSessionSummary => _core?.LastSessionSummary;
 
+        private UnityEngine.Events.UnityAction<SessionCompletedEventArgs>? _onSessionCompleted;
+
         private void Start()
         {
             if (!this.IsEventBusReady()) return;
@@ -67,6 +69,9 @@ namespace SafetyProto.Runtime.Task
 
             _core.Subscribe();
 
+            _onSessionCompleted = _ => _core?.ForceCompleteAllPendingTasks();
+            EventBus.Instance!.onSessionCompleted.AddListener(_onSessionCompleted);
+
             if (startTasksAutomatically)
             {
                 _core.StartSession();
@@ -75,6 +80,9 @@ namespace SafetyProto.Runtime.Task
 
         private void OnDestroy()
         {
+            if (EventBus.Instance != null && _onSessionCompleted != null)
+                EventBus.Instance.onSessionCompleted.RemoveListener(_onSessionCompleted);
+
             _core?.Dispose();
             _core = null;
         }
