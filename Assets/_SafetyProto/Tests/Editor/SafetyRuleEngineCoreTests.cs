@@ -4,7 +4,6 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Domain.Safety;
-using SafetyProto.Runtime.Safety;
 using SafetyProto.Tests.Editor.Support;
 
 namespace SafetyProto.Tests.Editor
@@ -135,35 +134,58 @@ namespace SafetyProto.Tests.Editor
             Assert.IsEmpty(_violations);
         }
 
+        // ── Race condition tests ──────────────────────────────────────────────────
+
         [Test]
-        public void InjectedPpeChecker_OverridesEventState()
+        public void RaceCondition_PpeZoneExitAfterActionInSameBatch_NoFalseViolation()
         {
-            // Tear down the default engine from SetUp so only the injected-checker
-            // engine receives events — otherwise both engines process the same action
-            // and the default one emits PPE_MISSING because no helmet-worn event fires.
-            _engine.Dispose();
-
-            var engine = new SafetyRuleEngineCore(
-                _bus,
-                ppeChecker: new AlwaysCompliantChecker());
-            engine.Subscribe();
-
-            var task = _tasks.Task("t", "action", PPEType.Helmet);
-            var group = _tasks.Group("g", TaskExecutionModeShared.Sequential, task);
+            // Models the physics-frame race: player picks up new PPE while the
+            // previously-held item exits its zone. The action and the zone-exit
+            // arrive in the event queue in the same batch before EventBusRunner
+            // processes them. Compliance must be evaluated against the state at
+            // action time (boots still on in _ppeStates) — not against the
+            // physics-ahead PPEManager state (boots already off).
+            var task = _tasks.Task("equip_gloves", "equip_gloves", PPEType.Boots);
+            var group = _tasks.Group("PPE selection", TaskExecutionModeShared.Sequential, task);
 
             _bus.Publish(new TaskGroupEventArgs(group));
             _bus.Publish(new TaskEventArgs(task));
-            _bus.Publish(new ActionAttemptedEvent("action"));
+            _bus.Publish(new PPEStateChangedEventArgs(PPEType.Boots, isWearing: true));
+
+            _bus.BatchPublish(() =>
+            {
+                _bus.Publish(new ActionAttemptedEvent("equip_gloves"));
+                _bus.Publish(new PPEStateChangedEventArgs(PPEType.Boots, isWearing: false));
+            });
 
             Assert.IsEmpty(_violations);
-            Assert.IsTrue(_taskCompletions[_taskCompletions.Count - 1].WasPpeCompliant);
-
-            engine.Dispose();
+            Assert.AreEqual(1, _taskCompletions.Count);
+            Assert.IsTrue(_taskCompletions[0].WasPpeCompliant);
         }
 
-        private sealed class AlwaysCompliantChecker : IPPEComplianceChecker
+        [Test]
+        public void RaceCondition_PpeZoneExitBeforeActionInSameBatch_ViolationFires()
         {
-            public bool IsCompliant(IReadOnlyCollection<PPEType> requiredPpe) => true;
+            // Sanity-check: if the zone-exit arrives *before* the action in the same
+            // batch, the engine correctly sees missing PPE at action time and raises
+            // a violation — the fix must not suppress legitimate failures.
+            var task = _tasks.Task("equip_gloves", "equip_gloves", PPEType.Boots);
+            var group = _tasks.Group("PPE selection", TaskExecutionModeShared.Sequential, task);
+
+            _bus.Publish(new TaskGroupEventArgs(group));
+            _bus.Publish(new TaskEventArgs(task));
+            _bus.Publish(new PPEStateChangedEventArgs(PPEType.Boots, isWearing: true));
+
+            _bus.BatchPublish(() =>
+            {
+                _bus.Publish(new PPEStateChangedEventArgs(PPEType.Boots, isWearing: false));
+                _bus.Publish(new ActionAttemptedEvent("equip_gloves"));
+            });
+
+            Assert.AreEqual(1, _violations.Count);
+            Assert.AreEqual("PPE_MISSING", _violations[0].ViolationCode);
+            Assert.AreEqual(1, _taskCompletions.Count);
+            Assert.IsFalse(_taskCompletions[0].WasPpeCompliant);
         }
     }
 }

@@ -67,6 +67,25 @@ namespace SafetyProto.Tests.Editor.Support
             }
         }
 
+        /// <summary>
+        /// Queues all events raised inside <paramref name="enqueueAll"/> before draining,
+        /// mirroring a Unity physics frame where multiple triggers fire before
+        /// EventBusRunner.ProcessEvents() runs in Update.
+        /// </summary>
+        public void BatchPublish(Action enqueueAll)
+        {
+            _draining = true;
+            try
+            {
+                enqueueAll();
+            }
+            finally
+            {
+                _draining = false;
+            }
+            Drain();
+        }
+
         public void Clear()
         {
             _subscribers.Clear();
