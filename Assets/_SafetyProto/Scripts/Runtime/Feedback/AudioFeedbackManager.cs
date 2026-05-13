@@ -27,6 +27,7 @@ namespace SafetyProto.Runtime.Feedback
             }
 
             EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
+            EventBus.Instance.onTaskTimeout.AddListener(OnTaskTimeout);
             EventBus.Instance.onSafetyViolation.AddListener(OnSafetyViolation);
             EventBus.Instance.onCriticalSafetyFailure.AddListener(OnCriticalFailure);
         }
@@ -36,6 +37,7 @@ namespace SafetyProto.Runtime.Feedback
             if (EventBus.Instance != null)
             {
                 EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
+                EventBus.Instance.onTaskTimeout.RemoveListener(OnTaskTimeout);
                 EventBus.Instance.onSafetyViolation.RemoveListener(OnSafetyViolation);
                 EventBus.Instance.onCriticalSafetyFailure.RemoveListener(OnCriticalFailure);
             }
@@ -43,10 +45,17 @@ namespace SafetyProto.Runtime.Feedback
 
         private void OnTaskCompleted(TaskEventArgs args)
         {
-            if (args.RuntimeTask?.State == TaskState.CompletedFailure) return;
-            PlayClip(successClip, successVolume);
+            // RuntimeTask is null when SafetyRuleEngineCore publishes the completion, so
+            // WasPpeCompliant is the authoritative flag for whether the task was safe.
+            bool successful = args.RuntimeTask != null
+                ? args.RuntimeTask.State == TaskState.CompletedSuccess
+                : args.WasPpeCompliant;
+
+            if (successful)
+                PlayClip(successClip, successVolume);
         }
 
+        private void OnTaskTimeout(TaskEventArgs _) => PlayClip(failureClip, failureVolume);
         private void OnSafetyViolation(SafetyViolationEventArgs _) => PlayClip(failureClip, failureVolume);
         private void OnCriticalFailure(CriticalSafetyFailureEventArgs _) => PlayClip(failureClip, failureVolume);
 
