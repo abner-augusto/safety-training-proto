@@ -56,6 +56,7 @@ namespace SafetyProto.Runtime.Task
             EventBus.Instance.onSessionStarted.AddListener(OnSessionStarted);
             EventBus.Instance.onGroupStarted.AddListener(OnGroupStarted);
             EventBus.Instance.onGroupCompleted.AddListener(OnGroupCompleted);
+            EventBus.Instance.onSessionCompleted.AddListener(OnSessionCompleted);
             EventBus.Instance.onTaskStarted.AddListener(OnTaskStartedForFreeOrder);
             EventBus.Instance.onSessionPaused.AddListener(PauseTimer);
             EventBus.Instance.onSessionResumed.AddListener(ResumeTimer);
@@ -67,6 +68,7 @@ namespace SafetyProto.Runtime.Task
             {
                 EventBus.Instance.onGroupStarted.RemoveListener(OnGroupStarted);
                 EventBus.Instance.onGroupCompleted.RemoveListener(OnGroupCompleted);
+                EventBus.Instance.onSessionCompleted.RemoveListener(OnSessionCompleted);
                 EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStartedForFreeOrder);
                 EventBus.Instance.onSessionPaused.RemoveListener(PauseTimer);
                 EventBus.Instance.onSessionResumed.RemoveListener(ResumeTimer);
@@ -115,6 +117,12 @@ namespace SafetyProto.Runtime.Task
                 StopCurrentTimer();
                 _timedGroup = null;
             }
+        }
+
+        private void OnSessionCompleted(SessionCompletedEventArgs _)
+        {
+            StopCurrentTimer();
+            _timedGroup = null;
         }
 
         private void StartTimerForGroup(TaskGroupEventArgs args)
