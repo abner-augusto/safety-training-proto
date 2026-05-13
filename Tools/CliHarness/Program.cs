@@ -50,12 +50,8 @@ public static class Program
 
         var taskGroups = BuildTaskGroups(scenario);
 
-        var ppeManager = new HarnessPPEManager(bus);
-        ppeManager.Subscribe();
-
         var ruleEngine = new SafetyRuleEngineCore(
             bus: bus,
-            ppeChecker: ppeManager,
             timer: timer,
             logger: logger,
             verboseLogging: false);
@@ -149,7 +145,6 @@ public static class Program
         scoreRuleEngine.Dispose();
         taskManager.Dispose();
         ruleEngine.Dispose();
-        ppeManager.Dispose();
         EventContext.Clear();
 
         return 0;

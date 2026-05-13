@@ -12,7 +12,6 @@ namespace SafetyProto.Domain.Safety
     public sealed class SafetyRuleEngineCore : IDisposable
     {
         private readonly IEventBus _bus;
-        private readonly IPPEComplianceChecker? _ppeChecker;
         private readonly ITimerSource? _timer;
         private readonly IHarnessLogger? _logger;
         private readonly bool _verboseLogging;
@@ -32,13 +31,11 @@ namespace SafetyProto.Domain.Safety
 
         public SafetyRuleEngineCore(
             IEventBus bus,
-            IPPEComplianceChecker? ppeChecker = null,
             ITimerSource? timer = null,
             IHarnessLogger? logger = null,
             bool verboseLogging = false)
         {
             _bus = bus ?? throw new ArgumentNullException(nameof(bus));
-            _ppeChecker = ppeChecker;
             _timer = timer;
             _logger = logger;
             _verboseLogging = verboseLogging;
@@ -243,21 +240,16 @@ namespace SafetyProto.Domain.Safety
         private bool IsPpeCompliant(IReadOnlyCollection<PPEType>? requiredPpe)
         {
             if (requiredPpe == null || requiredPpe.Count == 0)
-            {
                 return true;
-            }
 
-            if (_ppeChecker != null)
-            {
-                return _ppeChecker.IsCompliant(requiredPpe);
-            }
-
+            // Use the event-driven state cache so compliance is checked against
+            // the PPE state consistent with the current event-processing order.
+            // Querying PPEManager directly races against physics callbacks that
+            // update _wornPPE before the EventBus dispatches PpeStateChanged events.
             foreach (var ppe in requiredPpe)
             {
                 if (!_ppeStates.TryGetValue(ppe, out var isWearing) || !isWearing)
-                {
                     return false;
-                }
             }
 
             return true;
@@ -285,12 +277,6 @@ namespace SafetyProto.Domain.Safety
             return !string.IsNullOrEmpty(expectedId) &&
                    string.Equals(expectedId, actionId, StringComparison.OrdinalIgnoreCase);
         }
-
-        public void NotifyGroupStarted(TaskGroupEventArgs args) => HandleGroupLifecycle(args);
-
-        public void NotifyGroupCompleted(TaskGroupEventArgs args) => HandleGroupLifecycle(args);
-
-        public void NotifyTaskStarted(TaskEventArgs args) => HandleTaskLifecycle(args);
 
         public void Dispose()
         {
