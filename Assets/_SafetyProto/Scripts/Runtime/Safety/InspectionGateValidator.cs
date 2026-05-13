@@ -44,11 +44,18 @@ namespace SafetyProto.Runtime.Safety
         [Header("References")]
         [SerializeField] private TaskManager taskManager;
         [SerializeField] private MonoBehaviour popupFeedbackProvider;
+        [SerializeField] private TimerSystem timerSystem;
+        [Tooltip("Panels to activate after SessionCompleted fires (e.g. the session report canvas). Activated after the event so their OnEnable can read the cached args.")]
+        [SerializeField] private GameObject[] sessionEndPanels;
 
         private IPopupFeedback _popupFeedback;
 
         [Header("Gate Configuration")]
         [SerializeField] private int penaltyPerAttempt = 100;
+        [Tooltip("Seconds to wait after the success popup clears before raising SessionCompleted.")]
+        [SerializeField] private float delayBeforeSessionCompleted = 1.5f;
+        [Tooltip("When enabled, SessionCompleted fires after ANY failed attempt (all consequence types). When disabled, only a PlayerFallSimulation consequence ends the session.")]
+        [SerializeField] private bool endSessionOnAnyFailure = false;
 
         [Header("Consequence Timing")]
         [SerializeField] private float delayBetweenConsequences = 2.5f;
@@ -133,8 +140,9 @@ namespace SafetyProto.Runtime.Safety
 
             if (pendingTasks.Count == 0)
             {
+                _isProcessing = true;
                 PlaySound(successSound);
-                OnInspectionPassed();
+                StartCoroutine(OnInspectionPassedSequence(currentGroup));
                 return;
             }
 
@@ -150,13 +158,17 @@ namespace SafetyProto.Runtime.Safety
 
         // ── Passed ────────────────────────────────────────────────
 
-        private void OnInspectionPassed()
+        private IEnumerator OnInspectionPassedSequence(TaskGroup currentGroup)
         {
             if (verboseLogging)
-                SafetyLog.Info("[InspectionGateValidator] Inspection passed. Advancing.", this);
+                SafetyLog.Info("[InspectionGateValidator] Inspeção aprovada. Aguardando popup antes de finalizar sessão.", this);
 
-            // The TaskManager advances automatically when the group is complete.
-            // No additional call needed — gate just unblocks.
+            ShowConsequenceFeedback(currentGroup.groupName, "Inspeção concluída com sucesso!");
+            yield return new WaitForSeconds(delayBeforeSessionCompleted);
+            HideConsequenceFeedback();
+
+            EndSession("validação");
+            _isProcessing = false;
         }
 
         // ── Consequence sequence ──────────────────────────────────
@@ -166,6 +178,7 @@ namespace SafetyProto.Runtime.Safety
             TaskGroup currentGroup)
         {
             _isProcessing = true;
+            bool hadFallSimulation = false;
 
             // Build ordered mapping list — PlayerFallSimulation always last
             var pendingMappings = new List<(RuntimeSafetyTask task, ConsequenceMapping mapping)>();
@@ -218,6 +231,7 @@ namespace SafetyProto.Runtime.Safety
                         break;
 
                     case ConsequenceType.PlayerFallSimulation:
+                        hadFallSimulation = true;
                         yield return ExecutePlayerFallSimulation(mapping);
                         SafetyEvents.RaiseCriticalSafetyFailure(new CriticalSafetyFailureEventArgs
                         {
@@ -241,7 +255,35 @@ namespace SafetyProto.Runtime.Safety
 
             yield return new WaitForSeconds(delayAfterAllConsequences);
             HideConsequenceFeedback();
+
+            if (endSessionOnAnyFailure || hadFallSimulation)
+                EndSession(hadFallSimulation ? "simulação de queda" : "falha geral");
+
             _isProcessing = false;
+        }
+
+        // ── Session end ───────────────────────────────────────────
+
+        private void EndSession(string reason)
+        {
+            var sessionTasks = taskManager.GetSessionTasks();
+            float elapsed = timerSystem != null ? timerSystem.GetTotalSessionTime() : 0f;
+
+            SessionEvents.RaiseSessionCompleted(new SessionCompletedEventArgs(
+                totalElapsedTime: elapsed,
+                totalScore: ScoreService.Instance.CurrentScore,
+                tasksCompleted: sessionTasks.Count(t =>
+                    t.State == TaskState.CompletedSuccess ||
+                    t.State == TaskState.CompletedSuccessButUnsafe),
+                totalTasks: sessionTasks.Count
+            ));
+
+            if (verboseLogging)
+                SafetyLog.Info($"[InspectionGateValidator] SessionCompleted disparado ({reason}).", this);
+
+            if (sessionEndPanels != null)
+                foreach (var panel in sessionEndPanels)
+                    if (panel != null) panel.SetActive(true);
         }
 
         // ── Individual consequence implementations ────────────────
