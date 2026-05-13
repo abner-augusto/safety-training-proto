@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 435182422068427829}
   - component: {fileID: 2767532844893562971}
   - component: {fileID: 5444225924480370039}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: Handle1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -185,7 +185,7 @@ GameObject:
   - component: {fileID: 2373415232886253722}
   - component: {fileID: 363637558075400676}
   - component: {fileID: 1635798283985016445}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: Handle2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -357,7 +357,7 @@ GameObject:
   - component: {fileID: 6612635174247580399}
   - component: {fileID: 813077568891646507}
   - component: {fileID: 61129249893678211}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: ScaffoldPiece
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -456,7 +456,7 @@ BoxCollider:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 1024
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
@@ -521,7 +521,7 @@ MonoBehaviour:
   disableGrabAfterInstalled: 1
   grabbable: {fileID: 61129249893678211}
   handGrabInteractable: {fileID: 3749524570206295780}
-  pieceFeedbackRenderer: {fileID: 5854065291668720547}
+  pieceFeedbackRenderer: {fileID: 0}
   targetPreviewRenderer: {fileID: 0}
   showTargetPreviewOnlyWhileGrabbed: 1
   hideTargetPreviewAfterInstalled: 1
@@ -573,7 +573,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1761113822719304293}
   - component: {fileID: 8934155295741839030}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: OneGrabTransformer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -610,17 +610,17 @@ MonoBehaviour:
   _positionConstraints:
     ConstraintsAreRelative: 1
     XAxis:
-      ConstrainAxis: 1
+      ConstrainAxis: 0
       AxisRange:
         Min: 0
         Max: 0
     YAxis:
-      ConstrainAxis: 1
+      ConstrainAxis: 0
       AxisRange:
         Min: 0
         Max: 0
     ZAxis:
-      ConstrainAxis: 1
+      ConstrainAxis: 0
       AxisRange:
         Min: 0
         Max: 0
@@ -668,7 +668,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2111519777752143801}
   - component: {fileID: 3917399952086111464}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: TwoGrabFreeTransformer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -762,7 +762,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9213376185501107496}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: AnchorA
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -794,7 +794,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4912414334588980261}
   - component: {fileID: 7904938381007176333}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: PegaDireita
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -889,7 +889,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8016332332146117634}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: AnchorB
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -921,7 +921,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3206166063705626849}
   - component: {fileID: 906525838165874678}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: Pega Esquerda
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1018,7 +1018,7 @@ GameObject:
   - component: {fileID: 7798439531804350307}
   - component: {fileID: 3749524570206295780}
   - component: {fileID: 3701098095861894364}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: HandGrabInteractable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
