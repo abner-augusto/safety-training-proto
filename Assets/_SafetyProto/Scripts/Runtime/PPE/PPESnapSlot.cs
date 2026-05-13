@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
+using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
 using UnityEngine;
@@ -9,7 +10,7 @@ using UnityEngine.Events;
 namespace SafetyProto.Runtime.PPE
 {
     [RequireComponent(typeof(Collider))]
-    public class PPESnapSlot : MonoBehaviour
+    public class PPESnapSlot : MonoBehaviour, ISessionResettable
     {
         private const int MaxCapacity = 3;
         private const int DefaultCapacity = 1;
@@ -53,6 +54,7 @@ namespace SafetyProto.Runtime.PPE
         [SerializeField] private Color occupiedColor = new Color(0.2f, 0.4f, 1f, 0.5f);
 
         private readonly List<PPESnapItem> _snappedItems = new List<PPESnapItem>();
+        private readonly HashSet<PPEType> _emittedActions = new HashSet<PPEType>();
 
         public PPESnapItem SnappedItem => _snappedItems.Count > 0 ? _snappedItems[0] : null;
         public IReadOnlyList<PPESnapItem> SnappedItems => _snappedItems;
@@ -164,18 +166,26 @@ namespace SafetyProto.Runtime.PPE
 
             SafetyLog.Info($"PPESnapSlot [{name}]: accepted {item.PpeType} ({_snappedItems.Count}/{_slotCapacity})", this);
 
-            foreach (var mapping in ppeActionMappings)
+            if (!_emittedActions.Contains(item.PpeType))
             {
-                if (mapping.ppeType == item.PpeType && mapping.action != null && !string.IsNullOrWhiteSpace(mapping.action.ActionId))
+                foreach (var mapping in ppeActionMappings)
                 {
-                    ActionEvents.PublishActionAttempt(
-                        mapping.action.ActionId,
-                        sourceId: name,
-                        context: "ppe_snap",
-                        position: transform.position);
-                    SafetyLog.Info($"PPESnapSlot [{name}]: emitted ActionAttempt '{mapping.action.ActionId}' for {item.PpeType}", this);
-                    break;
+                    if (mapping.ppeType == item.PpeType && mapping.action != null && !string.IsNullOrWhiteSpace(mapping.action.ActionId))
+                    {
+                        _emittedActions.Add(item.PpeType);
+                        ActionEvents.PublishActionAttempt(
+                            mapping.action.ActionId,
+                            sourceId: name,
+                            context: "ppe_snap",
+                            position: transform.position);
+                        SafetyLog.Info($"PPESnapSlot [{name}]: emitted ActionAttempt '{mapping.action.ActionId}' for {item.PpeType}", this);
+                        break;
+                    }
                 }
+            }
+            else
+            {
+                SafetyLog.Info($"PPESnapSlot [{name}]: ação para {item.PpeType} já emitida — re-snap ignorado.", this);
             }
 
             return true;
@@ -194,6 +204,11 @@ namespace SafetyProto.Runtime.PPE
 
             UpdateHighlight();
             SafetyLog.Info($"PPESnapSlot [{name}]: capacity set to {_slotCapacity}.", this);
+        }
+
+        public void ResetSession()
+        {
+            _emittedActions.Clear();
         }
 
         public void Unlock()
