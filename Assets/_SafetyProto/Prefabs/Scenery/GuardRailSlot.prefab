@@ -42,7 +42,6 @@ GameObject:
   - component: {fileID: 3545281183868229370}
   - component: {fileID: 4402138405097086713}
   - component: {fileID: 7206201068729154445}
-  - component: {fileID: 2341482367513313902}
   m_Layer: 0
   m_Name: GuardRailSlot
   m_TagString: Untagged
@@ -124,28 +123,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &2341482367513313902
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6206616535456665418}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 2210984052915861623, guid: 9b1545b790c85354a9b6449bb3dee586, type: 3}
 --- !u!1 &7460349175229044517
 GameObject:
   m_ObjectHideFlags: 0

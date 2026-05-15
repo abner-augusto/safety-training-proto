@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "unity-mcp": {
+      "type": "stdio",
+      "command": "C:\\Users\\abner\\.unity\\relay\\relay_win.exe",
+      "args": ["--mcp", "--project-path", "D:\\ProjetosUnity\\safety-training-proto"]
+    }
+  }
+}
