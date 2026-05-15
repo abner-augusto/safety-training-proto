@@ -119,7 +119,10 @@ namespace SafetyProto.UI
                 _taskToEntry[task] = entry;
                 _taskToGO[task]    = go;
 
-                StartCoroutine(AnimateScale(go.transform, Vector3.zero, Vector3.one));
+                if (gameObject.activeInHierarchy)
+                    StartCoroutine(AnimateScale(go.transform, Vector3.zero, Vector3.one));
+                else
+                    go.transform.localScale = Vector3.one;
             }
         }
 
@@ -159,6 +162,7 @@ namespace SafetyProto.UI
                 entry.UpdateState(state);
 
             _completedVisibleCount++;
+            if (!gameObject.activeInHierarchy) return;
             _removalCoroutines[task] = StartCoroutine(RemoveAfterLinger(task));
             UpdateRemainingText();
         }

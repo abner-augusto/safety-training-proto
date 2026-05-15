@@ -3,6 +3,7 @@ using Oculus.Interaction.HandGrab;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
+using SafetyProto.Runtime.Feedback;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -74,6 +75,8 @@ namespace SafetyProto.Runtime.Scaffolding
         [SerializeField] private Grabbable grabbable;
         [Tooltip("HandGrabInteractable on the object. Auto-found if empty.")]
         [SerializeField] private HandGrabInteractable handGrabInteractable;
+        [Tooltip("ReturnObjectHome on the object. Auto-found if present.")]
+        [SerializeField] private ReturnObjectHome returnHome;
 
         // ── Visual Feedback ──────────────────────────────────────
 
@@ -126,6 +129,9 @@ namespace SafetyProto.Runtime.Scaffolding
 
             if (handGrabInteractable == null)
                 handGrabInteractable = GetComponentInChildren<HandGrabInteractable>(includeInactive: true);
+
+            if (returnHome == null)
+                returnHome = GetComponent<ReturnObjectHome>();
 
             if (pieceFeedbackRenderer != null)
                 _pieceFeedbackMaterial = pieceFeedbackRenderer.material;
@@ -192,6 +198,7 @@ namespace SafetyProto.Runtime.Scaffolding
             _wasValidPose = false;
             SetPhysicsEnabled(true);
             SetGrabEnabled(true);
+            if (returnHome != null) returnHome.enabled = true;
             SetFeedbackColor(idleColor);
             UpdateTargetPreviewVisibility();
         }
@@ -238,6 +245,12 @@ namespace SafetyProto.Runtime.Scaffolding
 
             if (disableGrabAfterInstalled)
                 SetGrabEnabled(false);
+
+            if (returnHome != null)
+            {
+                returnHome.CancelReturn();
+                returnHome.enabled = false;
+            }
 
             SetFeedbackColor(validColor);
 
@@ -322,14 +335,14 @@ namespace SafetyProto.Runtime.Scaffolding
         {
             if (_rigidbody == null) return;
 
-            _rigidbody.isKinematic = !physicsEnabled;
-            _rigidbody.useGravity  =  physicsEnabled;
-
             if (!physicsEnabled)
             {
                 _rigidbody.linearVelocity  = Vector3.zero;
                 _rigidbody.angularVelocity = Vector3.zero;
             }
+
+            _rigidbody.isKinematic = !physicsEnabled;
+            _rigidbody.useGravity  =  physicsEnabled;
         }
 
         private void SetGrabEnabled(bool enabled)

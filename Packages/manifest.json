@@ -3,6 +3,8 @@
     "com.meta.xr.sdk.all": "201.0.0",
     "com.meta.xr.sdk.movement": "https://github.com/oculus-samples/Unity-Movement.git",
     "com.unity.2d.sprite": "1.0.0",
+    "com.unity.ai.assistant": "2.6.0-pre.1",
+    "com.unity.ai.inference": "2.6.1",
     "com.unity.collab-proxy": "2.12.4",
     "com.unity.feature.development": "1.0.2",
     "com.unity.inputsystem": "1.19.0",
