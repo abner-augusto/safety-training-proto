@@ -12,6 +12,7 @@ EditorBuildSettings:
     path: Assets/_SafetyProto/Scene/TestScene.unity
     guid: 24d71f4f5103635459f932ad07e90354
   m_configObjects:
+    com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 289c1b55c9541489481df5cc06664110, type: 3}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 8d421f6a26b1eb84bab36cecd67352e6, type: 2}
     com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 4b53d65bad4958c4cb31d8c037dff7e0, type: 2}
