@@ -373,8 +373,8 @@ namespace SafetyProto.Runtime.PPE
             // Snap tip to anchor attach point
             transform.SetParent(null);
             transform.position = anchor.AttachPosition;
-            _rb.isKinematic = true;
             _rb.linearVelocity = Vector3.zero;
+            _rb.isKinematic = true;
 
             // Configure and enable Verlet rope
             _verletLanyard.SetStartAnchor(harnessAttachPoint);
