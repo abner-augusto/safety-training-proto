@@ -323,14 +323,14 @@ namespace SafetyProto.Runtime.PPE
 
         private void SetPhysicsEnabled(bool physicsEnabled)
         {
-            _rigidbody.isKinematic = !physicsEnabled;
-            _rigidbody.useGravity = physicsEnabled;
-
             if (!physicsEnabled)
             {
                 _rigidbody.linearVelocity = Vector3.zero;
                 _rigidbody.angularVelocity = Vector3.zero;
             }
+
+            _rigidbody.isKinematic = !physicsEnabled;
+            _rigidbody.useGravity = physicsEnabled;
         }
 
         // Trigger detection — notifies slots directly
