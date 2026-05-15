@@ -67,6 +67,8 @@ namespace SafetyProto.Runtime.Scaffolding
         [SerializeField] private bool lockAfterInstalled = true;
         [Tooltip("Disables grabbing after install.")]
         [SerializeField] private bool disableGrabAfterInstalled = true;
+        [Tooltip("Disables non-trigger colliders after install to prevent physics overlap artifacts.")]
+        [SerializeField] private bool disableCollidersAfterInstalled = true;
 
         // ── SDK References ───────────────────────────────────────
 
@@ -103,12 +105,14 @@ namespace SafetyProto.Runtime.Scaffolding
 
         // ── Private state ────────────────────────────────────────
 
-        private Rigidbody _rigidbody;
-        private Material  _pieceFeedbackMaterial;
-        private Material  _targetPreviewMaterial;
+        private Rigidbody  _rigidbody;
+        private Collider[] _colliders;
+        private Material   _pieceFeedbackMaterial;
+        private Material   _targetPreviewMaterial;
         private bool _isGrabbed;
         private bool _isInstalled;
         private bool _wasValidPose;
+        private bool _reachedTwoHands;
 
         // ── Public API ───────────────────────────────────────────
 
@@ -132,6 +136,8 @@ namespace SafetyProto.Runtime.Scaffolding
 
             if (returnHome == null)
                 returnHome = GetComponent<ReturnObjectHome>();
+
+            _colliders = GetComponentsInChildren<Collider>(includeInactive: false);
 
             if (pieceFeedbackRenderer != null)
                 _pieceFeedbackMaterial = pieceFeedbackRenderer.material;
@@ -196,6 +202,8 @@ namespace SafetyProto.Runtime.Scaffolding
         {
             _isInstalled  = false;
             _wasValidPose = false;
+            if (disableCollidersAfterInstalled)
+                SetCollidersEnabled(true);
             SetPhysicsEnabled(true);
             SetGrabEnabled(true);
             if (returnHome != null) returnHome.enabled = true;
@@ -212,6 +220,9 @@ namespace SafetyProto.Runtime.Scaffolding
                 case PointerEventType.Select:
                     _isGrabbed = true;
                     SetPhysicsEnabled(true);
+                    if (installMode == InstallMode.TwoSockets && requireTwoHandsForTwoSockets
+                        && grabbable.SelectingPointsCount >= 2)
+                        _reachedTwoHands = true;
                     UpdateTargetPreviewVisibility();
                     break;
 
@@ -224,6 +235,7 @@ namespace SafetyProto.Runtime.Scaffolding
                     if (!_isGrabbed)
                     {
                         TryInstall();
+                        _reachedTwoHands = false;
                     }
 
                     UpdateTargetPreviewVisibility();
@@ -240,17 +252,20 @@ namespace SafetyProto.Runtime.Scaffolding
 
             _isInstalled = true;
 
+            if (returnHome != null)
+            {
+                returnHome.CancelReturn();
+                returnHome.enabled = false;
+            }
+
             if (lockAfterInstalled)
                 SetPhysicsEnabled(false);
 
             if (disableGrabAfterInstalled)
                 SetGrabEnabled(false);
 
-            if (returnHome != null)
-            {
-                returnHome.CancelReturn();
-                returnHome.enabled = false;
-            }
+            if (disableCollidersAfterInstalled)
+                SetCollidersEnabled(false);
 
             SetFeedbackColor(validColor);
 
@@ -266,12 +281,7 @@ namespace SafetyProto.Runtime.Scaffolding
             if (installMode != InstallMode.TwoSockets || !requireTwoHandsForTwoSockets)
                 return true;
 
-            // At the moment of the last release, SelectingPointsCount has already decremented.
-            // Two-hand validation is handled by the presence of both grab poses in the correct
-            // space, verified via HasValidInstallPose().
-            // To require both hands simultaneously, use the Select event to track that the count
-            // reached 2 before release.
-            return true;
+            return _reachedTwoHands;
         }
 
         private bool HasValidInstallPose()
@@ -343,6 +353,13 @@ namespace SafetyProto.Runtime.Scaffolding
 
             _rigidbody.isKinematic = !physicsEnabled;
             _rigidbody.useGravity  =  physicsEnabled;
+        }
+
+        private void SetCollidersEnabled(bool enabled)
+        {
+            if (_colliders == null) return;
+            foreach (var col in _colliders)
+                if (col != null && !col.isTrigger) col.enabled = enabled;
         }
 
         private void SetGrabEnabled(bool enabled)

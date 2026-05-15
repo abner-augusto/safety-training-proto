@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2680044086389668684}
   - component: {fileID: 2673136915222759870}
   - component: {fileID: 2676830759265526423}
+  - component: {fileID: 8001122334455667799}
   m_Layer: 3
   m_Name: Improvement_Row
   m_TagString: Untagged
@@ -329,3 +330,17 @@ MonoBehaviour:
   m_FlexibleWidth: 1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &8001122334455667799
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4767063324688053839}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fbb18ee9fac681d4b8391cb8300e158e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  bulletIcon: {fileID: 8858121399551931181}
+  improvementText: {fileID: 4545826342164582569}

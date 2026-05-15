@@ -70,10 +70,6 @@ namespace SafetyProto.Runtime
                 ovr.FadeOut();
                 yield return new WaitForSeconds(fadeOutDuration);
             }
-            else
-            {
-                SafetyLog.Warning("[PhaseController] OVRScreenFade.instance é null — etapas de fade serão ignoradas.", this);
-            }
 
             foreach (var obj in objectsToHide)
                 if (obj != null) obj.SetActive(false);
@@ -115,6 +111,8 @@ namespace SafetyProto.Runtime
                 SafetyLog.Warning("[PhaseController] playerRig não atribuído no Inspector.", this);
             if (spawnPointAndaime == null)
                 SafetyLog.Warning("[PhaseController] spawnPointAndaime não atribuído no Inspector.", this);
+            if (OVRScreenFade.instance == null)
+                SafetyLog.Warning("[PhaseController] OVRScreenFade.instance é null — etapas de fade serão ignoradas.", this);
         }
     }
 }
