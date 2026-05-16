@@ -51,6 +51,8 @@ namespace SafetyProto.Runtime.Scaffolding
         [Header("Target Sockets")]
         [SerializeField] private Transform targetSocketA;
         [SerializeField] private Transform targetSocketB;
+        [Tooltip("When enabled, pieceAnchorA may align with either targetSocketA or targetSocketB (and pieceAnchorB with the remaining socket). Useful for symmetric pieces that can be installed in either direction.")]
+        [SerializeField] private bool allowAnySlotDirection = false;
 
         // ── Tolerances ───────────────────────────────────────────
 
@@ -113,6 +115,7 @@ namespace SafetyProto.Runtime.Scaffolding
         private bool _isInstalled;
         private bool _wasValidPose;
         private bool _reachedTwoHands;
+        private bool _isReversedSlot;
 
         // ── Public API ───────────────────────────────────────────
 
@@ -288,10 +291,27 @@ namespace SafetyProto.Runtime.Scaffolding
         {
             if (!HasRequiredReferences()) return false;
 
-            bool aValid = IsAnchorAligned(pieceAnchorA, targetSocketA);
-            if (installMode == InstallMode.SingleSocket) return aValid;
+            // Normal mapping: anchorA → socketA (and anchorB → socketB for TwoSockets)
+            bool normalValid = IsAnchorAligned(pieceAnchorA, targetSocketA) &&
+                               (installMode == InstallMode.SingleSocket || IsAnchorAligned(pieceAnchorB, targetSocketB));
 
-            return aValid && IsAnchorAligned(pieceAnchorB, targetSocketB);
+            if (normalValid)
+            {
+                _isReversedSlot = false;
+                return true;
+            }
+
+            if (!allowAnySlotDirection) return false;
+
+            // Reversed mapping: anchorA → socketB (and anchorB → socketA for TwoSockets)
+            bool reversedValid = false;
+            if (installMode == InstallMode.TwoSockets && pieceAnchorB != null && targetSocketB != null)
+                reversedValid = IsAnchorAligned(pieceAnchorA, targetSocketB) && IsAnchorAligned(pieceAnchorB, targetSocketA);
+            else if (installMode == InstallMode.SingleSocket && targetSocketB != null)
+                reversedValid = IsAnchorAligned(pieceAnchorA, targetSocketB);
+
+            _isReversedSlot = reversedValid;
+            return reversedValid;
         }
 
         private bool HasRequiredReferences()
@@ -312,13 +332,14 @@ namespace SafetyProto.Runtime.Scaffolding
 
         private void ApplySocketPose()
         {
-            if (pieceAnchorA == null || targetSocketA == null) return;
+            Transform activeSocket = (_isReversedSlot && targetSocketB != null) ? targetSocketB : targetSocketA;
+            if (pieceAnchorA == null || activeSocket == null) return;
 
             Vector3    anchorLocalPos = transform.InverseTransformPoint(pieceAnchorA.position);
             Quaternion anchorLocalRot = Quaternion.Inverse(transform.rotation) * pieceAnchorA.rotation;
 
-            Quaternion targetRootRot = targetSocketA.rotation * Quaternion.Inverse(anchorLocalRot);
-            Vector3    targetRootPos = targetSocketA.position - targetRootRot * anchorLocalPos;
+            Quaternion targetRootRot = activeSocket.rotation * Quaternion.Inverse(anchorLocalRot);
+            Vector3    targetRootPos = activeSocket.position - targetRootRot * anchorLocalPos;
 
             transform.SetPositionAndRotation(targetRootPos, targetRootRot);
         }
