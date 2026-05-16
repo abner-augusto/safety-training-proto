@@ -230,6 +230,10 @@ namespace SafetyProto.Runtime.PPE
 
             RemoveItem(item);
 
+            // Allow re-equipping to fire the action again: the task system decides
+            // whether re-completion is valid, so blocking it here is too aggressive.
+            _emittedActions.Remove(item.PpeType);
+
             if (hideWhenEquipped)
                 item.gameObject.SetActive(true);
 
