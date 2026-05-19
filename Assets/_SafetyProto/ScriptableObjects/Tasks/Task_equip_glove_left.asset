@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04755c844e92b994b931a41673b57e9d, type: 3}
+  m_Name: Task_equip_glove_left
+  m_EditorClassIdentifier: SafetyProto.Data.Unity::SafetyProto.Data.ScriptableObjects.SafetyTask
+  taskName: Equipar Luva Esquerda
+  taskDescription: "Selecione a luva de raspa de couro e equipe na m\xE3o esquerda."
+  expectedAction: {fileID: 11400000, guid: effd88492e65d5646be742a70ae470b5, type: 2}
+  expectedActionId: equip_glove_left
+  successPoints: 100
+  failurePenalty: 30
+  ppePenalty: 0
+  requiredPPE: 
+  hintText: "Use luvas de raspa de couro para estruturas met\xE1licas."
+  failureAdvice: "Luvas de raspa de couro s\xE3o obrigat\xF3rias para manuseio de
+    estruturas met\xE1licas em altura."
+  ppeAdvice: 
