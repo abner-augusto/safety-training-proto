@@ -357,6 +357,7 @@ GameObject:
   - component: {fileID: 6612635174247580399}
   - component: {fileID: 813077568891646507}
   - component: {fileID: 61129249893678211}
+  - component: {fileID: 4782799892279696617}
   m_Layer: 14
   m_Name: ScaffoldPiece
   m_TagString: Untagged
@@ -473,8 +474,8 @@ Rigidbody:
   m_GameObject: {fileID: 972425556055995357}
   serializedVersion: 5
   m_Mass: 10
-  m_LinearDamping: 3
-  m_AngularDamping: 1
+  m_LinearDamping: 5
+  m_AngularDamping: 5
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -489,7 +490,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 16
+  m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!114 &813077568891646507
 MonoBehaviour:
@@ -514,13 +515,16 @@ MonoBehaviour:
   pieceAnchorB: {fileID: 8016332332146117634}
   targetSocketA: {fileID: 0}
   targetSocketB: {fileID: 0}
-  positionTolerance: 0.12
-  angleTolerance: 20
+  allowAnySlotDirection: 0
+  positionTolerance: 0.2
+  angleTolerance: 35
   snapOnRelease: 1
   lockAfterInstalled: 1
   disableGrabAfterInstalled: 1
+  disableCollidersAfterInstalled: 1
   grabbable: {fileID: 61129249893678211}
   handGrabInteractable: {fileID: 3749524570206295780}
+  returnHome: {fileID: 0}
   pieceFeedbackRenderer: {fileID: 0}
   targetPreviewRenderer: {fileID: 0}
   showTargetPreviewOnlyWhileGrabbed: 1
@@ -563,6 +567,46 @@ MonoBehaviour:
   _kinematicWhileSelected: 1
   _throwWhenUnselected: 0
   _forceKinematicDisabled: 0
+--- !u!114 &4782799892279696617
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 972425556055995357}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d9e1119e03a4a94cb0fb9da3a92b9dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Feedback.ReturnObjectHome
+  homeOverride: {fileID: 0}
+  maxHomeDistance: 3
+  returnDelay: 5
+  returnDuration: 0.4
+  returnCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &1469211817988118093
 GameObject:
   m_ObjectHideFlags: 0
@@ -626,7 +670,7 @@ MonoBehaviour:
         Max: 0
   _rotationConstraints:
     XAxis:
-      ConstrainAxis: 1
+      ConstrainAxis: 0
       AxisRange:
         Min: 0
         Max: 0
@@ -636,7 +680,7 @@ MonoBehaviour:
         Min: 0
         Max: 0
     ZAxis:
-      ConstrainAxis: 1
+      ConstrainAxis: 0
       AxisRange:
         Min: 0
         Max: 0
@@ -810,7 +854,7 @@ Transform:
   m_GameObject: {fileID: 5114307962089873328}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0.6, y: 0.0629, z: 0.1313}
+  m_LocalPosition: {x: 0.6, y: 0.0629, z: 0.1481}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -937,7 +981,7 @@ Transform:
   m_GameObject: {fileID: 7430958155500985767}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7069777, y: -4.3013386e-23, z: 8.657978e-17, w: 0.70723593}
-  m_LocalPosition: {x: -0.6, y: 0.0706, z: 0.1309}
+  m_LocalPosition: {x: -0.6, y: 0.0706, z: 0.1477}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1079,7 +1123,7 @@ MonoBehaviour:
     _pinkyRequirement: 1
     _unselectMode: 0
   _movementProvider: {fileID: 0}
-  _handAligment: 1
+  _handAligment: 2
   _handGrabPoses: []
 --- !u!114 &3701098095861894364
 MonoBehaviour:
