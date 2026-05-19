@@ -48,6 +48,11 @@ namespace SafetyProto.Runtime.PPE
         // Public so PPESnapSlot can read it
         public PPEType PpeType => _ppeItem.ppeType;
 
+#if UNITY_EDITOR
+        // Exposed for editor preview tooling (PPESnapSlot gizmo / inspector).
+        public Transform SnapPoseOverride => snapPoseOverride;
+#endif
+
         private PPEItem _ppeItem;
         private Rigidbody _rigidbody;
         private Grabbable _grabbable;

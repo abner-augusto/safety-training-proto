@@ -9,6 +9,10 @@ namespace SafetyProto.Runtime.PPE
     {
         public PPEType ppeType = PPEType.None;
 
+        [Header("Snap Behavior")]
+        [Tooltip("Esconde o item (SetActive false) quando encaixado num slot. Carregar no item permite que cada EPI decida seu próprio comportamento independente do slot.")]
+        public bool hideWhenEquipped = false;
+
         [Header("Distractor")]
         [Tooltip("Marcar true para EPIs incorretos (ex: capacete sem jugular, cinto abdominal). " +
                  "Distradores disparam popup educativo ao tentar encaixar num slot.")]
