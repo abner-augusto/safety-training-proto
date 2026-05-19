@@ -21,8 +21,6 @@ namespace SafetyProto.Runtime.PPE
         [SerializeField] private int slotCapacity = DefaultCapacity;
 
         [Header("Behavior")]
-        [Tooltip("Esconde o item (SetActive false) quando ele é encaixado no slot.")]
-        [SerializeField] private bool hideWhenEquipped;
         [Tooltip("Impede que o item seja removido do slot após ser equipado.")]
         [SerializeField] private bool lockAfterEquipped;
 
@@ -52,6 +50,18 @@ namespace SafetyProto.Runtime.PPE
         [SerializeField] private Color idleColor = new Color(1f, 1f, 1f, 0.1f);
         [SerializeField] private Color hoverColor = new Color(0.2f, 0.8f, 0.2f, 0.5f);
         [SerializeField] private Color occupiedColor = new Color(0.2f, 0.4f, 1f, 0.5f);
+
+#if UNITY_EDITOR
+        [Header("Editor Preview")]
+        [Tooltip("PPE item prefabs (or scene instances) to preview at this slot's snap pose. Editor-only — applies the same snapPoseOverride math used at runtime.")]
+        [SerializeField] private PPESnapItem[] editorPreviewItems;
+        [Tooltip("Tint for the wireframe preview meshes.")]
+        [SerializeField] private Color editorPreviewColor = new Color(0.2f, 1f, 0.6f, 0.9f);
+        [Tooltip("Draw a solid (semi-transparent) preview in addition to the wireframe.")]
+        [SerializeField] private bool editorPreviewSolid = false;
+        [Tooltip("Draw the gizmo even when the slot is not selected.")]
+        [SerializeField] private bool editorPreviewAlwaysVisible = false;
+#endif
 
         private readonly List<PPESnapItem> _snappedItems = new List<PPESnapItem>();
         private readonly HashSet<PPEType> _emittedActions = new HashSet<PPEType>();
@@ -161,7 +171,8 @@ namespace SafetyProto.Runtime.PPE
             if (IsLocked)
                 item.SetGrabEnabled(false);
 
-            if (hideWhenEquipped)
+            var ppeItemComp = item.GetComponent<PPEItem>();
+            if (ppeItemComp != null && ppeItemComp.hideWhenEquipped)
                 item.gameObject.SetActive(false);
 
             SafetyLog.Info($"PPESnapSlot [{name}]: accepted {item.PpeType} ({_snappedItems.Count}/{_slotCapacity})", this);
@@ -234,7 +245,8 @@ namespace SafetyProto.Runtime.PPE
             // whether re-completion is valid, so blocking it here is too aggressive.
             _emittedActions.Remove(item.PpeType);
 
-            if (hideWhenEquipped)
+            var ppeItemComp = item.GetComponent<PPEItem>();
+            if (ppeItemComp != null && ppeItemComp.hideWhenEquipped)
                 item.gameObject.SetActive(true);
 
             item.SetGrabEnabled(true);
@@ -293,7 +305,99 @@ namespace SafetyProto.Runtime.PPE
                 Gizmos.DrawWireSphere(transform.position, sc.radius * transform.lossyScale.x);
             else
                 Gizmos.DrawWireCube(transform.position, transform.lossyScale);
+
+            if (!editorPreviewAlwaysVisible)
+                DrawEditorPreview();
         }
+
+        private void OnDrawGizmos()
+        {
+            if (editorPreviewAlwaysVisible)
+                DrawEditorPreview();
+        }
+
+        private void DrawEditorPreview()
+        {
+            if (editorPreviewItems == null || editorPreviewItems.Length == 0) return;
+
+            for (int i = 0; i < editorPreviewItems.Length; i++)
+            {
+                var item = editorPreviewItems[i];
+                if (item == null) continue;
+                DrawItemPreviewGizmo(item);
+            }
+        }
+
+        private void DrawItemPreviewGizmo(PPESnapItem item)
+        {
+            ComputeSnapPose(item, transform.position, transform.rotation, out var targetPos, out var targetRot);
+
+            // Anchor crosshair at the resolved snap pose.
+            var prevColor = Gizmos.color;
+            var prevMatrix = Gizmos.matrix;
+            Gizmos.color = editorPreviewColor;
+            Gizmos.matrix = Matrix4x4.TRS(targetPos, targetRot, Vector3.one);
+            Gizmos.DrawLine(Vector3.zero, Vector3.right * 0.05f);
+            Gizmos.DrawLine(Vector3.zero, Vector3.up * 0.05f);
+            Gizmos.DrawLine(Vector3.zero, Vector3.forward * 0.05f);
+            Gizmos.matrix = prevMatrix;
+
+            // Each MeshFilter in the item's hierarchy, transformed from item-local space
+            // to the resolved snap pose.
+            var itemRoot = item.transform;
+            var rootScale = itemRoot.lossyScale;
+            // Compensate for prefab-asset transforms (which sit at world origin) the same way:
+            // worldToLocalMatrix is local-to-root regardless of where the root lives.
+            var rootWorldToLocal = itemRoot.worldToLocalMatrix;
+            var targetRootMatrix = Matrix4x4.TRS(targetPos, targetRot, rootScale);
+
+            var meshFilters = item.GetComponentsInChildren<MeshFilter>(true);
+            for (int i = 0; i < meshFilters.Length; i++)
+            {
+                var mf = meshFilters[i];
+                if (mf == null || mf.sharedMesh == null) continue;
+
+                var meshLocalToRoot = rootWorldToLocal * mf.transform.localToWorldMatrix;
+                Gizmos.matrix = targetRootMatrix * meshLocalToRoot;
+                Gizmos.color = editorPreviewColor;
+                Gizmos.DrawWireMesh(mf.sharedMesh);
+
+                if (editorPreviewSolid)
+                {
+                    var solid = editorPreviewColor;
+                    solid.a *= 0.25f;
+                    Gizmos.color = solid;
+                    Gizmos.DrawMesh(mf.sharedMesh);
+                }
+            }
+
+            Gizmos.color = prevColor;
+            Gizmos.matrix = prevMatrix;
+        }
+
+        /// <summary>
+        /// Replicates <see cref="PPESnapItem.ApplySnapPose"/> so editor tooling can preview where
+        /// an item will land when snapped, without entering Play Mode.
+        /// </summary>
+        public static void ComputeSnapPose(PPESnapItem item, Vector3 slotPosition, Quaternion slotRotation,
+            out Vector3 targetPosition, out Quaternion targetRotation)
+        {
+            targetPosition = slotPosition;
+            targetRotation = slotRotation;
+            if (item == null) return;
+
+            var root = item.transform;
+            var pose = item.SnapPoseOverride;
+            if (pose == null) return;
+
+            Vector3 overrideLocalPos = root.InverseTransformPoint(pose.position);
+            Quaternion overrideLocalRot = Quaternion.Inverse(root.rotation) * pose.rotation;
+
+            targetRotation = slotRotation * Quaternion.Inverse(overrideLocalRot);
+            targetPosition = slotPosition - (targetRotation * overrideLocalPos);
+        }
+
+        public PPESnapItem[] EditorPreviewItems => editorPreviewItems;
 #endif
     }
 }
