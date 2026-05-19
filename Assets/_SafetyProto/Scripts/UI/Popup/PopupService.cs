@@ -65,6 +65,9 @@ namespace SafetyProto.UI
             }
         }
 
+        public void ShowSuccess(string title, string body)
+            => Show(new PopupData { type = PopupType.Normal, title = title, body = body });
+
         public void ShowNormal(string title, string body)
             => Show(new PopupData { type = PopupType.Normal, title = title, body = body });
 
