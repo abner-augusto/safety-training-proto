@@ -3,6 +3,9 @@ using SafetyProto.Core;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace SafetyProto.Runtime
 {
@@ -83,15 +86,13 @@ namespace SafetyProto.Runtime
             }
 
             if (transitionPanel != null)
-            {
                 transitionPanel.SetActive(true);
-                yield return new WaitForSeconds(holdBlackDuration);
+
+            // Always hold black so the teleport is never exposed, regardless of which fade mechanism is active.
+            yield return new WaitForSeconds(holdBlackDuration);
+
+            if (transitionPanel != null)
                 transitionPanel.SetActive(false);
-            }
-            else if (ovr != null)
-            {
-                yield return new WaitForSeconds(holdBlackDuration);
-            }
 
             if (ovr != null)
             {
@@ -112,7 +113,22 @@ namespace SafetyProto.Runtime
             if (spawnPointAndaime == null)
                 SafetyLog.Warning("[PhaseController] spawnPointAndaime não atribuído no Inspector.", this);
             if (OVRScreenFade.instance == null)
-                SafetyLog.Warning("[PhaseController] OVRScreenFade.instance é null — etapas de fade serão ignoradas.", this);
+                SafetyLog.Warning("[PhaseController] OVRScreenFade.instance é null — fade visual não funcionará no Quest. Adicione OVRScreenFade ao CenterEyeAnchor.", this);
         }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            // Warn in the Editor if no OVRScreenFade exists anywhere in the scene.
+            if (FindAnyObjectByType<OVRScreenFade>() == null)
+            {
+                Debug.LogWarning(
+                    "[PhaseController] OVRScreenFade não encontrado na cena. " +
+                    "Adicione o componente ao CenterEyeAnchor (OVRCameraRig > TrackingSpace > CenterEyeAnchor) " +
+                    "com fadeOnStart = false para que o fade funcione no Quest.",
+                    this);
+            }
+        }
+#endif
     }
 }
