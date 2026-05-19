@@ -163,7 +163,7 @@ namespace SafetyProto.Runtime.Safety
             if (verboseLogging)
                 SafetyLog.Info("[InspectionGateValidator] Inspeção aprovada. Aguardando popup antes de finalizar sessão.", this);
 
-            ShowConsequenceFeedback(currentGroup.groupName, "Inspeção concluída com sucesso!");
+            _popupFeedback?.ShowSuccess(currentGroup.groupName, "Inspeção concluída com sucesso!");
             yield return new WaitForSeconds(delayBeforeSessionCompleted);
             HideConsequenceFeedback();
 
