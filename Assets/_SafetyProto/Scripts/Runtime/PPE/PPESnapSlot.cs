@@ -34,7 +34,7 @@ namespace SafetyProto.Runtime.PPE
         public UnityEvent<PPEType> onDistractorSnapAttempted;
 
         [Header("Task Integration")]
-        [Tooltip("Opcional. Mapeia PPEType → ActionTypeSO para emissão de ActionAttemptedEvent por tipo de EPI encaixado.\nSubstitui PpeTaskMapping para tarefas simples de equipar.")]
+        [Tooltip("Opcional. Mapeia PPEType → ActionTypeSO para emissão de ActionAttemptedEvent por tipo de EPI encaixado.")]
         [SerializeField] private PPEActionMapping[] ppeActionMappings;
 
         [System.Serializable]
