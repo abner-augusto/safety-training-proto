@@ -876,7 +876,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb392bf881894459a61a2c07fa396660, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.Safety.SafetyRuleEngine
-  ppeManager: {fileID: 666742475}
   verboseLogging: 1
   timerSystem: {fileID: 742429413}
 --- !u!114 &165463881
@@ -2386,7 +2385,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapSlot
   slotCapacity: 1
-  hideWhenEquipped: 0
   lockAfterEquipped: 0
   onDistractorSnapAttempted:
     m_PersistentCalls:
@@ -2396,6 +2394,10 @@ MonoBehaviour:
   idleColor: {r: 1, g: 1, b: 1, a: 0.14117648}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.7647059}
   occupiedColor: {r: 0.2, g: 0.4, b: 1, a: 0.11372549}
+  editorPreviewItems: []
+  editorPreviewColor: {r: 0.2, g: 1, b: 0.6, a: 0.9}
+  editorPreviewSolid: 0
+  editorPreviewAlwaysVisible: 0
 --- !u!135 &511818485
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -10547,7 +10549,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapSlot
   slotCapacity: 1
-  hideWhenEquipped: 0
   lockAfterEquipped: 0
   onDistractorSnapAttempted:
     m_PersistentCalls:
@@ -10557,6 +10558,10 @@ MonoBehaviour:
   idleColor: {r: 1, g: 1, b: 1, a: 0.043137256}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.5}
   occupiedColor: {r: 0.2, g: 0.4, b: 1, a: 0.047058824}
+  editorPreviewItems: []
+  editorPreviewColor: {r: 0.2, g: 1, b: 0.6, a: 0.9}
+  editorPreviewSolid: 0
+  editorPreviewAlwaysVisible: 0
 --- !u!135 &761910481
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -10699,7 +10704,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapSlot
   slotCapacity: 1
-  hideWhenEquipped: 0
   lockAfterEquipped: 0
   onDistractorSnapAttempted:
     m_PersistentCalls:
@@ -10709,6 +10713,10 @@ MonoBehaviour:
   idleColor: {r: 1, g: 1, b: 1, a: 0.14117648}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.7647059}
   occupiedColor: {r: 0.2, g: 0.4, b: 1, a: 0.11372549}
+  editorPreviewItems: []
+  editorPreviewColor: {r: 0.2, g: 1, b: 0.6, a: 0.9}
+  editorPreviewSolid: 0
+  editorPreviewAlwaysVisible: 0
 --- !u!135 &843452367
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -11749,6 +11757,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _monoscopic: 0
   _sharpenType: 0
+  _disableRecording: 0
   _enableDynamicResolution: 1
   minDynamicResolutionScale: 1
   maxDynamicResolutionScale: 1
@@ -11820,6 +11829,10 @@ MonoBehaviour:
   SimultaneousHandsAndControllersEnabled: 0
   _readOnlyWideMotionModeHandPosesEnabled: 0
   wideMotionModeHandPosesEnabled: 0
+  _readOnlyFastMotionModeHandPosesEnabled: 0
+  fastMotionModeHandPosesEnabled: 0
+  _readOnlyWideMotionMode2HandPosesEnabled: 0
+  wideMotionMode2HandPosesEnabled: 0
   dynamicResolutionVersion: 1
 --- !u!114 &1150380802
 MonoBehaviour:
@@ -12830,7 +12843,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapSlot
   slotCapacity: 1
-  hideWhenEquipped: 0
   lockAfterEquipped: 0
   onDistractorSnapAttempted:
     m_PersistentCalls:
@@ -12840,6 +12852,10 @@ MonoBehaviour:
   idleColor: {r: 1, g: 1, b: 1, a: 0.043137256}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.5}
   occupiedColor: {r: 0.2, g: 0.4, b: 1, a: 0.047058824}
+  editorPreviewItems: []
+  editorPreviewColor: {r: 0.2, g: 1, b: 0.6, a: 0.9}
+  editorPreviewSolid: 0
+  editorPreviewAlwaysVisible: 0
 --- !u!135 &1334399989
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -14385,7 +14401,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapSlot
   slotCapacity: 1
-  hideWhenEquipped: 0
   lockAfterEquipped: 0
   onDistractorSnapAttempted:
     m_PersistentCalls:
@@ -14395,6 +14410,10 @@ MonoBehaviour:
   idleColor: {r: 1, g: 1, b: 1, a: 0.043137256}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.5}
   occupiedColor: {r: 0.2, g: 0.4, b: 1, a: 0.047058824}
+  editorPreviewItems: []
+  editorPreviewColor: {r: 0.2, g: 1, b: 0.6, a: 0.9}
+  editorPreviewSolid: 0
+  editorPreviewAlwaysVisible: 0
 --- !u!135 &1781015495
 SphereCollider:
   m_ObjectHideFlags: 0
