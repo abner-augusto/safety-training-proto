@@ -30,12 +30,12 @@ namespace SafetyProto.Tests.Editor
             var engine = new SafetyRuleEngineCore(_bus);
             engine.Subscribe();
 
-            var task = _tasks.Task("ppe_gloves", "ppe.putongloves", PPEType.Gloves);
+            var task = _tasks.Task("ppe_gloves", "ppe.putongloves", PPEType.GloveLeft);
             var group = _tasks.Group("PPE Check", TaskExecutionModeShared.Sequential, task);
 
             _bus.Publish(new TaskGroupEventArgs(group));
             _bus.Publish(new TaskEventArgs(task));
-            _bus.Publish(new PPEStateChangedEventArgs(PPEType.Gloves, true));
+            _bus.Publish(new PPEStateChangedEventArgs(PPEType.GloveLeft, true));
             _bus.Publish(new ActionAttemptedEvent("ppe.putongloves"));
 
             foreach (var v in _violations)
