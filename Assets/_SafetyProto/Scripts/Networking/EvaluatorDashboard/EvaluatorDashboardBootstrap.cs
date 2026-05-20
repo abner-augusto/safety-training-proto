@@ -199,6 +199,9 @@ namespace SafetyProto.Networking.Dashboard
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(json)) return;
+                json = json.Trim('\0', ' ', '\r', '\n', '\t');
+                
                 var envelope = JsonUtility.FromJson<GenericEventEnvelope>(json);
                 if (envelope != null && envelope.eventType == "RequestSync")
                 {
