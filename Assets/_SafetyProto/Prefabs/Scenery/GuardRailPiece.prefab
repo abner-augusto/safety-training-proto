@@ -172,6 +172,8 @@ MonoBehaviour:
   pieceAnchorB: {fileID: 8745503227167865127}
   targetSocketA: {fileID: 0}
   targetSocketB: {fileID: 0}
+  allowAnySlotDirection: 1
+  allow180Rotation: 1
   positionTolerance: 0.12
   angleTolerance: 20
   snapOnRelease: 1
