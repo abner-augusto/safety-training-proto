@@ -76,16 +76,16 @@ namespace SafetyProto.Tests.Editor
                 compliance[args.PpeType] = args.IsWearing;
             });
 
-            _bus.Publish(new PPEStateChangedEventArgs(PPEType.Helmet,  true));
-            _bus.Publish(new PPEStateChangedEventArgs(PPEType.Harness, true));
-            _bus.Publish(new PPEStateChangedEventArgs(PPEType.Boots,   true));
-            _bus.Publish(new PPEStateChangedEventArgs(PPEType.Gloves,  true));
+            _bus.Publish(new PPEStateChangedEventArgs(PPEType.Helmet,    true));
+            _bus.Publish(new PPEStateChangedEventArgs(PPEType.Harness,   true));
+            _bus.Publish(new PPEStateChangedEventArgs(PPEType.Boots,     true));
+            _bus.Publish(new PPEStateChangedEventArgs(PPEType.GloveLeft, true));
 
             Assert.AreEqual(4, compliance.Count);
             Assert.IsTrue(compliance[PPEType.Helmet]);
             Assert.IsTrue(compliance[PPEType.Harness]);
             Assert.IsTrue(compliance[PPEType.Boots]);
-            Assert.IsTrue(compliance[PPEType.Gloves]);
+            Assert.IsTrue(compliance[PPEType.GloveLeft]);
         }
 
         [Test]
