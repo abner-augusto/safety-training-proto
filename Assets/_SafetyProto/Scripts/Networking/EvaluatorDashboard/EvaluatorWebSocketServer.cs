@@ -27,6 +27,20 @@ namespace SafetyProto.Networking.Dashboard
         private Thread _listenerThread;
         private volatile bool _running;
 
+        public event Action<ClientConnection, string> MessageReceived;
+
+        public void SendToClient<T>(ClientConnection conn, string eventType, T payload)
+        {
+            var envelope = new Envelope<T> { eventType = eventType, payload = payload };
+            var json = JsonUtility.ToJson(envelope);
+            var utf8Json = Encoding.UTF8.GetBytes(json);
+            var frame = BuildTextFrame(utf8Json, utf8Json.Length);
+            if (conn.IsAlive)
+            {
+                conn.Outgoing.Enqueue(frame);
+            }
+        }
+
         public bool HasConnections
         {
             get
@@ -274,6 +288,10 @@ namespace SafetyProto.Networking.Dashboard
 
                     switch (opcode)
                     {
+                        case 0x1: // Text
+                            var text = Encoding.UTF8.GetString(payload, 0, payloadRead);
+                            MessageReceived?.Invoke(conn, text);
+                            break;
                         case 0x9: // Ping
                             conn.Outgoing.Enqueue(BuildControlFrame(0xA, payload, payloadRead));
                             break;
@@ -390,7 +408,7 @@ namespace SafetyProto.Networking.Dashboard
             public T payload;
         }
 
-        private sealed class ClientConnection : IDisposable
+        public sealed class ClientConnection : IDisposable
         {
             public readonly TcpClient Client;
             public readonly NetworkStream Stream;

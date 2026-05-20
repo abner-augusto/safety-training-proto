@@ -46,6 +46,7 @@ namespace SafetyProto.Networking.Dashboard
         private Coroutine _pendingLogBroadcast;
         private Coroutine _poseSendCoroutine;
         private readonly List<TaskGroup> _knownGroups = new List<TaskGroup>();
+        private readonly Queue<Action> _mainThreadQueue = new Queue<Action>();
 
         private void Awake()
         {
@@ -72,6 +73,24 @@ namespace SafetyProto.Networking.Dashboard
             SubscribeEvents(); // after servers are ready
         }
 
+        private void Update()
+        {
+            lock (_mainThreadQueue)
+            {
+                while (_mainThreadQueue.Count > 0)
+                {
+                    try
+                    {
+                        _mainThreadQueue.Dequeue()?.Invoke();
+                    }
+                    catch (Exception e)
+                    {
+                        SafetyLog.Error($"[EvaluatorDashboardBootstrap] Error executing main thread action: {e.Message}", this);
+                    }
+                }
+            }
+        }
+
         private void OnDisable() { } // intentionally empty
 
         private void OnDestroy()
@@ -95,6 +114,7 @@ namespace SafetyProto.Networking.Dashboard
         private void StartServers()
         {
             _wsServer = new EvaluatorWebSocketServer();
+            _wsServer.MessageReceived += OnClientMessageReceived;
             _wsServer.StartServer(wsPort);
 
             var indexAsset = Resources.Load<TextAsset>("Dashboard/index");
@@ -165,6 +185,119 @@ namespace SafetyProto.Networking.Dashboard
             {
                 EventBus.Instance.onSessionCompleted.RemoveListener(OnSessionCompleted);
             }
+        }
+
+        private void OnClientMessageReceived(EvaluatorWebSocketServer.ClientConnection client, string json)
+        {
+            lock (_mainThreadQueue)
+            {
+                _mainThreadQueue.Enqueue(() => ProcessClientMessage(client, json));
+            }
+        }
+
+        private void ProcessClientMessage(EvaluatorWebSocketServer.ClientConnection client, string json)
+        {
+            try
+            {
+                var envelope = JsonUtility.FromJson<GenericEventEnvelope>(json);
+                if (envelope != null && envelope.eventType == "RequestSync")
+                {
+                    HandleRequestSync(client);
+                }
+            }
+            catch (Exception e)
+            {
+                SafetyLog.Error($"[EvaluatorDashboardBootstrap] Error parsing client message: {e.Message}", this);
+            }
+        }
+
+        private void HandleRequestSync(EvaluatorWebSocketServer.ClientConnection client)
+        {
+            var sessionId = EventContext.CurrentSessionId;
+            if (string.IsNullOrEmpty(sessionId)) return;
+
+            // 0. Enviar SessionStarted para contextualizar o dashboard
+            var sessionDto = new SessionDto
+            {
+                sessionId = sessionId,
+                timestampMs = ResolveTimestamp(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
+            };
+            _wsServer.SendToClient(client, "SessionStarted", sessionDto);
+
+            // 1. Enviar Manifest
+            var manifest = BuildSessionManifest(sessionId);
+            _wsServer.SendToClient(client, "SessionManifest", manifest);
+
+            var scoreService = SafetyProto.Domain.Scoring.ScoreService.Instance;
+            var score = scoreService != null ? scoreService.CurrentScore : 0;
+            var scoreDto = new ScoreDto
+            {
+                sessionId = sessionId,
+                totalScore = score,
+                delta = 0,
+                timestampMs = ResolveTimestamp(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
+            };
+            _wsServer.SendToClient(client, "ScoreChanged", scoreDto);
+
+            var taskManager = FindFirstObjectByType<SafetyProto.Runtime.Task.TaskManager>();
+            if (taskManager != null)
+            {
+                var tasks = taskManager.GetSessionTasks();
+                foreach (var t in tasks)
+                {
+                    var taskData = t.TaskData as SafetyTask;
+                    if (taskData == null) continue;
+
+                    string status = "";
+                    string eventName = "";
+                    switch (t.State)
+                    {
+                        case SafetyProto.Core.TaskState.InProgress:
+                            eventName = "TaskStarted";
+                            status = "active";
+                            break;
+                        case SafetyProto.Core.TaskState.CompletedSuccess:
+                        case SafetyProto.Core.TaskState.CompletedSuccessButUnsafe:
+                            eventName = "TaskCompleted";
+                            status = "completed";
+                            break;
+                        case SafetyProto.Core.TaskState.CompletedFailure:
+                            eventName = "TaskTimeout";
+                            status = "failed";
+                            break;
+                        default:
+                            continue;
+                    }
+
+                    var meta = BuildTaskMetadata(taskData);
+                    var dto = new TaskDto
+                    {
+                        sessionId = sessionId,
+                        taskId = taskData.taskName,
+                        taskName = taskData.taskName,
+                        taskDescription = meta.description,
+                        hint = meta.hint,
+                        groupName = meta.groupName,
+                        order = meta.order,
+                        executionMode = meta.executionMode,
+                        expectedAction = meta.expectedAction,
+                        requiredPpe = meta.requiredPpe,
+                        successPoints = meta.successPoints,
+                        failurePenalty = meta.failurePenalty,
+                        ppePenalty = meta.ppePenalty,
+                        status = status,
+                        timestampMs = ResolveTimestamp(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
+                    };
+                    
+                    _wsServer.SendToClient(client, eventName, dto);
+                }
+            }
+        }
+
+        [Serializable]
+        private class GenericEventEnvelope
+        {
+            public string eventType;
         }
 
         #region Event Handlers
@@ -351,7 +484,7 @@ namespace SafetyProto.Networking.Dashboard
         {
             var task = args.Task as SafetyTask;
             var name = task != null ? task.taskName : string.Empty;
-            var id = task != null ? task.taskName : string.Empty;
+            var id = task != null ? task.taskName : string.Empty; // Usar taskName como ID para consistência
             var meta = BuildTaskMetadata(task);
             return new TaskDto
             {
