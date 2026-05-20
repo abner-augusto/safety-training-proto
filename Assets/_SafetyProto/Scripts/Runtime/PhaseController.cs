@@ -112,8 +112,10 @@ namespace SafetyProto.Runtime
                 SafetyLog.Warning("[PhaseController] playerRig não atribuído no Inspector.", this);
             if (spawnPointAndaime == null)
                 SafetyLog.Warning("[PhaseController] spawnPointAndaime não atribuído no Inspector.", this);
-            if (OVRScreenFade.instance == null)
-                SafetyLog.Warning("[PhaseController] OVRScreenFade.instance é null — fade visual não funcionará no Quest. Adicione OVRScreenFade ao CenterEyeAnchor.", this);
+            // OVRScreenFade.instance is assigned in OVRScreenFade.Start (not Awake), so a Start-time
+            // check against instance can race even with execOrder set. Look up the component directly.
+            if (FindAnyObjectByType<OVRScreenFade>() == null)
+                SafetyLog.Warning("[PhaseController] OVRScreenFade não encontrado na cena — fade visual não funcionará no Quest. Adicione OVRScreenFade ao CenterEyeAnchor.", this);
         }
 
 #if UNITY_EDITOR
