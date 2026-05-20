@@ -1,1462 +1,1545 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafetyProto Evaluator Dashboard</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0a0e27;
-            color: #fff;
-            overflow: hidden;
-            height: 100vh;
-        }
-
-        .container {
-            display: flex;
-            height: 100vh;
-            width: 100vw;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 380px;
-            background: linear-gradient(180deg, #1a1f3a 0%, #0f1229 100%);
-            overflow-y: auto;
-            overflow-x: hidden;
-            border-right: 1px solid rgba(100, 200, 255, 0.2);
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.3s ease;
-            z-index: 100;
-        }
-
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .sidebar::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .sidebar::-webkit-scrollbar-thumb {
-            background: rgba(100, 200, 255, 0.3);
-            border-radius: 3px;
-        }
-
-        /* Header */
-        .header {
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            position: relative;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .header h1 {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .status-indicator {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #ff4444;
-            animation: pulse 2s infinite;
-        }
-
-        .status-indicator.connected {
-            background: #44ff44;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .session-info {
-            display: flex;
-            gap: 15px;
-            font-size: 12px;
-            opacity: 0.9;
-        }
-
-        .session-info span {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 4px 10px;
-            border-radius: 12px;
-        }
-
-        /* Score Card */
-        .score-card {
-            margin: 20px;
-            padding: 25px;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(240, 147, 251, 0.3);
-            text-align: center;
-        }
-
-        .score-value {
-            font-size: 48px;
-            font-weight: bold;
-            margin: 10px 0;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .score-label {
-            font-size: 14px;
-            opacity: 0.9;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* Section */
-        .section {
-            margin: 20px;
-        }
-
-        .section-title {
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #64c8ff;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid rgba(100, 200, 255, 0.2);
-        }
-
-        /* Task List */
-        .task-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .task-item {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 15px;
-            border-left: 4px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .task-item.pending {
-            border-left-color: #ffa500;
-        }
-
-        .task-item.active {
-            border-left-color: #64c8ff;
-            background: rgba(100, 200, 255, 0.1);
-            box-shadow: 0 0 20px rgba(100, 200, 255, 0.2);
-        }
-
-        .task-item.completed {
-            border-left-color: #44ff44;
-            opacity: 0.7;
-        }
-
-        .task-item.failed {
-            border-left-color: #ff4444;
-            opacity: 0.7;
-        }
-
-        .task-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .task-name {
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .task-status {
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        .task-status.pending { background: rgba(255, 165, 0, 0.2); color: #ffa500; }
-        .task-status.active { background: rgba(100, 200, 255, 0.2); color: #64c8ff; }
-        .task-status.completed { background: rgba(68, 255, 68, 0.2); color: #44ff44; }
-        .task-status.failed { background: rgba(255, 68, 68, 0.2); color: #ff4444; }
-
-        .task-description {
-            font-size: 12px;
-            color: #aaa;
-            margin-top: 4px;
-        }
-
-        /* Activity Log */
-        .log-container {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-height: 300px;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
-
-        .log-container::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .log-container::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .log-container::-webkit-scrollbar-thumb {
-            background: rgba(100, 200, 255, 0.3);
-            border-radius: 3px;
-        }
-
-        .log-item {
-            background: rgba(255, 255, 255, 0.03);
-            padding: 10px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            border-left: 3px solid rgba(100, 200, 255, 0.3);
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .log-item.violation {
-            border-left-color: #ff4444;
-            background: rgba(255, 68, 68, 0.05);
-        }
-
-        .log-item.success {
-            border-left-color: #44ff44;
-            background: rgba(68, 255, 68, 0.05);
-        }
-
-        .log-time {
-            opacity: 0.6;
-            font-size: 11px;
-            margin-right: 8px;
-        }
-
-        /* 3D Viewport */
-        .viewport {
-            flex: 1;
-            position: relative;
-            background: #0a0e27;
-        }
-
-        #three-canvas {
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Mobile Toggle */
-        .mobile-toggle {
-            display: none;
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 200;
-            background: rgba(102, 126, 234, 0.9);
-            border: none;
-            color: white;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            font-size: 24px;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-        }
-
-        /* Language Toggle */
-        .language-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 200;
-            background: rgba(102, 126, 234, 0.9);
-            border: none;
-            color: white;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            font-size: 24px;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-            transition: transform 0.3s ease;
-        }
-
-        .language-toggle:hover {
-            transform: scale(1.1);
-        }
-
-        .language-toggle:active {
-            transform: scale(0.95);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                position: fixed;
-                left: 0;
-                top: 0;
-                height: 100vh;
-                transform: translateX(-100%);
-                box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
-            }
-
-            .sidebar.open {
-                transform: translateX(0);
-            }
-
-            .mobile-toggle {
-                display: block;
-            }
-
-            .language-toggle {
-                top: 80px;
-            }
-
-            .viewport {
-                width: 100vw;
-            }
-
-            .score-card {
-                margin: 15px;
-                padding: 20px;
-            }
-
-            .score-value {
-                font-size: 36px;
-            }
-        }
-
-        /* Empty States */
-        .empty-state {
-            text-align: center;
-            padding: 30px 20px;
-            opacity: 0.5;
-        }
-
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 10px;
-        }
-
-        /* Report Section */
-        .report-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 10px;
-        }
-
-        .report-summary {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-
-        .report-stat {
-            background: rgba(100, 200, 255, 0.1);
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .report-stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #64c8ff;
-            margin-bottom: 4px;
-        }
-
-        .report-stat-label {
-            font-size: 11px;
-            opacity: 0.7;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .report-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .report-button {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .report-button.primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .report-button.primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .report-button.secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
-
-        .report-button.secondary:hover {
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(5px);
-            animation: fadeIn 0.3s ease;
-        }
-
-        .modal.open {
-            display: flex;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .modal-content {
-            background: #1a1f3a;
-            border-radius: 16px;
-            width: 90vw;
-            max-width: 800px;
-            max-height: 80vh;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            animation: slideUp 0.3s ease;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .modal-header {
-            padding: 20px 25px;
-            border-bottom: 1px solid rgba(100, 200, 255, 0.2);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-title {
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 28px;
-            cursor: pointer;
-            opacity: 0.7;
-            transition: opacity 0.3s ease;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-close:hover {
-            opacity: 1;
-        }
-
-        .modal-body {
-            padding: 25px;
-            overflow-y: auto;
-            flex: 1;
-        }
-
-        .modal-body::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .modal-body::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .modal-body::-webkit-scrollbar-thumb {
-            background: rgba(100, 200, 255, 0.3);
-            border-radius: 4px;
-        }
-
-        .json-viewer {
-            background: #0a0e27;
-            border-radius: 8px;
-            padding: 20px;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            line-height: 1.6;
-            overflow-x: auto;
-            white-space: pre;
-            color: #e0e0e0;
-        }
-
-        .session-summary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .summary-card {
-            background: rgba(100, 200, 255, 0.1);
-            padding: 15px;
-            border-radius: 12px;
-            border-left: 4px solid #64c8ff;
-        }
-
-        .summary-card-value {
-            font-size: 28px;
-            font-weight: bold;
-            color: #64c8ff;
-            margin-bottom: 5px;
-        }
-
-        .summary-card-label {
-            font-size: 12px;
-            opacity: 0.7;
-        }
-
-        .timeline {
-            position: relative;
-            padding-left: 30px;
-        }
-
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 10px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: rgba(100, 200, 255, 0.3);
-        }
-
-        .timeline-item {
-            position: relative;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 8px;
-            border-left: 3px solid rgba(100, 200, 255, 0.5);
-        }
-
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -23px;
-            top: 20px;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #64c8ff;
-            border: 2px solid #1a1f3a;
-        }
-
-        .timeline-time {
-            font-size: 11px;
-            opacity: 0.6;
-            margin-bottom: 5px;
-        }
-
-        .timeline-event {
-            font-weight: 600;
-            margin-bottom: 3px;
-        }
-
-        .timeline-details {
-            font-size: 13px;
-            opacity: 0.8;
-        }
-    </style>
-    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
-    <script type="importmap">
-      {
-        "imports": {
-          "three": "https://unpkg.com/three@0.154.0/build/three.module.js",
-          "three/addons/": "https://unpkg.com/three@0.154.0/examples/jsm/"
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafetyProto — Painel do Avaliador</title>
+
+  <!-- Three.js via importmap -->
+  <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.154.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.154.0/examples/jsm/"
       }
-    </script>
+    }
+  </script>
+
+  <style>
+    /* ── Reset & Tokens ───────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0a0e27;
+      --bg-sidebar:  #1a1f3a;
+      --bg-surface:  rgba(255,255,255,0.05);
+      --bg-hover:    rgba(255,255,255,0.08);
+      --border:      rgba(100,200,255,0.2);
+
+      --text:        #ffffff;
+      --text-muted:  rgba(255,255,255,0.6);
+      --text-dim:    rgba(255,255,255,0.4);
+
+      --accent:      #64c8ff;
+      --green:       #44ff44;
+      --orange:      #ffa500;
+      --red:         #ff4444;
+      --violet:      #667eea;
+
+      --radius:      8px;
+      --radius-lg:   12px;
+      --radius-xl:   16px;
+    }
+
+    html, body {
+      height: 100%; overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    /* ── Layout ───────────────────────────────────────────────── */
+    .app {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ── Sidebar ──────────────────────────────────────────────── */
+    .sidebar {
+      /* width set via JS / CSS custom property; falls back to 380px */
+      width: var(--sidebar-w, 380px);
+      min-width: 260px;
+      max-width: 700px;
+      flex-shrink: 0;
+      background: linear-gradient(180deg, var(--bg-sidebar) 0%, #0f1229 100%);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.3s ease;
+      z-index: 100;
+      position: relative; /* needed for the resize handle */
+    }
+
+    /* ── Resize Handle ────────────────────────────────────────── */
+    .resize-handle {
+      position: absolute;
+      top: 0; right: 0;
+      width: 6px; height: 100%;
+      cursor: col-resize;
+      z-index: 110;
+      /* visual feedback strip */
+      background: transparent;
+      transition: background 0.15s;
+    }
+
+    .resize-handle:hover,
+    .resize-handle.dragging {
+      background: rgba(100, 200, 255, 0.35);
+    }
+
+    /* Drag ghost prevents text selection on the page while resizing */
+    body.resizing {
+      cursor: col-resize;
+      user-select: none;
+    }
+
+    .sidebar-scroll {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .sidebar-scroll::-webkit-scrollbar { width: 6px; }
+    .sidebar-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(100,200,255,0.3); border-radius: 3px; }
+
+    /* ── Sidebar Header ───────────────────────────────────────── */
+    .s-header {
+      padding: 18px 20px 14px;
+      background: linear-gradient(135deg, var(--violet) 0%, #764ba2 100%);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      flex-shrink: 0;
+    }
+
+    .s-header-title {
+      font-size: 18px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .status-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--red);
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    .status-dot.connected { background: var(--green); animation: none; }
+    .status-dot.connecting { background: #ffc107; animation: blink 1s ease-in-out infinite; }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.35} }
+
+    .s-header-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 11px;
+    }
+
+    .s-header-meta span {
+      background: rgba(255,255,255,0.15);
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    /* ── Score Card ───────────────────────────────────────────── */
+    .score-card {
+      margin: 16px 16px 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      border-radius: var(--radius-xl);
+      box-shadow: 0 8px 32px rgba(240,147,251,0.3);
+      text-align: center;
+    }
+
+    .score-label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.9;
+    }
+
+    .score-value {
+      font-size: 44px;
+      font-weight: 700;
+      margin: 6px 0 0;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      transition: transform 0.15s ease;
+    }
+
+    .score-value.bump {
+      transform: scale(1.12);
+    }
+
+    /* ── Section ──────────────────────────────────────────────── */
+    .section {
+      margin: 16px;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    /* ── Tasks ────────────────────────────────────────────────── */
+    .task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .task-item {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px;
+      border-left: 4px solid transparent;
+      transition: background 0.25s, border-color 0.25s, box-shadow 0.25s;
+    }
+
+    .task-item.pending  { border-left-color: var(--orange); }
+    .task-item.active   { border-left-color: var(--accent); background: rgba(100,200,255,0.09);
+                          box-shadow: 0 0 18px rgba(100,200,255,0.18); }
+    .task-item.completed{ border-left-color: var(--green);  opacity: 0.75; }
+    .task-item.failed   { border-left-color: var(--red);    opacity: 0.75; }
+
+    .task-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .task-name {
+      font-weight: 600;
+      font-size: 13px;
+      flex: 1;
+      /* allow long names to wrap when sidebar is narrow;
+         use word-break so camelCase identifiers also wrap */
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    .task-badge {
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .task-badge.pending   { background: rgba(255,165,0,0.2);   color: var(--orange); }
+    .task-badge.active    { background: rgba(100,200,255,0.2); color: var(--accent);
+                            animation: blink 1.5s ease-in-out infinite; }
+    .task-badge.completed { background: rgba(68,255,68,0.2);   color: var(--green); }
+    .task-badge.failed    { background: rgba(255,68,68,0.2);   color: var(--red); }
+
+    .task-description {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .task-meta {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--text-dim);
+      flex-wrap: wrap;
+    }
+
+    .task-pts { color: var(--accent); }
+
+    /* ── Log ──────────────────────────────────────────────────── */
+    .log-container {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    .log-container::-webkit-scrollbar { width: 5px; }
+    .log-container::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+    .log-container::-webkit-scrollbar-thumb { background: rgba(100,200,255,0.25); border-radius: 3px; }
+
+    .log-item {
+      background: rgba(255,255,255,0.03);
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      border-left: 3px solid rgba(100,200,255,0.25);
+      animation: slideIn 0.2s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-12px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .log-item.violation { border-left-color: var(--red);   background: rgba(255,68,68,0.05); }
+    .log-item.success   { border-left-color: var(--green); background: rgba(68,255,68,0.04); }
+
+    .log-time {
+      opacity: 0.5;
+      font-size: 10px;
+      margin-right: 6px;
+    }
+
+    /* ── Report Section (sidebar) ─────────────────────────────── */
+    .report-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+    }
+
+    .report-summary {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .report-stat {
+      background: rgba(100,200,255,0.08);
+      padding: 10px;
+      border-radius: var(--radius);
+      text-align: center;
+    }
+
+    .report-stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .report-stat-label {
+      font-size: 10px;
+      opacity: 0.65;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    .report-actions { display: flex; gap: 8px; }
+
+    .report-btn {
+      flex: 1;
+      padding: 9px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.2s ease;
+    }
+
+    .report-btn.primary {
+      background: linear-gradient(135deg, var(--violet) 0%, #764ba2 100%);
+      color: #fff;
+    }
+    .report-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(102,126,234,0.45); }
+
+    .report-btn.secondary {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+    .report-btn.secondary:hover { background: rgba(255,255,255,0.15); }
+
+    /* ── Empty State ──────────────────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 28px 16px;
+      opacity: 0.45;
+    }
+    .empty-state-icon { font-size: 40px; margin-bottom: 8px; }
+
+    /* ── 3D Viewport ──────────────────────────────────────────── */
+    .viewport {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    #three-canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ── Modal ────────────────────────────────────────────────── */
+    .modal {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+      animation: fadeIn 0.25s ease;
+    }
+    .modal.open { display: flex; }
+
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+    .modal-content {
+      background: var(--bg-sidebar);
+      border-radius: var(--radius-xl);
+      width: 90vw;
+      max-width: 800px;
+      max-height: 82vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      animation: slideUp 0.25s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity:0; transform:translateY(40px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .modal-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .modal-title { font-size: 18px; font-weight: 600; }
+
+    .modal-close {
+      background: none; border: none; color: #fff;
+      font-size: 26px; cursor: pointer;
+      opacity: 0.6; transition: opacity 0.2s;
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-close:hover { opacity: 1; }
+
+    .modal-body {
+      padding: 22px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .modal-body::-webkit-scrollbar { width: 7px; }
+    .modal-body::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); }
+    .modal-body::-webkit-scrollbar-thumb { background: rgba(100,200,255,0.3); border-radius: 4px; }
+
+    .session-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .summary-card {
+      background: rgba(100,200,255,0.1);
+      padding: 14px;
+      border-radius: var(--radius-lg);
+      border-left: 4px solid var(--accent);
+    }
+
+    .summary-card-value { font-size: 26px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+    .summary-card-label { font-size: 11px; opacity: 0.65; }
+
+    .timeline { position: relative; padding-left: 28px; }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 9px; top: 0; bottom: 0;
+      width: 2px;
+      background: rgba(100,200,255,0.25);
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.03);
+      border-radius: var(--radius);
+      border-left: 3px solid rgba(100,200,255,0.4);
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -22px; top: 18px;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid var(--bg-sidebar);
+    }
+
+    .timeline-item.violation { border-left-color: var(--red); }
+    .timeline-item.violation::before { background: var(--red); }
+
+    .timeline-time   { font-size: 10px; opacity: 0.55; margin-bottom: 4px; }
+    .timeline-event  { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+    .timeline-detail { font-size: 12px; opacity: 0.75; }
+
+    /* ── Floating buttons ─────────────────────────────────────── */
+    .fab {
+      position: fixed;
+      border: none;
+      color: #fff;
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      font-size: 22px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+      backdrop-filter: blur(10px);
+      background: rgba(102,126,234,0.88);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+    }
+
+    .fab:hover  { transform: scale(1.08); }
+    .fab:active { transform: scale(0.94); }
+
+    .fab-menu { top: 18px; left: 18px; display: none; }
+    .fab-lang { top: 18px; right: 18px; }
+
+    /* ── Responsive ───────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        left: 0; top: 0; bottom: 0;
+        transform: translateX(-100%);
+        box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .fab-menu { display: flex; }
+      .fab-lang  { top: 80px; }
+    }
+  </style>
 </head>
 <body>
-    <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
-    
-    <!-- Language Toggle -->
-    <button class="language-toggle" onclick="toggleLanguage()" id="lang-toggle">
-        <span id="lang-flag">🇧🇷</span>
-    </button>
-    
-    <div class="container">
-        <div class="sidebar" id="sidebar">
-            <div class="header">
-                <h1>
-                    <span class="status-indicator" id="status-indicator"></span>
-                    SafetyProto
-                </h1>
-                <div class="session-info">
-                    <span id="session-id">No Session</span>
-                    <span id="connection-status">Disconnected</span>
-                </div>
-            </div>
 
-            <div class="score-card">
-                <div class="score-label">Current Score</div>
-                <div class="score-value" id="score">0</div>
-            </div>
+  <!-- FAB: sidebar toggle (mobile only) -->
+  <button class="fab fab-menu" id="btn-menu" aria-label="Menu">☰</button>
+  <!-- FAB: language toggle -->
+  <button class="fab fab-lang" id="btn-lang" aria-label="Idioma"><span id="lang-flag">🇧🇷</span></button>
 
-            <div class="section">
-                <div class="section-title">📋 Active Tasks</div>
-                <div class="task-list" id="task-list">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">⏳</div>
-                        <div>Waiting for session to start...</div>
-                    </div>
-                </div>
-            </div>
+  <div class="app">
 
-            <div class="section">
-                <div class="section-title">📡 Activity Log</div>
-                <div class="log-container" id="log-container">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📝</div>
-                        <div>No activity yet</div>
-                    </div>
-                </div>
-            </div>
+    <!-- ── Sidebar ────────────────────────────────────────────── -->
+    <div class="sidebar" id="sidebar">
 
-            <div class="section">
-                <div class="section-title">📊 Session Report</div>
-                <div id="report-section">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📄</div>
-                        <div>Report available after session</div>
-                    </div>
-                </div>
-            </div>
+      <!-- Drag edge to resize sidebar width -->
+      <div class="resize-handle" id="resize-handle" title="Arraste para redimensionar"></div>
+
+      <div class="s-header">
+        <div class="s-header-title">
+          <span class="status-dot" id="status-dot"></span>
+          SafetyProto
+        </div>
+        <div class="s-header-meta">
+          <span id="session-id-label">—</span>
+          <span id="conn-status-label">Desconectado</span>
+        </div>
+      </div>
+
+      <div class="sidebar-scroll">
+
+        <!-- Score -->
+        <div class="score-card">
+          <div class="score-label" data-i18n="currentScore">Pontuação Atual</div>
+          <div class="score-value" id="score-value">0</div>
         </div>
 
-        <div class="viewport">
-            <div id="three-canvas"></div>
+        <!-- Tasks -->
+        <div class="section">
+          <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <span data-i18n="activeTasks">📋 Tarefas Ativas</span>
+            <label style="font-size: 10px; display: flex; align-items: center; gap: 4px; text-transform: none; color: var(--text-dim); cursor: pointer;">
+              <input type="checkbox" id="chk-hide-completed" style="accent-color: var(--accent);"> <span data-i18n="hideCompleted">Ocultar concluídas</span>
+            </label>
+          </div>
+          <div class="task-list" id="task-list">
+            <div class="empty-state">
+              <div class="empty-state-icon">⏳</div>
+              <div data-i18n="waitingSession">Aguardando início da sessão…</div>
+            </div>
+          </div>
         </div>
+
+        <!-- Log -->
+        <div class="section">
+          <div class="section-title" data-i18n="activityLog">📡 Registro de Atividades</div>
+          <div class="log-container" id="log-container">
+            <div class="empty-state">
+              <div class="empty-state-icon">📝</div>
+              <div data-i18n="noActivity">Nenhuma atividade ainda</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Report -->
+        <div class="section">
+          <div class="section-title" data-i18n="sessionReport">📊 Relatório da Sessão</div>
+          <div id="report-section">
+            <div class="empty-state">
+              <div class="empty-state-icon">📄</div>
+              <div data-i18n="reportAfterSession">Relatório disponível após a sessão</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /sidebar-scroll -->
+    </div><!-- /sidebar -->
+
+    <!-- ── 3D Viewport ─────────────────────────────────────────── -->
+    <div class="viewport">
+      <div id="three-canvas"></div>
     </div>
 
-    <!-- Report Modal -->
-    <div class="modal" id="report-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">📊 Session Report</div>
-                <button class="modal-close" onclick="closeReportModal()">×</button>
-            </div>
-            <div class="modal-body" id="modal-body">
-                <!-- Content will be injected here -->
-            </div>
-        </div>
+  </div><!-- /app -->
+
+  <!-- Report Modal -->
+  <div class="modal" id="report-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" data-i18n="sessionReport">📊 Relatório da Sessão</div>
+        <button class="modal-close" id="btn-close-modal">×</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
     </div>
+  </div>
 
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        // --- Configuration ---
-        const WS_PORT = 7071;
-        const WS_URL = `ws://${window.location.hostname}:${WS_PORT}/eval`;
+    /* ================================================================
+     * CONSTANTS
+     * ============================================================== */
+    const WS_PORT           = 7071;
+    const WS_PATH           = '/eval';
+    const RECONNECT_BASE_MS = 1_500;
+    const RECONNECT_MAX_MS  = 30_000;
+    const RECONNECT_JITTER  = 0.25;
+    const MAX_LOG_ITEMS     = 60;
 
-        // --- Translations ---
-        let currentLang = 'pt';
-        const translations = {
-            en: {
-                title: 'SafetyProto',
-                noSession: 'No Session',
-                session: 'Session',
-                disconnected: 'Disconnected',
-                connected: 'Connected',
-                currentScore: 'Current Score',
-                activeTasks: '📋 Active Tasks',
-                activityLog: '📡 Activity Log',
-                sessionReport: '📊 Session Report',
-                waitingSession: 'Waiting for session to start...',
-                noActivity: 'No activity yet',
-                reportAfterSession: 'Report available after session',
-                viewFullReport: 'View Full Report',
-                downloadJson: 'Download JSON',
-                duration: 'Duration',
-                finalScore: 'Final Score',
-                tasks: 'Tasks',
-                events: 'Events',
-                totalDuration: 'Total Duration',
-                tasksCompleted: 'Tasks Completed',
-                totalTasks: 'Total Tasks',
-                eventTimeline: 'Event Timeline',
-                pending: 'pending',
-                active: 'active',
-                completed: 'completed',
-                failed: 'failed',
-                // Log messages
-                logConnected: '🟢 Connected to training session',
-                logDisconnected: '🔴 Connection lost. Reconnecting...',
-                logSessionStarted: '🎮 Training session started',
-                logStarted: '▶️ Started',
-                logCompleted: '✅ Completed',
-                logTimeout: '⏰ Timeout',
-                logScorePlus: '➕ Score',
-                logScoreMinus: '➖ Score',
-                logTotal: 'Total',
-                logViolation: '⚠️ Safety Violation',
-                logCritical: '🚨 CRITICAL',
-                logSessionComplete: '🏁 Session Complete! Score',
-                logGroupStarted: '📂 Group Started',
-                logGroupCompleted: '📁 Group Completed',
-                logSessionReset: '🔄 Session has been reset',
-                logReportAvailable: '📊 Session report available',
-                logSessionPaused: '⏸️ Session paused',
-                logSessionResumed: '▶️ Session resumed',
-                logSessionEnded: '🔚 Session ended',
-                logPpeEquipped: '🦺 PPE Equipped',
-                logPpeRemoved: '🦺 PPE Removed',
-                logActionAttempt: '🎯 Action',
-                logSafetyError: '❌ Safety Error',
-                at: 'at'
-            },
-            pt: {
-                title: 'SafetyProto',
-                noSession: 'Sem Sessão',
-                session: 'Sessão',
-                disconnected: 'Desconectado',
-                connected: 'Conectado',
-                currentScore: 'Pontuação Atual',
-                activeTasks: '📋 Tarefas Ativas',
-                activityLog: '📡 Registro de Atividades',
-                sessionReport: '📊 Relatório da Sessão',
-                waitingSession: 'Aguardando início da sessão...',
-                noActivity: 'Nenhuma atividade ainda',
-                reportAfterSession: 'Relatório disponível após a sessão',
-                viewFullReport: 'Ver Relatório Completo',
-                downloadJson: 'Baixar JSON',
-                duration: 'Duração',
-                finalScore: 'Pontuação Final',
-                tasks: 'Tarefas',
-                events: 'Eventos',
-                totalDuration: 'Duração Total',
-                tasksCompleted: 'Tarefas Concluídas',
-                totalTasks: 'Total de Tarefas',
-                eventTimeline: 'Linha do Tempo',
-                pending: 'pendente',
-                active: 'ativa',
-                completed: 'concluída',
-                failed: 'falhou',
-                // Log messages
-                logConnected: '🟢 Conectado à sessão de treinamento',
-                logDisconnected: '🔴 Conexão perdida. Reconectando...',
-                logSessionStarted: '🎮 Sessão de treinamento iniciada',
-                logStarted: '▶️ Iniciada',
-                logCompleted: '✅ Concluída',
-                logTimeout: '⏰ Tempo esgotado',
-                logScorePlus: '➕ Pontos',
-                logScoreMinus: '➖ Pontos',
-                logTotal: 'Total',
-                logViolation: '⚠️ Violação de Segurança',
-                logCritical: '🚨 CRÍTICO',
-                logSessionComplete: '🏁 Sessão Completa! Pontuação',
-                logGroupStarted: '📂 Grupo Iniciado',
-                logGroupCompleted: '📁 Grupo Concluído',
-                logSessionReset: '🔄 Sessão foi reiniciada',
-                logReportAvailable: '📊 Relatório da sessão disponível',
-                logSessionPaused: '⏸️ Sessão pausada',
-                logSessionResumed: '▶️ Sessão retomada',
-                logSessionEnded: '🔚 Sessão encerrada',
-                logPpeEquipped: '🦺 EPI Equipado',
-                logPpeRemoved: '🦺 EPI Removido',
-                logActionAttempt: '🎯 Ação',
-                logSafetyError: '❌ Erro de Segurança',
-                at: 'em'
+    /* ================================================================
+     * TRANSLATIONS
+     * ============================================================== */
+    const i18n = {
+      en: {
+        currentScore: 'Current Score',
+        activeTasks: '📋 Active Tasks',
+        activityLog: '📡 Activity Log',
+        sessionReport: '📊 Session Report',
+        waitingSession: 'Waiting for session to start…',
+        noActivity: 'No activity yet',
+        reportAfterSession: 'Report available after session',
+        viewFullReport: 'View Full Report',
+        downloadJson: 'Download JSON',
+        duration: 'Duration',
+        finalScore: 'Final Score',
+        tasks: 'Tasks',
+        events: 'Events',
+        totalDuration: 'Total Duration',
+        tasksCompleted: 'Tasks Completed',
+        totalTasks: 'Total Tasks',
+        eventTimeline: 'Event Timeline',
+        noSession: 'No Session',
+        session: 'Session',
+        disconnected: 'Disconnected',
+        connected: 'Connected',
+        connecting: 'Connecting…',
+        pending: 'Pending', active: 'Active', completed: 'Done', failed: 'Failed',
+        hideCompleted: 'Hide completed',
+        // log
+        logConnected: '🟢 Connected to training session',
+        logDisconnected: '🔴 Connection lost. Reconnecting…',
+        logSessionStarted: '🎮 Training session started',
+        logStarted: '▶️ Started', logCompleted: '✅ Completed', logTimeout: '⏰ Timeout',
+        logScorePlus: '➕ Score', logScoreMinus: '➖ Score', logTotal: 'Total',
+        logViolation: '⚠️ Safety Violation', logCritical: '🚨 CRITICAL',
+        logSessionComplete: '🏁 Session Complete! Score',
+        logGroupStarted: '📂 Group Started', logGroupCompleted: '📁 Group Completed',
+        logSessionReset: '🔄 Session reset', logReportAvailable: '📊 Report available',
+        logSessionPaused: '⏸️ Session paused', logSessionResumed: '▶️ Session resumed',
+        logSessionEnded: '🔚 Session ended',
+        logPpeEquipped: '🦺 PPE Equipped', logPpeRemoved: '🦺 PPE Removed',
+        logActionAttempt: '🎯 Action', logSafetyError: '❌ Safety Error', at: 'at',
+      },
+      pt: {
+        currentScore: 'Pontuação Atual',
+        activeTasks: '📋 Tarefas Ativas',
+        activityLog: '📡 Registro de Atividades',
+        sessionReport: '📊 Relatório da Sessão',
+        waitingSession: 'Aguardando início da sessão…',
+        noActivity: 'Nenhuma atividade ainda',
+        reportAfterSession: 'Relatório disponível após a sessão',
+        viewFullReport: 'Ver Relatório Completo',
+        downloadJson: 'Baixar JSON',
+        duration: 'Duração',
+        finalScore: 'Pontuação Final',
+        tasks: 'Tarefas',
+        events: 'Eventos',
+        totalDuration: 'Duração Total',
+        tasksCompleted: 'Tarefas Concluídas',
+        totalTasks: 'Total de Tarefas',
+        eventTimeline: 'Linha do Tempo',
+        noSession: 'Sem Sessão',
+        session: 'Sessão',
+        disconnected: 'Desconectado',
+        connected: 'Conectado',
+        connecting: 'Conectando…',
+        pending: 'Pendente', active: 'Ativa', completed: 'Concluída', failed: 'Falhou',
+        // log
+        logConnected: '🟢 Conectado à sessão de treinamento',
+        logDisconnected: '🔴 Conexão perdida. Reconectando…',
+        logSessionStarted: '🎮 Sessão de treinamento iniciada',
+        logStarted: '▶️ Iniciada', logCompleted: '✅ Concluída', logTimeout: '⏰ Tempo esgotado',
+        logScorePlus: '➕ Pontos', logScoreMinus: '➖ Pontos', logTotal: 'Total',
+        logViolation: '⚠️ Violação de Segurança', logCritical: '🚨 CRÍTICO',
+        logSessionComplete: '🏁 Sessão Completa! Pontuação',
+        logGroupStarted: '📂 Grupo Iniciado', logGroupCompleted: '📁 Grupo Concluído',
+        logSessionReset: '🔄 Sessão reiniciada', logReportAvailable: '📊 Relatório disponível',
+        logSessionPaused: '⏸️ Sessão pausada', logSessionResumed: '▶️ Sessão retomada',
+        logSessionEnded: '🔚 Sessão encerrada',
+        logPpeEquipped: '🦺 EPI Equipado', logPpeRemoved: '🦺 EPI Removido',
+        logActionAttempt: '🎯 Ação', logSafetyError: '❌ Erro de Segurança', at: 'em',
+      }
+    };
+
+    let lang = localStorage.getItem('sp_lang') || 'pt';
+    const t = k => (i18n[lang][k] ?? i18n['en'][k] ?? k);
+
+    function applyTranslations() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.textContent = t(el.dataset.i18n);
+      });
+      document.getElementById('lang-flag').textContent = lang === 'pt' ? '🇧🇷' : '🇺🇸';
+    }
+
+    /* ================================================================
+     * STATE
+     * ============================================================== */
+    /**
+     * tasks: Map<taskId, { id, name, description, groupName, order,
+     *   executionMode, expectedAction, requiredPpe[], successPoints,
+     *   failurePenalty, ppePenalty, status }>
+     */
+    const tasks      = new Map();
+    let currentScore = 0;
+    let sessionReport= null;
+    let hideCompleted = false;
+
+    /* ================================================================
+     * WsManager — exponential backoff, jitter, keepalive ping
+     * ============================================================== */
+    class WsManager {
+      constructor(url, onMessage) {
+        this._url       = url;
+        this._onMessage = onMessage;
+        this._ws        = null;
+        this._retries   = 0;
+        this._retryTimer= null;
+        this._pingTimer = null;
+        this._intentional = false;
+      }
+
+      connect() {
+        this._intentional = false;
+        this._attempt();
+      }
+
+      _attempt() {
+        clearTimeout(this._retryTimer);
+        setStatusUI('connecting');
+
+        try {
+          this._ws = new WebSocket(this._url);
+        } catch {
+          this._scheduleRetry();
+          return;
+        }
+
+        this._ws.onopen = () => {
+          this._retries = 0;
+          setStatusUI('connected');
+          addLog(t('logConnected'), 'success');
+
+          // NOVO: Pedir sincronização de estado (evita amnésia após queda de conexão)
+          try {
+            this._ws.send(JSON.stringify({ eventType: "RequestSync", payload: {} }));
+          } catch (e) {
+            console.error("Erro ao solicitar sync:", e);
+          }
+
+          // keepalive ping every 8 s
+          this._pingTimer = setInterval(() => {
+            if (this._ws?.readyState === WebSocket.OPEN) {
+              try { this._ws.send('ping'); } catch (_) {}
             }
+          }, 8_000);
         };
 
-        function t(key) {
-            return translations[currentLang][key] || key;
-        }
-
-        function updateUILanguage() {
-            // Update static text elements
-            document.querySelector('.score-label').textContent = t('currentScore');
-            document.querySelectorAll('.section-title')[0].textContent = t('activeTasks');
-            document.querySelectorAll('.section-title')[1].textContent = t('activityLog');
-            document.querySelectorAll('.section-title')[2].textContent = t('sessionReport');
-            
-            // Update flag
-            document.getElementById('lang-flag').textContent = currentLang === 'en' ? '🇺🇸' : '🇧🇷';
-            
-            // Update empty states if they exist
-            const taskList = document.getElementById('task-list');
-            if (taskList.querySelector('.empty-state')) {
-                taskList.querySelector('.empty-state div:last-child').textContent = t('waitingSession');
-            }
-            
-            const logContainer = document.getElementById('log-container');
-            if (logContainer.querySelector('.empty-state')) {
-                logContainer.querySelector('.empty-state div:last-child').textContent = t('noActivity');
-            }
-            
-            const reportSection = document.getElementById('report-section');
-            if (reportSection.querySelector('.empty-state')) {
-                reportSection.querySelector('.empty-state div:last-child').textContent = t('reportAfterSession');
-            }
-            
-            // Update connection status
-            const connectionStatus = document.getElementById('connection-status');
-            if (connectionStatus) {
-                const isConnected = connectionStatus.textContent.includes('Connect') || connectionStatus.textContent.includes('Conectado');
-                connectionStatus.textContent = isConnected ? t('connected') : t('disconnected');
-            }
-            
-            // Update session ID label if no session
-            const sessionId = document.getElementById('session-id');
-            if (sessionId && (sessionId.textContent === 'No Session' || sessionId.textContent === 'Sem Sessão')) {
-                sessionId.textContent = t('noSession');
-            }
-        }
-
-        window.toggleLanguage = function() {
-            currentLang = currentLang === 'en' ? 'pt' : 'en';
-            updateUILanguage();
-            
-            // Save preference
-            localStorage.setItem('dashboardLang', currentLang);
+        this._ws.onmessage = ev => {
+          try { this._onMessage(JSON.parse(ev.data)); }
+          catch { /* ignore malformed */ }
         };
 
-        // Load saved language preference
-        const savedLang = localStorage.getItem('dashboardLang');
-        if (savedLang) {
-            currentLang = savedLang;
+        this._ws.onerror = () => { /* handled in onclose */ };
+
+        this._ws.onclose = () => {
+          clearInterval(this._pingTimer);
+          if (this._intentional) return;
+          setStatusUI('disconnected');
+          addLog(t('logDisconnected'), 'violation');
+          this._scheduleRetry();
+        };
+      }
+
+      _scheduleRetry() {
+        const base = Math.min(RECONNECT_BASE_MS * (2 ** this._retries), RECONNECT_MAX_MS);
+        const delay = base * (1 + (Math.random() * 2 - 1) * RECONNECT_JITTER);
+        this._retries++;
+        this._retryTimer = setTimeout(() => this._attempt(), delay);
+      }
+
+      destroy() {
+        this._intentional = true;
+        clearTimeout(this._retryTimer);
+        clearInterval(this._pingTimer);
+        this._ws?.close();
+      }
+    }
+
+    /* ================================================================
+     * EVENT ROUTER — declarative handler map
+     * ============================================================== */
+    const handlers = {};
+    const on = (type, fn) => { handlers[type] = fn; };
+
+    function route(envelope) {
+      const { eventType, payload } = envelope;
+      if (!eventType) return;
+      const fn = handlers[eventType];
+      if (fn) { try { fn(payload); } catch (e) { console.error(`[handler:${eventType}]`, e); } }
+      // PoseFrame handled inline (high frequency — skip addLog)
+    }
+
+    /* ── Session lifecycle ── */
+    on('SessionStarted', p => {
+      document.getElementById('session-id-label').textContent =
+        `${t('session')}: ${p.sessionId?.substring(0, 8) ?? '?'}`;
+      addLog(t('logSessionStarted'), 'success');
+    });
+
+    on('SessionManifest', p => {
+      tasks.clear(); // Clear old tasks on new manifest
+      (p.tasks ?? []).forEach((task, idx) => {
+        if (!tasks.has(task.taskName)) {
+          tasks.set(task.taskName, {
+            id: task.taskName, name: task.taskName,
+            description: task.description ?? '',
+            groupName: task.groupName ?? '',
+            order: idx + 1,
+            executionMode: '', expectedAction: '', requiredPpe: [],
+            successPoints: 0, failurePenalty: 0, ppePenalty: 0,
+            status: 'pending',
+          });
         }
+      });
+      renderTasks();
+    });
 
-        // --- UI State ---
-        const tasks = new Map();
-        const logMessages = [];
-        let currentScore = 0;
-        let sessionReport = null;
+    on('SessionPaused',   () => addLog(t('logSessionPaused')));
+    on('SessionResumed',  () => addLog(t('logSessionResumed'), 'success'));
+    on('SessionEnded',    () => addLog(t('logSessionEnded')));
 
-        // --- Three.js Setup ---
-        const container = document.getElementById('three-canvas');
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0a0e27);
-        scene.fog = new THREE.Fog(0x0a0e27, 5, 30);
+    on('SessionCompleted', p => {
+      addLog(`${t('logSessionComplete')}: ${p.totalScore} | ${t('tasks')}: ${p.tasksCompleted}/${p.totalTasks}`, 'success');
+    });
 
-        const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-        camera.position.set(0, 1.6, 3);
+    on('SessionReset', () => {
+      tasks.clear();
+      sessionReport = null;
+      currentScore  = 0;
+      setScoreUI(0);
+      resetTaskUI();
+      document.getElementById('report-section').innerHTML = emptyState('📄', t('reportAfterSession'));
+      document.getElementById('session-id-label').textContent = t('noSession');
+      addLog(t('logSessionReset'));
+    });
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(container.clientWidth, container.clientHeight);
-        container.appendChild(renderer.domElement);
+    /* ── Task events ── */
+    function upsertTask(p, status) {
+      const existing = tasks.get(p.taskId) ?? {};
+      tasks.set(p.taskId, {
+        id:            p.taskId,
+        name:          p.taskName          ?? existing.name          ?? p.taskId,
+        description:   p.taskDescription   ?? existing.description   ?? '',
+        groupName:     p.groupName         ?? existing.groupName     ?? '',
+        order:         p.order             ?? existing.order         ?? 0,
+        executionMode: p.executionMode     ?? existing.executionMode ?? '',
+        expectedAction:p.expectedAction    ?? existing.expectedAction?? '',
+        requiredPpe:   p.requiredPpe       ?? existing.requiredPpe   ?? [],
+        successPoints: p.successPoints     ?? existing.successPoints ?? 0,
+        failurePenalty:p.failurePenalty    ?? existing.failurePenalty?? 0,
+        ppePenalty:    p.ppePenalty        ?? existing.ppePenalty    ?? 0,
+        status,
+      });
+      renderTasks();
+    }
 
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.target.set(0, 1.0, 0);
-        controls.update();
+    on('TaskStarted',   p => { upsertTask(p, 'active');    addLog(`${t('logStarted')}: ${p.taskName}`); });
+    on('TaskCompleted', p => { upsertTask(p, 'completed'); addLog(`${t('logCompleted')}: ${p.taskName}`, 'success'); });
+    on('TaskTimeout',   p => { upsertTask(p, 'failed');    addLog(`${t('logTimeout')}: ${p.taskName}`, 'violation'); });
 
-        const ambientLight = new THREE.AmbientLight(0x404040, 2);
-        scene.add(ambientLight);
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-        dirLight.position.set(2, 5, 2);
-        scene.add(dirLight);
+    /* ── Group events ── */
+    on('GroupStarted',   p => addLog(`${t('logGroupStarted')}: ${p.groupName}`));
+    on('GroupCompleted', p => addLog(`${t('logGroupCompleted')}: ${p.groupName}`, 'success'));
 
-        const gridHelper = new THREE.GridHelper(10, 10, 0x444444, 0x444444);
-        scene.add(gridHelper);
-        const axesHelper = new THREE.AxesHelper(1);
-        scene.add(axesHelper);
+    /* ── Score ── */
+    on('ScoreChanged', p => {
+      setScoreUI(p.totalScore);
+      const d = p.delta;
+      if (d > 0)      addLog(`${t('logScorePlus')} +${d} (${t('logTotal')}: ${p.totalScore})`, 'success');
+      else if (d < 0) addLog(`${t('logScoreMinus')} ${d} (${t('logTotal')}: ${p.totalScore})`, 'violation');
+    });
 
-        // Label system
-        const labelRenderer = document.createElement('div');
-        labelRenderer.style.position = 'absolute';
-        labelRenderer.style.top = '0';
-        labelRenderer.style.left = '0';
-        labelRenderer.style.width = '100%';
-        labelRenderer.style.height = '100%';
-        labelRenderer.style.pointerEvents = 'none';
-        container.appendChild(labelRenderer);
+    /* ── PPE ── */
+    on('PpeChanged', p => {
+      if (p.isWearing) addLog(`${t('logPpeEquipped')}: ${p.ppeType}`, 'success');
+      else             addLog(`${t('logPpeRemoved')}: ${p.ppeType}`, 'violation');
+    });
 
-        const labels = new Map();
+    /* ── Safety ── */
+    on('ActionAttempt', p => {
+      const pos = p.hasPosition ? ` ${t('at')} (${p.px?.toFixed(1)},${p.py?.toFixed(1)},${p.pz?.toFixed(1)})` : '';
+      addLog(`${t('logActionAttempt')}: ${p.actionId} (${p.sourceId ?? ''})${pos}`);
+    });
 
-        // labels Map stores { el, yOffset } per mesh
-        function createLabel(text, color = '#ffffff', yOffset = 0.15) {
-            const label = document.createElement('div');
-            label.style.position = 'absolute';
-            label.style.color = color;
-            label.style.fontSize = '12px';
-            label.style.fontWeight = 'bold';
-            label.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-            label.style.padding = '4px 8px';
-            label.style.borderRadius = '4px';
-            label.style.border = `1px solid ${color}`;
-            label.style.whiteSpace = 'nowrap';
-            label.style.transform = 'translate(-50%, -100%)';
-            label.style.marginTop = '-10px';
-            label.textContent = text;
-            labelRenderer.appendChild(label);
-            return { el: label, yOffset };
-        }
+    on('SafetyViolation',      p => addLog(`${t('logViolation')}: ${p.message}`, 'violation'));
+    on('CriticalSafetyFailure',p => addLog(`${t('logCritical')}: ${p.reason}`, 'violation'));
+    on('SafetyError',          p => addLog(`${t('logSafetyError')}: [${p.source}] ${p.message}`, 'violation'));
 
-        // Projects a world position to screen, sets label position, returns { x, y, visible }
-        function updateLabelPosition(labelData, position) {
-            const vector = position.clone();
-            vector.project(camera);
+    /* ── Session Log File ── */
+    on('SessionLogFile', p => {
+      if (!p.content) return;
+      try {
+        const report = JSON.parse(p.content);
+        renderReportSection(report);
+        addLog(t('logReportAvailable'), 'success');
+      } catch (e) {
+        console.error('Failed to parse session log:', e);
+      }
+    });
 
-            const x = (vector.x * 0.5 + 0.5) * container.clientWidth;
-            const y = (vector.y * -0.5 + 0.5) * container.clientHeight;
-            const visible = vector.z <= 1;
+    /* ================================================================
+     * UI HELPERS
+     * ============================================================== */
+    function setStatusUI(state) {
+      const dot   = document.getElementById('status-dot');
+      const label = document.getElementById('conn-status-label');
+      dot.className = 'status-dot' + (state === 'connected' ? ' connected' : state === 'connecting' ? ' connecting' : '');
+      label.textContent = t(state === 'connected' ? 'connected' : state === 'connecting' ? 'connecting' : 'disconnected');
+    }
 
-            labelData.el.style.display = visible ? 'block' : 'none';
-            labelData.el.style.left = `${x}px`;
-            labelData.el.style.top = `${y}px`;
+    function setScoreUI(score) {
+      currentScore = score;
+      const el = document.getElementById('score-value');
+      el.textContent = score;
+      el.classList.remove('bump');
+      void el.offsetWidth; // reflow to retrigger animation
+      el.classList.add('bump');
+      setTimeout(() => el.classList.remove('bump'), 180);
+    }
 
-            return { x, y, visible };
-        }
+    function emptyState(icon, text) {
+      return `<div class="empty-state"><div class="empty-state-icon">${icon}</div><div>${text}</div></div>`;
+    }
 
-        // --- 3D Objects ---
-        const objects = { hmd: null, leftHand: null, rightHand: null, ppe: {} };
-        const matHead = new THREE.MeshLambertMaterial({ color: 0x00aaff });
-        const matHand = new THREE.MeshLambertMaterial({ color: 0x00ffaa });
-        const matPPEAttached = new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
+    function resetTaskUI() {
+      document.getElementById('task-list').innerHTML = emptyState('⏳', t('waitingSession'));
+    }
 
-        // Five-color palette for PPE objects — mesh and label share the same color
-        const PPE_PALETTE = [
-            { hex: 0xff6b35, css: '#ff6b35' },
-            { hex: 0xc44dff, css: '#c44dff' },
-            { hex: 0x00cfff, css: '#00cfff' },
-            { hex: 0xff4da6, css: '#ff4da6' },
-            { hex: 0x44ff88, css: '#44ff88' },
+    /* ── Task renderer — full rebuild from Map ── */
+    function renderTasks() {
+      const container = document.getElementById('task-list');
+      if (tasks.size === 0) { resetTaskUI(); return; }
+
+      // Sort: active first, then by order
+      let sorted = [...tasks.values()];
+
+      if (hideCompleted) {
+        sorted = sorted.filter(t => t.status !== 'completed' && t.status !== 'failed');
+      }
+
+      sorted.sort((a, b) => {
+        const priority = s => s === 'active' ? 0 : s === 'pending' ? 1 : 2;
+        const pd = priority(a.status) - priority(b.status);
+        if (pd !== 0) return pd;
+        return (a.order ?? 999) - (b.order ?? 999);
+      });
+
+      container.innerHTML = '';
+      sorted.forEach(task => {
+        const pts = [];
+        if (task.successPoints)  pts.push(`+${task.successPoints}pts`);
+        if (task.ppePenalty)     pts.push(`-${task.ppePenalty} EPI`);
+        if (task.failurePenalty) pts.push(`-${task.failurePenalty} falha`);
+
+        const ppe = (task.requiredPpe ?? []).join(', ');
+
+        const el = document.createElement('div');
+        el.className = `task-item ${task.status}`;
+        el.innerHTML = `
+          <div class="task-header">
+            <div class="task-name">${task.name}</div>
+            <div class="task-badge ${task.status}">${t(task.status)}</div>
+          </div>
+          ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
+          <div class="task-meta">
+            ${task.groupName ? `<span>Grupo: ${task.groupName}</span>` : ''}
+            ${pts.length ? `<span class="task-pts">${pts.join(' / ')}</span>` : ''}
+            ${ppe ? `<span>EPI: ${ppe}</span>` : ''}
+          </div>
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    /* ── Log ── */
+    function addLog(message, type = 'info') {
+      const container = document.getElementById('log-container');
+      const empty = container.querySelector('.empty-state');
+      if (empty) container.innerHTML = '';
+
+      const item = document.createElement('div');
+      item.className = `log-item ${type}`;
+      const time = new Date().toLocaleTimeString(lang === 'pt' ? 'pt-BR' : 'en-US', { hour12: false });
+      item.innerHTML = `<span class="log-time">${time}</span>${message}`;
+      container.insertBefore(item, container.firstChild);
+
+      while (container.children.length > MAX_LOG_ITEMS) {
+        container.removeChild(container.lastChild);
+      }
+    }
+
+    /* ── Report Section ── */
+    function renderReportSection(report) {
+      sessionReport = report;
+      const summary = report.summary ?? {};
+      const mins    = Math.floor((summary.totalElapsedTime ?? 0) / 60);
+      const secs    = Math.floor((summary.totalElapsedTime ?? 0) % 60);
+
+      document.getElementById('report-section').innerHTML = `
+        <div class="report-card">
+          <div class="report-summary">
+            <div class="report-stat">
+              <div class="report-stat-value">${mins}:${String(secs).padStart(2,'0')}</div>
+              <div class="report-stat-label">${t('duration')}</div>
+            </div>
+            <div class="report-stat">
+              <div class="report-stat-value">${summary.totalScore ?? 0}</div>
+              <div class="report-stat-label">${t('finalScore')}</div>
+            </div>
+            <div class="report-stat">
+              <div class="report-stat-value">${summary.tasksCompleted ?? 0}/${summary.totalTasks ?? 0}</div>
+              <div class="report-stat-label">${t('tasks')}</div>
+            </div>
+            <div class="report-stat">
+              <div class="report-stat-value">${report.entries?.length ?? 0}</div>
+              <div class="report-stat-label">${t('events')}</div>
+            </div>
+          </div>
+          <div class="report-actions">
+            <button class="report-btn primary" id="btn-view-report">${t('viewFullReport')}</button>
+            <button class="report-btn secondary" id="btn-dl-report">${t('downloadJson')}</button>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('btn-view-report').onclick = openReportModal;
+      document.getElementById('btn-dl-report').onclick   = downloadReport;
+    }
+
+    function openReportModal() {
+      if (!sessionReport) return;
+      const summary = sessionReport.summary ?? {};
+      const entries = sessionReport.entries ?? [];
+      const mins = Math.floor((summary.totalElapsedTime ?? 0) / 60);
+      const secs = Math.floor((summary.totalElapsedTime ?? 0) % 60);
+
+      const timelineHtml = entries.map(entry => {
+        const time  = new Date(entry.timestamp).toLocaleTimeString(lang === 'pt' ? 'pt-BR' : 'en-US', { hour12: false });
+        const isViol = entry.eventName?.toLowerCase().includes('violation');
+        return `
+          <div class="timeline-item ${isViol ? 'violation' : ''}">
+            <div class="timeline-time">${time}</div>
+            <div class="timeline-event">${entry.eventName ?? ''}</div>
+            ${entry.details ? `<div class="timeline-detail">${entry.details}</div>` : ''}
+          </div>`;
+      }).join('');
+
+      document.getElementById('modal-body').innerHTML = `
+        <div class="session-summary-grid">
+          <div class="summary-card">
+            <div class="summary-card-value">${mins}:${String(secs).padStart(2,'0')}</div>
+            <div class="summary-card-label">${t('totalDuration')}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-value">${summary.totalScore ?? 0}</div>
+            <div class="summary-card-label">${t('finalScore')}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-value">${summary.tasksCompleted ?? 0}</div>
+            <div class="summary-card-label">${t('tasksCompleted')}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-value">${summary.totalTasks ?? 0}</div>
+            <div class="summary-card-label">${t('totalTasks')}</div>
+          </div>
+        </div>
+        <h3 style="margin-bottom:14px;color:var(--accent)">${t('eventTimeline')}</h3>
+        <div class="timeline">${timelineHtml}</div>
+      `;
+      document.getElementById('report-modal').classList.add('open');
+    }
+
+    function downloadReport() {
+      if (!sessionReport) return;
+      const blob = new Blob([JSON.stringify(sessionReport, null, 2)], { type: 'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = Object.assign(document.createElement('a'), {
+        href: url,
+        download: `session_report_${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+      });
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    /* ── Close modal ── */
+    document.getElementById('btn-close-modal').onclick = () =>
+      document.getElementById('report-modal').classList.remove('open');
+    document.getElementById('report-modal').addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('open');
+    });
+
+    /* ── Mobile sidebar toggle ── */
+    document.getElementById('btn-menu').onclick = () =>
+      document.getElementById('sidebar').classList.toggle('open');
+
+    /* ── Language toggle ── */
+    document.getElementById('btn-lang').onclick = () => {
+      lang = lang === 'pt' ? 'en' : 'pt';
+      localStorage.setItem('sp_lang', lang);
+      applyTranslations();
+      // Re-render dynamic UI in new language
+      renderTasks();
+    };
+
+    document.getElementById('chk-hide-completed').onchange = e => {
+      hideCompleted = e.target.checked;
+      renderTasks();
+    };
+
+    /* ================================================================
+     * EvaluatorViewport — encapsulates Three.js scene, object pool,
+     * label system and render loop. Completely decoupled from UI state.
+     * ============================================================== */
+    class EvaluatorViewport {
+      constructor(containerEl) {
+        this._container = containerEl;
+
+        /* Scene */
+        this._scene = new THREE.Scene();
+        this._scene.background = new THREE.Color(0x0a0e27);
+        this._scene.fog = new THREE.Fog(0x0a0e27, 6, 30);
+
+        /* Camera */
+        this._camera = new THREE.PerspectiveCamera(
+          75,
+          containerEl.clientWidth / containerEl.clientHeight,
+          0.1, 1000
+        );
+        this._camera.position.set(0, 1.6, 3);
+
+        /* Renderer */
+        this._renderer = new THREE.WebGLRenderer({ antialias: true });
+        this._renderer.setPixelRatio(window.devicePixelRatio);
+        this._renderer.setSize(containerEl.clientWidth, containerEl.clientHeight);
+        containerEl.appendChild(this._renderer.domElement);
+
+        /* Controls */
+        this._controls = new OrbitControls(this._camera, this._renderer.domElement);
+        this._controls.target.set(0, 1.0, 0);
+        this._controls.update();
+
+        /* Lighting */
+        this._scene.add(new THREE.AmbientLight(0x404040, 2));
+        const dir = new THREE.DirectionalLight(0xffffff, 1);
+        dir.position.set(2, 5, 2);
+        this._scene.add(dir);
+
+        /* Environment helpers */
+        this._scene.add(new THREE.GridHelper(10, 10, 0x333355, 0x222244));
+        this._scene.add(new THREE.AxesHelper(1));
+
+        /* Label overlay */
+        this._labelOverlay = document.createElement('div');
+        Object.assign(this._labelOverlay.style, {
+          position: 'absolute', top: '0', left: '0',
+          width: '100%', height: '100%', pointerEvents: 'none',
+        });
+        containerEl.appendChild(this._labelOverlay);
+
+        /* Object + label pools */
+        this._objects   = { hmd: null, leftHand: null, rightHand: null, ppe: {} };
+        this._labels    = new Map();   // mesh → { el, yOffset }
+        this._ppeColors = new Map();   // ppeId → { css, mat }
+        this._ppeColorIdx = 0;
+
+        /* Shared geometries */
+        this._geoHead = new THREE.BoxGeometry(0.2, 0.15, 0.25);
+        this._geoHand = new THREE.SphereGeometry(0.05, 16, 16);
+        this._geoPPE  = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+
+        /* Shared materials */
+        this._matHead       = new THREE.MeshLambertMaterial({ color: 0x00aaff });
+        this._matHand       = new THREE.MeshLambertMaterial({ color: 0x00ffaa });
+        this._matPPEAttached= new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
+
+        this._PPE_PALETTE = [
+          { hex: 0xff6b35, css: '#ff6b35' },
+          { hex: 0xc44dff, css: '#c44dff' },
+          { hex: 0x00cfff, css: '#00cfff' },
+          { hex: 0xff4da6, css: '#ff4da6' },
+          { hex: 0x44ff88, css: '#44ff88' },
         ];
-        const ppeColors = new Map(); // id → { css, mat }
-        let _ppeColorIdx = 0;
-        const geoHead = new THREE.BoxGeometry(0.2, 0.15, 0.25);
-        const geoHand = new THREE.SphereGeometry(0.05, 16, 16);
-        const geoPPE = new THREE.BoxGeometry(0.1, 0.1, 0.1);
 
-        function updateObject(id, pose, type, attachedTo = "") {
-            let obj = type === 'ppe' ? objects.ppe[id] : objects[id];
-            if (!obj) {
-                let mesh;
-                if (type === 'hmd') mesh = new THREE.Mesh(geoHead, matHead);
-                else if (type === 'hand') mesh = new THREE.Mesh(geoHand, matHand);
-                else if (type === 'ppe') {
-                    const palette = PPE_PALETTE[_ppeColorIdx % PPE_PALETTE.length];
-                    const ppeMat = new THREE.MeshLambertMaterial({ color: palette.hex });
-                    ppeColors.set(id, { css: palette.css, mat: ppeMat });
-                    _ppeColorIdx++;
-                    mesh = new THREE.Mesh(geoPPE, ppeMat);
-                }
-                scene.add(mesh);
-                obj = mesh;
-                if (type === 'ppe') objects.ppe[id] = obj;
-                else objects[id] = obj;
+        /* Resize listener */
+        this._onResize = () => this.resize();
+        window.addEventListener('resize', this._onResize);
 
-                // Create label for this object, with per-type Y offsets
-                let labelText = '';
-                let labelColor = '#ffffff';
-                let labelYOffset = 0.15;
+        /* Start loop */
+        this._animate();
+      }
 
-                if (type === 'hmd') {
-                    labelText = 'HMD';
-                    labelColor = '#00aaff';
-                    labelYOffset = 0.28;
-                } else if (type === 'hand') {
-                    labelText = id === 'leftHand' ? 'Left Hand' : 'Right Hand';
-                    labelColor = '#00ffaa';
-                    labelYOffset = 0.12;
-                } else if (type === 'ppe') {
-                    labelText = id.toUpperCase();
-                    labelColor = ppeColors.get(id)?.css ?? '#ffaa00';
-                    labelYOffset = 0.14;
-                }
+      /* ── Public API ───────────────────────────────────────────── */
 
-                const labelData = createLabel(labelText, labelColor, labelYOffset);
-                labels.set(obj, labelData);
-            }
-            obj.position.set(pose.px, pose.py, -pose.pz);
-            obj.quaternion.set(-pose.qx, pose.qy, pose.qz, -pose.qw);
-            if (type === 'ppe') {
-                if (attachedTo && attachedTo !== "") {
-                    obj.material = matPPEAttached;
-                    obj.scale.set(0.8, 0.8, 0.8);
+      /** Call after the container element changes size (e.g. sidebar resize). */
+      resize() {
+        const w = this._container.clientWidth;
+        const h = this._container.clientHeight;
+        this._camera.aspect = w / h;
+        this._camera.updateProjectionMatrix();
+        this._renderer.setSize(w, h);
+      }
+
+      /** Update pose for hmd / hand / ppe. Called at 10 Hz from PoseFrame. */
+      updatePose(id, pose, type, attachedTo = '') {
+        let obj = type === 'ppe' ? this._objects.ppe[id] : this._objects[id];
+
+        if (!obj) {
+          obj = this._createObject(id, type);
+        }
+
+        obj.position.set(pose.px, pose.py, -pose.pz);
+        obj.quaternion.set(-pose.qx, pose.qy, pose.qz, -pose.qw);
+
+        if (type === 'ppe') {
+          if (attachedTo) {
+            obj.material = this._matPPEAttached;
+            obj.scale.setScalar(0.8);
+          } else {
+            obj.material = this._ppeColors.get(id)?.mat ?? this._matPPEAttached;
+            obj.scale.setScalar(1);
+          }
+        }
+      }
+
+      /** Release GPU resources (call if viewport is ever torn down). */
+      dispose() {
+        window.removeEventListener('resize', this._onResize);
+        this._renderer.dispose();
+      }
+
+      /* ── Private helpers ──────────────────────────────────────── */
+
+      _createObject(id, type) {
+        let mesh;
+        if (type === 'hmd') {
+          mesh = new THREE.Mesh(this._geoHead, this._matHead);
+        } else if (type === 'hand') {
+          mesh = new THREE.Mesh(this._geoHand, this._matHand);
+        } else {
+          const p = this._PPE_PALETTE[this._ppeColorIdx % this._PPE_PALETTE.length];
+          const mat = new THREE.MeshLambertMaterial({ color: p.hex });
+          this._ppeColors.set(id, { css: p.css, mat });
+          this._ppeColorIdx++;
+          mesh = new THREE.Mesh(this._geoPPE, mat);
+        }
+
+        this._scene.add(mesh);
+        if (type === 'ppe') this._objects.ppe[id] = mesh;
+        else                this._objects[id] = mesh;
+
+        /* Create matching label */
+        let text = '', color = '#ffffff', yOffset = 0.15;
+        if      (type === 'hmd')  { text = 'HMD';  color = '#00aaff'; yOffset = 0.28; }
+        else if (type === 'hand') { text = id === 'leftHand' ? 'Left Hand' : 'Right Hand';
+                                    color = '#00ffaa'; yOffset = 0.12; }
+        else                      { text = id.toUpperCase();
+                                    color = this._ppeColors.get(id)?.css ?? '#ffaa00'; yOffset = 0.14; }
+        this._labels.set(mesh, this._createLabel(text, color, yOffset));
+
+        return mesh;
+      }
+
+      _createLabel(text, color, yOffset) {
+        const el = document.createElement('div');
+        Object.assign(el.style, {
+          position: 'absolute', color,
+          fontSize: '12px', fontWeight: 'bold',
+          backgroundColor: 'rgba(0,0,0,0.7)',
+          padding: '3px 8px', borderRadius: '4px',
+          border: `1px solid ${color}`,
+          whiteSpace: 'nowrap',
+          transform: 'translate(-50%,-100%)',
+          marginTop: '-10px',
+        });
+        el.textContent = text;
+        this._labelOverlay.appendChild(el);
+        return { el, yOffset };
+      }
+
+      _projectLabel(ld, worldPos) {
+        const v = worldPos.clone().project(this._camera);
+        const x = (v.x * 0.5 + 0.5) * this._container.clientWidth;
+        const y = (v.y * -0.5 + 0.5) * this._container.clientHeight;
+        const visible = v.z <= 1;
+        ld.el.style.display = visible ? 'block' : 'none';
+        ld.el.style.left = `${x}px`;
+        ld.el.style.top  = `${y}px`;
+        return { x, y, visible };
+      }
+
+      _animate() {
+        requestAnimationFrame(() => this._animate());
+        this._controls.update();
+        this._updateLabels();
+        this._renderer.render(this._scene, this._camera);
+      }
+
+      _updateLabels() {
+        const visible = [];
+        this._labels.forEach((ld, obj) => {
+          if (!obj?.position) return;
+          const wp = obj.position.clone();
+          wp.y += ld.yOffset;
+          const sp = this._projectLabel(ld, wp);
+          if (sp.visible) visible.push({ el: ld.el, x: sp.x, y: sp.y });
+        });
+
+        /* Iterative screen-space push-apart (4 passes, 96×22 px label estimate) */
+        const LW = 96, LH = 22, PAD = 6;
+        for (let iter = 0; iter < 4; iter++) {
+          for (let i = 0; i < visible.length; i++) {
+            for (let j = i + 1; j < visible.length; j++) {
+              const a = visible[i], b = visible[j];
+              const ox = (LW + PAD) - Math.abs(b.x - a.x);
+              const oy = (LH + PAD) - Math.abs(b.y - a.y);
+              if (ox > 0 && oy > 0) {
+                if (ox < oy) {
+                  const push = ox / 2 * Math.sign(b.x - a.x || 1);
+                  a.x -= push; b.x += push;
                 } else {
-                    const ppeColor = ppeColors.get(id);
-                    if (ppeColor) obj.material = ppeColor.mat;
-                    obj.scale.set(1, 1, 1);
+                  const push = oy / 2 * Math.sign(b.y - a.y || -1);
+                  a.y -= push; b.y += push;
                 }
+              }
             }
+          }
         }
-
-        // --- UI Functions ---
-        function updateScore(score) {
-            currentScore = score;
-            document.getElementById('score').textContent = score;
-        }
-
-        function addLog(message, type = 'info') {
-            const container = document.getElementById('log-container');
-            if (container.querySelector('.empty-state')) {
-                container.innerHTML = '';
-            }
-
-            const logItem = document.createElement('div');
-            logItem.className = `log-item ${type}`;
-            
-            const time = new Date().toLocaleTimeString(currentLang === 'pt' ? 'pt-BR' : 'en-US', { hour12: false });
-            logItem.innerHTML = `<span class="log-time">${time}</span>${message}`;
-            
-            container.insertBefore(logItem, container.firstChild);
-            
-            // Keep only last 50 logs
-            while (container.children.length > 50) {
-                container.removeChild(container.lastChild);
-            }
-        }
-
-        function updateTaskUI() {
-            const container = document.getElementById('task-list');
-            if (tasks.size === 0) return;
-            
-            container.innerHTML = '';
-            tasks.forEach((task, taskId) => {
-                const taskItem = document.createElement('div');
-                taskItem.className = `task-item ${task.status}`;
-                taskItem.innerHTML = `
-                    <div class="task-header">
-                        <div class="task-name">${task.name}</div>
-                        <div class="task-status ${task.status}">${t(task.status)}</div>
-                    </div>
-                    ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
-                `;
-                container.appendChild(taskItem);
-            });
-        }
-
-        function addOrUpdateTask(taskId, name, description, status) {
-            tasks.set(taskId, { name, description, status });
-            updateTaskUI();
-        }
-
-        function updateReportSection(report) {
-            sessionReport = report;
-            const container = document.getElementById('report-section');
-            
-            const summary = report.summary || {};
-            const minutes = Math.floor(summary.totalElapsedTime / 60);
-            const seconds = Math.floor(summary.totalElapsedTime % 60);
-            
-            container.innerHTML = `
-                <div class="report-card">
-                    <div class="report-summary">
-                        <div class="report-stat">
-                            <div class="report-stat-value">${minutes}:${seconds.toString().padStart(2, '0')}</div>
-                            <div class="report-stat-label">${t('duration')}</div>
-                        </div>
-                        <div class="report-stat">
-                            <div class="report-stat-value">${summary.totalScore || 0}</div>
-                            <div class="report-stat-label">${t('finalScore')}</div>
-                        </div>
-                        <div class="report-stat">
-                            <div class="report-stat-value">${summary.tasksCompleted || 0}/${summary.totalTasks || 0}</div>
-                            <div class="report-stat-label">${t('tasks')}</div>
-                        </div>
-                        <div class="report-stat">
-                            <div class="report-stat-value">${report.entries ? report.entries.length : 0}</div>
-                            <div class="report-stat-label">${t('events')}</div>
-                        </div>
-                    </div>
-                    <div class="report-actions">
-                        <button class="report-button primary" onclick="viewFullReport()">${t('viewFullReport')}</button>
-                        <button class="report-button secondary" onclick="downloadReport()">${t('downloadJson')}</button>
-                    </div>
-                </div>
-            `;
-        }
-
-        function viewFullReport() {
-            if (!sessionReport) return;
-            
-            const modal = document.getElementById('report-modal');
-            const modalBody = document.getElementById('modal-body');
-            
-            const summary = sessionReport.summary || {};
-            const entries = sessionReport.entries || [];
-            
-            const minutes = Math.floor(summary.totalElapsedTime / 60);
-            const seconds = Math.floor(summary.totalElapsedTime % 60);
-            
-            let html = `
-                <div class="session-summary-grid">
-                    <div class="summary-card">
-                        <div class="summary-card-value">${minutes}:${seconds.toString().padStart(2, '0')}</div>
-                        <div class="summary-card-label">${t('totalDuration')}</div>
-                    </div>
-                    <div class="summary-card">
-                        <div class="summary-card-value">${summary.totalScore || 0}</div>
-                        <div class="summary-card-label">${t('finalScore')}</div>
-                    </div>
-                    <div class="summary-card">
-                        <div class="summary-card-value">${summary.tasksCompleted || 0}</div>
-                        <div class="summary-card-label">${t('tasksCompleted')}</div>
-                    </div>
-                    <div class="summary-card">
-                        <div class="summary-card-value">${summary.totalTasks || 0}</div>
-                        <div class="summary-card-label">${t('totalTasks')}</div>
-                    </div>
-                </div>
-                
-                <h3 style="margin-bottom: 15px; color: #64c8ff;">${t('eventTimeline')}</h3>
-                <div class="timeline">
-            `;
-            
-            entries.forEach(entry => {
-                const time = new Date(entry.timestamp).toLocaleTimeString(currentLang === 'pt' ? 'pt-BR' : 'en-US', { hour12: false });
-                const eventClass = entry.eventName.toLowerCase().includes('violation') ? 'violation' : '';
-                html += `
-                    <div class="timeline-item ${eventClass}">
-                        <div class="timeline-time">${time}</div>
-                        <div class="timeline-event">${entry.eventName}</div>
-                        ${entry.details ? `<div class="timeline-details">${entry.details}</div>` : ''}
-                    </div>
-                `;
-            });
-            
-            html += '</div>';
-            
-            modalBody.innerHTML = html;
-            modal.classList.add('open');
-        }
-
-        function downloadReport() {
-            if (!sessionReport) return;
-            
-            const dataStr = JSON.stringify(sessionReport, null, 2);
-            const dataBlob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(dataBlob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `session_report_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
-            link.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function closeReportModal() {
-            document.getElementById('report-modal').classList.remove('open');
-        }
-
-        // Close modal when clicking outside
-        document.getElementById('report-modal')?.addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeReportModal();
-            }
+        visible.forEach(({ el, x, y }) => {
+          el.style.left = `${x}px`;
+          el.style.top  = `${y}px`;
         });
+      }
+    }
 
-        // --- WebSocket ---
-        let _wsReconnecting = false;
+    /* ================================================================
+     * SidebarResizeManager — drag-to-resize with localStorage persist
+     * ============================================================== */
+    class SidebarResizeManager {
+      /**
+       * @param {HTMLElement} sidebar   — the element whose width changes
+       * @param {HTMLElement} handle    — the drag target on the right edge
+       * @param {EvaluatorViewport} viewport — notified after each resize
+       * @param {{ min: number, max: number, default: number }} opts
+       */
+      constructor(sidebar, handle, viewport, opts = {}) {
+        this._sidebar  = sidebar;
+        this._handle   = handle;
+        this._viewport = viewport;
+        this._min      = opts.min     ?? 260;
+        this._max      = opts.max     ?? 700;
+        this._default  = opts.default ?? 380;
+        this._storageKey = 'sp_sidebar_w';
 
-        function connect() {
-            const ws = new WebSocket(WS_URL);
-            const statusIndicator = document.getElementById('status-indicator');
-            const connectionStatus = document.getElementById('connection-status');
+        this._dragging  = false;
+        this._startX    = 0;
+        this._startW    = 0;
 
-            ws.onopen = () => {
-                statusIndicator.classList.add('connected');
-                connectionStatus.textContent = t('connected');
-                addLog(t('logConnected'), 'success');
-                _wsReconnecting = false;
-            };
+        this._restore();
+        this._bind();
+      }
 
-            ws.onclose = () => {
-                statusIndicator.classList.remove('connected');
-                connectionStatus.textContent = t('disconnected');
-                if (!_wsReconnecting) {
-                    addLog(t('logDisconnected'), 'violation');
-                    _wsReconnecting = true;
-                }
-                setTimeout(connect, 3000);
-            };
+      /* ── Private ── */
 
-            ws.onerror = (err) => console.error("WS Error", err);
+      _restore() {
+        const saved = parseInt(localStorage.getItem(this._storageKey), 10);
+        const w = (!isNaN(saved) && saved >= this._min && saved <= this._max)
+          ? saved : this._default;
+        this._applyWidth(w);
+      }
 
-            ws.onmessage = (event) => {
-                try {
-                    const envelope = JSON.parse(event.data);
-                    handleEvent(envelope);
-                } catch (e) {
-                    console.error("Parse error:", e);
-                }
-            };
-        }
+      _applyWidth(w) {
+        const clamped = Math.max(this._min, Math.min(this._max, w));
+        this._sidebar.style.setProperty('--sidebar-w', `${clamped}px`);
+        // Override the CSS var directly on the element for immediate effect
+        this._sidebar.style.width = `${clamped}px`;
+      }
 
-        function handleEvent(envelope) {
-            const type = envelope.eventType;
-            const payload = envelope.payload;
+      _bind() {
+        this._handle.addEventListener('mousedown', e => this._onMouseDown(e));
+        /* Touch support */
+        this._handle.addEventListener('touchstart', e => this._onTouchStart(e), { passive: false });
+      }
 
-            switch (type) {
-                case "PoseFrame":
-                    if (payload.hmd) updateObject('hmd', payload.hmd, 'hmd');
-                    if (payload.leftHand) updateObject('leftHand', payload.leftHand, 'hand');
-                    if (payload.rightHand) updateObject('rightHand', payload.rightHand, 'hand');
-                    if (payload.ppe && Array.isArray(payload.ppe)) {
-                        payload.ppe.forEach(p => updateObject(p.id, p.pose, 'ppe', p.attachedTo));
-                    }
-                    break;
+      _onMouseDown(e) {
+        e.preventDefault();
+        this._dragging = true;
+        this._startX   = e.clientX;
+        this._startW   = this._sidebar.offsetWidth;
+        this._handle.classList.add('dragging');
+        document.body.classList.add('resizing');
 
-                case "SessionStarted":
-                    document.getElementById('session-id').textContent =
-                        `${t('session')}: ${payload.sessionId.substring(0, 8)}`;
-                    addLog(t('logSessionStarted'), 'success');
-                    break;
-
-                case "SessionPaused":
-                    addLog(t('logSessionPaused'));
-                    break;
-
-                case "SessionResumed":
-                    addLog(t('logSessionResumed'), 'success');
-                    break;
-
-                case "SessionEnded":
-                    addLog(t('logSessionEnded'));
-                    break;
-
-                case "SessionManifest":
-                    if (payload.tasks) {
-                        payload.tasks.forEach(task => {
-                            addOrUpdateTask(task.taskName, task.taskName, task.description, 'pending');
-                        });
-                    }
-                    break;
-
-                case "TaskStarted":
-                    addOrUpdateTask(payload.taskId, payload.taskName, payload.taskDescription, 'active');
-                    addLog(`${t('logStarted')}: ${payload.taskName}`);
-                    break;
-
-                case "TaskCompleted":
-                    addOrUpdateTask(payload.taskId, payload.taskName, payload.taskDescription, 'completed');
-                    addLog(`${t('logCompleted')}: ${payload.taskName}`, 'success');
-                    break;
-
-                case "TaskTimeout":
-                    addOrUpdateTask(payload.taskId, payload.taskName, payload.taskDescription, 'failed');
-                    addLog(`${t('logTimeout')}: ${payload.taskName}`, 'violation');
-                    break;
-
-                case "ScoreChanged": {
-                    const delta = payload.delta;
-                    updateScore(payload.totalScore);
-                    if (delta > 0) {
-                        addLog(`${t('logScorePlus')} +${delta} (${t('logTotal')}: ${payload.totalScore})`, 'success');
-                    } else if (delta < 0) {
-                        addLog(`${t('logScoreMinus')} ${delta} (${t('logTotal')}: ${payload.totalScore})`, 'violation');
-                    }
-                    break;
-                }
-
-                case "PpeChanged":
-                    if (payload.isWearing) {
-                        addLog(`${t('logPpeEquipped')}: ${payload.ppeType}`, 'success');
-                    } else {
-                        addLog(`${t('logPpeRemoved')}: ${payload.ppeType}`, 'violation');
-                    }
-                    break;
-
-                case "ActionAttempt":
-                    addLog(`${t('logActionAttempt')}: ${payload.actionId} (${payload.sourceId || ''})${payload.hasPosition ? ` ${t('at')} (${payload.px.toFixed(1)}, ${payload.py.toFixed(1)}, ${payload.pz.toFixed(1)})` : ''}`);
-                    break;
-
-                case "SafetyViolation":
-                    addLog(`${t('logViolation')}: ${payload.message}`, 'violation');
-                    break;
-
-                case "CriticalSafetyFailure":
-                    addLog(`${t('logCritical')}: ${payload.reason}`, 'violation');
-                    break;
-
-                case "SafetyError":
-                    addLog(`${t('logSafetyError')}: [${payload.source}] ${payload.message}`, 'violation');
-                    break;
-
-                case "SessionCompleted":
-                    addLog(`${t('logSessionComplete')}: ${payload.totalScore}, ${t('tasks')}: ${payload.tasksCompleted}/${payload.totalTasks}`, 'success');
-                    break;
-
-                case "SessionLogFile":
-                    if (payload.content) {
-                        try {
-                            const report = JSON.parse(payload.content);
-                            updateReportSection(report);
-                            addLog(t('logReportAvailable'), 'success');
-                        } catch (e) {
-                            console.error('Failed to parse session log:', e);
-                        }
-                    }
-                    break;
-
-                case "GroupStarted":
-                    addLog(`${t('logGroupStarted')}: ${payload.groupName}`);
-                    break;
-
-                case "GroupCompleted":
-                    addLog(`${t('logGroupCompleted')}: ${payload.groupName}`, 'success');
-                    break;
-
-                case "SessionReset":
-                    tasks.clear();
-                    sessionReport = null;
-                    currentScore = 0;
-
-                    updateScore(0);
-                    document.getElementById('task-list').innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">⏳</div>
-                            <div>${t('waitingSession')}</div>
-                        </div>
-                    `;
-                    document.getElementById('report-section').innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📄</div>
-                            <div>${t('reportAfterSession')}</div>
-                        </div>
-                    `;
-                    document.getElementById('session-id').textContent = t('noSession');
-
-                    addLog(t('logSessionReset'));
-                    break;
-            }
-        }
-
-        // --- Render Loop ---
-        function animate() {
-            requestAnimationFrame(animate);
-            controls.update();
-            
-            // --- Label update: project to screen then push apart to avoid overlap ---
-            const screenLabels = [];
-            labels.forEach((labelData, obj) => {
-                if (obj && obj.position) {
-                    const wp = obj.position.clone();
-                    wp.y += labelData.yOffset;
-                    const sp = updateLabelPosition(labelData, wp);
-                    if (sp.visible) {
-                        screenLabels.push({ el: labelData.el, x: sp.x, y: sp.y });
-                    }
-                }
-            });
-
-            // Iterative screen-space push-apart (estimated label size 96x22 px + padding)
-            const LW = 96, LH = 22, PAD = 6;
-            for (let iter = 0; iter < 4; iter++) {
-                for (let i = 0; i < screenLabels.length; i++) {
-                    for (let j = i + 1; j < screenLabels.length; j++) {
-                        const a = screenLabels[i], b = screenLabels[j];
-                        const overlapX = (LW + PAD) - Math.abs(b.x - a.x);
-                        const overlapY = (LH + PAD) - Math.abs(b.y - a.y);
-                        if (overlapX > 0 && overlapY > 0) {
-                            if (overlapX < overlapY) {
-                                const push = overlapX / 2 * Math.sign(b.x - a.x || 1);
-                                a.x -= push; b.x += push;
-                            } else {
-                                const push = overlapY / 2 * Math.sign(b.y - a.y || -1);
-                                a.y -= push; b.y += push;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Write corrected screen positions
-            screenLabels.forEach(({ el, x, y }) => {
-                el.style.left = `${x}px`;
-                el.style.top = `${y}px`;
-            });
-            
-            renderer.render(scene, camera);
-        }
-
-        // --- Resize Handler ---
-        window.addEventListener('resize', () => {
-            camera.aspect = container.clientWidth / container.clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(container.clientWidth, container.clientHeight);
-        });
-
-        // --- Start ---
-        connect();
-        animate();
-        updateUILanguage();
-
-        // Expose functions globally
-        window.toggleSidebar = function() {
-            document.getElementById('sidebar').classList.toggle('open');
+        const onMove = e => this._onMouseMove(e);
+        const onUp   = () => {
+          this._dragging = false;
+          this._handle.classList.remove('dragging');
+          document.body.classList.remove('resizing');
+          this._save();
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+          /* Tell the viewport its container changed size */
+          this._viewport?.resize();
         };
-        
-        window.viewFullReport = viewFullReport;
-        window.downloadReport = downloadReport;
-        window.closeReportModal = closeReportModal;
-    </script>
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      }
+
+      _onMouseMove(e) {
+        if (!this._dragging) return;
+        const delta = e.clientX - this._startX;
+        this._applyWidth(this._startW + delta);
+      }
+
+      _onTouchStart(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        this._dragging = true;
+        this._startX   = touch.clientX;
+        this._startW   = this._sidebar.offsetWidth;
+        this._handle.classList.add('dragging');
+
+        const onMove = e => {
+          const t = e.touches[0];
+          const delta = t.clientX - this._startX;
+          this._applyWidth(this._startW + delta);
+        };
+        const onEnd = () => {
+          this._dragging = false;
+          this._handle.classList.remove('dragging');
+          this._save();
+          this._viewport?.resize();
+          document.removeEventListener('touchmove', onMove);
+          document.removeEventListener('touchend', onEnd);
+        };
+
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onEnd);
+      }
+
+      _save() {
+        localStorage.setItem(this._storageKey, this._sidebar.offsetWidth);
+      }
+    }
+
+    /* ================================================================
+     * MAIN ENTRY POINT
+     * ============================================================== */
+    const canvasContainer = document.getElementById('three-canvas');
+
+    /* Boot 3D viewport */
+    const viewport = new EvaluatorViewport(canvasContainer);
+
+    /* PoseFrame handler — bypasses router (high-frequency) */
+    function handlePoseFrame(p) {
+      if (p.hmd)       viewport.updatePose('hmd',       p.hmd,       'hmd');
+      if (p.leftHand)  viewport.updatePose('leftHand',  p.leftHand,  'hand');
+      if (p.rightHand) viewport.updatePose('rightHand', p.rightHand, 'hand');
+      if (Array.isArray(p.ppe)) {
+        p.ppe.forEach(item => viewport.updatePose(item.id, item.pose, 'ppe', item.attachedTo));
+      }
+    }
+
+    /* Boot sidebar resize manager (needs viewport reference for resize callback) */
+    new SidebarResizeManager(
+      document.getElementById('sidebar'),
+      document.getElementById('resize-handle'),
+      viewport,
+      { min: 260, max: 700, default: 380 }
+    );
+
+    /* Boot WebSocket */
+    const ws = new WsManager(
+      `ws://${window.location.hostname}:${WS_PORT}${WS_PATH}`,
+      envelope => {
+        if (envelope.eventType === 'PoseFrame') {
+          handlePoseFrame(envelope.payload);
+        } else {
+          route(envelope);
+        }
+      }
+    );
+
+    ws.connect();
+    applyTranslations();
+
+  </script>
 </body>
 </html>
