@@ -19,7 +19,7 @@ MonoBehaviour:
   successPoints: 150
   failurePenalty: 30
   ppePenalty: 0
-  requiredPPE: 060000000200000003000000
+  requiredPPE: 06000000070000000800000003000000
   hintText: O capacete DEVE ter jugular para trabalho em altura. Sem ela, o capacete
     pode cair durante a atividade.
   failureAdvice: "O capacete com jugular \xE9 obrigat\xF3rio em qualquer trabalho
