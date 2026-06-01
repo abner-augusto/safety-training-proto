@@ -20,7 +20,7 @@ MonoBehaviour:
   successPoints: 200
   failurePenalty: 50
   ppePenalty: 50
-  requiredPPE: 040000000100000002000000
+  requiredPPE: 04000000010000000700000008000000
   hintText: "O guarda-corpo deve ter 1,20m de altura com travess\xE3o intermedi\xE1rio
     e rodap\xE9 (NR-18 \xA718.15)."
   failureAdvice: "O guarda-corpo deve estar presente em todos os lados abertos da
