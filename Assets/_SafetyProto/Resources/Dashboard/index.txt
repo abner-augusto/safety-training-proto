@@ -855,20 +855,35 @@
     });
 
     on('SessionManifest', p => {
-      tasks.clear(); // Clear old tasks on new manifest
-      (p.tasks ?? []).forEach((task, idx) => {
-        if (!tasks.has(task.taskName)) {
-          tasks.set(task.taskName, {
-            id: task.taskName, name: task.taskName,
-            description: task.description ?? '',
-            groupName: task.groupName ?? '',
-            order: idx + 1,
-            executionMode: '', expectedAction: '', requiredPpe: [],
-            successPoints: 0, failurePenalty: 0, ppePenalty: 0,
-            status: 'pending',
-          });
-        }
+      const snapshot = p.tasks ?? [];
+      const seen = new Set();
+
+      snapshot.forEach((task, idx) => {
+        const id = task.taskName;
+        if (!id) return;
+
+        seen.add(id);
+        const existing = tasks.get(id) ?? {};
+        tasks.set(id, {
+          id,
+          name:          task.taskName     ?? existing.name          ?? id,
+          description:   task.description  ?? existing.description   ?? '',
+          groupName:     task.groupName    ?? existing.groupName     ?? '',
+          order:         task.order        ?? existing.order         ?? (idx + 1),
+          executionMode: existing.executionMode ?? '',
+          expectedAction:existing.expectedAction?? '',
+          requiredPpe:   existing.requiredPpe   ?? [],
+          successPoints: existing.successPoints ?? 0,
+          failurePenalty:existing.failurePenalty?? 0,
+          ppePenalty:    existing.ppePenalty    ?? 0,
+          status:        task.status       ?? existing.status        ?? 'pending',
+        });
       });
+
+      Array.from(tasks.keys()).forEach(id => {
+        if (!seen.has(id)) tasks.delete(id);
+      });
+
       renderTasks();
     });
 
