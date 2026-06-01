@@ -19,7 +19,7 @@ MonoBehaviour:
   successPoints: 150
   failurePenalty: 50
   ppePenalty: 50
-  requiredPPE: 040000000100000002000000
+  requiredPPE: 04000000010000000700000008000000
   hintText: "O rodap\xE9 de 20cm impede que ferramentas e materiais caiam sobre trabalhadores
     abaixo."
   failureAdvice: "O rodap\xE9 de 20cm impede que ferramentas e materiais caiam da

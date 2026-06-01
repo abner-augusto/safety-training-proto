@@ -19,7 +19,7 @@ MonoBehaviour:
   successPoints: 100
   failurePenalty: 30
   ppePenalty: 0
-  requiredPPE: 0600000002000000
+  requiredPPE: 060000000700000008000000
   hintText: "Os \xF3culos de prote\xE7\xE3o protegem contra part\xEDculas e respingos
     durante o trabalho."
   failureAdvice: "Os \xF3culos de prote\xE7\xE3o s\xE3o equipamentos obrigat\xF3rios

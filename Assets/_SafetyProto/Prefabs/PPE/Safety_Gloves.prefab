@@ -15,9 +15,9 @@ GameObject:
   - component: {fileID: 3965247634208357737}
   - component: {fileID: 2601642719565040040}
   - component: {fileID: 8088619854274177640}
-  - component: {fileID: 5172431322603241140}
   - component: {fileID: 8193289681481235352}
   - component: {fileID: 7803944540948783177}
+  - component: {fileID: 285251723941542459}
   m_Layer: 6
   m_Name: Safety_Gloves
   m_TagString: Untagged
@@ -35,7 +35,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 4780145042780451735}
@@ -50,7 +50,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1160870894067531648}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+  m_Mesh: {fileID: -6228211984502169773, guid: cbdc88e9d17a7604598128ab05511137, type: 3}
 --- !u!23 &561584424985811411
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -76,7 +76,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 135ec4279ae7c0b4fba4104a56923682, type: 2}
+  - {fileID: -3774271594985312425, guid: a9ddfe4818a5de846a220b617e4f2b75, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -164,7 +164,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.Interactables.ReturnObjectHome
   homeOverride: {fileID: 0}
   maxHomeDistance: 0.3
-  returnDelay: 1
+  returnDelay: 3
   returnDuration: 0.4
   returnCurve:
     serializedVersion: 2
@@ -248,27 +248,6 @@ MonoBehaviour:
   _whenCancel:
     m_PersistentCalls:
       m_Calls: []
---- !u!65 &5172431322603241140
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1160870894067531648}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1.5, y: 1.5, z: 1.5}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &8193289681481235352
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -281,7 +260,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 401bc184e3b0346409dbafee300036b6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPEItem
-  ppeType: 2
+  ppeType: 7
+  hideWhenEquipped: 1
+  isDistractor: 0
 --- !u!114 &7803944540948783177
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -295,12 +276,37 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapItem
   snapSearchRadius: 0.12
+  snapSearchMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
   snapPoseOverride: {fileID: 0}
   trackSnapPoseOverrideEveryFrame: 0
   unsnapDistance: 0.1
   followSpeed: 0
   handGrabInteractable: {fileID: 7450468912020579302}
   returnObjectHome: {fileID: 2601642719565040040}
+--- !u!64 &285251723941542459
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1160870894067531648}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -6228211984502169773, guid: cbdc88e9d17a7604598128ab05511137, type: 3}
 --- !u!1 &3113684316446788425
 GameObject:
   m_ObjectHideFlags: 0
@@ -408,7 +414,6 @@ GameObject:
   m_Component:
   - component: {fileID: 4780145042780451735}
   - component: {fileID: 5007697378145845057}
-  - component: {fileID: 3912170068069172710}
   m_Layer: 6
   m_Name: PhysicsCollider
   m_TagString: Untagged
@@ -426,8 +431,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 521638020468003343}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -452,19 +457,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &3912170068069172710
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3696598088139817085}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 401bc184e3b0346409dbafee300036b6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPEItem
-  ppeType: 2
 --- !u!1 &7716851483882013550
 GameObject:
   m_ObjectHideFlags: 0

@@ -166,7 +166,6 @@ namespace SafetyProto.Runtime.PPE
             _snappedItems.Add(item);
             _hoverCounts.Remove(item);
             UpdateHighlight();
-            _ppeManager?.ReportPPEStateChange(item.PpeType, true, item.gameObject);
 
             if (IsLocked)
                 item.SetGrabEnabled(false);
@@ -174,6 +173,14 @@ namespace SafetyProto.Runtime.PPE
             var ppeItemComp = item.GetComponent<PPEItem>();
             if (ppeItemComp != null && ppeItemComp.hideWhenEquipped)
                 item.gameObject.SetActive(false);
+
+            // Register as worn AFTER the optional hide. SetActive(false) triggers
+            // PPEItem.OnDisable -> PPEManager.UnregisterIfOwned, which would immediately
+            // clear a worn flag set before the hide. That ordering bug made
+            // hideWhenEquipped items (gloves, goggles) report worn then instantly
+            // un-worn, so they never satisfied cumulative PPE requirements. Proximity
+            // eviction skips inactive objects, so a hidden-but-worn item stays compliant.
+            _ppeManager?.ReportPPEStateChange(item.PpeType, true, item.gameObject);
 
             SafetyLog.Info($"PPESnapSlot [{name}]: accepted {item.PpeType} ({_snappedItems.Count}/{_slotCapacity})", this);
 
