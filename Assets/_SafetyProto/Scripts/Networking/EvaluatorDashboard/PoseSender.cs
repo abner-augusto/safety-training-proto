@@ -34,7 +34,10 @@ namespace SafetyProto.Networking.Dashboard
         {
             while (true)
             {
-                if (_server.HasConnections && _channel != null)
+                // Skip the pose frame while gameplay has suspended the stream (e.g. during the
+                // scaffold teleport) — these frames are droppable and a blocking send here would
+                // cause the very hitch that drops the player through the deck.
+                if (!DashboardGate.PoseBroadcastSuspended && _server.HasConnections && _channel != null)
                 {
                     SendPoseFrame();
                 }

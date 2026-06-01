@@ -33,6 +33,19 @@ namespace SafetyProto.Runtime
         [Tooltip("TaskGroup ScriptableObject que dispara a transição ao ser concluído.")]
         [SerializeField] private TaskGroup triggerGroup;
 
+        [Header("Anti-queda no teleporte")]
+        [Tooltip("Locomotor do jogador (FirstPersonLocomotor). Desabilitado durante o teleporte para " +
+                 "suspender a gravidade até o chão estar pronto. Auto-resolvido a partir do playerRig se vazio.")]
+        [SerializeField] private Behaviour playerLocomotor;
+        [Tooltip("Layers consideradas 'chão' na sondagem pós-teleporte.")]
+        [SerializeField] private LayerMask groundMask = ~0;
+        [Tooltip("Distância máxima da sondagem para baixo a partir do spawn.")]
+        [SerializeField] private float groundProbeDistance = 5f;
+        [Tooltip("Raio do SphereCast da sondagem de chão.")]
+        [SerializeField] private float groundProbeRadius = 0.25f;
+        [Tooltip("Tempo máximo aguardando o chão registrar antes de religar o locomotor (rede de segurança).")]
+        [SerializeField] private float groundWaitTimeout = 3f;
+
         private bool _transitionExecuted;
 
         private void Start()
@@ -45,13 +58,30 @@ namespace SafetyProto.Runtime
             }
 
             ValidateReferences();
+
+            if (playerLocomotor == null && playerRig != null)
+                playerLocomotor = ResolveLocomotor(playerRig);
+
             EventBus.Instance.onGroupCompleted.AddListener(OnGroupCompleted);
+        }
+
+        // The Meta FirstPersonLocomotor ships as a precompiled type; resolve it by name so this
+        // controller stays decoupled from the exact SDK type while still being able to toggle gravity.
+        private static Behaviour ResolveLocomotor(Transform root)
+        {
+            foreach (var b in root.GetComponentsInChildren<Behaviour>(true))
+                if (b != null && b.GetType().Name == "FirstPersonLocomotor")
+                    return b;
+            return null;
         }
 
         private void OnDestroy()
         {
             if (EventBus.Instance != null)
                 EventBus.Instance.onGroupCompleted.RemoveListener(OnGroupCompleted);
+
+            // Safety: never leave the pose stream suspended if we're torn down mid-transition.
+            DashboardGate.PoseBroadcastSuspended = false;
         }
 
         private void OnGroupCompleted(TaskGroupEventArgs args)
@@ -74,22 +104,53 @@ namespace SafetyProto.Runtime
                 yield return new WaitForSeconds(fadeOutDuration);
             }
 
+            // Activate the destination geometry BEFORE moving so its colliders already exist by teleport time.
             foreach (var obj in objectsToHide)
                 if (obj != null) obj.SetActive(false);
             foreach (var obj in objectsToShow)
                 if (obj != null) obj.SetActive(true);
 
+            // Suspend player gravity for the teleport: disabling the locomotor stops it from calling
+            // CharacterController.Move, so a frame hitch (e.g. a dashboard send) can't drop the player
+            // through scaffold colliders that haven't registered yet.
+            bool locomotorWasEnabled = playerLocomotor != null && playerLocomotor.enabled;
+            if (playerLocomotor != null) playerLocomotor.enabled = false;
+
+            // Suspend the dashboard pose stream for the transition: its ~10 Hz main-thread sends are
+            // a prime source of the frame hitch behind this bug. Discrete events keep flowing.
+            DashboardGate.PoseBroadcastSuspended = true;
+
             if (playerRig != null && spawnPointAndaime != null)
             {
                 playerRig.position = spawnPointAndaime.position;
                 playerRig.rotation = Quaternion.Euler(0f, spawnPointAndaime.rotation.eulerAngles.y, 0f);
+                // Push the moved transforms into the physics scene now so the ground probe and the first
+                // post-teleport Move see final positions this frame.
+                Physics.SyncTransforms();
             }
 
             if (transitionPanel != null)
                 transitionPanel.SetActive(true);
 
-            // Always hold black so the teleport is never exposed, regardless of which fade mechanism is active.
-            yield return new WaitForSeconds(holdBlackDuration);
+            // Hold black for comfort AND until solid ground under the spawn is confirmed. The timeout is a
+            // safety cap so a missing/misconfigured floor never freezes the transition.
+            float elapsed = 0f;
+            bool groundReady = false;
+            while (elapsed < holdBlackDuration || (!groundReady && elapsed < groundWaitTimeout))
+            {
+                if (!groundReady) groundReady = IsGroundReadyAtSpawn();
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            if (!groundReady)
+                SafetyLog.Warning($"[PhaseController] Chão do andaime não confirmado em {groundWaitTimeout}s — religando locomotor mesmo assim.", this);
+
+            // Re-enable gravity/locomotion only now that the player has solid ground beneath them.
+            if (playerLocomotor != null) playerLocomotor.enabled = locomotorWasEnabled;
+
+            // Resume the dashboard pose stream now the latency-sensitive window is over.
+            DashboardGate.PoseBroadcastSuspended = false;
 
             if (transitionPanel != null)
                 transitionPanel.SetActive(false);
@@ -102,6 +163,24 @@ namespace SafetyProto.Runtime
             }
 
             SafetyLog.Info("[PhaseController] Transição concluída. ZonaAndaime ativa.", this);
+        }
+
+        // Probes straight down from the spawn for any non-player collider — confirms the scaffold deck
+        // has registered before gravity is restored. Returns true when there is no spawn to check.
+        private bool IsGroundReadyAtSpawn()
+        {
+            if (spawnPointAndaime == null) return true;
+
+            Vector3 origin = spawnPointAndaime.position + Vector3.up * 0.5f;
+            var hits = Physics.SphereCastAll(origin, groundProbeRadius, Vector3.down,
+                groundProbeDistance, groundMask, QueryTriggerInteraction.Ignore);
+            foreach (var hit in hits)
+            {
+                // Ignore the player's own colliders (capsule, hands, held items).
+                if (playerRig != null && hit.collider.transform.IsChildOf(playerRig)) continue;
+                return true;
+            }
+            return false;
         }
 
         private void ValidateReferences()
