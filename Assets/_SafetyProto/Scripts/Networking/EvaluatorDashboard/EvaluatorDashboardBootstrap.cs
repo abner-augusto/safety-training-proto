@@ -242,59 +242,7 @@ namespace SafetyProto.Networking.Dashboard
             };
             _wsServer.SendToClient(client, "ScoreChanged", scoreDto);
 
-            var taskManager = FindFirstObjectByType<SafetyProto.Runtime.Task.TaskManager>();
-            if (taskManager != null)
-            {
-                var tasks = taskManager.GetSessionTasks();
-                foreach (var t in tasks)
-                {
-                    var taskData = t.TaskData as SafetyTask;
-                    if (taskData == null) continue;
 
-                    string status = "";
-                    string eventName = "";
-                    switch (t.State)
-                    {
-                        case SafetyProto.Core.TaskState.InProgress:
-                            eventName = "TaskStarted";
-                            status = "active";
-                            break;
-                        case SafetyProto.Core.TaskState.CompletedSuccess:
-                        case SafetyProto.Core.TaskState.CompletedSuccessButUnsafe:
-                            eventName = "TaskCompleted";
-                            status = "completed";
-                            break;
-                        case SafetyProto.Core.TaskState.CompletedFailure:
-                            eventName = "TaskTimeout";
-                            status = "failed";
-                            break;
-                        default:
-                            continue;
-                    }
-
-                    var meta = BuildTaskMetadata(taskData);
-                    var dto = new TaskDto
-                    {
-                        sessionId = sessionId,
-                        taskId = taskData.taskName,
-                        taskName = taskData.taskName,
-                        taskDescription = meta.description,
-                        hint = meta.hint,
-                        groupName = meta.groupName,
-                        order = meta.order,
-                        executionMode = meta.executionMode,
-                        expectedAction = meta.expectedAction,
-                        requiredPpe = meta.requiredPpe,
-                        successPoints = meta.successPoints,
-                        failurePenalty = meta.failurePenalty,
-                        ppePenalty = meta.ppePenalty,
-                        status = status,
-                        timestampMs = ResolveTimestamp(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
-                    };
-                    
-                    _wsServer.SendToClient(client, eventName, dto);
-                }
-            }
         }
 
         [Serializable]
@@ -372,11 +320,12 @@ namespace SafetyProto.Networking.Dashboard
                 timestampMs = ResolveTimestamp(args.TimestampMs)
             };
             Broadcast("GroupCompleted", dto);
+            Broadcast("SessionManifest", BuildSessionManifest(args.SessionId));
         }
 
         private void OnTaskStarted(TaskEventArgs args)
         {
-            Broadcast("TaskStarted", BuildTaskDto(args, "started"));
+            Broadcast("TaskStarted", BuildTaskDto(args, "active"));
         }
 
         private void OnTaskCompleted(TaskEventArgs args)
@@ -386,7 +335,7 @@ namespace SafetyProto.Networking.Dashboard
 
         private void OnTaskTimeout(TaskEventArgs args)
         {
-            Broadcast("TaskTimeout", BuildTaskDto(args, "timeout"));
+            Broadcast("TaskTimeout", BuildTaskDto(args, "failed"));
         }
 
         private void OnScoreChanged(ScoreChangedEventArgs args)
@@ -509,7 +458,23 @@ namespace SafetyProto.Networking.Dashboard
             };
         }
 
-        private TaskMetadata BuildTaskMetadata(SafetyTask task)
+        private static string ResolveTaskStatus(SafetyProto.Core.TaskState state)
+        {
+            switch (state)
+            {
+                case SafetyProto.Core.TaskState.InProgress:
+                    return "active";
+                case SafetyProto.Core.TaskState.CompletedSuccess:
+                case SafetyProto.Core.TaskState.CompletedSuccessButUnsafe:
+                    return "completed";
+                case SafetyProto.Core.TaskState.CompletedFailure:
+                    return "failed";
+                default:
+                    return "pending";
+            }
+        }
+
+        private TaskMetadata BuildTaskMetadata(SafetyTask task, bool includeDetails = true)
         {
             if (task == null || _knownGroups.Count == 0)
             {
@@ -547,7 +512,7 @@ namespace SafetyProto.Networking.Dashboard
             }
 
         Found:
-            var required = task.requiredPPE != null
+            var required = includeDetails && task.requiredPPE != null
                 ? task.requiredPPE.ConvertAll(p => p.ToString()).ToArray()
                 : System.Array.Empty<string>();
 
@@ -558,7 +523,7 @@ namespace SafetyProto.Networking.Dashboard
                 order = order,
                 description = task.taskDescription ?? string.Empty,
                 hint = task.hintText ?? string.Empty,
-                expectedAction = task.ResolveExpectedActionId(),
+                expectedAction = includeDetails ? task.ResolveExpectedActionId() : string.Empty,
                 requiredPpe = required,
                 successPoints = task.successPoints,
                 failurePenalty = task.failurePenalty,
@@ -566,8 +531,52 @@ namespace SafetyProto.Networking.Dashboard
             };
         }
 
+        private void RegisterKnownGroupsFromTaskManager(SafetyProto.Runtime.Task.TaskManager taskManager)
+        {
+            if (taskManager == null || taskManager.taskGroups == null)
+                return;
+
+            for (int i = 0; i < taskManager.taskGroups.Count; i++)
+            {
+                var group = taskManager.taskGroups[i];
+                if (group != null && !_knownGroups.Contains(group))
+                    _knownGroups.Add(group);
+            }
+        }
+
         private SessionManifestDto BuildSessionManifest(string sessionId)
         {
+            var taskManager = FindFirstObjectByType<SafetyProto.Runtime.Task.TaskManager>();
+            if (taskManager != null)
+            {
+                RegisterKnownGroupsFromTaskManager(taskManager);
+
+                var sessionTasks = taskManager.GetSessionTasks();
+                var liveDtos = new List<TaskManifestItemDto>(sessionTasks.Count);
+                foreach (var runtimeTask in sessionTasks)
+                {
+                    var task = runtimeTask.TaskData as SafetyTask;
+                    if (task == null)
+                        continue;
+
+                    var meta = BuildTaskMetadata(task, includeDetails: false);
+                    liveDtos.Add(new TaskManifestItemDto
+                    {
+                        taskName = task.taskName,
+                        groupName = meta.groupName,
+                        description = meta.description,
+                        order = meta.order,
+                        status = ResolveTaskStatus(runtimeTask.State)
+                    });
+                }
+
+                return new SessionManifestDto
+                {
+                    sessionId = sessionId,
+                    tasks = liveDtos.ToArray()
+                };
+            }
+
             var dtos = new List<TaskManifestItemDto>();
 
             foreach (var group in _knownGroups)
@@ -576,11 +585,14 @@ namespace SafetyProto.Networking.Dashboard
                 foreach (var task in group.tasks)
                 {
                     if (task == null) continue;
+                    var meta = BuildTaskMetadata(task, includeDetails: false);
                     dtos.Add(new TaskManifestItemDto
                     {
                         taskName = task.taskName,
-                        groupName = group.groupName,
-                        description = task.taskDescription
+                        groupName = meta.groupName,
+                        description = meta.description,
+                        order = meta.order,
+                        status = "pending"
                     });
                 }
             }
@@ -886,6 +898,8 @@ namespace SafetyProto.Networking.Dashboard
             public string taskName;
             public string groupName;
             public string description;
+            public int order;
+            public string status;
         }
 
         [Serializable]
