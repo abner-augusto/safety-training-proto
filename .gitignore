@@ -6,8 +6,7 @@
 # AI / TOOLING
 # ============================================================
 CLAUDE.md
-.claude/*
-.vscode/
+.*/*
 .vsconfig
 before-structure.txt
 .repomixignore
