@@ -994,6 +994,29 @@
       return `<div class="empty-state"><div class="empty-state-icon">${icon}</div><div>${text}</div></div>`;
     }
 
+    /** Returns an emoji icon for a session-log event name, matching the real-time log icons. */
+    function eventIcon(name) {
+      const n = (name ?? '').toLowerCase();
+      if (n.includes('critical'))           return '🚨';
+      if (n.includes('violation'))          return '⚠️';
+      if (n.includes('safetyerror'))        return '❌';
+      if (n.includes('taskstarted'))        return '▶️';
+      if (n.includes('taskcompleted'))      return '✅';
+      if (n.includes('tasktimeout'))        return '⏰';
+      if (n.includes('groupstarted'))       return '📂';
+      if (n.includes('groupcompleted'))     return '📁';
+      if (n.includes('scorechanged'))       return '📊';
+      if (n.includes('ppestatechanged'))    return '🦺';
+      if (n.includes('actionattempt'))      return '🎯';
+      if (n.includes('sessioncompleted'))   return '🏁';
+      if (n.includes('sessionstarted'))     return '🎮';
+      if (n.includes('sessionpaused'))      return '⏸️';
+      if (n.includes('sessionresumed'))     return '▶️';
+      if (n.includes('sessionreset'))       return '🔄';
+      if (n.includes('sessionended'))       return '🔚';
+      return '📋';
+    }
+
     function resetTaskUI() {
       document.getElementById('task-list').innerHTML = emptyState('⏳', t('waitingSession'));
     }
@@ -1072,19 +1095,19 @@
         <div class="report-card">
           <div class="report-summary">
             <div class="report-stat">
-              <div class="report-stat-value">${mins}:${String(secs).padStart(2,'0')}</div>
+              <div class="report-stat-value">⏱️ ${mins}:${String(secs).padStart(2,'0')}</div>
               <div class="report-stat-label">${t('duration')}</div>
             </div>
             <div class="report-stat">
-              <div class="report-stat-value">${summary.totalScore ?? 0}</div>
+              <div class="report-stat-value">🏆 ${summary.totalScore ?? 0}</div>
               <div class="report-stat-label">${t('finalScore')}</div>
             </div>
             <div class="report-stat">
-              <div class="report-stat-value">${summary.tasksCompleted ?? 0}/${summary.totalTasks ?? 0}</div>
+              <div class="report-stat-value">✅ ${summary.tasksCompleted ?? 0}/${summary.totalTasks ?? 0}</div>
               <div class="report-stat-label">${t('tasks')}</div>
             </div>
             <div class="report-stat">
-              <div class="report-stat-value">${report.entries?.length ?? 0}</div>
+              <div class="report-stat-value">📊 ${report.entries?.length ?? 0}</div>
               <div class="report-stat-label">${t('events')}</div>
             </div>
           </div>
@@ -1108,11 +1131,13 @@
 
       const timelineHtml = entries.map(entry => {
         const time  = new Date(entry.timestamp).toLocaleTimeString(lang === 'pt' ? 'pt-BR' : 'en-US', { hour12: false });
-        const isViol = entry.eventName?.toLowerCase().includes('violation');
+        const en    = entry.eventName ?? '';
+        const icon  = eventIcon(en);
+        const isViol = /violation|critical|safetyerror/i.test(en);
         return `
           <div class="timeline-item ${isViol ? 'violation' : ''}">
             <div class="timeline-time">${time}</div>
-            <div class="timeline-event">${entry.eventName ?? ''}</div>
+            <div class="timeline-event">${icon} ${en}</div>
             ${entry.details ? `<div class="timeline-detail">${entry.details}</div>` : ''}
           </div>`;
       }).join('');
@@ -1120,19 +1145,19 @@
       document.getElementById('modal-body').innerHTML = `
         <div class="session-summary-grid">
           <div class="summary-card">
-            <div class="summary-card-value">${mins}:${String(secs).padStart(2,'0')}</div>
+            <div class="summary-card-value">⏱️ ${mins}:${String(secs).padStart(2,'0')}</div>
             <div class="summary-card-label">${t('totalDuration')}</div>
           </div>
           <div class="summary-card">
-            <div class="summary-card-value">${summary.totalScore ?? 0}</div>
+            <div class="summary-card-value">🏆 ${summary.totalScore ?? 0}</div>
             <div class="summary-card-label">${t('finalScore')}</div>
           </div>
           <div class="summary-card">
-            <div class="summary-card-value">${summary.tasksCompleted ?? 0}</div>
+            <div class="summary-card-value">✅ ${summary.tasksCompleted ?? 0}</div>
             <div class="summary-card-label">${t('tasksCompleted')}</div>
           </div>
           <div class="summary-card">
-            <div class="summary-card-value">${summary.totalTasks ?? 0}</div>
+            <div class="summary-card-value">📋 ${summary.totalTasks ?? 0}</div>
             <div class="summary-card-label">${t('totalTasks')}</div>
           </div>
         </div>
