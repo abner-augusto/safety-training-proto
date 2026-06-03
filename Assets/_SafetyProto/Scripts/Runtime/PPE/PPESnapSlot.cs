@@ -149,16 +149,22 @@ namespace SafetyProto.Runtime.PPE
         public bool TryAcceptSnap(PPESnapItem item)
         {
             if (item == null) return false;
-            if (!Accepts(item.PpeType))
+
+            var ppeItem = item.GetComponent<PPEItem>();
+
+            // Reject distractors before the type check. A distractor shares the
+            // valid PPEType (ex: capacete sem jugular ainda é Helmet), so Accepts()
+            // would otherwise pass and the decoy would be reported as worn — exactly
+            // the opposite of the educational intent. Firing here, before Accepts(),
+            // means the slot the item legitimately hovers always triggers the popup.
+            if (ppeItem != null && ppeItem.isDistractor)
             {
-                var ppeItem = item.GetComponent<PPEItem>();
-                if (ppeItem != null && ppeItem.isDistractor)
-                {
-                    onDistractorSnapAttempted?.Invoke(item.PpeType);
-                    SafetyLog.Info($"PPESnapSlot [{name}]: distrator '{item.name}' ({item.PpeType}) rejeitado.", this);
-                }
+                onDistractorSnapAttempted?.Invoke(item.PpeType);
+                SafetyLog.Info($"PPESnapSlot [{name}]: distrator '{item.name}' ({item.PpeType}) rejeitado.", this);
                 return false;
             }
+
+            if (!Accepts(item.PpeType)) return false;
             if (!HasAvailableSpace) return false;
 
             if (ContainsItem(item)) return false;
@@ -170,8 +176,7 @@ namespace SafetyProto.Runtime.PPE
             if (IsLocked)
                 item.SetGrabEnabled(false);
 
-            var ppeItemComp = item.GetComponent<PPEItem>();
-            if (ppeItemComp != null && ppeItemComp.hideWhenEquipped)
+            if (ppeItem != null && ppeItem.hideWhenEquipped)
                 item.gameObject.SetActive(false);
 
             // Register as worn AFTER the optional hide. SetActive(false) triggers
