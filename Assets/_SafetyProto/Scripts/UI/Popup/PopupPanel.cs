@@ -31,6 +31,13 @@ namespace SafetyProto.UI
 
         public bool IsVisible { get; private set; }
 
+        /// <summary>
+        /// Raised when the panel starts hiding, no matter the trigger (close button or
+        /// programmatic <see cref="Hide"/>). PopupService listens to this to resume the
+        /// session, so closing via the button can't leave the timer paused.
+        /// </summary>
+        public event System.Action Hidden;
+
         private PopupData _currentData;
         private Coroutine _fadeCoroutine;
         private CanvasGroup _canvasGroup;
@@ -116,6 +123,8 @@ namespace SafetyProto.UI
 
             IsVisible = false;
             _fadeCoroutine = StartCoroutine(FadeAlphaAndDeactivate(_canvasGroup.alpha, 0f));
+
+            Hidden?.Invoke();
         }
 
         public void OnActionButtonPressed()

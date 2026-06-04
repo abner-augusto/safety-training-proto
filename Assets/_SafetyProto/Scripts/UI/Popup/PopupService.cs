@@ -32,10 +32,32 @@ namespace SafetyProto.UI
                 return;
             }
 
+            // Resume the session whenever the panel hides, including the close button,
+            // which calls PopupPanel.Hide() directly and never routes through Hide() here.
+            popupPanel.Hidden += OnPanelHidden;
+
             if (popupPanel.gameObject.activeSelf)
             {
                 popupPanel.gameObject.SetActive(false);
                 SafetyLog.Info("[PopupService] PopupCanvas deactivated on Start().", this);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (popupPanel != null)
+                popupPanel.Hidden -= OnPanelHidden;
+
+            if (Instance == this)
+                Instance = null;
+        }
+
+        private void OnPanelHidden()
+        {
+            if (_sessionPausedByUs)
+            {
+                SessionEvents.RaiseSessionResumed();
+                _sessionPausedByUs = false;
             }
         }
 
@@ -56,13 +78,8 @@ namespace SafetyProto.UI
         {
             if (popupPanel == null) return;
 
+            // PopupPanel.Hide() raises Hidden, which OnPanelHidden uses to resume the session.
             popupPanel.Hide();
-
-            if (_sessionPausedByUs)
-            {
-                SessionEvents.RaiseSessionResumed();
-                _sessionPausedByUs = false;
-            }
         }
 
         public void ShowSuccess(string title, string body)
