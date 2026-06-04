@@ -4,6 +4,7 @@ using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Data.ScriptableObjects;
+using SafetyProto.Runtime.Task;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -32,6 +33,10 @@ namespace SafetyProto.Runtime.PPE
         [Tooltip("Disparado quando um item distrator tenta encaixar neste slot. " +
                  "Passa o PPEType tentado para o TaskFeedbackController.")]
         public UnityEvent<PPEType> onDistractorSnapAttempted;
+
+        [Tooltip("Raised when a valid item is snapped out of the task's expected order. " +
+                 "Passes the attempted PPEType so the TaskFeedbackController can nudge the player.")]
+        public UnityEvent<PPEType> onWrongOrderSnapAttempted;
 
         [Header("Task Integration")]
         [Tooltip("Opcional. Mapeia PPEType → ActionTypeSO para emissão de ActionAttemptedEvent por tipo de EPI encaixado.")]
@@ -77,6 +82,7 @@ namespace SafetyProto.Runtime.PPE
         private readonly Dictionary<PPESnapItem, int> _hoverCounts = new Dictionary<PPESnapItem, int>();
         private Material _highlightMaterial;
         private PPEManager _ppeManager;
+        private TaskManager _taskManager;
 
         private void Awake()
         {
@@ -101,6 +107,12 @@ namespace SafetyProto.Runtime.PPE
                 SafetyLog.Error($"PPESnapSlot on {name}: PPEManager not found.", this);
                 enabled = false;
             }
+
+            // Optional: only needed for the wrong-order guard. If absent, the guard is
+            // skipped and the slot behaves as before (TryAcceptSnap null-checks it).
+            _taskManager = FindFirstObjectByType<TaskManager>();
+            if (_taskManager == null)
+                SafetyLog.Warning($"PPESnapSlot on {name}: TaskManager not found — verificação de ordem desativada.", this);
         }
 
         private void OnDestroy()
@@ -118,6 +130,28 @@ namespace SafetyProto.Runtime.PPE
                 return false;
             }
             return true;
+        }
+
+        /// <summary>
+        /// Resolves the ActionId this slot maps the given PPEType to, if any.
+        /// Returns false when there is no mapping (slot is not task-gated for this type).
+        /// </summary>
+        private bool TryGetMappedActionId(PPEType type, out string actionId)
+        {
+            actionId = null;
+            if (ppeActionMappings == null) return false;
+
+            for (int i = 0; i < ppeActionMappings.Length; i++)
+            {
+                var mapping = ppeActionMappings[i];
+                if (mapping.ppeType == type && mapping.action != null &&
+                    !string.IsNullOrWhiteSpace(mapping.action.ActionId))
+                {
+                    actionId = mapping.action.ActionId;
+                    return true;
+                }
+            }
+            return false;
         }
 
         public void OnItemEntered(PPESnapItem item)
@@ -168,6 +202,21 @@ namespace SafetyProto.Runtime.PPE
             if (!HasAvailableSpace) return false;
 
             if (ContainsItem(item)) return false;
+
+            // Wrong-order guard. If this slot maps the item's PPEType to a task action,
+            // only accept when that action is valid right now — the active sequential task,
+            // or any pending free-order task (see TaskManagerCore.FindPendingTaskByActionId).
+            // Otherwise reject and nudge the player: an out-of-order equip must never be
+            // consumed/locked, or it would block completing the correct sequence. Slots with
+            // no mapping for this type (and the case where TaskManager is absent) are unaffected.
+            if (_taskManager != null &&
+                TryGetMappedActionId(item.PpeType, out var mappedActionId) &&
+                _taskManager.FindPendingTaskByActionId(mappedActionId) == null)
+            {
+                onWrongOrderSnapAttempted?.Invoke(item.PpeType);
+                SafetyLog.Info($"PPESnapSlot [{name}]: '{item.name}' ({item.PpeType}) fora de ordem — snap rejeitado.", this);
+                return false;
+            }
 
             _snappedItems.Add(item);
             _hoverCounts.Remove(item);

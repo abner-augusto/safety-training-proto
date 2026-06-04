@@ -16,6 +16,7 @@ namespace SafetyProto.UI
         [SerializeField] private string hintTitle    = "Dica";
         [SerializeField] private string failureTitle = "Atenção";
         [SerializeField] private string ppeTitle = "EPI Incorreto";
+        [SerializeField] private string wrongOrderTitle = "Ordem Incorreta";
 
         private TaskManager _taskManager;
 
@@ -32,7 +33,10 @@ namespace SafetyProto.UI
 
             foreach (var slot in snapSlots)
                 if (slot != null)
+                {
                     slot.onDistractorSnapAttempted.AddListener(OnDistractorSnapAttempted);
+                    slot.onWrongOrderSnapAttempted.AddListener(OnWrongOrderSnapAttempted);
+                }
         }
 
         private void OnDestroy()
@@ -45,7 +49,10 @@ namespace SafetyProto.UI
 
             foreach (var slot in snapSlots)
                 if (slot != null)
+                {
                     slot.onDistractorSnapAttempted.RemoveListener(OnDistractorSnapAttempted);
+                    slot.onWrongOrderSnapAttempted.RemoveListener(OnWrongOrderSnapAttempted);
+                }
         }
 
         private void OnTaskTimeout(TaskEventArgs args)
@@ -90,6 +97,19 @@ namespace SafetyProto.UI
                 body += $"\n\nDica: {hint}";
 
             PopupService.Instance?.ShowWarning(ppeTitle, body);
+        }
+
+        private void OnWrongOrderSnapAttempted(PPEType attempted)
+        {
+            // The item is valid PPE but was equipped before its turn. Point the player
+            // at the task that is actually expected now via its hint.
+            var hint = _taskManager?.CurrentRuntimeTask?.TaskData?.hintText;
+
+            var body = !string.IsNullOrWhiteSpace(hint)
+                ? $"Este equipamento ainda não é o próximo da sequência.\n\nDica: {hint}"
+                : "Este equipamento ainda não é o próximo da sequência. Siga a ordem correta das tarefas.";
+
+            PopupService.Instance?.ShowWarning(wrongOrderTitle, body);
         }
     }
 }
