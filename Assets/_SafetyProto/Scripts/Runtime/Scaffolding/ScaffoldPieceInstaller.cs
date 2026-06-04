@@ -60,7 +60,13 @@ namespace SafetyProto.Runtime.Scaffolding
 
         [Header("Tolerances")]
         [SerializeField] private float positionTolerance = 0.12f;
-        [SerializeField] private float angleTolerance = 20f;
+        [Tooltip("Max yaw error in degrees (about the vertical axis). Kept TIGHT — a piece rotated " +
+                 "the wrong way around Y is rejected.")]
+        [SerializeField] private float yawTolerance = 15f;
+        [Tooltip("Max tilt error in degrees (roll/pitch off-vertical). Kept LOOSE — a slightly-" +
+                 "tilted but correctly-oriented piece still validates; ApplySocketPose snaps it " +
+                 "perfectly upright on accept.")]
+        [SerializeField] private float tiltTolerance = 35f;
 
         // ── Snap & Lock ──────────────────────────────────────────
 
@@ -347,29 +353,53 @@ namespace SafetyProto.Runtime.Scaffolding
             if (Vector3.Distance(pieceAnchor.position, socket.position) > positionTolerance)
                 return false;
 
-            float angle = Quaternion.Angle(pieceAnchor.rotation, socket.rotation);
-            if (angle <= angleTolerance) return true;
+            if (IsRotationAligned(pieceAnchor.rotation, socket.rotation)) return true;
 
             if (allow180Rotation)
             {
                 // Check if it matches after a 180 degree rotation around the Y axis
                 Quaternion flippedRotation = socket.rotation * Quaternion.Euler(0, 180, 0);
-                if (Quaternion.Angle(pieceAnchor.rotation, flippedRotation) <= angleTolerance)
-                    return true;
+                if (IsRotationAligned(pieceAnchor.rotation, flippedRotation)) return true;
             }
 
             return false;
+        }
+
+        // B11 — per-axis rotation gate. Decomposes the piece→socket delta into yaw (about the
+        // vertical axis) and tilt (roll/pitch, i.e. how far the piece's up axis leans off the
+        // socket's up axis), and gates each against its own tolerance: yaw tight, tilt loose. So a
+        // slightly-leaning-but-correctly-facing piece passes, while a piece spun the wrong way
+        // around Y is still rejected.
+        private bool IsRotationAligned(Quaternion pieceRot, Quaternion socketRot)
+        {
+            // Delta expressed in the socket's local frame.
+            Quaternion delta = Quaternion.Inverse(socketRot) * pieceRot;
+
+            // Tilt: angle between the (local) up axes.
+            float tilt = Vector3.Angle(Vector3.up, delta * Vector3.up);
+            if (tilt > tiltTolerance) return false;
+
+            // Yaw: rotation of the forward axis about the vertical, measured on the horizontal plane.
+            Vector3 flatFwd = Vector3.ProjectOnPlane(delta * Vector3.forward, Vector3.up);
+            float yaw = flatFwd.sqrMagnitude < 1e-6f ? 0f : Vector3.Angle(Vector3.forward, flatFwd);
+            return yaw <= yawTolerance;
         }
 
         private void ApplySocketPose()
         {
             if (_activeAnchor == null || _activeSocket == null) return;
 
-            // Determine if we need to apply the 180 degree flip based on current relative rotation
+            // Determine if we need to apply the 180 degree flip: pick whichever orientation the
+            // piece is actually closest to (robust to the loose tilt tolerance).
             Quaternion targetRotation = _activeSocket.rotation;
-            if (allow180Rotation && Quaternion.Angle(_activeAnchor.rotation, _activeSocket.rotation) > angleTolerance)
+            if (allow180Rotation)
             {
-                targetRotation *= Quaternion.Euler(0, 180, 0);
+                Quaternion flipped = _activeSocket.rotation * Quaternion.Euler(0, 180, 0);
+                if (Quaternion.Angle(_activeAnchor.rotation, flipped) <
+                    Quaternion.Angle(_activeAnchor.rotation, _activeSocket.rotation))
+                {
+                    targetRotation = flipped;
+                }
             }
 
             Vector3    anchorLocalPos = transform.InverseTransformPoint(_activeAnchor.position);
@@ -463,7 +493,8 @@ namespace SafetyProto.Runtime.Scaffolding
             if (!string.IsNullOrEmpty(context))  context  = context.Trim();
 
             positionTolerance = Mathf.Max(0f, positionTolerance);
-            angleTolerance    = Mathf.Clamp(angleTolerance, 0f, 180f);
+            yawTolerance      = Mathf.Clamp(yawTolerance, 0f, 180f);
+            tiltTolerance     = Mathf.Clamp(tiltTolerance, 0f, 180f);
         }
 
         private void OnDrawGizmosSelected()
