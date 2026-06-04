@@ -166,3 +166,9 @@ Tools/**/bin/
 Tools/**/obj/
 harness-output/
 
+
+# ============================================================
+# UNITY CRASH-RECOVERY SCENES
+# ============================================================
+/Assets/_Recovery/
+/Assets/_Recovery.meta
