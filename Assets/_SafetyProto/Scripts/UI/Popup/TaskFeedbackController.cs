@@ -77,13 +77,19 @@ namespace SafetyProto.UI
 
         private void OnDistractorSnapAttempted(PPEType attempted)
         {
-            var advice = _taskManager?.CurrentRuntimeTask?.TaskData?.ppeAdvice;
+            var task = _taskManager?.CurrentRuntimeTask?.TaskData;
 
-            var text = !string.IsNullOrWhiteSpace(advice)
+            var advice = task?.ppeAdvice;
+            var body = !string.IsNullOrWhiteSpace(advice)
                 ? advice
                 : "Este equipamento não é adequado para trabalho em altura.";
 
-            PopupService.Instance?.ShowWarning(ppeTitle, text);
+            // Anexa a dica da tarefa atual para reforçar o EPI correto.
+            var hint = task?.hintText;
+            if (!string.IsNullOrWhiteSpace(hint))
+                body += $"\n\nDica: {hint}";
+
+            PopupService.Instance?.ShowWarning(ppeTitle, body);
         }
     }
 }
