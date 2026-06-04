@@ -47,15 +47,15 @@ namespace SafetyProto.Runtime.Safety
         [SerializeField] private TimerSystem timerSystem;
         [Tooltip("Panels to activate after SessionCompleted fires (e.g. the session report canvas). Activated after the event so their OnEnable can read the cached args.")]
         [SerializeField] private GameObject[] sessionEndPanels;
+        [Tooltip("Optional (A3). If set, the PlayerFallSimulation consequence routes through its controlled fall and is skipped when the player is correctly anchored.")]
+        [SerializeField] private FallFromHeightController fallController;
 
         private IPopupFeedback _popupFeedback;
 
         [Header("Gate Configuration")]
         [SerializeField] private int penaltyPerAttempt = 100;
-        [Tooltip("Seconds to wait after the success popup clears before raising SessionCompleted.")]
-        [SerializeField] private float delayBeforeSessionCompleted = 1.5f;
-        [Tooltip("When enabled, SessionCompleted fires after ANY failed attempt (all consequence types). When disabled, only a PlayerFallSimulation consequence ends the session.")]
-        [SerializeField] private bool endSessionOnAnyFailure = false;
+        [Tooltip("Label for the manual-dismiss button on the success / warning popups.")]
+        [SerializeField] private string continueButtonLabel = "Continuar";
 
         [Header("Consequence Timing")]
         [SerializeField] private float delayBetweenConsequences = 2.5f;
@@ -142,7 +142,7 @@ namespace SafetyProto.Runtime.Safety
             {
                 _isProcessing = true;
                 PlaySound(successSound);
-                StartCoroutine(OnInspectionPassedSequence(currentGroup));
+                ShowSuccessAndEnd(currentGroup);
                 return;
             }
 
@@ -158,17 +158,25 @@ namespace SafetyProto.Runtime.Safety
 
         // ── Passed ────────────────────────────────────────────────
 
-        private IEnumerator OnInspectionPassedSequence(TaskGroup currentGroup)
+        // B7: all tasks complete → success popup with a manual "Continuar" button that ends the
+        // session (and shows the finish screen). No timed auto-dismiss.
+        private void ShowSuccessAndEnd(TaskGroup currentGroup)
         {
             if (verboseLogging)
-                SafetyLog.Info("[InspectionGateValidator] Inspeção aprovada. Aguardando popup antes de finalizar sessão.", this);
+                SafetyLog.Info("[InspectionGateValidator] Inspeção aprovada. Aguardando 'Continuar' para finalizar a sessão.", this);
 
-            _popupFeedback?.ShowSuccess(currentGroup.groupName, "Inspeção concluída com sucesso!");
-            yield return new WaitForSeconds(delayBeforeSessionCompleted);
-            HideConsequenceFeedback();
+            void Finish()
+            {
+                HideConsequenceFeedback();
+                EndSession("validação");
+                _isProcessing = false;
+            }
 
-            EndSession("validação");
-            _isProcessing = false;
+            if (_popupFeedback != null)
+                _popupFeedback.ShowInteractive(currentGroup.groupName,
+                    "Inspeção concluída com sucesso!", continueButtonLabel, Finish);
+            else
+                Finish();
         }
 
         // ── Consequence sequence ──────────────────────────────────
@@ -178,7 +186,6 @@ namespace SafetyProto.Runtime.Safety
             TaskGroup currentGroup)
         {
             _isProcessing = true;
-            bool hadFallSimulation = false;
 
             // Build ordered mapping list — PlayerFallSimulation always last
             var pendingMappings = new List<(RuntimeSafetyTask task, ConsequenceMapping mapping)>();
@@ -231,8 +238,11 @@ namespace SafetyProto.Runtime.Safety
                         break;
 
                     case ConsequenceType.PlayerFallSimulation:
-                        hadFallSimulation = true;
-                        yield return ExecutePlayerFallSimulation(mapping);
+                        // A3: route through the controlled fall (skips when correctly anchored).
+                        if (fallController != null)
+                            yield return fallController.TriggerControlledFall();
+                        else
+                            yield return ExecutePlayerFallSimulation(mapping);
                         SafetyEvents.RaiseCriticalSafetyFailure(new CriticalSafetyFailureEventArgs
                         {
                             Reason = $"Trabalhou desconectado: {mapping.displayName}",
@@ -256,10 +266,31 @@ namespace SafetyProto.Runtime.Safety
             yield return new WaitForSeconds(delayAfterAllConsequences);
             HideConsequenceFeedback();
 
-            if (endSessionOnAnyFailure || hadFallSimulation)
-                EndSession(hadFallSimulation ? "simulação de queda" : "falha geral");
+            // B7: warn-and-continue. The gate no longer ends the session on failure — list the
+            // still-pending tasks and let the player keep going to finish them. _isProcessing is
+            // released only when the player presses "Continuar".
+            ShowPendingWarningAndContinue(pendingTasks);
+        }
 
-            _isProcessing = false;
+        // B7: warning popup listing the remaining tasks, with a "Continuar" button that dismisses
+        // and lets the player keep playing (no SessionCompleted).
+        private void ShowPendingWarningAndContinue(List<RuntimeSafetyTask> pendingTasks)
+        {
+            string list = string.Join("\n", pendingTasks.Select(t =>
+                "• " + (string.IsNullOrWhiteSpace(t.taskName) ? t.ExpectedActionId : t.taskName)));
+            string body = $"Você ainda não concluiu todas as tarefas de segurança:\n{list}\n\n" +
+                          "Conclua as tarefas restantes antes de iniciar a atividade.";
+
+            void Continue()
+            {
+                HideConsequenceFeedback();
+                _isProcessing = false;
+            }
+
+            if (_popupFeedback != null)
+                _popupFeedback.ShowInteractive("Tarefas Pendentes", body, continueButtonLabel, Continue);
+            else
+                Continue();
         }
 
         // ── Session end ───────────────────────────────────────────
