@@ -13,6 +13,10 @@ namespace SafetyProto.Runtime
     {
         [Header("Player")]
         [SerializeField] private Transform playerRig;
+        [Tooltip("Head transform (CenterEyeAnchor). Auto-resolved from playerRig if empty. Used to " +
+                 "cancel the room-scale offset when teleporting so the player — not the rig origin — " +
+                 "lands centered on the scaffold spawn.")]
+        [SerializeField] private Transform playerHead;
         [SerializeField] private Transform spawnPointAndaime;
 
         [Header("Zonas (opcional)")]
@@ -61,6 +65,9 @@ namespace SafetyProto.Runtime
 
             if (playerLocomotor == null && playerRig != null)
                 playerLocomotor = ResolveLocomotor(playerRig);
+
+            if (playerHead == null && playerRig != null)
+                playerHead = PlayerRecenter.ResolveHead(playerRig);
 
             EventBus.Instance.onGroupCompleted.AddListener(OnGroupCompleted);
         }
@@ -122,11 +129,20 @@ namespace SafetyProto.Runtime
 
             if (playerRig != null && spawnPointAndaime != null)
             {
-                playerRig.position = spawnPointAndaime.position;
-                playerRig.rotation = Quaternion.Euler(0f, spawnPointAndaime.rotation.eulerAngles.y, 0f);
-                // Push the moved transforms into the physics scene now so the ground probe and the first
-                // post-teleport Move see final positions this frame.
-                Physics.SyncTransforms();
+                if (playerHead != null)
+                {
+                    // Recenter the HEAD over the spawn (cancels the room-scale rig offset) so the
+                    // player lands centered on the scaffold deck regardless of where they physically
+                    // stand. PlayerRecenter calls Physics.SyncTransforms internally.
+                    PlayerRecenter.Recenter(playerRig, playerHead, spawnPointAndaime);
+                }
+                else
+                {
+                    // Fallback: no head ref — move the rig origin directly (legacy behavior).
+                    playerRig.position = spawnPointAndaime.position;
+                    playerRig.rotation = Quaternion.Euler(0f, spawnPointAndaime.rotation.eulerAngles.y, 0f);
+                    Physics.SyncTransforms();
+                }
             }
 
             if (transitionPanel != null)
