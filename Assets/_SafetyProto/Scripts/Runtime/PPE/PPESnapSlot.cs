@@ -56,6 +56,11 @@ namespace SafetyProto.Runtime.PPE
         [SerializeField] private Color hoverColor = new Color(0.2f, 0.8f, 0.2f, 0.5f);
         [SerializeField] private Color occupiedColor = new Color(0.2f, 0.4f, 1f, 0.5f);
 
+        [Tooltip("De-flicker (B10): seconds to keep the hover highlight after the last hover blip " +
+                 "clears, so a flickering boundary trigger (e.g. boot MeshCollider vs slope sphere) " +
+                 "doesn't strobe the highlight on/off.")]
+        [SerializeField, Range(0f, 0.5f)] private float hoverHoldSeconds = 0.15f;
+
 #if UNITY_EDITOR
         [Header("Editor Preview")]
         [Tooltip("PPE item prefabs (or scene instances) to preview at this slot's snap pose. Editor-only — applies the same snapPoseOverride math used at runtime.")]
@@ -80,6 +85,8 @@ namespace SafetyProto.Runtime.PPE
         private int _slotCapacity;
 
         private readonly Dictionary<PPESnapItem, int> _hoverCounts = new Dictionary<PPESnapItem, int>();
+        private float _hoverHoldUntil;
+        private bool _hoverVisualActive;
         private Material _highlightMaterial;
         private PPEManager _ppeManager;
         private TaskManager _taskManager;
@@ -328,16 +335,43 @@ namespace SafetyProto.Runtime.PPE
             return _snappedItems.Contains(item);
         }
 
+        private void Update()
+        {
+            // Drive the end of the hover-hold window even when no enter/exit events arrive this
+            // frame, so the highlight eventually settles back to idle after a flicker burst.
+            if (_hoverVisualActive && _hoverCounts.Count == 0 && Time.time >= _hoverHoldUntil)
+                UpdateHighlight();
+        }
+
         private void UpdateHighlight()
         {
             if (_highlightMaterial == null) return;
 
             if (IsOccupied)
+            {
+                _hoverVisualActive = false;
                 SetHighlight(occupiedColor);
-            else if (_hoverCounts.Count > 0)
+                return;
+            }
+
+            if (_hoverCounts.Count > 0)
+            {
+                // Active hover — show it and (re)arm the hold window.
+                _hoverVisualActive = true;
+                _hoverHoldUntil = Time.time + hoverHoldSeconds;
                 SetHighlight(hoverColor);
+            }
+            else if (_hoverVisualActive && Time.time < _hoverHoldUntil)
+            {
+                // Hover blipped off, but we're inside the hold window — keep it steady to ride
+                // out a flickering boundary trigger.
+                SetHighlight(hoverColor);
+            }
             else
+            {
+                _hoverVisualActive = false;
                 SetHighlight(idleColor);
+            }
         }
 
         private void SetHighlight(Color color)
