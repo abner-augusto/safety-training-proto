@@ -18,6 +18,8 @@ namespace SafetyProto.UI
         [SerializeField] private GameObject closeButtonRoot;
         [Tooltip("Botão secundário opcional 'Pular' (onboarding). Exibido apenas quando PopupData.showSkipButton.")]
         [SerializeField] private GameObject skipButtonRoot;
+        [Tooltip("Campo de texto opcional (identificação do participante). Exibido apenas quando PopupData.showInputField.")]
+        [SerializeField] private GameObject inputFieldRoot;
         [Tooltip("Root do layout a reconstruir após mudar o conteúdo (geralmente o background ou este próprio RectTransform).")]
         [SerializeField] private RectTransform layoutRoot;
 
@@ -100,6 +102,9 @@ namespace SafetyProto.UI
 
             if (skipButtonRoot != null)
                 skipButtonRoot.SetActive(data.showSkipButton);
+
+            if (inputFieldRoot != null)
+                inputFieldRoot.SetActive(data.showInputField);
 
             StopFade();
 

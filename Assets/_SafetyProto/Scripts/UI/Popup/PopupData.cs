@@ -21,5 +21,8 @@ namespace SafetyProto.UI
         // Botão secundário opcional "Pular" — usado pelo onboarding para sair da sequência.
         public bool showSkipButton;
         public UnityEvent onSkipPressed;
+
+        // Campo de texto opcional — usado pela tela de identificação do participante.
+        public bool showInputField;
     }
 }
