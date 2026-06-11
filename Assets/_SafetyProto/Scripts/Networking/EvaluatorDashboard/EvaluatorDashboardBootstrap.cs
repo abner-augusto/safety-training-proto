@@ -223,6 +223,7 @@ namespace SafetyProto.Networking.Dashboard
             var sessionDto = new SessionDto
             {
                 sessionId = sessionId,
+                participantId = string.IsNullOrEmpty(EventContext.CurrentPlayerId) ? "—" : EventContext.CurrentPlayerId,
                 timestampMs = ResolveTimestamp(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
             };
             _wsServer.SendToClient(client, "SessionStarted", sessionDto);
@@ -255,7 +256,11 @@ namespace SafetyProto.Networking.Dashboard
 
         private void OnSessionStarted(SessionStartedEventArgs args)
         {
-            Broadcast("SessionStarted", new SessionDto(args.SessionId, ResolveTimestamp(args.TimestampMs)));
+            var dto = new SessionDto(args.SessionId, ResolveTimestamp(args.TimestampMs))
+            {
+                participantId = string.IsNullOrEmpty(args.PlayerId) ? "—" : args.PlayerId
+            };
+            Broadcast("SessionStarted", dto);
 
             var manifest = BuildSessionManifest(args.SessionId);
             Broadcast("SessionManifest", manifest);
@@ -734,11 +739,13 @@ namespace SafetyProto.Networking.Dashboard
         private struct SessionDto
         {
             public string sessionId;
+            public string participantId;
             public long timestampMs;
 
             public SessionDto(string sessionId, long timestamp)
             {
                 this.sessionId = sessionId;
+                participantId = null;
                 timestampMs = timestamp;
             }
         }
