@@ -558,6 +558,7 @@
           SafetyProto
         </div>
         <div class="s-header-meta">
+          <span id="participant-label">—</span>
           <span id="session-id-label">—</span>
           <span id="conn-status-label">Desconectado</span>
         </div>
@@ -668,6 +669,7 @@
         eventTimeline: 'Event Timeline',
         noSession: 'No Session',
         session: 'Session',
+        participant: 'Participant',
         disconnected: 'Disconnected',
         connected: 'Connected',
         connecting: 'Connecting…',
@@ -708,6 +710,7 @@
         eventTimeline: 'Linha do Tempo',
         noSession: 'Sem Sessão',
         session: 'Sessão',
+        participant: 'Participante',
         disconnected: 'Desconectado',
         connected: 'Conectado',
         connecting: 'Conectando…',
@@ -851,6 +854,8 @@
     on('SessionStarted', p => {
       document.getElementById('session-id-label').textContent =
         `${t('session')}: ${p.sessionId?.substring(0, 8) ?? '?'}`;
+      document.getElementById('participant-label').textContent =
+        `${t('participant')}: ${p.participantId ?? '—'}`;
       addLog(t('logSessionStarted'), 'success');
     });
 
@@ -903,6 +908,7 @@
       resetTaskUI();
       document.getElementById('report-section').innerHTML = emptyState('📄', t('reportAfterSession'));
       document.getElementById('session-id-label').textContent = t('noSession');
+      document.getElementById('participant-label').textContent = `${t('participant')}: —`;
       addLog(t('logSessionReset'));
     });
 
