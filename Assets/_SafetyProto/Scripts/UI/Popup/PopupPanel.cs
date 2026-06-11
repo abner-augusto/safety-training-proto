@@ -16,6 +16,8 @@ namespace SafetyProto.UI
         [SerializeField] private GameObject actionButtonRoot;
         [SerializeField] private TextMeshProUGUI actionButtonLabel;
         [SerializeField] private GameObject closeButtonRoot;
+        [Tooltip("Botão secundário opcional 'Pular' (onboarding). Exibido apenas quando PopupData.showSkipButton.")]
+        [SerializeField] private GameObject skipButtonRoot;
         [Tooltip("Root do layout a reconstruir após mudar o conteúdo (geralmente o background ou este próprio RectTransform).")]
         [SerializeField] private RectTransform layoutRoot;
 
@@ -96,6 +98,9 @@ namespace SafetyProto.UI
             if (closeButtonRoot != null)
                 closeButtonRoot.SetActive(!isInteractive);
 
+            if (skipButtonRoot != null)
+                skipButtonRoot.SetActive(data.showSkipButton);
+
             StopFade();
 
             var root = layoutRoot ?? (RectTransform)transform;
@@ -137,6 +142,12 @@ namespace SafetyProto.UI
         {
             SafetyLog.Info("[PopupPanel] OnCloseButtonPressed()", this);
             Hide();
+        }
+
+        public void OnSkipButtonPressed()
+        {
+            SafetyLog.Info("[PopupPanel] OnSkipButtonPressed()", this);
+            _currentData?.onSkipPressed?.Invoke();
         }
 
         private IEnumerator FadeAlpha(float from, float to)

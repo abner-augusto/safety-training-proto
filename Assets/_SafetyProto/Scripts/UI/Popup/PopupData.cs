@@ -17,5 +17,9 @@ namespace SafetyProto.UI
         // Apenas Interactive — ignorado nos outros tipos
         public string actionButtonLabel;
         public UnityEvent onActionPressed;
+
+        // Botão secundário opcional "Pular" — usado pelo onboarding para sair da sequência.
+        public bool showSkipButton;
+        public UnityEvent onSkipPressed;
     }
 }
