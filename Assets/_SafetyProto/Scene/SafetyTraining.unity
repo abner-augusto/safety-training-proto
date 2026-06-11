@@ -48449,23 +48449,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 1
   m_IsActive: 1
---- !u!1 &1822684023012371576
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 6742358056732954164}
-  - component: {fileID: 7444944003304579498}
-  m_Layer: 0
-  m_Name: OnboardingController
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
 --- !u!114 &1835916023342379292
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -49120,7 +49103,6 @@ Transform:
   m_Children:
   - {fileID: 591484959400194827}
   - {fileID: 1708245726}
-  - {fileID: 6742358056732954164}
   - {fileID: 9152504665694397441}
   - {fileID: 1644188873}
   m_Father: {fileID: 8833846016270955010}
@@ -52916,21 +52898,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _position: {x: 0, y: 0, z: 0}
   _size: {x: 1, y: 1, z: 1}
---- !u!4 &6742358056732954164
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1822684023012371576}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2690452664022829007}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6764748511678478130
 GameObject:
   m_ObjectHideFlags: 0
@@ -54435,129 +54402,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2773724089861531001}
   m_Mesh: {fileID: -8414736177376978266, guid: 8a69427872f566a4d9709896efc071dc, type: 3}
---- !u!114 &7444944003304579498
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1822684023012371576}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f6f98ab4061897149a39537037626549, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.UI.OnboardingController
-  popupService: {fileID: 5455797637335201551}
-  steps:
-  - title: "Bem Vindo ao Treinamento de Seguran\xE7a!"
-    body: "Este treinamento foi criado para te ajudar a trabalhar com mais seguran\xE7a
-      em altura. Aqui voc\xEA vai aprender na pr\xE1tica como se equipar corretamente
-      e inspecionar um andaime antes de come\xE7ar o trabalho."
-    actionButtonLabel: "Pr\xF3ximo"
-    icon: {fileID: 21300000, guid: bd0eb31f565efa9478845672908fb5c6, type: 3}
-    highlightTarget: {fileID: 0}
-    onStepConfirmed:
-      m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 8185551094889031479}
-          m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-          m_MethodName: SetActive
-          m_Mode: 6
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 1
-          m_CallState: 2
-  - title: "Voc\xEA est\xE1 em um ambiente virtual"
-    body: "Tudo que voc\xEA v\xEA \xE9 uma simula\xE7\xE3o \u2014 n\xE3o tem risco
-      real aqui. Fique \xE0 vontade para explorar e cometer erros. \xC9 exatamente
-      para isso que o treinamento existe."
-    actionButtonLabel: Entendi
-    icon: {fileID: 21300000, guid: c1b77ffedb1987f43a8aeb4b0eecd391, type: 3}
-    highlightTarget: {fileID: 0}
-    onStepConfirmed:
-      m_PersistentCalls:
-        m_Calls: []
-  - title: "Seus controles s\xE3o suas m\xE3os"
-    body: "Para pegar um objeto, aproxime a m\xE3o dele e feche o punho. Para soltar,
-      abra a m\xE3o. N\xE3o precisa apertar nenhum bot\xE3o \u2014 o sistema reconhece
-      seus movimentos."
-    actionButtonLabel: "Pr\xF3ximo"
-    icon: {fileID: 21300000, guid: cde92da782a3fa24985de86cf32bd393, type: 3}
-    highlightTarget: {fileID: 0}
-    onStepConfirmed:
-      m_PersistentCalls:
-        m_Calls: []
-  - title: "Para bot\xF5es e pain\xE9is"
-    body: "Aponte o dedo indicador para o bot\xE3o desejado e aproxime a m\xE3o at\xE9
-      tocar. Voc\xEA vai ouvir um som confirmando a sele\xE7\xE3o."
-    actionButtonLabel: "Pr\xF3ximo"
-    icon: {fileID: 21300000, guid: 46712e23d71a3994d906c3660e5f528c, type: 3}
-    highlightTarget: {fileID: 0}
-    onStepConfirmed:
-      m_PersistentCalls:
-        m_Calls: []
-  - title: "Prefere usar controles f\xEDsicos?"
-    body: "Se tiver dificuldade com o rastreamento das m\xE3os, pe\xE7a ao monitor
-      presente que ative os controles f\xEDsicos do headset. Ele pode te ajudar a
-      qualquer momento durante o treinamento."
-    actionButtonLabel: "Pr\xF3ximo"
-    icon: {fileID: 21300000, guid: bcbd8d8afe724be4390d5e4be2a02ba5, type: 3}
-    highlightTarget: {fileID: 0}
-    onStepConfirmed:
-      m_PersistentCalls:
-        m_Calls: []
-  - title: Duas etapas de treinamento
-    body: "Primeiro, voc\xEA vai escolher os equipamentos de prote\xE7\xE3o corretos
-      para o trabalho em altura. Depois, vai subir a um andaime e inspecionar as
-      condi\xE7\xF5es antes de iniciar a atividade."
-    actionButtonLabel: "Pr\xF3ximo"
-    icon: {fileID: 21300000, guid: 17f42810d27567f4d990696a7c399fd1, type: 3}
-    highlightTarget: {fileID: 0}
-    onStepConfirmed:
-      m_PersistentCalls:
-        m_Calls: []
-  - title: "Seu desempenho \xE9 registrado"
-    body: "Cada decis\xE3o correta soma pontos. Se errar, n\xE3o tem problema \u2014
-      voc\xEA recebe uma dica e pode tentar de novo. Ao final, voc\xEA ver\xE1 um
-      resumo completo do que acertou e do que pode melhorar."
-    actionButtonLabel: "Pr\xF3ximo"
-    icon: {fileID: 21300000, guid: 8c692c044905f4b41986747104e4cae4, type: 3}
-    highlightTarget: {fileID: 0}
-    onStepConfirmed:
-      m_PersistentCalls:
-        m_Calls: []
-  - title: "Pronto para come\xE7ar?"
-    body: "Dirija-se \xE0 bancada \xE0 sua frente e escolha os equipamentos certos
-      para trabalhar em altura. Boa sorte!"
-    actionButtonLabel: "Pr\xF3ximo"
-    icon: {fileID: 21300000, guid: 1fe5a7887d4d25c448821b998ec50d9e, type: 3}
-    highlightTarget: {fileID: 5869049331895166445}
-    onStepConfirmed:
-      m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 4610155724688692438}
-          m_TargetAssemblyTypeName: SafetyProto.Gameplay.Feedback.AudioFeedbackManager,
-            Assembly-CSharp
-          m_MethodName: PlaySuccessClip
-          m_Mode: 1
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
-  autoStartOnEnable: 0
-  startDelayFrames: 10
-  onOnboardingFinished:
-    m_PersistentCalls:
-      m_Calls: []
-  rememberSeen: 0
 --- !u!33 &7445209529564754894
 MeshFilter:
   m_ObjectHideFlags: 10
