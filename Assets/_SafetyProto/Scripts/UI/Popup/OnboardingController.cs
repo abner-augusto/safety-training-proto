@@ -114,6 +114,14 @@ namespace SafetyProto.UI
                 ShowNext();
             });
 
+            // Offer a "Pular" button on the very first popup so testers can bypass the intro.
+            if (_currentIndex == 0)
+            {
+                data.showSkipButton = true;
+                data.onSkipPressed = new UnityEvent();
+                data.onSkipPressed.AddListener(SkipAll);
+            }
+
             if (popupService == null)
             {
                 SafetyLog.Warning("[OnboardingController] PopupService not assigned in Inspector.", this);
