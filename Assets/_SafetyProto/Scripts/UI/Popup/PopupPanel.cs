@@ -46,10 +46,23 @@ namespace SafetyProto.UI
         private Coroutine _fadeCoroutine;
         private CanvasGroup _canvasGroup;
 
+        // Resolved from actionButtonRoot/inputFieldRoot so no extra Inspector wiring is needed.
+        // Used to lock the action button while a required input field is empty.
+        private Button _actionButton;
+        private TMP_InputField _inputField;
+        private bool _gateActionOnInput;
+
         private void Awake()
         {
             _canvasGroup = GetComponent<CanvasGroup>()
                         ?? gameObject.AddComponent<CanvasGroup>();
+
+            if (actionButtonRoot != null)
+                _actionButton = actionButtonRoot.GetComponent<Button>();
+            if (inputFieldRoot != null)
+                _inputField = inputFieldRoot.GetComponentInChildren<TMP_InputField>(true);
+            if (_inputField != null)
+                _inputField.onValueChanged.AddListener(OnInputValueChanged);
 
             if (titleText == null)
                 SafetyLog.Error("[PopupPanel] titleText not assigned in Inspector!", this);
@@ -106,6 +119,10 @@ namespace SafetyProto.UI
             if (inputFieldRoot != null)
                 inputFieldRoot.SetActive(data.showInputField);
 
+            // Lock the action button until the participant types a name (or uses Pular/Skip).
+            _gateActionOnInput = isInteractive && data.showInputField && data.requireInputForAction;
+            RefreshActionInteractable();
+
             StopFade();
 
             var root = layoutRoot ?? (RectTransform)transform;
@@ -139,8 +156,33 @@ namespace SafetyProto.UI
 
         public void OnActionButtonPressed()
         {
+            // Safety net: ignore presses while gated empty, even if something re-enables the button.
+            if (_gateActionOnInput && string.IsNullOrWhiteSpace(_inputField != null ? _inputField.text : null))
+                return;
+
             SafetyLog.Info("[PopupPanel] OnActionButtonPressed()", this);
             _currentData?.onActionPressed?.Invoke();
+        }
+
+        private void OnInputValueChanged(string _) => RefreshActionInteractable();
+
+        /// <summary>
+        /// Enables the action button only when its required input field is non-empty.
+        /// No-op (button stays interactable) when the current popup isn't gated on input.
+        /// </summary>
+        private void RefreshActionInteractable()
+        {
+            if (_actionButton == null) return;
+
+            bool blocked = _gateActionOnInput &&
+                           string.IsNullOrWhiteSpace(_inputField != null ? _inputField.text : null);
+            _actionButton.interactable = !blocked;
+        }
+
+        private void OnDestroy()
+        {
+            if (_inputField != null)
+                _inputField.onValueChanged.RemoveListener(OnInputValueChanged);
         }
 
         public void OnCloseButtonPressed()

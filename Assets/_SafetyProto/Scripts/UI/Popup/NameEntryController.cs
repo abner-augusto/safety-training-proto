@@ -87,6 +87,7 @@ namespace SafetyProto.UI
                 actionButtonLabel = confirmLabel,
                 onActionPressed = new UnityEvent(),
                 showInputField = true,
+                requireInputForAction = true,
                 showSkipButton = true,
                 onSkipPressed = new UnityEvent()
             };
@@ -138,6 +139,9 @@ namespace SafetyProto.UI
         public void Confirm()
         {
             string name = nameField != null ? nameField.text : string.Empty;
+            // Require a typed name on confirm — this also gates the keyboard "Done" path.
+            // An empty submission is intentional only via Skip (which assigns the anon id).
+            if (string.IsNullOrWhiteSpace(name)) return;
             Finish(name);
         }
 
