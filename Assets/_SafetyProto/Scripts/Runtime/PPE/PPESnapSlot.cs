@@ -139,28 +139,6 @@ namespace SafetyProto.Runtime.PPE
             return true;
         }
 
-        /// <summary>
-        /// Resolves the ActionId this slot maps the given PPEType to, if any.
-        /// Returns false when there is no mapping (slot is not task-gated for this type).
-        /// </summary>
-        private bool TryGetMappedActionId(PPEType type, out string actionId)
-        {
-            actionId = null;
-            if (ppeActionMappings == null) return false;
-
-            for (int i = 0; i < ppeActionMappings.Length; i++)
-            {
-                var mapping = ppeActionMappings[i];
-                if (mapping.ppeType == type && mapping.action != null &&
-                    !string.IsNullOrWhiteSpace(mapping.action.ActionId))
-                {
-                    actionId = mapping.action.ActionId;
-                    return true;
-                }
-            }
-            return false;
-        }
-
         public void OnItemEntered(PPESnapItem item)
         {
             if (item == null) return;
@@ -210,15 +188,12 @@ namespace SafetyProto.Runtime.PPE
 
             if (ContainsItem(item)) return false;
 
-            // Wrong-order guard. If this slot maps the item's PPEType to a task action,
-            // only accept when that action is valid right now — the active sequential task,
-            // or any pending free-order task (see TaskManagerCore.FindPendingTaskByActionId).
-            // Otherwise reject and nudge the player: an out-of-order equip must never be
-            // consumed/locked, or it would block completing the correct sequence. Slots with
-            // no mapping for this type (and the case where TaskManager is absent) are unaffected.
-            if (_taskManager != null &&
-                TryGetMappedActionId(item.PpeType, out var mappedActionId) &&
-                _taskManager.FindPendingTaskByActionId(mappedActionId) == null)
+            // Order guard (equip-set model). If this PPE belongs to a later step than the current
+            // one, reject the snap and nudge the player: it must NOT equip, hide, or register as
+            // worn out of order — otherwise a hideWhenEquipped item (gloves/goggles) would vanish
+            // and silently count. Within a step (gloves L/R) any order is fine. No-op for FreeOrder
+            // groups, current/prior-step PPE, or when TaskManager is absent.
+            if (_taskManager != null && _taskManager.IsPpeAheadOfCurrentStep(item.PpeType))
             {
                 onWrongOrderSnapAttempted?.Invoke(item.PpeType);
                 SafetyLog.Info($"PPESnapSlot [{name}]: '{item.name}' ({item.PpeType}) fora de ordem — snap rejeitado.", this);

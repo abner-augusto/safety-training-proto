@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Data.ScriptableObjects.SafetyTask
   taskName: Equipar Cinto Paraquedista
   taskDescription: Selecione o cinto tipo paraquedista e vista corretamente.
-  expectedAction: {fileID: 11400000, guid: 99900bd837460b646b2d26126b58595e, type: 2}
-  expectedActionId: equip_harness
+  expectedAction: {fileID: 0}
+  expectedActionId: 
   successPoints: 200
   failurePenalty: 30
   ppePenalty: 0
-  requiredPPE: 0600000007000000080000000300000001000000
+  requiredPPE: 060000000700000008000000030000000100000004000000
   hintText: "Use APENAS o cinto tipo paraquedista. Cintos abdominais n\xE3o s\xE3o
     aceitos para trabalho em altura."
   failureAdvice: "O cinto tipo paraquedista \xE9 o \xFAnico modelo aceito para trabalho
