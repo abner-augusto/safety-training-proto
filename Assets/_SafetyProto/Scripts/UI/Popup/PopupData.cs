@@ -24,5 +24,9 @@ namespace SafetyProto.UI
 
         // Campo de texto opcional — usado pela tela de identificação do participante.
         public bool showInputField;
+
+        // Quando true (e showInputField), o botão de ação fica bloqueado enquanto o
+        // campo de texto estiver vazio. O participante deve digitar um nome ou usar "Pular".
+        public bool requireInputForAction;
     }
 }
