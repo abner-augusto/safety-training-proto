@@ -99,7 +99,10 @@ namespace SafetyProto.Runtime.Task
                     var actionId = task.ResolveExpectedActionId();
                     if (string.IsNullOrEmpty(actionId))
                     {
-                        SafetyLog.Error($"[TaskManager] Task '{task.taskName}' has no expected action id.", this);
+                        // Equip-set tasks intentionally have no action — they complete on PPE
+                        // state. Only flag a task that has neither an action nor any requiredPPE.
+                        if (task.requiredPPE == null || task.requiredPPE.Count == 0)
+                            SafetyLog.Error($"[TaskManager] Task '{task.taskName}' has no expected action id.", this);
                         continue;
                     }
                     if (!ActionResolver.TryResolve(actionId, out _))
@@ -119,6 +122,9 @@ namespace SafetyProto.Runtime.Task
 
         public RuntimeSafetyTask? FindPendingTaskByActionId(string actionId) =>
             _core?.FindPendingTaskByActionId(actionId);
+
+        public bool IsPpeAheadOfCurrentStep(PPEType type) =>
+            _core?.IsPpeAheadOfCurrentStep(type) ?? false;
 
         public void FocusTask(RuntimeSafetyTask runtimeTask) => _core?.FocusTask(runtimeTask);
 

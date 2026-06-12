@@ -13,16 +13,7 @@ MonoBehaviour:
   m_Name: ActionRegistry
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.Actions.ActionRegistry
   actions:
-  - {fileID: 11400000, guid: 51e0635cc8db34047a63e4b8aadeb5f3, type: 2}
-  - {fileID: 11400000, guid: 1fe43f5981e03854c838a839de11cfbe, type: 2}
-  - {fileID: 11400000, guid: 9afbe5816ee6eed419301aa744dd8b09, type: 2}
-  - {fileID: 11400000, guid: 520a16e786f4fdc47a7fe2233463896a, type: 2}
-  - {fileID: 11400000, guid: 80f9a0cb74ac1de47ba595040e0b364e, type: 2}
-  - {fileID: 11400000, guid: e82f5dfff10aab54ea028b40fec6852d, type: 2}
-  - {fileID: 11400000, guid: 99900bd837460b646b2d26126b58595e, type: 2}
   - {fileID: 11400000, guid: 96e051c356f529345bd5082d2a19261f, type: 2}
   - {fileID: 11400000, guid: 701c7648e46249a49b8f95f158076016, type: 2}
   - {fileID: 11400000, guid: 457b49329f3622f4cb0c24d5dd51ce62, type: 2}
   - {fileID: 11400000, guid: cf73a41117dee2847a42903ffa24e142, type: 2}
-  - {fileID: 11400000, guid: effd88492e65d5646be742a70ae470b5, type: 2}
-  - {fileID: 11400000, guid: 33a2fc81686e7c8478417098b3bac666, type: 2}
