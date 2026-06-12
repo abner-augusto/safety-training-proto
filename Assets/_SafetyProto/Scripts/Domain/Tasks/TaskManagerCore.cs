@@ -355,6 +355,45 @@ namespace SafetyProto.Domain.Tasks
             return null;
         }
 
+        /// <summary>
+        /// True when <paramref name="type"/> belongs to an equip-set step that comes AFTER the
+        /// current step in a Sequential group — i.e. the player is equipping ahead of the
+        /// recommended order. Pickup is still allowed; callers use this only to surface an order
+        /// hint. Returns false for FreeOrder groups, current/prior-step PPE, and types not owned
+        /// by any equip task.
+        /// </summary>
+        public bool IsPpeAheadOfCurrentStep(PPEType type)
+        {
+            var group = GetCurrentGroup();
+            if (group == null || group.executionMode != TaskExecutionModeShared.Sequential) return false;
+            if (_currentTask == null) return false;
+
+            var tasks = group.tasks;
+            int activeIdx = -1, owningIdx = -1;
+            for (int i = 0; i < tasks.Count; i++)
+            {
+                var t = tasks[i];
+                if (ReferenceEquals(t, _currentTask.TaskData)) activeIdx = i;
+                // The "owning" step is the first task that introduces this PPE type.
+                if (owningIdx < 0 && IsEquipTask(t) && RequiresPpe(t, type)) owningIdx = i;
+            }
+            return activeIdx >= 0 && owningIdx > activeIdx;
+        }
+
+        private static bool IsEquipTask(ISafetyTask task)
+        {
+            return string.IsNullOrEmpty(task.ResolveExpectedActionId()) &&
+                   task.requiredPPE != null && task.requiredPPE.Count > 0;
+        }
+
+        private static bool RequiresPpe(ISafetyTask task, PPEType type)
+        {
+            var list = task.requiredPPE;
+            for (int i = 0; i < list.Count; i++)
+                if (list[i] == type) return true;
+            return false;
+        }
+
         public void FocusTask(RuntimeSafetyTask? runtimeTask)
         {
             if (runtimeTask == null)

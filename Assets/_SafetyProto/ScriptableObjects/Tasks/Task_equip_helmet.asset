@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Data.ScriptableObjects.SafetyTask
   taskName: Equipar Capacete com Jugular
   taskDescription: "Selecione o capacete CORRETO (com jugular) e equipe na cabe\xE7a."
-  expectedAction: {fileID: 11400000, guid: e82f5dfff10aab54ea028b40fec6852d, type: 2}
-  expectedActionId: equip_helmet
+  expectedAction: {fileID: 0}
+  expectedActionId: 
   successPoints: 150
   failurePenalty: 30
   ppePenalty: 0
-  requiredPPE: 06000000070000000800000003000000
+  requiredPPE: 0600000007000000080000000300000001000000
   hintText: O capacete DEVE ter jugular para trabalho em altura. Sem ela, o capacete
     pode cair durante a atividade.
   failureAdvice: "O capacete com jugular \xE9 obrigat\xF3rio em qualquer trabalho

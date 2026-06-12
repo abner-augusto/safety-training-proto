@@ -96,6 +96,10 @@ namespace SafetyProto.Domain.Safety
             if (_activeGroup != null && _activeGroup.executionMode == TaskExecutionModeShared.FreeOrder)
             {
                 _activeFreeOrderTasks.AddRange(_activeGroup.tasks);
+
+                // An equip-set task may already be satisfied at group start (PPE worn earlier).
+                for (int i = _activeFreeOrderTasks.Count - 1; i >= 0; i--)
+                    TryCompleteEquipTask(_activeFreeOrderTasks[i]);
             }
         }
 
@@ -114,6 +118,10 @@ namespace SafetyProto.Domain.Safety
             if (_activeGroup.executionMode == TaskExecutionModeShared.Sequential)
             {
                 _activeSequentialTask = args.Task;
+
+                // If this newly active task is an equip-set task whose PPE are already worn
+                // (player equipped them during an earlier task), complete it right away.
+                TryCompleteEquipTask(_activeSequentialTask);
             }
         }
 
@@ -127,6 +135,49 @@ namespace SafetyProto.Domain.Safety
         private void HandlePpeStateChanged(PPEStateChangedEventArgs args)
         {
             _ppeStates[args.PpeType] = args.IsWearing;
+
+            // Equip-set tasks (no expected action, only requiredPPE) complete on PPE state,
+            // not on an action attempt — so the member items can be equipped in any order
+            // even inside a Sequential group (e.g. left/right gloves as one "wear gloves" task).
+            if (!args.IsWearing || _activeGroup == null) return;
+
+            if (_activeGroup.executionMode == TaskExecutionModeShared.Sequential)
+            {
+                TryCompleteEquipTask(_activeSequentialTask);
+            }
+            else
+            {
+                for (int i = _activeFreeOrderTasks.Count - 1; i >= 0; i--)
+                    TryCompleteEquipTask(_activeFreeOrderTasks[i]);
+            }
+        }
+
+        /// <summary>
+        /// An equip-set task carries no expected action — only a <c>requiredPPE</c> set. It
+        /// completes the moment every item in that set is worn, regardless of equip order. This
+        /// is what lets a single "wear gloves" task accept left/right in any sequence.
+        /// </summary>
+        private static bool IsEquipTask(ISafetyTask? task)
+        {
+            return task != null &&
+                   string.IsNullOrEmpty(task.ResolveExpectedActionId()) &&
+                   task.requiredPPE != null && task.requiredPPE.Count > 0;
+        }
+
+        private bool TryCompleteEquipTask(ISafetyTask? task)
+        {
+            if (_activeGroup == null || !IsEquipTask(task)) return false;
+            if (!IsPpeCompliant(task!.requiredPPE)) return false;
+
+            ProcessTaskAttempt(task!, _activeGroup);
+
+            // Stop a later PPE event from re-completing the same sequential task before the
+            // next OnTaskStarted reassigns the active reference. (FreeOrder is already guarded
+            // by ProcessTaskAttempt removing the task from _activeFreeOrderTasks.)
+            if (ReferenceEquals(_activeSequentialTask, task))
+                _activeSequentialTask = null;
+
+            return true;
         }
 
         private void HandleActionAttempt(ActionAttemptedEvent args)

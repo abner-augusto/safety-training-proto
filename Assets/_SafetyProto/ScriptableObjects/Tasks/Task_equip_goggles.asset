@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Data.ScriptableObjects.SafetyTask
   taskName: "Equipar \xD3culos de Prote\xE7\xE3o"
   taskDescription: "Selecione os \xF3culos de prote\xE7\xE3o e equipe no rosto."
-  expectedAction: {fileID: 11400000, guid: 80f9a0cb74ac1de47ba595040e0b364e, type: 2}
-  expectedActionId: equip_goggles
+  expectedAction: {fileID: 0}
+  expectedActionId: 
   successPoints: 100
   failurePenalty: 30
   ppePenalty: 0
-  requiredPPE: 060000000700000008000000
+  requiredPPE: 06000000070000000800000003000000
   hintText: "Os \xF3culos de prote\xE7\xE3o protegem contra part\xEDculas e respingos
     durante o trabalho."
   failureAdvice: "Os \xF3culos de prote\xE7\xE3o s\xE3o equipamentos obrigat\xF3rios

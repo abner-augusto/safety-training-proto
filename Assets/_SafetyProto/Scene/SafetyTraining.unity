@@ -6585,7 +6585,7 @@ MonoBehaviour:
       m_Calls: []
   ppeActionMappings:
   - ppeType: 6
-    action: {fileID: 11400000, guid: 520a16e786f4fdc47a7fe2233463896a, type: 2}
+    action: {fileID: 0}
   highlightRenderer: {fileID: 306169573}
   idleColor: {r: 1, g: 1, b: 1, a: 0.043137256}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.5}
@@ -10418,9 +10418,9 @@ MonoBehaviour:
       m_Calls: []
   ppeActionMappings:
   - ppeType: 1
-    action: {fileID: 11400000, guid: e82f5dfff10aab54ea028b40fec6852d, type: 2}
+    action: {fileID: 0}
   - ppeType: 3
-    action: {fileID: 11400000, guid: 80f9a0cb74ac1de47ba595040e0b364e, type: 2}
+    action: {fileID: 0}
   highlightRenderer: {fileID: 499804247}
   idleColor: {r: 1, g: 1, b: 1, a: 0.043137256}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.5}
@@ -12718,7 +12718,7 @@ MonoBehaviour:
       m_Calls: []
   ppeActionMappings:
   - ppeType: 4
-    action: {fileID: 11400000, guid: 99900bd837460b646b2d26126b58595e, type: 2}
+    action: {fileID: 0}
   highlightRenderer: {fileID: 667127736}
   idleColor: {r: 1, g: 1, b: 1, a: 0.043137256}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.5}
@@ -15341,7 +15341,7 @@ MonoBehaviour:
       m_Calls: []
   ppeActionMappings:
   - ppeType: 8
-    action: {fileID: 11400000, guid: 33a2fc81686e7c8478417098b3bac666, type: 2}
+    action: {fileID: 0}
   highlightRenderer: {fileID: 876599391}
   idleColor: {r: 1, g: 1, b: 1, a: 0.14117648}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.7647059}
@@ -16050,7 +16050,7 @@ MonoBehaviour:
       m_Calls: []
   ppeActionMappings:
   - ppeType: 7
-    action: {fileID: 11400000, guid: effd88492e65d5646be742a70ae470b5, type: 2}
+    action: {fileID: 0}
   highlightRenderer: {fileID: 917602395}
   idleColor: {r: 1, g: 1, b: 1, a: 0.14117648}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.7647059}
@@ -54966,7 +54966,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!65 &8191854775280813253
 BoxCollider:
   m_ObjectHideFlags: 0

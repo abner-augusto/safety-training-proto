@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Data.ScriptableObjects.SafetyTask
   taskName: "Equipar Botina de Seguran\xE7a"
   taskDescription: "Selecione a botina de seguran\xE7a correta e equipe nos p\xE9s."
-  expectedAction: {fileID: 11400000, guid: 520a16e786f4fdc47a7fe2233463896a, type: 2}
-  expectedActionId: equip_boots
+  expectedAction: {fileID: 0}
+  expectedActionId: 
   successPoints: 100
   failurePenalty: 30
   ppePenalty: 0
-  requiredPPE: 
+  requiredPPE: 06000000
   hintText: "A botina deve ser fechada e com bico de prote\xE7\xE3o. Verifique o
     CA."
   failureAdvice: "A botina de seguran\xE7a protege contra perfura\xE7\xF5es e quedas
