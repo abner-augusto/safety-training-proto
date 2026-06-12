@@ -226,6 +226,7 @@ Transform:
   - {fileID: 3085724204664979019}
   - {fileID: 6212608502539371556}
   - {fileID: 7980713831261846927}
+  - {fileID: 798048988026461950}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!33 &268903654381361
@@ -293,9 +294,9 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5017827149711672781}
   serializedVersion: 5
-  m_Mass: 5
-  m_LinearDamping: 1
-  m_AngularDamping: 1
+  m_Mass: 1.2
+  m_LinearDamping: 0.4
+  m_AngularDamping: 2
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -311,7 +312,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 1
   m_Constraints: 0
-  m_CollisionDetection: 1
+  m_CollisionDetection: 2
 --- !u!114 &3974052515080401785
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -333,8 +334,8 @@ MonoBehaviour:
   _maxGrabPoints: -1
   _rigidbody: {fileID: 3374130971218371314}
   _kinematicWhileSelected: 1
-  _throwWhenUnselected: 0
-  _forceKinematicDisabled: 0
+  _throwWhenUnselected: 1
+  _forceKinematicDisabled: 1
 --- !u!114 &2218303962629299465
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -348,7 +349,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.Interactables.ReturnObjectHome
   homeOverride: {fileID: 0}
-  maxHomeDistance: 0
+  maxHomeDistance: 0.3
   returnDelay: 5
   returnDuration: 0.4
   returnCurve:
@@ -461,6 +462,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPEItem
   ppeType: 6
+  hideWhenEquipped: 1
+  isDistractor: 0
 --- !u!65 &2896435082559181140
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -495,12 +498,46 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapItem
   snapSearchRadius: 0.12
-  snapPoseOverride: {fileID: 0}
-  trackSnapPoseOverrideEveryFrame: 0
-  unsnapDistance: 0.1
+  snapSearchMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  snapPoseOverride: {fileID: 798048988026461950}
+  trackSnapPoseOverrideEveryFrame: 1
+  unsnapDistance: 0.3
   followSpeed: 0
   handGrabInteractable: {fileID: 8717124398250375388}
   returnObjectHome: {fileID: 2218303962629299465}
+--- !u!1 &7944955958926990146
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 798048988026461950}
+  m_Layer: 6
+  m_Name: SnapPose
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &798048988026461950
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7944955958926990146}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: -0.7071068, z: 0.7071068, w: 0}
+  m_LocalPosition: {x: 0, y: 0.086, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3554470869194058418}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 180}
 --- !u!1001 &6903328497289110064
 PrefabInstance:
   m_ObjectHideFlags: 0
