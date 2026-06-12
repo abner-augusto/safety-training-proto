@@ -378,6 +378,14 @@ namespace SafetyProto.Runtime.PPE
         {
             if (_highlightMaterial != null)
                 _highlightMaterial.color = color;
+
+            // Honor a fully transparent color as "hidden" regardless of shader. The Standard
+            // transparent shader still renders specular highlights and glossy reflections at
+            // alpha 0, so a faint shiny sphere would otherwise remain visible (e.g. an occupied
+            // slot whose item is hideWhenEquipped). Toggling the renderer is shader-independent
+            // and applies per-state (idle/hover/occupied) based on each color's alpha.
+            if (highlightRenderer != null)
+                highlightRenderer.enabled = color.a > 0.001f;
         }
 
         private void EnsureCapacityInitialized()
