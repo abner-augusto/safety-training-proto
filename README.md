@@ -265,11 +265,25 @@ The harness will produce a transcript matching the Unity-side session log format
 
 ## Adding a new task or scenario (Unity)
 
-1. Create a new `SafetyTask` ScriptableObject via `Assets → Create → SafetyProto → SafetyTask`.
-2. Set `taskName`, `expectedActionId`, `successPoints`, `requiredPPE`.
-3. Create or edit a `TaskGroup` and add the task to its list.
-4. Reference the `TaskGroup` in the `TaskManager` in the `SafetyTraining` scene.
-5. Register the action ID in the `ActionRegistry` asset under `Resources/`.
+Tasks are ScriptableObjects and come in two kinds:
+
+- **Action task** — has an `expectedAction`; completes when a matching action is
+  raised (use for performing something).
+- **Equip-set task** — no action, only `requiredPPE`; completes when all those
+  PPE are worn, in any order (use for putting on PPE).
+
+Quick start:
+
+1. Create a `SafetyTask` via `Assets → Create → VRSafetyTraining → SafetyTask`.
+2. For an action task, set `expectedAction` + scoring; for an equip-set task,
+   leave `expectedAction` empty and set `requiredPPE`.
+3. Add the task to a `TaskGroup` (`Assets → Create → VRSafetyTraining → TaskGroup`)
+   and reference that group in the `TaskManager` in the `SafetyTraining` scene.
+4. Action tasks only: register the `ActionTypeSO` in `Resources/ActionRegistry.asset`.
+
+See **[docs/authoring-tasks.md](docs/authoring-tasks.md)** for the full guide —
+field reference, equip-set/order-guard details, PPE slot wiring, and worked
+examples.
 
 ## Current status and limitations
 
