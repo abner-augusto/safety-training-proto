@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SafetyProto — Painel do Avaliador</title>
 
+  <!-- Institutional type pairing: IBM Plex Sans (UI) + IBM Plex Mono (instrument readouts).
+       System fallback keeps the dashboard legible if the font CDN is unreachable (offline LAN). -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <!-- Three.js via importmap -->
   <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
   <script type="importmap">
@@ -21,33 +27,62 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:          #0a0e27;
-      --bg-sidebar:  #1a1f3a;
-      --bg-surface:  rgba(255,255,255,0.05);
-      --bg-hover:    rgba(255,255,255,0.08);
-      --border:      rgba(100,200,255,0.2);
+      /* ── Surfaces: graphite, not navy ───────────────────────── */
+      --bg:          #0e1217;
+      --bg-sidebar:  #151b22;
+      --bg-rail:     #0a0d11;
+      --bg-elev:     #1b232c;
+      --bg-surface:  rgba(255,255,255,0.025);
+      --bg-hover:    rgba(255,255,255,0.05);
+      --border:      rgba(148,163,184,0.16);
+      --border-strong: rgba(148,163,184,0.30);
 
-      --text:        #ffffff;
-      --text-muted:  rgba(255,255,255,0.6);
-      --text-dim:    rgba(255,255,255,0.4);
+      /* ── Text (contrast-checked on --bg) ────────────────────── */
+      --text:        #e8ecf2;
+      --text-muted:  #aeb8c6;
+      --text-dim:    #7f8b9b;
 
-      --accent:      #64c8ff;
-      --green:       #44ff44;
-      --orange:      #ffa500;
-      --red:         #ff4444;
-      --violet:      #667eea;
+      /* ── One restrained institutional accent ────────────────── */
+      --accent:      #4d8df0;   /* steel/IBM blue */
+      --accent-weak: rgba(77,141,240,0.14);
 
-      --radius:      8px;
-      --radius-lg:   12px;
-      --radius-xl:   16px;
+      /* ── ANSI Z535 safety semantics (grounded, not neon).
+           Kept under the original token names so existing rules
+           (var(--green)/--orange/--red) pick up the new values. ── */
+      --green:       #2fa46a;   /* compliant / done    */
+      --orange:      #d99b25;   /* pending / caution   */
+      --red:         #d84450;   /* violation / failed  */
+      --violet:      #4d8df0;   /* folded into the single accent */
+
+      --mono:        'IBM Plex Mono', ui-monospace, monospace;
+
+      --radius:      6px;
+      --radius-lg:   10px;
+      --radius-xl:   14px;
     }
 
     html, body {
       height: 100%; overflow: hidden;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'IBM Plex Sans', system-ui, 'Segoe UI', Tahoma, sans-serif;
       background: var(--bg);
       color: var(--text);
       font-size: 13px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Keyboard focus affordance (institutional / a11y) */
+    button:focus-visible, input:focus-visible, [tabindex]:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Respect reduced-motion: neutralize the infinite blink/pulse and transitions */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+      }
     }
 
     /* ── Layout ───────────────────────────────────────────────── */
@@ -105,14 +140,21 @@
 
     .sidebar-scroll::-webkit-scrollbar { width: 6px; }
     .sidebar-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
-    .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(100,200,255,0.3); border-radius: 3px; }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(77,141,240,0.3); border-radius: 3px; }
 
     /* ── Sidebar Header ───────────────────────────────────────── */
     .s-header {
-      padding: 18px 20px 14px;
-      background: linear-gradient(135deg, var(--violet) 0%, #764ba2 100%);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      padding: 16px 18px 14px;
+      background: var(--bg-rail);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
       flex-shrink: 0;
+      position: relative;
+    }
+    /* institutional accent rule on the masthead edge */
+    .s-header::after {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+      background: var(--accent);
     }
 
     .s-header-title {
@@ -144,35 +186,53 @@
     }
 
     .s-header-meta span {
-      background: rgba(255,255,255,0.15);
-      padding: 3px 10px;
-      border-radius: 20px;
+      font-family: var(--mono);
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 4px 9px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    /* ── Score Card ───────────────────────────────────────────── */
+    /* ── Instrument cluster: score + live clock ───────────────── */
+    .cluster {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      margin: 14px 16px 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
     .score-card {
-      margin: 16px 16px 0;
-      padding: 20px;
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      border-radius: var(--radius-xl);
-      box-shadow: 0 8px 32px rgba(240,147,251,0.3);
+      background: var(--bg-elev);
+      padding: 15px 16px;
       text-align: center;
     }
 
     .score-label {
-      font-size: 13px;
+      font-size: 9.5px;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      opacity: 0.9;
+      letter-spacing: 1.5px;
+      color: var(--text-dim);
     }
 
     .score-value {
-      font-size: 44px;
-      font-weight: 700;
-      margin: 6px 0 0;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+      font-size: 34px;
+      font-weight: 600;
+      line-height: 1.05;
+      margin: 7px 0 0;
+      color: var(--accent);
       transition: transform 0.15s ease;
     }
+    #clock-value { color: var(--text); }
 
     .score-value.bump {
       transform: scale(1.12);
@@ -210,8 +270,8 @@
     }
 
     .task-item.pending  { border-left-color: var(--orange); }
-    .task-item.active   { border-left-color: var(--accent); background: rgba(100,200,255,0.09);
-                          box-shadow: 0 0 18px rgba(100,200,255,0.18); }
+    .task-item.active   { border-left-color: var(--accent); background: rgba(77,141,240,0.09);
+                          box-shadow: 0 0 18px rgba(77,141,240,0.18); }
     .task-item.completed{ border-left-color: var(--green);  opacity: 0.75; }
     .task-item.failed   { border-left-color: var(--red);    opacity: 0.75; }
 
@@ -242,11 +302,11 @@
       flex-shrink: 0;
     }
 
-    .task-badge.pending   { background: rgba(255,165,0,0.2);   color: var(--orange); }
-    .task-badge.active    { background: rgba(100,200,255,0.2); color: var(--accent);
+    .task-badge.pending   { background: rgba(217,155,37,0.2);   color: var(--orange); }
+    .task-badge.active    { background: rgba(77,141,240,0.2); color: var(--accent);
                             animation: blink 1.5s ease-in-out infinite; }
-    .task-badge.completed { background: rgba(68,255,68,0.2);   color: var(--green); }
-    .task-badge.failed    { background: rgba(255,68,68,0.2);   color: var(--red); }
+    .task-badge.completed { background: rgba(47,164,106,0.2);   color: var(--green); }
+    .task-badge.failed    { background: rgba(216,68,80,0.2);   color: var(--red); }
 
     .task-description {
       font-size: 11px;
@@ -258,7 +318,8 @@
       display: flex;
       gap: 10px;
       margin-top: 4px;
-      font-size: 11px;
+      font-family: var(--mono);
+      font-size: 10px;
       color: var(--text-dim);
       flex-wrap: wrap;
     }
@@ -276,14 +337,14 @@
 
     .log-container::-webkit-scrollbar { width: 5px; }
     .log-container::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
-    .log-container::-webkit-scrollbar-thumb { background: rgba(100,200,255,0.25); border-radius: 3px; }
+    .log-container::-webkit-scrollbar-thumb { background: rgba(77,141,240,0.25); border-radius: 3px; }
 
     .log-item {
       background: rgba(255,255,255,0.03);
       padding: 7px 10px;
       border-radius: 6px;
       font-size: 11px;
-      border-left: 3px solid rgba(100,200,255,0.25);
+      border-left: 3px solid rgba(77,141,240,0.25);
       animation: slideIn 0.2s ease;
     }
 
@@ -292,11 +353,12 @@
       to   { opacity: 1; transform: translateX(0); }
     }
 
-    .log-item.violation { border-left-color: var(--red);   background: rgba(255,68,68,0.05); }
-    .log-item.success   { border-left-color: var(--green); background: rgba(68,255,68,0.04); }
+    .log-item.violation { border-left-color: var(--red);   background: rgba(216,68,80,0.05); }
+    .log-item.success   { border-left-color: var(--green); background: rgba(47,164,106,0.04); }
 
     .log-time {
-      opacity: 0.5;
+      font-family: var(--mono);
+      color: var(--text-dim);
       font-size: 10px;
       margin-right: 6px;
     }
@@ -316,15 +378,17 @@
     }
 
     .report-stat {
-      background: rgba(100,200,255,0.08);
+      background: rgba(77,141,240,0.08);
       padding: 10px;
       border-radius: var(--radius);
       text-align: center;
     }
 
     .report-stat-value {
-      font-size: 20px;
-      font-weight: 700;
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+      font-size: 19px;
+      font-weight: 600;
       color: var(--accent);
     }
 
@@ -352,10 +416,10 @@
     }
 
     .report-btn.primary {
-      background: linear-gradient(135deg, var(--violet) 0%, #764ba2 100%);
-      color: #fff;
+      background: var(--accent);
+      color: #08121f;
     }
-    .report-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(102,126,234,0.45); }
+    .report-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(77,141,240,0.45); }
 
     .report-btn.secondary {
       background: rgba(255,255,255,0.1);
@@ -444,7 +508,7 @@
 
     .modal-body::-webkit-scrollbar { width: 7px; }
     .modal-body::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); }
-    .modal-body::-webkit-scrollbar-thumb { background: rgba(100,200,255,0.3); border-radius: 4px; }
+    .modal-body::-webkit-scrollbar-thumb { background: rgba(77,141,240,0.3); border-radius: 4px; }
 
     .session-summary-grid {
       display: grid;
@@ -454,13 +518,13 @@
     }
 
     .summary-card {
-      background: rgba(100,200,255,0.1);
+      background: rgba(77,141,240,0.1);
       padding: 14px;
       border-radius: var(--radius-lg);
       border-left: 4px solid var(--accent);
     }
 
-    .summary-card-value { font-size: 26px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+    .summary-card-value { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 24px; font-weight: 600; color: var(--accent); margin-bottom: 4px; }
     .summary-card-label { font-size: 11px; opacity: 0.65; }
 
     .timeline { position: relative; padding-left: 28px; }
@@ -469,7 +533,7 @@
       position: absolute;
       left: 9px; top: 0; bottom: 0;
       width: 2px;
-      background: rgba(100,200,255,0.25);
+      background: rgba(77,141,240,0.25);
     }
 
     .timeline-item {
@@ -478,7 +542,7 @@
       padding: 12px 14px;
       background: rgba(255,255,255,0.03);
       border-radius: var(--radius);
-      border-left: 3px solid rgba(100,200,255,0.4);
+      border-left: 3px solid rgba(77,141,240,0.4);
     }
 
     .timeline-item::before {
@@ -509,7 +573,7 @@
       cursor: pointer;
       box-shadow: 0 4px 20px rgba(0,0,0,0.35);
       backdrop-filter: blur(10px);
-      background: rgba(102,126,234,0.88);
+      background: rgba(77,141,240,0.88);
       z-index: 200;
       display: flex;
       align-items: center;
@@ -535,6 +599,40 @@
       .fab-menu { display: flex; }
       .fab-lang  { top: 80px; }
     }
+    /* ── Inline SVG icons (replace emoji chrome) ──────────────── */
+    .s-icon { width: 14px; height: 14px; flex-shrink: 0; color: var(--accent); opacity: 0.9; vertical-align: -2px; margin-right: 7px; }
+    .wordmark-icon { width: 20px; height: 20px; color: var(--accent); flex-shrink: 0; }
+
+    /* ── Activity-log "violations only" filter (wired by behavior plan) ── */
+    .log-container.violations-only .log-item:not(.violation) { display: none; }
+
+    /* ── Viewport legend + load-failure fallback ──────────────── */
+    .vp-legend {
+      position: absolute; top: 16px; left: 16px;
+      background: rgba(10,13,17,0.82);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px;
+      backdrop-filter: blur(8px);
+      min-width: 180px;
+      z-index: 10;
+    }
+    .vp-legend h4 {
+      font-size: 9.5px; letter-spacing: 1.8px; text-transform: uppercase;
+      color: var(--text-dim); margin-bottom: 9px; font-weight: 600;
+    }
+    .vp-legend-row { display: flex; align-items: center; gap: 9px; font-family: var(--mono); font-size: 11px; color: var(--text-muted); margin: 5px 0; }
+    .vp-swatch { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+
+    #viewport-error {
+      position: absolute; inset: 0;
+      align-items: center; justify-content: center; text-align: center;
+      padding: 24px; color: var(--text-muted); font-family: var(--mono); line-height: 1.6;
+      z-index: 20;
+    }
+
+    /* Language FAB shows a text label (PT/EN) instead of a country flag */
+    #lang-flag { font-family: var(--mono); font-size: 13px; font-weight: 600; letter-spacing: 0.5px; }
   </style>
 </head>
 <body>
@@ -542,7 +640,7 @@
   <!-- FAB: sidebar toggle (mobile only) -->
   <button class="fab fab-menu" id="btn-menu" aria-label="Menu">☰</button>
   <!-- FAB: language toggle -->
-  <button class="fab fab-lang" id="btn-lang" aria-label="Idioma"><span id="lang-flag">🇧🇷</span></button>
+  <button class="fab fab-lang" id="btn-lang" aria-label="Idioma"><span id="lang-flag">PT</span></button>
 
   <div class="app">
 
@@ -555,6 +653,9 @@
       <div class="s-header">
         <div class="s-header-title">
           <span class="status-dot" id="status-dot"></span>
+          <svg class="wordmark-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5l-8-3Z"/><path d="m9 12 2 2 4-4"/>
+          </svg>
           SafetyProto
         </div>
         <div class="s-header-meta">
@@ -566,23 +667,32 @@
 
       <div class="sidebar-scroll">
 
-        <!-- Score -->
-        <div class="score-card">
-          <div class="score-label" data-i18n="currentScore">Pontuação Atual</div>
-          <div class="score-value" id="score-value">0</div>
+        <!-- Instrument cluster: score + live session clock -->
+        <div class="cluster">
+          <div class="score-card">
+            <div class="score-label" data-i18n="currentScore">Pontuação Atual</div>
+            <div class="score-value" id="score-value">0</div>
+          </div>
+          <div class="score-card">
+            <div class="score-label" data-i18n="elapsed">Tempo</div>
+            <div class="score-value" id="clock-value">0:00</div>
+          </div>
         </div>
 
         <!-- Tasks -->
         <div class="section">
           <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
-            <span data-i18n="activeTasks">📋 Tarefas Ativas</span>
+            <span style="display:flex; align-items:center;">
+              <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              <span data-i18n="activeTasks">Tarefas Ativas</span>
+            </span>
             <label style="font-size: 10px; display: flex; align-items: center; gap: 4px; text-transform: none; color: var(--text-dim); cursor: pointer;">
               <input type="checkbox" id="chk-hide-completed" style="accent-color: var(--accent);"> <span data-i18n="hideCompleted">Ocultar concluídas</span>
             </label>
           </div>
           <div class="task-list" id="task-list">
             <div class="empty-state">
-              <div class="empty-state-icon">⏳</div>
+              <div class="empty-state-icon"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6"/><circle cx="12" cy="16.5" r="0.6" fill="currentColor" stroke="none"/></svg></div>
               <div data-i18n="waitingSession">Aguardando início da sessão…</div>
             </div>
           </div>
@@ -590,10 +700,18 @@
 
         <!-- Log -->
         <div class="section">
-          <div class="section-title" data-i18n="activityLog">📡 Registro de Atividades</div>
+          <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="display:flex; align-items:center;">
+              <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1.5" fill="currentColor"/></svg>
+              <span data-i18n="activityLog">Registro de Atividades</span>
+            </span>
+            <label style="font-size: 10px; display: flex; align-items: center; gap: 4px; text-transform: none; color: var(--text-dim); cursor: pointer;">
+              <input type="checkbox" id="chk-violations-only" style="accent-color: var(--accent);"> <span data-i18n="violationsOnly">Só violações</span>
+            </label>
+          </div>
           <div class="log-container" id="log-container">
             <div class="empty-state">
-              <div class="empty-state-icon">📝</div>
+              <div class="empty-state-icon"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6"/><circle cx="12" cy="16.5" r="0.6" fill="currentColor" stroke="none"/></svg></div>
               <div data-i18n="noActivity">Nenhuma atividade ainda</div>
             </div>
           </div>
@@ -601,10 +719,13 @@
 
         <!-- Report -->
         <div class="section">
-          <div class="section-title" data-i18n="sessionReport">📊 Relatório da Sessão</div>
+          <div class="section-title" style="display:flex; align-items:center;">
+            <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
+            <span data-i18n="sessionReport">Relatório da Sessão</span>
+          </div>
           <div id="report-section">
             <div class="empty-state">
-              <div class="empty-state-icon">📄</div>
+              <div class="empty-state-icon"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6"/><circle cx="12" cy="16.5" r="0.6" fill="currentColor" stroke="none"/></svg></div>
               <div data-i18n="reportAfterSession">Relatório disponível após a sessão</div>
             </div>
           </div>
@@ -616,6 +737,17 @@
     <!-- ── 3D Viewport ─────────────────────────────────────────── -->
     <div class="viewport">
       <div id="three-canvas"></div>
+      <div class="vp-legend">
+        <h4 data-i18n="legendTitle">Legenda do Espaço</h4>
+        <div class="vp-legend-row"><span class="vp-swatch" style="background:#00aaff"></span><span data-i18n="legendHmd">HMD (capacete)</span></div>
+        <div class="vp-legend-row"><span class="vp-swatch" style="background:#00ffaa"></span><span data-i18n="legendHands">Mãos</span></div>
+        <div class="vp-legend-row"><span class="vp-swatch" style="background:#ff6b35"></span><span data-i18n="legendPpeLoose">EPI solto</span></div>
+        <div class="vp-legend-row"><span class="vp-swatch" style="background:#aaaaaa"></span><span data-i18n="legendPpeWorn">EPI equipado</span></div>
+      </div>
+      <!-- Shown by the load-failure watchdog if the 3D module never initializes -->
+      <div id="viewport-error" style="display:none;">
+        <span data-i18n="viewport3dFailed">Não foi possível carregar a visualização 3D. O restante do painel continua funcionando.</span>
+      </div>
     </div>
 
   </div><!-- /app -->
@@ -624,7 +756,7 @@
   <div class="modal" id="report-modal">
     <div class="modal-content">
       <div class="modal-header">
-        <div class="modal-title" data-i18n="sessionReport">📊 Relatório da Sessão</div>
+        <div class="modal-title" data-i18n="sessionReport">Relatório da Sessão</div>
         <button class="modal-close" id="btn-close-modal">×</button>
       </div>
       <div class="modal-body" id="modal-body"></div>
@@ -651,9 +783,17 @@
     const i18n = {
       en: {
         currentScore: 'Current Score',
-        activeTasks: '📋 Active Tasks',
-        activityLog: '📡 Activity Log',
-        sessionReport: '📊 Session Report',
+        elapsed: 'Elapsed',
+        activeTasks: 'Active Tasks',
+        activityLog: 'Activity Log',
+        sessionReport: 'Session Report',
+        violationsOnly: 'Violations only',
+        legendTitle: 'Scene Legend',
+        legendHmd: 'HMD (head)',
+        legendHands: 'Hands',
+        legendPpeLoose: 'PPE (loose)',
+        legendPpeWorn: 'PPE (worn)',
+        viewport3dFailed: 'Could not load the 3D view. The rest of the panel keeps working.',
         waitingSession: 'Waiting for session to start…',
         noActivity: 'No activity yet',
         reportAfterSession: 'Report available after session',
@@ -692,9 +832,18 @@
       },
       pt: {
         currentScore: 'Pontuação Atual',
-        activeTasks: '📋 Tarefas Ativas',
-        activityLog: '📡 Registro de Atividades',
-        sessionReport: '📊 Relatório da Sessão',
+        elapsed: 'Tempo',
+        activeTasks: 'Tarefas Ativas',
+        activityLog: 'Registro de Atividades',
+        sessionReport: 'Relatório da Sessão',
+        hideCompleted: 'Ocultar concluídas',
+        violationsOnly: 'Só violações',
+        legendTitle: 'Legenda do Espaço',
+        legendHmd: 'HMD (capacete)',
+        legendHands: 'Mãos',
+        legendPpeLoose: 'EPI solto',
+        legendPpeWorn: 'EPI equipado',
+        viewport3dFailed: 'Não foi possível carregar a visualização 3D. O restante do painel continua funcionando.',
         waitingSession: 'Aguardando início da sessão…',
         noActivity: 'Nenhuma atividade ainda',
         reportAfterSession: 'Relatório disponível após a sessão',
@@ -739,7 +888,10 @@
       document.querySelectorAll('[data-i18n]').forEach(el => {
         el.textContent = t(el.dataset.i18n);
       });
-      document.getElementById('lang-flag').textContent = lang === 'pt' ? '🇧🇷' : '🇺🇸';
+      // FAB shows the currently-active language (PT / EN)
+      document.getElementById('lang-flag').textContent = lang === 'pt' ? 'PT' : 'EN';
+      // keep the document language in sync for screen readers / hyphenation
+      document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
     }
 
     /* ================================================================
@@ -754,6 +906,24 @@
     let currentScore = 0;
     let sessionReport= null;
     let hideCompleted = false;
+    let violationsOnly = false;
+
+    /* ── Live session timer (driven by session lifecycle events) ── */
+    const sessionTimer = {
+      _start: 0, _accum: 0, _running: false, _interval: null,
+      _fmt(s) { const m = Math.floor(s / 60), r = Math.floor(s % 60);
+                return `${m}:${String(r).padStart(2, '0')}`; },
+      _render() { const el = document.getElementById('clock-value');
+                  if (el) el.textContent = this._fmt(this.elapsed()); },
+      elapsed() { return this._accum + (this._running ? (Date.now() - this._start) / 1000 : 0); },
+      start() { this.reset(); this._start = Date.now(); this._running = true;
+                this._interval = setInterval(() => this._render(), 1000); this._render(); },
+      pause() { if (!this._running) return; this._accum = this.elapsed(); this._running = false; },
+      resume() { if (this._running) return; this._start = Date.now(); this._running = true; },
+      stop() { this.pause(); clearInterval(this._interval); this._interval = null; },
+      reset() { this.stop(); this._accum = 0; this._running = false;
+                const el = document.getElementById('clock-value'); if (el) el.textContent = '0:00'; },
+    };
 
     /* ================================================================
      * WsManager — exponential backoff, jitter, keepalive ping
@@ -856,6 +1026,7 @@
         `${t('session')}: ${p.sessionId?.substring(0, 8) ?? '?'}`;
       document.getElementById('participant-label').textContent =
         `${t('participant')}: ${p.participantId ?? '—'}`;
+      sessionTimer.start();
       addLog(t('logSessionStarted'), 'success');
     });
 
@@ -892,11 +1063,12 @@
       renderTasks();
     });
 
-    on('SessionPaused',   () => addLog(t('logSessionPaused')));
-    on('SessionResumed',  () => addLog(t('logSessionResumed'), 'success'));
-    on('SessionEnded',    () => addLog(t('logSessionEnded')));
+    on('SessionPaused',   () => { sessionTimer.pause();  addLog(t('logSessionPaused')); });
+    on('SessionResumed',  () => { sessionTimer.resume(); addLog(t('logSessionResumed'), 'success'); });
+    on('SessionEnded',    () => { sessionTimer.stop();   addLog(t('logSessionEnded')); });
 
     on('SessionCompleted', p => {
+      sessionTimer.stop();
       addLog(`${t('logSessionComplete')}: ${p.totalScore} | ${t('tasks')}: ${p.tasksCompleted}/${p.totalTasks}`, 'success');
     });
 
@@ -904,9 +1076,10 @@
       tasks.clear();
       sessionReport = null;
       currentScore  = 0;
+      sessionTimer.reset();
       setScoreUI(0);
       resetTaskUI();
-      document.getElementById('report-section').innerHTML = emptyState('📄', t('reportAfterSession'));
+      document.getElementById('report-section').innerHTML = emptyState('', t('reportAfterSession'));
       document.getElementById('session-id-label').textContent = t('noSession');
       document.getElementById('participant-label').textContent = `${t('participant')}: —`;
       addLog(t('logSessionReset'));
@@ -979,6 +1152,12 @@
     /* ================================================================
      * UI HELPERS
      * ============================================================== */
+    /** Escape text before interpolating it into innerHTML (session data is untrusted). */
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
     function setStatusUI(state) {
       const dot   = document.getElementById('status-dot');
       const label = document.getElementById('conn-status-label');
@@ -996,8 +1175,11 @@
       setTimeout(() => el.classList.remove('bump'), 180);
     }
 
-    function emptyState(icon, text) {
-      return `<div class="empty-state"><div class="empty-state-icon">${icon}</div><div>${text}</div></div>`;
+    // Neutral institutional placeholder mark for empty states (replaces emoji).
+    const EMPTY_ICON = '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6"/><circle cx="12" cy="16.5" r="0.6" fill="currentColor" stroke="none"/></svg>';
+
+    function emptyState(_icon, text) {
+      return `<div class="empty-state"><div class="empty-state-icon">${EMPTY_ICON}</div><div>${text}</div></div>`;
     }
 
     /** Returns an emoji icon for a session-log event name, matching the real-time log icons. */
@@ -1024,7 +1206,7 @@
     }
 
     function resetTaskUI() {
-      document.getElementById('task-list').innerHTML = emptyState('⏳', t('waitingSession'));
+      document.getElementById('task-list').innerHTML = emptyState('', t('waitingSession'));
     }
 
     /* ── Task renderer — full rebuild from Map ── */
@@ -1053,18 +1235,18 @@
         if (task.ppePenalty)     pts.push(`-${task.ppePenalty} EPI`);
         if (task.failurePenalty) pts.push(`-${task.failurePenalty} falha`);
 
-        const ppe = (task.requiredPpe ?? []).join(', ');
+        const ppe = (task.requiredPpe ?? []).map(esc).join(', ');
 
         const el = document.createElement('div');
         el.className = `task-item ${task.status}`;
         el.innerHTML = `
           <div class="task-header">
-            <div class="task-name">${task.name}</div>
+            <div class="task-name">${esc(task.name)}</div>
             <div class="task-badge ${task.status}">${t(task.status)}</div>
           </div>
-          ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
+          ${task.description ? `<div class="task-description">${esc(task.description)}</div>` : ''}
           <div class="task-meta">
-            ${task.groupName ? `<span>Grupo: ${task.groupName}</span>` : ''}
+            ${task.groupName ? `<span>Grupo: ${esc(task.groupName)}</span>` : ''}
             ${pts.length ? `<span class="task-pts">${pts.join(' / ')}</span>` : ''}
             ${ppe ? `<span>EPI: ${ppe}</span>` : ''}
           </div>
@@ -1082,7 +1264,7 @@
       const item = document.createElement('div');
       item.className = `log-item ${type}`;
       const time = new Date().toLocaleTimeString(lang === 'pt' ? 'pt-BR' : 'en-US', { hour12: false });
-      item.innerHTML = `<span class="log-time">${time}</span>${message}`;
+      item.innerHTML = `<span class="log-time">${time}</span>${esc(message)}`;
       container.insertBefore(item, container.firstChild);
 
       while (container.children.length > MAX_LOG_ITEMS) {
@@ -1101,19 +1283,19 @@
         <div class="report-card">
           <div class="report-summary">
             <div class="report-stat">
-              <div class="report-stat-value">⏱️ ${mins}:${String(secs).padStart(2,'0')}</div>
+              <div class="report-stat-value">${mins}:${String(secs).padStart(2,'0')}</div>
               <div class="report-stat-label">${t('duration')}</div>
             </div>
             <div class="report-stat">
-              <div class="report-stat-value">🏆 ${summary.totalScore ?? 0}</div>
+              <div class="report-stat-value">${summary.totalScore ?? 0}</div>
               <div class="report-stat-label">${t('finalScore')}</div>
             </div>
             <div class="report-stat">
-              <div class="report-stat-value">✅ ${summary.tasksCompleted ?? 0}/${summary.totalTasks ?? 0}</div>
+              <div class="report-stat-value">${summary.tasksCompleted ?? 0}/${summary.totalTasks ?? 0}</div>
               <div class="report-stat-label">${t('tasks')}</div>
             </div>
             <div class="report-stat">
-              <div class="report-stat-value">📊 ${report.entries?.length ?? 0}</div>
+              <div class="report-stat-value">${report.entries?.length ?? 0}</div>
               <div class="report-stat-label">${t('events')}</div>
             </div>
           </div>
@@ -1143,27 +1325,27 @@
         return `
           <div class="timeline-item ${isViol ? 'violation' : ''}">
             <div class="timeline-time">${time}</div>
-            <div class="timeline-event">${icon} ${en}</div>
-            ${entry.details ? `<div class="timeline-detail">${entry.details}</div>` : ''}
+            <div class="timeline-event">${icon} ${esc(en)}</div>
+            ${entry.details ? `<div class="timeline-detail">${esc(entry.details)}</div>` : ''}
           </div>`;
       }).join('');
 
       document.getElementById('modal-body').innerHTML = `
         <div class="session-summary-grid">
           <div class="summary-card">
-            <div class="summary-card-value">⏱️ ${mins}:${String(secs).padStart(2,'0')}</div>
+            <div class="summary-card-value">${mins}:${String(secs).padStart(2,'0')}</div>
             <div class="summary-card-label">${t('totalDuration')}</div>
           </div>
           <div class="summary-card">
-            <div class="summary-card-value">🏆 ${summary.totalScore ?? 0}</div>
+            <div class="summary-card-value">${summary.totalScore ?? 0}</div>
             <div class="summary-card-label">${t('finalScore')}</div>
           </div>
           <div class="summary-card">
-            <div class="summary-card-value">✅ ${summary.tasksCompleted ?? 0}</div>
+            <div class="summary-card-value">${summary.tasksCompleted ?? 0}</div>
             <div class="summary-card-label">${t('tasksCompleted')}</div>
           </div>
           <div class="summary-card">
-            <div class="summary-card-value">📋 ${summary.totalTasks ?? 0}</div>
+            <div class="summary-card-value">${summary.totalTasks ?? 0}</div>
             <div class="summary-card-label">${t('totalTasks')}</div>
           </div>
         </div>
@@ -1208,6 +1390,12 @@
     document.getElementById('chk-hide-completed').onchange = e => {
       hideCompleted = e.target.checked;
       renderTasks();
+    };
+
+    /* Activity-log "violations only" filter — CSS-driven, no re-render needed */
+    document.getElementById('chk-violations-only').onchange = e => {
+      violationsOnly = e.target.checked;
+      document.getElementById('log-container').classList.toggle('violations-only', violationsOnly);
     };
 
     /* ================================================================
