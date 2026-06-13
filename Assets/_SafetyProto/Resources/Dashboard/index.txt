@@ -753,11 +753,11 @@
   </div><!-- /app -->
 
   <!-- Report Modal -->
-  <div class="modal" id="report-modal">
+  <div class="modal" id="report-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title-el">
     <div class="modal-content">
       <div class="modal-header">
-        <div class="modal-title" data-i18n="sessionReport">Relatório da Sessão</div>
-        <button class="modal-close" id="btn-close-modal">×</button>
+        <div class="modal-title" id="modal-title-el" data-i18n="sessionReport">Relatório da Sessão</div>
+        <button class="modal-close" id="btn-close-modal" aria-label="Fechar">×</button>
       </div>
       <div class="modal-body" id="modal-body"></div>
     </div>
@@ -1353,6 +1353,21 @@
         <div class="timeline">${timelineHtml}</div>
       `;
       document.getElementById('report-modal').classList.add('open');
+      _lastFocused = document.activeElement;
+      document.addEventListener('keydown', _onModalKey);
+      document.getElementById('btn-close-modal').focus();
+    }
+
+    /* ── Modal close + keyboard accessibility ── */
+    let _lastFocused = null;
+    function closeReportModal() {
+      document.getElementById('report-modal').classList.remove('open');
+      document.removeEventListener('keydown', _onModalKey);
+      if (_lastFocused && typeof _lastFocused.focus === 'function') _lastFocused.focus();
+      _lastFocused = null;
+    }
+    function _onModalKey(e) {
+      if (e.key === 'Escape') closeReportModal();
     }
 
     function downloadReport() {
@@ -1367,11 +1382,10 @@
       URL.revokeObjectURL(url);
     }
 
-    /* ── Close modal ── */
-    document.getElementById('btn-close-modal').onclick = () =>
-      document.getElementById('report-modal').classList.remove('open');
+    /* ── Close modal (button + backdrop click; Escape handled in _onModalKey) ── */
+    document.getElementById('btn-close-modal').onclick = closeReportModal;
     document.getElementById('report-modal').addEventListener('click', function(e) {
-      if (e.target === this) this.classList.remove('open');
+      if (e.target === this) closeReportModal();
     });
 
     /* ── Mobile sidebar toggle ── */
