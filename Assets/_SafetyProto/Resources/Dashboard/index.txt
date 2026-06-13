@@ -6,10 +6,24 @@
   <title>SafetyProto — Painel do Avaliador</title>
 
   <!-- Institutional type pairing: IBM Plex Sans (UI) + IBM Plex Mono (instrument readouts).
-       System fallback keeps the dashboard legible if the font CDN is unreachable (offline LAN). -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+       Fonts are served locally by MiniHttpServer (/vendor/fonts/*.woff2) — no CDN.
+       The body font stack keeps a system fallback if any face fails to load. -->
+  <style>
+    @font-face { font-family:'IBM Plex Sans'; font-style:normal; font-weight:400; font-display:swap;
+      src:url('/vendor/fonts/ibm-plex-sans-latin-400-normal.woff2') format('woff2'); }
+    @font-face { font-family:'IBM Plex Sans'; font-style:normal; font-weight:500; font-display:swap;
+      src:url('/vendor/fonts/ibm-plex-sans-latin-500-normal.woff2') format('woff2'); }
+    @font-face { font-family:'IBM Plex Sans'; font-style:normal; font-weight:600; font-display:swap;
+      src:url('/vendor/fonts/ibm-plex-sans-latin-600-normal.woff2') format('woff2'); }
+    @font-face { font-family:'IBM Plex Sans'; font-style:normal; font-weight:700; font-display:swap;
+      src:url('/vendor/fonts/ibm-plex-sans-latin-700-normal.woff2') format('woff2'); }
+    @font-face { font-family:'IBM Plex Mono'; font-style:normal; font-weight:400; font-display:swap;
+      src:url('/vendor/fonts/ibm-plex-mono-latin-400-normal.woff2') format('woff2'); }
+    @font-face { font-family:'IBM Plex Mono'; font-style:normal; font-weight:500; font-display:swap;
+      src:url('/vendor/fonts/ibm-plex-mono-latin-500-normal.woff2') format('woff2'); }
+    @font-face { font-family:'IBM Plex Mono'; font-style:normal; font-weight:600; font-display:swap;
+      src:url('/vendor/fonts/ibm-plex-mono-latin-600-normal.woff2') format('woff2'); }
+  </style>
 
   <!-- Three.js served locally by MiniHttpServer (offline-capable; no CDN).
        Native import maps are supported by the Quest Browser and modern desktop
