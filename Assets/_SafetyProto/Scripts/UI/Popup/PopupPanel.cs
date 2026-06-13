@@ -44,6 +44,7 @@ namespace SafetyProto.UI
 
         private PopupData _currentData;
         private Coroutine _fadeCoroutine;
+        private Coroutine _autoCloseCoroutine;
         private CanvasGroup _canvasGroup;
 
         // Resolved from actionButtonRoot/inputFieldRoot so no extra Inspector wiring is needed.
@@ -135,6 +136,11 @@ namespace SafetyProto.UI
             gameObject.SetActive(true);
             IsVisible = true;
             _fadeCoroutine = StartCoroutine(FadeAlpha(0f, 1f));
+
+            // Auto-fechamento opcional. Interactive nunca fecha sozinho — exige clique do usuário.
+            StopAutoClose();
+            if (!isInteractive && data.autoCloseSeconds > 0f)
+                _autoCloseCoroutine = StartCoroutine(AutoCloseRoutine(data.autoCloseSeconds));
         }
 
         public void Hide()
@@ -143,6 +149,7 @@ namespace SafetyProto.UI
 
             SafetyLog.Info("[PopupPanel] Hide()", this);
 
+            StopAutoClose();
             StopFade();
 
             _canvasGroup.interactable = false;
@@ -232,6 +239,23 @@ namespace SafetyProto.UI
             {
                 StopCoroutine(_fadeCoroutine);
                 _fadeCoroutine = null;
+            }
+        }
+
+        private IEnumerator AutoCloseRoutine(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            _autoCloseCoroutine = null;
+            SafetyLog.Info($"[PopupPanel] Auto-fechando após {delay:0.#}s.", this);
+            Hide();
+        }
+
+        private void StopAutoClose()
+        {
+            if (_autoCloseCoroutine != null)
+            {
+                StopCoroutine(_autoCloseCoroutine);
+                _autoCloseCoroutine = null;
             }
         }
     }
