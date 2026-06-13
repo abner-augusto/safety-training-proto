@@ -368,6 +368,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPEItem
   ppeType: 4
+  hideWhenEquipped: 0
   isDistractor: 0
 --- !u!114 &2578568355370428004
 MonoBehaviour:
@@ -387,8 +388,10 @@ MonoBehaviour:
     m_Bits: 4294967295
   snapPoseOverride: {fileID: 0}
   trackSnapPoseOverrideEveryFrame: 0
-  unsnapDistance: 0.1
-  followSpeed: 0
+  unsnapDistance: 0.15
+  followSpeed: 10
+  maxFreeSpeed: 2.5
+  maxFreeAngularSpeed: 6
   handGrabInteractable: {fileID: 1692212783426962088}
   returnObjectHome: {fileID: 7375837194418130784}
 --- !u!1 &4243240717789492444
