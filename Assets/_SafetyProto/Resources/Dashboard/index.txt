@@ -453,6 +453,62 @@
     }
     .report-btn.secondary:hover { background: rgba(255,255,255,0.15); }
 
+    /* ── Session History ──────────────────────────────────────── */
+    .history-count {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-dim);
+      margin-left: 6px;
+    }
+    .history-chevron {
+      width: 14px;
+      height: 14px;
+      transition: transform 0.2s ease;
+      flex-shrink: 0;
+    }
+    #history-body.collapsed { display: none; }
+    #history-section.collapsed .history-chevron { transform: rotate(-90deg); }
+
+    .history-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .history-item {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      padding: 10px 12px;
+      border-left: 4px solid var(--accent);
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .history-item:hover { background: rgba(77,141,240,0.12); transform: translateX(2px); }
+    .history-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .history-item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .history-pid {
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .history-score {
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .history-item-sub {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 3px;
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+    }
+    .history-actions { display: flex; gap: 8px; margin-top: 10px; }
+
     /* ── Empty State ──────────────────────────────────────────── */
     .empty-state {
       text-align: center;
@@ -770,6 +826,25 @@
           </div>
         </div>
 
+        <!-- Session History -->
+        <div class="section" id="history-section">
+          <div class="section-title" id="history-header" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;" role="button" tabindex="0" aria-expanded="true" aria-controls="history-body">
+            <span style="display:flex; align-items:center;">
+              <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
+              <span data-i18n="sessionHistory">Histórico de Sessões</span>
+              <span class="history-count" id="history-count"></span>
+            </span>
+            <svg class="history-chevron" id="history-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div id="history-body">
+            <div id="history-list"></div>
+            <div class="history-actions" id="history-actions" style="display:none;">
+              <button class="report-btn secondary" id="btn-export-history" data-i18n="exportAll">Exportar tudo</button>
+              <button class="report-btn secondary" id="btn-clear-history" data-i18n="clearHistory">Limpar histórico</button>
+            </div>
+          </div>
+        </div>
+
       </div><!-- /sidebar-scroll -->
     </div><!-- /sidebar -->
 
@@ -848,6 +923,11 @@
         tasksCompleted: 'Tasks Completed',
         totalTasks: 'Total Tasks',
         eventTimeline: 'Event Timeline',
+        sessionHistory: 'Session History',
+        noHistory: 'No saved sessions yet',
+        exportAll: 'Export all',
+        clearHistory: 'Clear',
+        confirmClearHistory: 'Clear all saved sessions?',
         noSession: 'No Session',
         session: 'Session',
         participant: 'Participant',
@@ -898,6 +978,11 @@
         tasksCompleted: 'Tarefas Concluídas',
         totalTasks: 'Total de Tarefas',
         eventTimeline: 'Linha do Tempo',
+        sessionHistory: 'Histórico de Sessões',
+        noHistory: 'Nenhuma sessão salva ainda',
+        exportAll: 'Exportar tudo',
+        clearHistory: 'Limpar histórico',
+        confirmClearHistory: 'Limpar todas as sessões salvas?',
         noSession: 'Sem Sessão',
         session: 'Sessão',
         participant: 'Participante',
@@ -948,6 +1033,13 @@
     let sessionReport= null;
     let hideCompleted = false;
     let violationsOnly = false;
+
+    /* ── Session history (persisted in localStorage; survives resets + reloads) ── */
+    const HISTORY_KEY = 'sp_session_history';
+    const MAX_HISTORY = 50;
+    let sessionHistory = [];               // [{ sessionId, participantId, savedAt, report }]
+    let currentParticipantId = '—';        // captured on SessionStarted, stamped on save
+    let currentSessionId = null;
 
     /* ── Live session timer (driven by session lifecycle events) ── */
     const sessionTimer = {
@@ -1063,10 +1155,12 @@
 
     /* ── Session lifecycle ── */
     on('SessionStarted', p => {
+      currentSessionId = p.sessionId ?? null;
+      currentParticipantId = p.participantId ?? '—';
       document.getElementById('session-id-label').textContent =
         `${t('session')}: ${p.sessionId?.substring(0, 8) ?? '?'}`;
       document.getElementById('participant-label').textContent =
-        `${t('participant')}: ${p.participantId ?? '—'}`;
+        `${t('participant')}: ${currentParticipantId}`;
       sessionTimer.start();
       addLog(t('logSessionStarted'), 'success');
     });
@@ -1184,6 +1278,7 @@
       try {
         const report = JSON.parse(p.content);
         renderReportSection(report);
+        saveSessionToHistory(report);
         addLog(t('logReportAvailable'), 'success');
       } catch (e) {
         console.error('Failed to parse session log:', e);
@@ -1347,14 +1442,16 @@
         </div>
       `;
 
-      document.getElementById('btn-view-report').onclick = openReportModal;
+      document.getElementById('btn-view-report').onclick = () => openReportModal();
       document.getElementById('btn-dl-report').onclick   = downloadReport;
     }
 
-    function openReportModal() {
-      if (!sessionReport) return;
-      const summary = sessionReport.summary ?? {};
-      const entries = sessionReport.entries ?? [];
+    function openReportModal(report) {
+      // Defaults to the live report; history rows pass their own stored report.
+      report = (report && report.summary) ? report : sessionReport;
+      if (!report) return;
+      const summary = report.summary ?? {};
+      const entries = report.entries ?? [];
       const mins = Math.floor((summary.totalElapsedTime ?? 0) / 60);
       const secs = Math.floor((summary.totalElapsedTime ?? 0) % 60);
 
@@ -1423,6 +1520,129 @@
       URL.revokeObjectURL(url);
     }
 
+    /* ================================================================
+     * SESSION HISTORY — persisted in localStorage, survives resets/reloads
+     * ============================================================== */
+    function loadHistory() {
+      try {
+        const raw = localStorage.getItem(HISTORY_KEY);
+        sessionHistory = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(sessionHistory)) sessionHistory = [];
+      } catch (e) {
+        console.error('Failed to load session history:', e);
+        sessionHistory = [];
+      }
+    }
+
+    function persistHistory() {
+      try {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(sessionHistory));
+      } catch (e) {
+        // Most likely quota exceeded — drop the oldest and retry once.
+        console.error('Failed to persist session history:', e);
+        if (sessionHistory.length > 1) {
+          sessionHistory = sessionHistory.slice(0, Math.floor(sessionHistory.length / 2));
+          try { localStorage.setItem(HISTORY_KEY, JSON.stringify(sessionHistory)); } catch (_) {}
+        }
+      }
+    }
+
+    /** Capture the just-finished session report into history (newest first). */
+    function saveSessionToHistory(report) {
+      if (!report) return;
+      sessionHistory.unshift({
+        sessionId:     currentSessionId,
+        participantId: currentParticipantId,
+        savedAt:       Date.now(),
+        report,
+      });
+      if (sessionHistory.length > MAX_HISTORY) sessionHistory.length = MAX_HISTORY;
+      persistHistory();
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const list    = document.getElementById('history-list');
+      const actions = document.getElementById('history-actions');
+      const count   = document.getElementById('history-count');
+
+      count.textContent = sessionHistory.length ? `(${sessionHistory.length})` : '';
+
+      if (sessionHistory.length === 0) {
+        list.innerHTML = emptyState('', t('noHistory'));
+        actions.style.display = 'none';
+        return;
+      }
+      actions.style.display = 'flex';
+
+      const locale = lang === 'pt' ? 'pt-BR' : 'en-US';
+      list.innerHTML = sessionHistory.map((h, i) => {
+        const s     = h.report?.summary ?? {};
+        const score = s.totalScore ?? 0;
+        const done  = s.tasksCompleted ?? 0;
+        const total = s.totalTasks ?? 0;
+        const when  = new Date(h.savedAt ?? Date.now())
+          .toLocaleString(locale, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+        return `
+          <div class="history-item" data-idx="${i}" role="button" tabindex="0"
+               aria-label="${esc(h.participantId ?? '—')} — ${score} pts">
+            <div class="history-item-top">
+              <span class="history-pid">${esc(h.participantId ?? '—')}</span>
+              <span class="history-score">${score} pts</span>
+            </div>
+            <div class="history-item-sub">${done}/${total} · ${esc(when)}</div>
+          </div>`;
+      }).join('');
+
+      list.querySelectorAll('.history-item').forEach(el => {
+        const open = () => {
+          const idx = Number(el.dataset.idx);
+          const entry = sessionHistory[idx];
+          if (entry) openReportModal(entry.report);
+        };
+        el.onclick = open;
+        el.onkeydown = e => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+        };
+      });
+    }
+
+    function clearHistory() {
+      if (sessionHistory.length === 0) return;
+      if (!window.confirm(t('confirmClearHistory'))) return;
+      sessionHistory = [];
+      persistHistory();
+      renderHistory();
+    }
+
+    function exportAllHistory() {
+      if (sessionHistory.length === 0) return;
+      const blob = new Blob([JSON.stringify(sessionHistory, null, 2)], { type: 'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = Object.assign(document.createElement('a'), {
+        href: url,
+        download: `session_history_${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+      });
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    /* ── History section wiring ── */
+    document.getElementById('btn-export-history').onclick = exportAllHistory;
+    document.getElementById('btn-clear-history').onclick  = clearHistory;
+    (function () {
+      const header  = document.getElementById('history-header');
+      const section = document.getElementById('history-section');
+      header.onclick = () => {
+        const collapsed = section.classList.toggle('collapsed');
+        document.getElementById('history-body').classList.toggle('collapsed', collapsed);
+        header.setAttribute('aria-expanded', String(!collapsed));
+      };
+      header.onkeydown = e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); header.onclick(); }
+      };
+    })();
+
     /* ── Close modal (button + backdrop click; Escape handled in _onModalKey) ── */
     document.getElementById('btn-close-modal').onclick = closeReportModal;
     document.getElementById('report-modal').addEventListener('click', function(e) {
@@ -1456,6 +1676,7 @@
       applyTranslations();
       // Re-render dynamic UI in new language
       renderTasks();
+      renderHistory();
     };
 
     document.getElementById('chk-hide-completed').onchange = e => {
@@ -1844,6 +2065,8 @@
 
     ws.connect();
     applyTranslations();
+    loadHistory();
+    renderHistory();
 
     // Signal the load-failure watchdog that the 3D module booted successfully.
     window.__spViewportReady = true;
