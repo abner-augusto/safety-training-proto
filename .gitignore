@@ -172,3 +172,8 @@ harness-output/
 # ============================================================
 /Assets/_Recovery/
 /Assets/_Recovery.meta
+
+# ============================================================
+# /improve advisor artifacts (local-only; not part of the repo)
+# ============================================================
+/plans/
