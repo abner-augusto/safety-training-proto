@@ -86,10 +86,16 @@ namespace SafetyProto.UI
             => Show(new PopupData { type = PopupType.Normal, title = title, body = body });
 
         public void ShowNormal(string title, string body)
-            => Show(new PopupData { type = PopupType.Normal, title = title, body = body });
+            => ShowNormal(title, body, 0f);
+
+        public void ShowNormal(string title, string body, float autoCloseSeconds)
+            => Show(new PopupData { type = PopupType.Normal, title = title, body = body, autoCloseSeconds = autoCloseSeconds });
 
         public void ShowWarning(string title, string body)
-            => Show(new PopupData { type = PopupType.Warning, title = title, body = body });
+            => ShowWarning(title, body, 0f);
+
+        public void ShowWarning(string title, string body, float autoCloseSeconds)
+            => Show(new PopupData { type = PopupType.Warning, title = title, body = body, autoCloseSeconds = autoCloseSeconds });
 
         public void ShowInteractive(string title, string body, string buttonLabel, UnityAction onAction)
         {
