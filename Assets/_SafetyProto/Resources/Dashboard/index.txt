@@ -612,6 +612,9 @@
 
     .fab-menu { top: 18px; left: 18px; display: none; }
     .fab-lang { top: 18px; right: 18px; }
+    /* Optional "watch player cast" FAB, sits left of the language toggle */
+    .fab-cast { top: 18px; right: 78px; }
+    .fab-cast svg { width: 22px; height: 22px; }
 
     /* ── Responsive ───────────────────────────────────────────── */
     @media (max-width: 768px) {
@@ -624,6 +627,7 @@
       .sidebar.open { transform: translateX(0); }
       .fab-menu { display: flex; }
       .fab-lang  { top: 80px; }
+      .fab-cast  { top: 142px; right: 18px; }
     }
     /* ── Inline SVG icons (replace emoji chrome) ──────────────── */
     .s-icon { width: 14px; height: 14px; flex-shrink: 0; color: var(--accent); opacity: 0.9; vertical-align: -2px; margin-right: 7px; }
@@ -667,6 +671,13 @@
   <button class="fab fab-menu" id="btn-menu" aria-label="Menu">☰</button>
   <!-- FAB: language toggle -->
   <button class="fab fab-lang" id="btn-lang" aria-label="Idioma"><span id="lang-flag">PT</span></button>
+  <!-- FAB: open Meta Quest player casting in a side-by-side popup (optional) -->
+  <button class="fab fab-cast" id="btn-cast" aria-label="Transmissão do jogador" title="Transmissão do jogador">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M2 16a6 6 0 0 1 6 6"/><path d="M2 12a10 10 0 0 1 10 10"/>
+      <rect x="2" y="3" width="20" height="14" rx="2"/>
+    </svg>
+  </button>
 
   <div class="app">
 
@@ -802,6 +813,8 @@
     const RECONNECT_MAX_MS  = 30_000;
     const RECONNECT_JITTER  = 0.25;
     const MAX_LOG_ITEMS     = 60;
+    // Meta Quest player casting (opened on demand in a side-by-side popup).
+    const CAST_URL          = 'https://horizon.meta.com/casting/';
 
     /* ================================================================
      * TRANSLATIONS
@@ -1417,6 +1430,22 @@
     /* ── Mobile sidebar toggle ── */
     document.getElementById('btn-menu').onclick = () =>
       document.getElementById('sidebar').classList.toggle('open');
+
+    /* ── Optional: open Meta Quest player casting in a side-by-side popup ──
+       The casting page sets X-Frame-Options: DENY, so it cannot be embedded;
+       a popup on the right half of the screen is the supported alternative.
+       Requires the evaluator to be signed in to the same Meta account as the
+       headset, with the Quest casting to the browser. */
+    let _castWin = null;
+    document.getElementById('btn-cast').onclick = () => {
+      if (_castWin && !_castWin.closed) { _castWin.focus(); return; }
+      const w = Math.min(1100, Math.floor(screen.availWidth * 0.5));
+      const h = Math.floor(screen.availHeight * 0.92);
+      const left = Math.max(0, screen.availWidth - w);
+      _castWin = window.open(CAST_URL, 'spPlayerCast',
+        `width=${w},height=${h},left=${left},top=0`);
+      if (_castWin) _castWin.focus();
+    };
 
     /* ── Language toggle ── */
     document.getElementById('btn-lang').onclick = () => {
