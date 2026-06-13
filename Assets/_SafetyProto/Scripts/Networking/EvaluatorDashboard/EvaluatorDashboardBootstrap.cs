@@ -125,7 +125,20 @@ namespace SafetyProto.Networking.Dashboard
             var appBytes = appAsset != null ? Encoding.UTF8.GetBytes(appAsset.text) : null;
             var styleBytes = styleAsset != null ? Encoding.UTF8.GetBytes(styleAsset.text) : null;
 
-            _httpServer = new MiniHttpServer(indexBytes, appBytes, styleBytes);
+            // Three.js is vendored locally as TextAssets (.txt — Unity does not import
+            // .js as TextAsset) and served at /vendor/*.js so the dashboard works offline.
+            var threeAsset = Resources.Load<TextAsset>("Dashboard/vendor/three.module");
+            var orbitAsset = Resources.Load<TextAsset>("Dashboard/vendor/OrbitControls");
+
+            var extraRoutes = new Dictionary<string, (byte[] body, string contentType)>();
+            if (threeAsset != null)
+                extraRoutes["/vendor/three.module.js"] = (Encoding.UTF8.GetBytes(threeAsset.text), "application/javascript");
+            if (orbitAsset != null)
+                extraRoutes["/vendor/OrbitControls.js"] = (Encoding.UTF8.GetBytes(orbitAsset.text), "application/javascript");
+            if (threeAsset == null || orbitAsset == null)
+                SafetyLog.Warning("Assets do viewport 3D não encontrados em Resources/Dashboard/vendor; o painel funcionará sem a visualização 3D.", this);
+
+            _httpServer = new MiniHttpServer(indexBytes, appBytes, styleBytes, extraRoutes);
             _httpServer.Start(httpPort);
         }
 

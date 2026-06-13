@@ -11,15 +11,27 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Three.js via importmap -->
-  <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+  <!-- Three.js served locally by MiniHttpServer (offline-capable; no CDN).
+       Native import maps are supported by the Quest Browser and modern desktop
+       browsers, so es-module-shims is no longer needed. -->
   <script type="importmap">
     {
       "imports": {
-        "three": "https://unpkg.com/three@0.154.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.154.0/examples/jsm/"
+        "three": "/vendor/three.module.js",
+        "three/addons/controls/OrbitControls.js": "/vendor/OrbitControls.js"
       }
     }
+  </script>
+
+  <!-- Watchdog: if the 3D module never signals ready, surface a friendly notice
+       instead of a blank viewport (classic script so it runs even if the module fails). -->
+  <script>
+    window.addEventListener('load', () => setTimeout(() => {
+      if (!window.__spViewportReady) {
+        const el = document.getElementById('viewport-error');
+        if (el) el.style.display = 'flex';
+      }
+    }, 6000));
   </script>
 
   <style>
@@ -1787,6 +1799,9 @@
 
     ws.connect();
     applyTranslations();
+
+    // Signal the load-failure watchdog that the 3D module booted successfully.
+    window.__spViewportReady = true;
 
   </script>
 </body>
