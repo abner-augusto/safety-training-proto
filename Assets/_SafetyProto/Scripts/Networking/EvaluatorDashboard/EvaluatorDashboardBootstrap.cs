@@ -138,6 +138,23 @@ namespace SafetyProto.Networking.Dashboard
             if (threeAsset == null || orbitAsset == null)
                 SafetyLog.Warning("Assets do viewport 3D não encontrados em Resources/Dashboard/vendor; o painel funcionará sem a visualização 3D.", this);
 
+            // IBM Plex fonts vendored locally as .bytes (raw woff2) and served at
+            // /vendor/fonts/*.woff2, so the dashboard needs no font CDN when offline.
+            // The HTML still has a system-font fallback if any of these are missing.
+            string[] fontFiles =
+            {
+                "ibm-plex-sans-latin-400-normal", "ibm-plex-sans-latin-500-normal",
+                "ibm-plex-sans-latin-600-normal", "ibm-plex-sans-latin-700-normal",
+                "ibm-plex-mono-latin-400-normal", "ibm-plex-mono-latin-500-normal",
+                "ibm-plex-mono-latin-600-normal",
+            };
+            foreach (var font in fontFiles)
+            {
+                var fontAsset = Resources.Load<TextAsset>($"Dashboard/vendor/fonts/{font}");
+                if (fontAsset != null)
+                    extraRoutes[$"/vendor/fonts/{font}.woff2"] = (fontAsset.bytes, "font/woff2");
+            }
+
             _httpServer = new MiniHttpServer(indexBytes, appBytes, styleBytes, extraRoutes);
             _httpServer.Start(httpPort);
         }
