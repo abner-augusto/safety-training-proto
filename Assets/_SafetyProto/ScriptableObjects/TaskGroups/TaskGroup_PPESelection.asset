@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Data.ScriptableObjects.TaskGroup
   groupName: "Sele\xE7\xE3o de EPIs"
   executionMode: 0
-  timeLimit: 270
+  timeLimit: 420
   tasks:
   - {fileID: 11400000, guid: d4c725b898810114fbf75b7cb1d6529a, type: 2}
   - {fileID: 11400000, guid: 7b3e9c1a4d5f42e8b6c0a1d2e3f40516, type: 2}
