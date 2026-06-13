@@ -18,6 +18,10 @@ namespace SafetyProto.UI
         [SerializeField] private string ppeTitle = "EPI Incorreto";
         [SerializeField] private string wrongOrderTitle = "Ordem Incorreta";
 
+        [Header("Auto-fechamento")]
+        [Tooltip("Tempo (s) para auto-fechar os alertas de task/EPI (ordem incorreta, EPI errado, etc.). 0 = sem timeout.")]
+        [SerializeField] private float autoCloseSeconds = 6f;
+
         private TaskManager _taskManager;
 
         private void Start()
@@ -59,7 +63,7 @@ namespace SafetyProto.UI
         {
             var text = args.Task?.hintText;
             if (string.IsNullOrWhiteSpace(text)) return;
-            PopupService.Instance?.ShowNormal(hintTitle, text);
+            PopupService.Instance?.ShowNormal(hintTitle, text, autoCloseSeconds);
         }
 
         private void OnTaskCompleted(TaskEventArgs args)
@@ -71,13 +75,13 @@ namespace SafetyProto.UI
                 case TaskState.CompletedSuccessButUnsafe:
                     var ppeText = args.Task?.ppeAdvice;
                     if (!string.IsNullOrWhiteSpace(ppeText))
-                        PopupService.Instance?.ShowWarning(ppeTitle, ppeText);
+                        PopupService.Instance?.ShowWarning(ppeTitle, ppeText, autoCloseSeconds);
                     break;
 
                 case TaskState.CompletedFailure:
                     var failText = args.Task?.failureAdvice;
                     if (!string.IsNullOrWhiteSpace(failText))
-                        PopupService.Instance?.ShowWarning(failureTitle, failText);
+                        PopupService.Instance?.ShowWarning(failureTitle, failText, autoCloseSeconds);
                     break;
             }
         }
@@ -96,7 +100,7 @@ namespace SafetyProto.UI
             if (!string.IsNullOrWhiteSpace(hint))
                 body += $"\n\nDica: {hint}";
 
-            PopupService.Instance?.ShowWarning(ppeTitle, body);
+            PopupService.Instance?.ShowWarning(ppeTitle, body, autoCloseSeconds);
         }
 
         private void OnWrongOrderSnapAttempted(PPEType attempted)
@@ -109,7 +113,7 @@ namespace SafetyProto.UI
                 ? $"Este equipamento ainda não é o próximo da sequência.\n\nDica: {hint}"
                 : "Este equipamento ainda não é o próximo da sequência. Siga a ordem correta das tarefas.";
 
-            PopupService.Instance?.ShowWarning(wrongOrderTitle, body);
+            PopupService.Instance?.ShowWarning(wrongOrderTitle, body, autoCloseSeconds);
         }
     }
 }

@@ -28,5 +28,9 @@ namespace SafetyProto.UI
         // Quando true (e showInputField), o botão de ação fica bloqueado enquanto o
         // campo de texto estiver vazio. O participante deve digitar um nome ou usar "Pular".
         public bool requireInputForAction;
+
+        // Auto-fecha o popup após N segundos. 0 = sem timeout (fica até ação manual).
+        // Ignorado para PopupType.Interactive (exige clique do usuário).
+        public float autoCloseSeconds = 0f;
     }
 }
