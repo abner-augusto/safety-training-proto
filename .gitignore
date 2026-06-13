@@ -177,3 +177,8 @@ harness-output/
 # /improve advisor artifacts (local-only; not part of the repo)
 # ============================================================
 /plans/
+
+# ============================================================
+# Local-only asset-generation scripts (not part of the repo)
+# ============================================================
+/Tools/generate_icon_pack_from_approved.py
