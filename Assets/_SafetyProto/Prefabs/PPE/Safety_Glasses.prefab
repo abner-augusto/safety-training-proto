@@ -659,9 +659,9 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5123576640106811540}
   serializedVersion: 5
-  m_Mass: 5
-  m_LinearDamping: 1
-  m_AngularDamping: 1
+  m_Mass: 0.5
+  m_LinearDamping: 0.4
+  m_AngularDamping: 2.5
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -677,7 +677,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 1
   m_Constraints: 0
-  m_CollisionDetection: 1
+  m_CollisionDetection: 2
 --- !u!114 &3776430364029854082
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -699,8 +699,8 @@ MonoBehaviour:
   _maxGrabPoints: -1
   _rigidbody: {fileID: 3739308379233267742}
   _kinematicWhileSelected: 1
-  _throwWhenUnselected: 0
-  _forceKinematicDisabled: 0
+  _throwWhenUnselected: 1
+  _forceKinematicDisabled: 1
 --- !u!114 &3560460861262399336
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -714,7 +714,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.Interactables.ReturnObjectHome
   homeOverride: {fileID: 0}
-  maxHomeDistance: 0
+  maxHomeDistance: 0.3
   returnDelay: 5
   returnDuration: 0.4
   returnCurve:
@@ -812,6 +812,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPEItem
   ppeType: 3
+  hideWhenEquipped: 1
+  isDistractor: 0
 --- !u!114 &6590348386747832007
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -824,7 +826,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2df4532240349734cbdfbc40e8bd79bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapItem
-  snapSearchRadius: 0.12
+  snapSearchRadius: 0.15
+  snapSearchMask:
+    serializedVersion: 2
+    m_Bits: 8191
   snapPoseOverride: {fileID: 5233490422972771378}
   trackSnapPoseOverrideEveryFrame: 1
   unsnapDistance: 0.1
