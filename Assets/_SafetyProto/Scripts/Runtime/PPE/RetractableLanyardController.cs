@@ -70,6 +70,19 @@ namespace SafetyProto.Runtime.PPE
         [Tooltip("Layer mask for anchor point detection. Use Default if unsure.")]
         [SerializeField] private LayerMask anchorLayerMask = ~0;
 
+        [Header("Lock Snap")]
+        [Tooltip("Parent the carabiner to the anchor attach point while locked so it stays " +
+                 "perfectly fixed (no floating/drift) instead of holding the hand's last pose.")]
+        [SerializeField] private bool parentToAnchorWhileLocked = true;
+
+        [Tooltip("Local position offset from the anchor attach point when snapped. " +
+                 "Leave at zero and author the AnchorPoint's attachPoint empty for exact placement.")]
+        [SerializeField] private Vector3 lockedSnapPositionOffset = Vector3.zero;
+
+        [Tooltip("Local rotation offset (euler) from the anchor attach point when snapped. " +
+                 "Use to align the carabiner mesh axis with the anchor's olhal.")]
+        [SerializeField] private Vector3 lockedSnapRotationOffset = Vector3.zero;
+
         [Header("Rope Settings")]
         [Tooltip("Locked rope length when connected to the olhal de ancoragem (NR-35).")]
         [SerializeField, Range(0.5f, 2f)] private float lockedRopeLength = 1.5f;
@@ -370,10 +383,18 @@ namespace SafetyProto.Runtime.PPE
             if (_lineRenderer != null)
                 _lineRenderer.positionCount = 0;
 
-            // Snap tip to anchor attach point
-            transform.SetParent(null);
-            transform.position = anchor.AttachPosition;
+            // Snap tip to the anchor attach point with a FIXED pose (position + rotation).
+            // Snapping rotation too — and optionally parenting — removes the floating /
+            // tilted look that came from keeping the hand's last orientation.
+            Transform attach = anchor.AttachTransform;
+            Vector3 snapPos = attach.TransformPoint(lockedSnapPositionOffset);
+            Quaternion snapRot = attach.rotation * Quaternion.Euler(lockedSnapRotationOffset);
+
+            transform.SetParent(parentToAnchorWhileLocked ? attach : null, worldPositionStays: true);
+            transform.SetPositionAndRotation(snapPos, snapRot);
+
             _rb.linearVelocity = Vector3.zero;
+            _rb.angularVelocity = Vector3.zero;
             _rb.isKinematic = true;
 
             // Configure and enable Verlet rope
