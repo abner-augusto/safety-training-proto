@@ -18,9 +18,14 @@ namespace SafetyProto.UI
         public string actionButtonLabel;
         public UnityEvent onActionPressed;
 
-        // Botão secundário opcional "Pular" — usado pelo onboarding para sair da sequência.
+        // Botão secundário opcional "Pular" — usado pelo onboarding para sair da sequência,
+        // e como botão "Cancelar" nas confirmações.
         public bool showSkipButton;
         public UnityEvent onSkipPressed;
+
+        // Rótulo opcional do botão secundário (ex.: "Cancelar"). Vazio mantém o texto autorado
+        // no prefab ("Pular").
+        public string skipButtonLabel;
 
         // Campo de texto opcional — usado pela tela de identificação do participante.
         public bool showInputField;

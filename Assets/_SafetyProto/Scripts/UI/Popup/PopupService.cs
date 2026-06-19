@@ -110,5 +110,27 @@ namespace SafetyProto.UI
             data.onActionPressed.AddListener(onAction);
             Show(data);
         }
+
+        public void ShowConfirmation(string title, string body, string confirmLabel, string cancelLabel,
+                                     UnityAction onConfirm, UnityAction onCancel = null)
+        {
+            var data = new PopupData
+            {
+                type              = PopupType.Interactive,
+                title             = title,
+                body              = body,
+                actionButtonLabel = confirmLabel,
+                onActionPressed   = new UnityEvent(),
+                showSkipButton    = true,
+                skipButtonLabel   = cancelLabel,
+                onSkipPressed     = new UnityEvent(),
+            };
+
+            // Both choices close the popup first, then run the caller's callback so a callback
+            // that opens another popup isn't immediately hidden by this one.
+            data.onActionPressed.AddListener(() => { Hide(); onConfirm?.Invoke(); });
+            data.onSkipPressed.AddListener(() => { Hide(); onCancel?.Invoke(); });
+            Show(data);
+        }
     }
 }
