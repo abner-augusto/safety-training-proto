@@ -37,13 +37,6 @@ namespace SafetyProto.Runtime.PPE
         [Tooltip("How fast the item follows the slot transform. 0 = instant.")]
         [SerializeField] private float followSpeed = 20f;
 
-        [Header("Físico")]
-        [Tooltip("Velocidade linear máxima (m/s) quando o item está solto/livre. Evita que glitches de tracking " +
-                 "(no release ou colisão das esferas dos dedos) arremessem o EPI para fora do cenário.")]
-        [SerializeField] private float maxFreeSpeed = 2.5f;
-        [Tooltip("Velocidade angular máxima (rad/s) quando o item está solto/livre.")]
-        [SerializeField] private float maxFreeAngularSpeed = 6f;
-
         [Header("SDK Reference")]
         [Tooltip("The HandGrabInteractable on this item. Auto-found if left empty.")]
         [SerializeField] private HandGrabInteractable handGrabInteractable;
@@ -343,28 +336,6 @@ namespace SafetyProto.Runtime.PPE
 
             _rigidbody.isKinematic = !physicsEnabled;
             _rigidbody.useGravity = physicsEnabled;
-
-            // Ao reativar a física (release), limita a velocidade herdada do tracking.
-            if (physicsEnabled)
-                ClampFreeVelocity();
-        }
-
-        // Mantém a velocidade do item dentro de limites enquanto ele está dinâmico e livre
-        // (nem segurado, nem snapado). Cobre tanto o instante do release quanto colisões das
-        // esferas dos dedos (HandPhysics) que poderiam "socar" o EPI para fora do cenário.
-        private void FixedUpdate()
-        {
-            if (_isGrabbed || _isSnapped || _rigidbody.isKinematic) return;
-            ClampFreeVelocity();
-        }
-
-        private void ClampFreeVelocity()
-        {
-            if (maxFreeSpeed > 0f)
-                _rigidbody.linearVelocity = Vector3.ClampMagnitude(_rigidbody.linearVelocity, maxFreeSpeed);
-
-            if (maxFreeAngularSpeed > 0f)
-                _rigidbody.angularVelocity = Vector3.ClampMagnitude(_rigidbody.angularVelocity, maxFreeAngularSpeed);
         }
 
         // Trigger detection — notifies slots directly

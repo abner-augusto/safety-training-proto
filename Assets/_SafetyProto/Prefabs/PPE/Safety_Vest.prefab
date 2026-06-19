@@ -65,7 +65,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 1
+  m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 1
 --- !u!114 &2110403652793283385
@@ -223,6 +223,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPEItem
   ppeType: 5
+  hideWhenEquipped: 0
+  isDistractor: 0
 --- !u!114 &7581102808523933404
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -236,10 +238,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapItem
   snapSearchRadius: 0.12
+  snapSearchMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
   snapPoseOverride: {fileID: 0}
   trackSnapPoseOverrideEveryFrame: 0
   unsnapDistance: 0.1
   followSpeed: 0
+  maxFreeSpeed: 2.5
+  maxFreeAngularSpeed: 6
   handGrabInteractable: {fileID: 4086326768560488913}
   returnObjectHome: {fileID: 3370640472509175233}
 --- !u!1 &5938388044809296783

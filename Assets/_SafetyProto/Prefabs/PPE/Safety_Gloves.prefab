@@ -109,8 +109,8 @@ Rigidbody:
   m_GameObject: {fileID: 1160870894067531648}
   serializedVersion: 5
   m_Mass: 1
-  m_LinearDamping: 3
-  m_AngularDamping: 1.5
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -148,7 +148,7 @@ MonoBehaviour:
   _maxGrabPoints: -1
   _rigidbody: {fileID: 5959504045116577694}
   _kinematicWhileSelected: 1
-  _throwWhenUnselected: 0
+  _throwWhenUnselected: 1
   _forceKinematicDisabled: 0
 --- !u!114 &2601642719565040040
 MonoBehaviour:
@@ -164,7 +164,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.Interactables.ReturnObjectHome
   homeOverride: {fileID: 0}
   maxHomeDistance: 0.3
-  returnDelay: 3
+  returnDelay: 2
   returnDuration: 0.4
   returnCurve:
     serializedVersion: 2
@@ -281,8 +281,10 @@ MonoBehaviour:
     m_Bits: 4294967295
   snapPoseOverride: {fileID: 0}
   trackSnapPoseOverrideEveryFrame: 0
-  unsnapDistance: 0.1
-  followSpeed: 0
+  unsnapDistance: 0.15
+  followSpeed: 20
+  maxFreeSpeed: 2.5
+  maxFreeAngularSpeed: 6
   handGrabInteractable: {fileID: 7450468912020579302}
   returnObjectHome: {fileID: 2601642719565040040}
 --- !u!64 &285251723941542459

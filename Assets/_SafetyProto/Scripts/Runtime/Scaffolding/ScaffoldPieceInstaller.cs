@@ -139,7 +139,6 @@ namespace SafetyProto.Runtime.Scaffolding
         private void Awake()
         {
             _rigidbody = GetComponent<Rigidbody>();
-
             if (grabbable == null)
                 grabbable = GetComponent<Grabbable>();
 
