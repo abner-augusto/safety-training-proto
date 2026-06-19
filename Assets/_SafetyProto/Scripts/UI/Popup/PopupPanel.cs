@@ -16,8 +16,10 @@ namespace SafetyProto.UI
         [SerializeField] private GameObject actionButtonRoot;
         [SerializeField] private TextMeshProUGUI actionButtonLabel;
         [SerializeField] private GameObject closeButtonRoot;
-        [Tooltip("Botão secundário opcional 'Pular' (onboarding). Exibido apenas quando PopupData.showSkipButton.")]
+        [Tooltip("Botão secundário opcional 'Pular' (onboarding) / 'Cancelar' (confirmações). Exibido apenas quando PopupData.showSkipButton.")]
         [SerializeField] private GameObject skipButtonRoot;
+        [Tooltip("Rótulo do botão secundário. Permite reusá-lo como 'Cancelar' em confirmações. Opcional.")]
+        [SerializeField] private TextMeshProUGUI skipButtonLabel;
         [Tooltip("Campo de texto opcional (identificação do participante). Exibido apenas quando PopupData.showInputField.")]
         [SerializeField] private GameObject inputFieldRoot;
         [Tooltip("Root do layout a reconstruir após mudar o conteúdo (geralmente o background ou este próprio RectTransform).")]
@@ -41,6 +43,13 @@ namespace SafetyProto.UI
         /// session, so closing via the button can't leave the timer paused.
         /// </summary>
         public event System.Action Hidden;
+
+        /// <summary>
+        /// Raised when the panel becomes visible. Unlike the session pause/resume events,
+        /// this fires only for the popup itself, so listeners (e.g. a menu that hides behind
+        /// the popup) won't be triggered by unrelated session pauses.
+        /// </summary>
+        public event System.Action Shown;
 
         private PopupData _currentData;
         private Coroutine _fadeCoroutine;
@@ -117,6 +126,9 @@ namespace SafetyProto.UI
             if (skipButtonRoot != null)
                 skipButtonRoot.SetActive(data.showSkipButton);
 
+            if (skipButtonLabel != null && !string.IsNullOrEmpty(data.skipButtonLabel))
+                skipButtonLabel.text = data.skipButtonLabel;
+
             if (inputFieldRoot != null)
                 inputFieldRoot.SetActive(data.showInputField);
 
@@ -136,6 +148,8 @@ namespace SafetyProto.UI
             gameObject.SetActive(true);
             IsVisible = true;
             _fadeCoroutine = StartCoroutine(FadeAlpha(0f, 1f));
+
+            Shown?.Invoke();
 
             // Auto-fechamento opcional. Interactive nunca fecha sozinho — exige clique do usuário.
             StopAutoClose();
