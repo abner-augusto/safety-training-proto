@@ -16,9 +16,7 @@ GameObject:
   - component: {fileID: 2313486299481544854}
   - component: {fileID: 7242501172608023842}
   - component: {fileID: 6640761106443566814}
-  - component: {fileID: 374292004426114409}
-  - component: {fileID: 6312789995017432180}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: GuardRailPiece
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -109,9 +107,9 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 513434941815971683}
   serializedVersion: 5
-  m_Mass: 1
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
+  m_Mass: 4
+  m_LinearDamping: 0.5
+  m_AngularDamping: 1.5
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -127,7 +125,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!114 &1121500440398714428
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -140,16 +138,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43f86b14a27b52f4f9298c33015b5c26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Oculus.Interaction::Oculus.Interaction.Grabbable
-  _transferOnSecondSelection: 0
+  _transferOnSecondSelection: 1
   _addNewPointsToFront: 0
   _forwardElement: {fileID: 0}
-  _oneGrabTransformer: {fileID: 374292004426114409}
-  _twoGrabTransformer: {fileID: 6312789995017432180}
+  _oneGrabTransformer: {fileID: 0}
+  _twoGrabTransformer: {fileID: 0}
   _targetTransform: {fileID: 5448882227532428706}
   _maxGrabPoints: -1
   _rigidbody: {fileID: 546876180104430110}
   _kinematicWhileSelected: 1
-  _throwWhenUnselected: 1
+  _throwWhenUnselected: 0
   _forceKinematicDisabled: 0
 --- !u!114 &2313486299481544854
 MonoBehaviour:
@@ -168,7 +166,7 @@ MonoBehaviour:
   sourceId: 
   context: scaffold_install
   interactorId: 0
-  installMode: 0
+  installMode: 1
   requireTwoHandsForTwoSockets: 0
   pieceAnchorA: {fileID: 2912436180243086780}
   pieceAnchorB: {fileID: 8745503227167865127}
@@ -176,9 +174,9 @@ MonoBehaviour:
   targetSocketB: {fileID: 0}
   allowAnySlotDirection: 1
   allow180Rotation: 1
-  positionTolerance: 0.12
-  yawTolerance: 15
-  tiltTolerance: 35
+  positionTolerance: 0.15
+  yawTolerance: 35
+  tiltTolerance: 45
   snapOnRelease: 1
   lockAfterInstalled: 1
   disableGrabAfterInstalled: 1
@@ -186,7 +184,7 @@ MonoBehaviour:
   grabbable: {fileID: 1121500440398714428}
   handGrabInteractable: {fileID: 1269935213995601109}
   returnHome: {fileID: 0}
-  pieceFeedbackRenderer: {fileID: 5313489545297829222}
+  pieceFeedbackRenderer: {fileID: 0}
   targetPreviewRenderer: {fileID: 0}
   showTargetPreviewOnlyWhileGrabbed: 1
   hideTargetPreviewAfterInstalled: 1
@@ -233,7 +231,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 513434941815971683}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0d9e1119e03a4a94cb0fb9da3a92b9dc, type: 3}
   m_Name: 
@@ -266,74 +264,6 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &374292004426114409
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 513434941815971683}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3236b8f205019504589358e7e0412a38, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Oculus.Interaction::Oculus.Interaction.OneGrabFreeTransformer
-  _positionConstraints:
-    ConstraintsAreRelative: 0
-    XAxis:
-      ConstrainAxis: 0
-      AxisRange:
-        Min: 0
-        Max: 0
-    YAxis:
-      ConstrainAxis: 0
-      AxisRange:
-        Min: 0
-        Max: 0
-    ZAxis:
-      ConstrainAxis: 0
-      AxisRange:
-        Min: 0
-        Max: 0
-  _rotationConstraints:
-    XAxis:
-      ConstrainAxis: 0
-      AxisRange:
-        Min: 0
-        Max: 0
-    YAxis:
-      ConstrainAxis: 0
-      AxisRange:
-        Min: 0
-        Max: 0
-    ZAxis:
-      ConstrainAxis: 0
-      AxisRange:
-        Min: 0
-        Max: 0
---- !u!114 &6312789995017432180
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 513434941815971683}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b053556d972eae24b947c1477538bff1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Oculus.Interaction::Oculus.Interaction.TwoGrabFreeTransformer
-  _constraints:
-    ConstraintsAreRelative: 1
-    MinScale:
-      Constrain: 1
-      Value: 1
-    MaxScale:
-      Constrain: 1
-      Value: 1
-    ConstrainXScale: 1
-    ConstrainYScale: 0
-    ConstrainZScale: 0
 --- !u!1 &1479217018200974602
 GameObject:
   m_ObjectHideFlags: 0
@@ -345,7 +275,7 @@ GameObject:
   - component: {fileID: 1514496982450027445}
   - component: {fileID: 1269935213995601109}
   - component: {fileID: 8382744660523411702}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: HandGrabInteractable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -440,7 +370,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8745503227167865127}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: AnchorB
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -473,7 +403,7 @@ GameObject:
   - component: {fileID: 348957602763588494}
   - component: {fileID: 5456187690483005735}
   - component: {fileID: 5905119012737742568}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: ColliderLaterais
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -546,7 +476,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2912436180243086780}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: AnchorA
   m_TagString: Untagged
   m_Icon: {fileID: 0}
