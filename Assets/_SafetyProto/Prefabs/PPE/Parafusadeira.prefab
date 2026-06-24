@@ -1399,7 +1399,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Meta.XR.BuildingBlocks::Meta.XR.BuildingBlocks.BuildingBlock
   blockId: 4e14e0ba-51f2-4a5c-a822-e304bf36d48c
-  instanceId: cd9ae8a1-dd47-4d88-a672-87cd1b17ba11
+  instanceId: ceb54b47-a5ee-4c1a-b688-d858ca2cafdf
   version: 1
   installationRoutineCheckpoint:
     _installationRoutineId: fb25cac7-8f37-455d-ac01-3fa41a1be37d
@@ -1730,8 +1730,8 @@ MonoBehaviour:
   _maxGrabPoints: -1
   _rigidbody: {fileID: 3874410483769145402}
   _kinematicWhileSelected: 1
-  _throwWhenUnselected: 0
-  _forceKinematicDisabled: 0
+  _throwWhenUnselected: 1
+  _forceKinematicDisabled: 1
 --- !u!114 &4108280145469152593
 MonoBehaviour:
   m_ObjectHideFlags: 0
