@@ -46220,6 +46220,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MenuCanvas
       objectReference: {fileID: 0}
+    - target: {fileID: 1017920710531044919, guid: ff7cd1112ef0caa448f48bd6fd49d205, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1104304311400669474, guid: ff7cd1112ef0caa448f48bd6fd49d205, type: 3}
       propertyPath: _whenSelect.m_PersistentCalls.m_Calls.Array.data[1].m_Mode
       value: 1
