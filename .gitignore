@@ -6,11 +6,13 @@
 # AI / TOOLING
 # ============================================================
 CLAUDE.md
+AGENTS.md
 .*/*
 .vsconfig
 before-structure.txt
 .repomixignore
 repomix.config.json
+opencode.json
 
 # ============================================================
 # UNITY ENGINE CACHE & GENERATED DIRS
