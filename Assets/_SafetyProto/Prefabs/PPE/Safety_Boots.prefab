@@ -295,7 +295,7 @@ Rigidbody:
   m_GameObject: {fileID: 5017827149711672781}
   serializedVersion: 5
   m_Mass: 1.2
-  m_LinearDamping: 0.4
+  m_LinearDamping: 0.8
   m_AngularDamping: 2
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
@@ -505,8 +505,6 @@ MonoBehaviour:
   trackSnapPoseOverrideEveryFrame: 1
   unsnapDistance: 0.3
   followSpeed: 0
-  maxFreeSpeed: 2.5
-  maxFreeAngularSpeed: 6
   handGrabInteractable: {fileID: 8717124398250375388}
   returnObjectHome: {fileID: 2218303962629299465}
 --- !u!1 &7944955958926990146
