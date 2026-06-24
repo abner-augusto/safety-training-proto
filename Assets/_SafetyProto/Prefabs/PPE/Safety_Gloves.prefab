@@ -109,7 +109,7 @@ Rigidbody:
   m_GameObject: {fileID: 1160870894067531648}
   serializedVersion: 5
   m_Mass: 1
-  m_LinearDamping: 0
+  m_LinearDamping: 1
   m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
@@ -126,7 +126,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!114 &3965247634208357737
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -283,8 +283,6 @@ MonoBehaviour:
   trackSnapPoseOverrideEveryFrame: 0
   unsnapDistance: 0.15
   followSpeed: 20
-  maxFreeSpeed: 2.5
-  maxFreeAngularSpeed: 6
   handGrabInteractable: {fileID: 7450468912020579302}
   returnObjectHome: {fileID: 2601642719565040040}
 --- !u!64 &285251723941542459
