@@ -67,6 +67,12 @@ namespace SafetyProto.Runtime.PPE
         [Tooltip("Radius to search for AnchorPoint components on release.")]
         [SerializeField, Range(0.05f, 0.5f)] private float anchorSearchRadius = 0.2f;
 
+        [Tooltip("Hysteresis multiplier for the proximity gate. The tip is considered " +
+                 "'near' at anchorSearchRadius, but only leaves the near-zone past " +
+                 "anchorSearchRadius * this value. Prevents hand jitter at the boundary " +
+                 "from re-firing the carabiner Open/Close transitions every frame.")]
+        [SerializeField, Range(1f, 2f)] private float anchorReleaseHysteresis = 1.4f;
+
         [Tooltip("Layer mask for anchor point detection. Use Default if unsure.")]
         [SerializeField] private LayerMask anchorLayerMask = ~0;
 
@@ -356,7 +362,15 @@ namespace SafetyProto.Runtime.PPE
 
         private void CheckAnchorProximity()
         {
-            bool isNear = FindNearestAnchor() != null;
+            // Hysteresis: enter the near-zone at anchorSearchRadius, but only leave it once
+            // the tip is well outside (anchorSearchRadius * release). Without the wider exit
+            // band, hand-tracking jitter at the exact boundary toggles isNear every frame and
+            // re-fires the Close_Open / Open_Close triggers, replaying the gate transition
+            // clips on a loop while the player hovers near the anchor.
+            float radius = _nearAnchor
+                ? anchorSearchRadius * anchorReleaseHysteresis
+                : anchorSearchRadius;
+            bool isNear = FindNearestAnchor(radius) != null;
 
             if (isNear && !_nearAnchor)
                 FireTrigger(TriggerCloseOpen);  // gate opens as tip approaches anchor
@@ -514,10 +528,12 @@ namespace SafetyProto.Runtime.PPE
 
         // ── Anchor Detection ──────────────────────────────────────
 
-        private AnchorPoint FindNearestAnchor()
+        private AnchorPoint FindNearestAnchor() => FindNearestAnchor(anchorSearchRadius);
+
+        private AnchorPoint FindNearestAnchor(float radius)
         {
             int count = Physics.OverlapSphereNonAlloc(
-                transform.position, anchorSearchRadius, _overlapBuffer,
+                transform.position, radius, _overlapBuffer,
                 anchorLayerMask, QueryTriggerInteraction.Collide);
 
             AnchorPoint best = null;
