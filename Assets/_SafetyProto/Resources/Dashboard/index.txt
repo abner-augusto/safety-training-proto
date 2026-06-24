@@ -950,6 +950,10 @@
         logSessionEnded: '🔚 Session ended',
         logPpeEquipped: '🦺 PPE Equipped', logPpeRemoved: '🦺 PPE Removed',
         logActionAttempt: '🎯 Action', logSafetyError: '❌ Safety Error', at: 'at',
+        // report detail line (scaffolding labels)
+        detailPpe: 'PPE', detailWorn: 'worn', detailRemoved: 'removed',
+        detailDelta: 'Delta', detailTotal: 'Total', detailIn: 'in',
+        detailTime: 'Time', detailScore: 'Score', detailCompleted: 'Completed',
       },
       pt: {
         currentScore: 'Pontuação Atual',
@@ -1004,6 +1008,10 @@
         logSessionEnded: '🔚 Sessão encerrada',
         logPpeEquipped: '🦺 EPI Equipado', logPpeRemoved: '🦺 EPI Removido',
         logActionAttempt: '🎯 Ação', logSafetyError: '❌ Erro de Segurança', at: 'em',
+        // report detail line (scaffolding labels)
+        detailPpe: 'EPI', detailWorn: 'equipado', detailRemoved: 'removido',
+        detailDelta: 'Variação', detailTotal: 'Total', detailIn: 'em',
+        detailTime: 'Tempo', detailScore: 'Pontuação', detailCompleted: 'Concluídas',
       }
     };
 
@@ -1341,6 +1349,78 @@
       return '📋';
     }
 
+    /* Localized display label for a logged event name (JSON keeps English). */
+    function eventLabel(name) {
+      const labels = {
+        pt: {
+          SessionStarted: 'Sessão iniciada',
+          SessionPaused: 'Sessão pausada',
+          SessionResumed: 'Sessão retomada',
+          SessionEnded: 'Sessão encerrada',
+          SessionCompleted: 'Sessão concluída',
+          SessionReset: 'Sessão reiniciada',
+          ActionAttempt: 'Tentativa de ação',
+          PpeStateChanged: 'EPI alterado',
+          TaskStarted: 'Tarefa iniciada',
+          TaskCompleted: 'Tarefa concluída',
+          TaskTimeout: 'Tempo da tarefa esgotado',
+          ScoreChanged: 'Pontuação alterada',
+          GroupStarted: 'Grupo iniciado',
+          GroupCompleted: 'Grupo concluído',
+          SafetyViolation: 'Violação de segurança',
+          SafetyError: 'Erro de segurança',
+          CriticalSafetyFailure: 'Falha crítica de segurança',
+        },
+        en: {
+          SessionStarted: 'Session started',
+          SessionPaused: 'Session paused',
+          SessionResumed: 'Session resumed',
+          SessionEnded: 'Session ended',
+          SessionCompleted: 'Session completed',
+          SessionReset: 'Session reset',
+          ActionAttempt: 'Action attempt',
+          PpeStateChanged: 'PPE changed',
+          TaskStarted: 'Task started',
+          TaskCompleted: 'Task completed',
+          TaskTimeout: 'Task timeout',
+          ScoreChanged: 'Score changed',
+          GroupStarted: 'Group started',
+          GroupCompleted: 'Group completed',
+          SafetyViolation: 'Safety violation',
+          SafetyError: 'Safety error',
+          CriticalSafetyFailure: 'Critical safety failure',
+        },
+      };
+      const table = labels[lang] || labels.en;
+      return table[name] ?? name;
+    }
+
+    /* Localized detail line from structured entry.data (falls back to entry.details
+       for older saved reports that predate the structured schema). */
+    function formatDetails(entry) {
+      const d = entry.data;
+      if (!d) return entry.details || '';
+      switch (entry.eventName) {
+        case 'PpeStateChanged':
+          return `${t('detailPpe')}: ${d.ppeType} · ${d.wearing ? t('detailWorn') : t('detailRemoved')}`;
+        case 'ScoreChanged':
+          return `${t('detailDelta')}: ${d.delta >= 0 ? '+' : ''}${d.delta} · ${t('detailTotal')}: ${d.totalScore}`;
+        case 'SafetyViolation':
+          return `${d.violationCode}${d.message ? ` | ${d.message}` : ''}`;
+        case 'SafetyError':
+          return `${d.source}: ${d.message}${d.errorDetails ? ` (${d.errorDetails})` : ''}`;
+        case 'CriticalSafetyFailure':
+          return `${d.reason} · ${d.violationCount} ${t('detailIn')} ${d.windowSeconds}s`;
+        case 'SessionCompleted': {
+          const m = Math.floor((d.totalElapsedTime ?? 0) / 60);
+          const s = Math.floor((d.totalElapsedTime ?? 0) % 60);
+          return `${t('detailTime')}: ${m}:${String(s).padStart(2, '0')} · ${t('detailScore')}: ${d.totalScore} · ${t('detailCompleted')}: ${d.tasksCompleted}/${d.totalTasks}`;
+        }
+        default:
+          return entry.details || '';
+      }
+    }
+
     function resetTaskUI() {
       document.getElementById('task-list').innerHTML = emptyState('', t('waitingSession'));
     }
@@ -1460,11 +1540,12 @@
         const en    = entry.eventName ?? '';
         const icon  = eventIcon(en);
         const isViol = /violation|critical|safetyerror/i.test(en);
+        const detail = formatDetails(entry);
         return `
           <div class="timeline-item ${isViol ? 'violation' : ''}">
             <div class="timeline-time">${time}</div>
-            <div class="timeline-event">${icon} ${esc(en)}</div>
-            ${entry.details ? `<div class="timeline-detail">${esc(entry.details)}</div>` : ''}
+            <div class="timeline-event">${icon} ${esc(eventLabel(en))}</div>
+            ${detail ? `<div class="timeline-detail">${esc(detail)}</div>` : ''}
           </div>`;
       }).join('');
 
