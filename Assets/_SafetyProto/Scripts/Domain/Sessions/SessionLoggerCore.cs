@@ -32,12 +32,50 @@ namespace SafetyProto.Domain.Sessions
         /// because <c>System.Text.Json</c> ignores fields by default. Without this
         /// flag the harness would silently emit empty objects.
         /// </summary>
+        /// <summary>
+        /// Typed, structured counterpart to <see cref="LogEntry.details"/>. Lets the
+        /// web dashboard format and localize the report detail line instead of relying
+        /// on the backend's English string. Only the events that carry English
+        /// scaffolding populate this; the rest leave it at <c>default</c> and the
+        /// frontend falls back to <see cref="LogEntry.details"/>. Field names are reused
+        /// across events (e.g. <c>message</c>, <c>totalScore</c>) to keep the struct small.
+        /// It is a value type so both <c>JsonUtility</c> and <c>System.Text.Json</c>
+        /// always serialize it inline.
+        /// </summary>
+        [Serializable]
+        public struct LogData
+        {
+            // PpeStateChanged
+            public string ppeType;
+            public bool wearing;
+            // ScoreChanged (totalScore reused by SessionCompleted)
+            public int delta;
+            public int totalScore;
+            // SafetyViolation (message reused by SafetyError)
+            public string violationCode;
+            public string message;
+            public string taskId;
+            public string groupId;
+            // SafetyError
+            public string source;
+            public string errorDetails;
+            // CriticalSafetyFailure
+            public string reason;
+            public int violationCount;
+            public float windowSeconds;
+            // SessionCompleted
+            public float totalElapsedTime;
+            public int tasksCompleted;
+            public int totalTasks;
+        }
+
         [Serializable]
         public sealed class LogEntry
         {
             public string timestamp = string.Empty;
             public string eventName = string.Empty;
             public string details = string.Empty;
+            public LogData data;
             public string sessionId = string.Empty;
             public string playerId = string.Empty;
             public string scenarioId = string.Empty;
@@ -94,7 +132,8 @@ namespace SafetyProto.Domain.Sessions
             _onSessionResumed        = args => LogEvent("SessionResumed",    string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
             _onSessionCompleted      = OnSessionCompleted;
             _onActionAttempt         = args => LogEvent("ActionAttempt",     args.ActionId ?? string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
-            _onPpeStateChanged       = args => LogEvent("PpeStateChanged",   $"PPE={args.PpeType}, Wearing={args.IsWearing}", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
+            _onPpeStateChanged       = args => LogEvent("PpeStateChanged",   $"PPE={args.PpeType}, Wearing={args.IsWearing}", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                new LogData { ppeType = args.PpeType.ToString(), wearing = args.IsWearing });
             _onTaskLifecycle = args =>
             {
                 string eventName = args.Phase switch
@@ -108,7 +147,8 @@ namespace SafetyProto.Domain.Sessions
                     args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
             };
             _onScoreChanged = args => LogEvent("ScoreChanged", $"Delta={args.Delta}, Total={args.TotalScore}",
-                args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
+                args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                new LogData { delta = args.Delta, totalScore = args.TotalScore });
             _onGroupLifecycle = args =>
             {
                 string eventName = args.Phase switch
@@ -120,9 +160,12 @@ namespace SafetyProto.Domain.Sessions
                 LogEvent(eventName, args.Group?.groupName ?? string.Empty,
                     args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
             };
-            _onSafetyViolation       = args => LogEvent("SafetyViolation",   $"{args.ViolationCode} | {args.Message} (Task={args.TaskId}, Group={args.GroupId})", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
-            _onSafetyError           = args => LogEvent("SafetyError",       $"{args.Source}: {args.Message} ({args.Details})", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
-            _onCriticalSafetyFailure = args => LogEvent("CriticalSafetyFailure", $"{args.Reason} [{args.ViolationCount} in {args.WindowSeconds}s]", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
+            _onSafetyViolation       = args => LogEvent("SafetyViolation",   $"{args.ViolationCode} | {args.Message} (Task={args.TaskId}, Group={args.GroupId})", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                new LogData { violationCode = args.ViolationCode, message = args.Message, taskId = args.TaskId, groupId = args.GroupId });
+            _onSafetyError           = args => LogEvent("SafetyError",       $"{args.Source}: {args.Message} ({args.Details})", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                new LogData { source = args.Source, message = args.Message, errorDetails = args.Details });
+            _onCriticalSafetyFailure = args => LogEvent("CriticalSafetyFailure", $"{args.Reason} [{args.ViolationCount} in {args.WindowSeconds}s]", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                new LogData { reason = args.Reason, violationCount = args.ViolationCount, windowSeconds = args.WindowSeconds });
         }
 
         public void Subscribe()
@@ -167,7 +210,14 @@ namespace SafetyProto.Domain.Sessions
                 "Time={0}, Score={1}, Completed={2}/{3}",
                 args.totalElapsedTime, args.totalScore, args.tasksCompleted, args.totalTasks);
             LogEvent("SessionCompleted", details,
-                args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
+                args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                new LogData
+                {
+                    totalElapsedTime = args.totalElapsedTime,
+                    totalScore = args.totalScore,
+                    tasksCompleted = args.tasksCompleted,
+                    totalTasks = args.totalTasks
+                });
 
             _log.summary = new SessionSummary
             {
@@ -180,7 +230,7 @@ namespace SafetyProto.Domain.Sessions
             _ = WriteLogAsync();
         }
 
-        private void LogEvent(string eventName, string details, string sessionId, string playerId, string scenarioId, long timestampMs)
+        private void LogEvent(string eventName, string details, string sessionId, string playerId, string scenarioId, long timestampMs, LogData data = default)
         {
             long actualTimestamp = timestampMs == 0 ? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() : timestampMs;
             var timestampIso = DateTimeOffset.FromUnixTimeMilliseconds(actualTimestamp).ToString("o");
@@ -190,6 +240,7 @@ namespace SafetyProto.Domain.Sessions
                 timestamp = timestampIso,
                 eventName = eventName,
                 details = details ?? string.Empty,
+                data = data,
                 sessionId = sessionId ?? string.Empty,
                 playerId = playerId ?? string.Empty,
                 scenarioId = scenarioId ?? string.Empty,
