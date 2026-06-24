@@ -89,8 +89,8 @@ MonoBehaviour:
   _maxGrabPoints: -1
   _rigidbody: {fileID: 1045335866023713642}
   _kinematicWhileSelected: 1
-  _throwWhenUnselected: 0
-  _forceKinematicDisabled: 0
+  _throwWhenUnselected: 1
+  _forceKinematicDisabled: 1
 --- !u!65 &7227783744570428228
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -245,8 +245,6 @@ MonoBehaviour:
   trackSnapPoseOverrideEveryFrame: 0
   unsnapDistance: 0.1
   followSpeed: 0
-  maxFreeSpeed: 2.5
-  maxFreeAngularSpeed: 6
   handGrabInteractable: {fileID: 4086326768560488913}
   returnObjectHome: {fileID: 3370640472509175233}
 --- !u!1 &5938388044809296783
