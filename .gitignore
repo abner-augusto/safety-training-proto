@@ -184,3 +184,4 @@ harness-output/
 # Local-only asset-generation scripts (not part of the repo)
 # ============================================================
 /Tools/generate_icon_pack_from_approved.py
+/docs/benchmarks
