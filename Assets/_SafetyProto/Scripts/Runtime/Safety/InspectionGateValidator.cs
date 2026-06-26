@@ -47,6 +47,8 @@ namespace SafetyProto.Runtime.Safety
         [SerializeField] private TimerSystem timerSystem;
         [Tooltip("Panels to activate after SessionCompleted fires (e.g. the session report canvas). Activated after the event so their OnEnable can read the cached args.")]
         [SerializeField] private GameObject[] sessionEndPanels;
+        [Tooltip("GameObjects to deactivate when the inspection passes (e.g. the 'Iniciar Atividade' button or the canvas it lives on). Left active while any task is still pending.")]
+        [SerializeField] private GameObject[] gateButtonObjects;
         [Tooltip("Optional (A3). If set, the PlayerFallSimulation consequence routes through its controlled fall and is skipped when the player is correctly anchored.")]
         [SerializeField] private FallFromHeightController fallController;
 
@@ -164,6 +166,9 @@ namespace SafetyProto.Runtime.Safety
         {
             if (verboseLogging)
                 SafetyLog.Info("[InspectionGateValidator] Inspeção aprovada. Aguardando 'Continuar' para finalizar a sessão.", this);
+
+            // Inspection passed: take the gate button (and its canvas) out so it can't be pressed again.
+            HideGateButtons();
 
             void Finish()
             {
@@ -405,6 +410,13 @@ namespace SafetyProto.Runtime.Safety
         private void HideConsequenceFeedback()
         {
             _popupFeedback?.Hide();
+        }
+
+        private void HideGateButtons()
+        {
+            if (gateButtonObjects == null) return;
+            foreach (var go in gateButtonObjects)
+                if (go != null) go.SetActive(false);
         }
 
         private void OnDestroy()
