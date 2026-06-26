@@ -231,7 +231,14 @@ namespace SafetyProto.Networking.Dashboard
             {
                 if (string.IsNullOrWhiteSpace(json)) return;
                 json = json.Trim('\0', ' ', '\r', '\n', '\t');
-                
+
+                // The dashboard client sends a plain-text "ping" keepalive every 8s; it is not JSON.
+                if (json == "ping") return;
+
+                // GenericEventEnvelope requires a JSON object root; ignore anything else
+                // so non-JSON frames don't spam the console with parse errors.
+                if (json.Length == 0 || json[0] != '{') return;
+
                 var envelope = JsonUtility.FromJson<GenericEventEnvelope>(json);
                 if (envelope != null && envelope.eventType == "RequestSync")
                 {
