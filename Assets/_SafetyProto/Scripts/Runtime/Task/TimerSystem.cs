@@ -5,7 +5,6 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
-using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Utils;
 using UnityEngine;
 using UnityEngine.Events;
@@ -86,9 +85,9 @@ namespace SafetyProto.Runtime.Task
         {
             if (_timedGroup == null)
             {
-                TaskGroup current = taskManager.GetCurrentGroup();
+                ITaskGroup current = taskManager.GetCurrentGroup();
                 if (current != null &&
-                    current.executionMode == TaskExecutionMode.FreeOrder &&
+                    current.executionMode == TaskExecutionModeShared.FreeOrder &&
                     current.tasks.Any(x => ReferenceEquals(x, args.Task)))
                 {
                     StartTimerForGroup(new TaskGroupEventArgs(current));
