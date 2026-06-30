@@ -1,8 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using SafetyProto.Core;
+using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
-using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Runtime.Task;
 using SafetyProto.Utils;
 using TMPro;
@@ -24,13 +24,13 @@ namespace SafetyProto.UI
         [Header("Rodapé")]
         [SerializeField] private TMP_Text remainingTasksText;
 
-        private TaskGroup _activeGroup;
-        private List<SafetyTask> _groupTasks       = new();
-        private List<SafetyTask> _pendingTasks     = new();
-        private List<SafetyTask> _visibleTasks     = new();
-        private Dictionary<SafetyTask, TaskEntryUI>  _taskToEntry        = new();
-        private Dictionary<SafetyTask, GameObject>   _taskToGO           = new();
-        private Dictionary<SafetyTask, Coroutine>    _removalCoroutines  = new();
+        private ITaskGroup _activeGroup;
+        private List<ISafetyTask> _groupTasks       = new();
+        private List<ISafetyTask> _pendingTasks     = new();
+        private List<ISafetyTask> _visibleTasks     = new();
+        private Dictionary<ISafetyTask, TaskEntryUI>  _taskToEntry        = new();
+        private Dictionary<ISafetyTask, GameObject>   _taskToGO           = new();
+        private Dictionary<ISafetyTask, Coroutine>    _removalCoroutines  = new();
         private int _completedVisibleCount = 0;
         private readonly AnimationCurve _scaleCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
@@ -68,7 +68,7 @@ namespace SafetyProto.UI
 
         private void OnGroupStarted(TaskGroupEventArgs args)
         {
-            if (args.Group is not TaskGroup group) return;
+            if (args.Group is not { } group) return;
 
             // Cancelar remoções pendentes
             foreach (var kvp in _removalCoroutines)
@@ -86,8 +86,8 @@ namespace SafetyProto.UI
             _groupTasks.Clear();
 
             _activeGroup  = group;
-            _groupTasks   = new List<SafetyTask>(group.tasks);
-            _pendingTasks = new List<SafetyTask>(_groupTasks);
+            _groupTasks   = new List<ISafetyTask>(group.tasks);
+            _pendingTasks = new List<ISafetyTask>(_groupTasks);
             _completedVisibleCount = 0;
 
             FillWindow();
@@ -130,8 +130,8 @@ namespace SafetyProto.UI
 
         private void OnTaskStarted(TaskEventArgs args)
         {
-            if (args.Task is not SafetyTask task) return;
-            if (_activeGroup == null || _activeGroup.executionMode != TaskExecutionMode.Sequential) return;
+            if (args.Task is not { } task) return;
+            if (_activeGroup == null || _activeGroup.executionMode != TaskExecutionModeShared.Sequential) return;
 
             if (_taskToEntry.TryGetValue(task, out var entry))
                 entry.UpdateState(TaskState.InProgress);
@@ -139,7 +139,7 @@ namespace SafetyProto.UI
 
         private void OnTaskCompleted(TaskEventArgs args)
         {
-            if (args.Task is not SafetyTask task) return;
+            if (args.Task is not { } task) return;
             if (!_visibleTasks.Contains(task)) return;
 
             var state = args.RuntimeTask?.State ?? TaskState.CompletedSuccess;
@@ -148,13 +148,13 @@ namespace SafetyProto.UI
 
         private void OnTaskTimeout(TaskEventArgs args)
         {
-            if (args.Task is not SafetyTask task) return;
+            if (args.Task is not { } task) return;
             if (!_visibleTasks.Contains(task)) return;
 
             ScheduleRemoval(task, TaskState.CompletedFailure);
         }
 
-        private void ScheduleRemoval(SafetyTask task, TaskState state)
+        private void ScheduleRemoval(ISafetyTask task, TaskState state)
         {
             if (_removalCoroutines.ContainsKey(task)) return; // já agendado
 
@@ -169,7 +169,7 @@ namespace SafetyProto.UI
 
         // ── Coroutines ───────────────────────────────────────────────────────
 
-        private IEnumerator RemoveAfterLinger(SafetyTask task)
+        private IEnumerator RemoveAfterLinger(ISafetyTask task)
         {
             yield return new WaitForSeconds(completedLingerDuration);
 

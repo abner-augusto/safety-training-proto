@@ -118,7 +118,7 @@ namespace SafetyProto.Runtime.Task
 
         public ISafetyTask? GetCurrentTaskData() => _core?.CurrentRuntimeTask?.TaskData;
 
-        public TaskGroup? GetCurrentGroup() => _core?.GetCurrentGroup() as TaskGroup;
+        public ITaskGroup? GetCurrentGroup() => _core?.GetCurrentGroup();
 
         public RuntimeSafetyTask? FindPendingTaskByActionId(string actionId) =>
             _core?.FindPendingTaskByActionId(actionId);
