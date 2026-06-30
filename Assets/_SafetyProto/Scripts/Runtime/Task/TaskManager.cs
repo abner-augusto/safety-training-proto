@@ -17,8 +17,17 @@ namespace SafetyProto.Runtime.Task
 {
     public class TaskManager : MonoBehaviour, ISessionResettable
     {
-        [Header("Task Configuration")]
+        [Header("Scenario (runtime data source)")]
+        [Tooltip("Resources/Scenarios/<name> — embedded default, with optional override at " +
+                 "persistentDataPath/scenarios/<name>.json. Loaded via ScenarioSource.")]
+        [SerializeField] private string scenarioResourceName = "default";
+
+        [Header("Task Authoring (bake source)")]
+        [Tooltip("ScriptableObject authoring source for the scenario JSON. NOT used at runtime " +
+                 "(the loaded JSON is). Kept to bake/re-bake the JSON and as a resilience fallback " +
+                 "if the JSON fails to load. Removed in a later phase once authoring moves out of Unity.")]
         public List<TaskGroup> taskGroups = new List<TaskGroup>();
+
         public bool startTasksAutomatically = true;
         public float delayBetweenTasks = 2.0f;
 
@@ -26,6 +35,10 @@ namespace SafetyProto.Runtime.Task
         [SerializeField] private TimerSystem? timerSystem;
 
         private TaskManagerCore? _core;
+
+        /// <summary>The groups actually driving this session (from JSON, or the SO fallback).</summary>
+        private IReadOnlyList<ITaskGroup> _runtimeGroups = new List<ITaskGroup>();
+        public IReadOnlyList<ITaskGroup> RuntimeGroups => _runtimeGroups;
 
         public int CurrentTaskIndex => _core?.CurrentTaskIndex ?? -1;
         public RuntimeSafetyTask? CurrentRuntimeTask => _core?.CurrentRuntimeTask;
@@ -39,6 +52,7 @@ namespace SafetyProto.Runtime.Task
 
             IScoreService scoreService = ScoreService.Instance;
 
+            _runtimeGroups = LoadRuntimeGroups();
             ValidateActions();
 
             if (timerSystem == null)
@@ -52,16 +66,10 @@ namespace SafetyProto.Runtime.Task
 
             IAsyncScheduler scheduler = new AwaitableAsyncSchedulerAdapter();
 
-            var groupsAsInterface = new List<ITaskGroup>(taskGroups.Count);
-            for (int i = 0; i < taskGroups.Count; i++)
-            {
-                groupsAsInterface.Add(taskGroups[i]);
-            }
-
             _core = new TaskManagerCore(
                 bus: EventBus.Instance!,
                 scoreService: scoreService,
-                taskGroups: groupsAsInterface,
+                taskGroups: _runtimeGroups,
                 timer: timerSource,
                 scheduler: scheduler,
                 logger: new SafetyLogAdapter(),
@@ -87,10 +95,34 @@ namespace SafetyProto.Runtime.Task
             _core = null;
         }
 
+        /// <summary>
+        /// Resolves the runtime groups from the unified scenario JSON (layered, fail-safe).
+        /// Falls back to the SO authoring list only if the JSON can't be loaded, so a missing
+        /// or corrupt scenario never leaves the session empty during the migration.
+        /// </summary>
+        private IReadOnlyList<ITaskGroup> LoadRuntimeGroups()
+        {
+            var scenario = ScenarioSource.Load(scenarioResourceName);
+            if (scenario != null)
+            {
+                return (IReadOnlyList<ITaskGroup>)scenario.Groups;
+            }
+
+            var fallback = new List<ITaskGroup>(taskGroups.Count);
+            for (int i = 0; i < taskGroups.Count; i++)
+            {
+                if (taskGroups[i] != null) fallback.Add(taskGroups[i]);
+            }
+            SafetyLog.Warning(
+                $"[TaskManager] Cenário '{scenarioResourceName}' indisponível; usando os ScriptableObjects " +
+                $"de autoria como fallback ({fallback.Count} grupos).", this);
+            return fallback;
+        }
+
         private void ValidateActions()
         {
-            if (taskGroups == null) return;
-            foreach (var group in taskGroups)
+            if (_runtimeGroups == null) return;
+            foreach (var group in _runtimeGroups)
             {
                 if (group == null || group.tasks == null) continue;
                 foreach (var task in group.tasks)

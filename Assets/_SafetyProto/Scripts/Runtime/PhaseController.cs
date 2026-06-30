@@ -94,7 +94,11 @@ namespace SafetyProto.Runtime
         private void OnGroupCompleted(TaskGroupEventArgs args)
         {
             if (_transitionExecuted) return;
-            if (triggerGroup == null || !ReferenceEquals(args.Group, triggerGroup)) return;
+            // Match by group name (id), not reference: the event carries a JSON-backed
+            // TaskGroupDef at runtime, while triggerGroup is the authoring ScriptableObject.
+            if (triggerGroup == null || args.Group == null ||
+                !string.Equals(args.Group.groupName, triggerGroup.groupName, System.StringComparison.Ordinal))
+                return;
 
             _transitionExecuted = true;
             StartCoroutine(ExecutePhaseTransition());

@@ -1,0 +1,158 @@
+{
+  "name": "default",
+  "participantId": "P000",
+  "groups": [
+    {
+      "name": "Seleção de EPIs",
+      "executionMode": "Sequential",
+      "timeLimit": 420.0,
+      "tasks": [
+        {
+          "name": "Equipar Botina de Segurança",
+          "taskDescription": "Selecione a botina de segurança correta e equipe nos pés.",
+          "actionId": "",
+          "successPoints": 100,
+          "failurePenalty": 30,
+          "ppePenalty": 0,
+          "requiredPPE": [
+            "Boots"
+          ],
+          "hintText": "A botina deve ser fechada e com bico de proteção. Verifique o CA.",
+          "failureAdvice": "A botina de segurança protege contra perfurações e quedas de objetos nos pés. O uso de calçado de proteção em canteiro é obrigatório (NR-06).",
+          "ppeAdvice": ""
+        },
+        {
+          "name": "Equipar Luvas",
+          "taskDescription": "Selecione as luvas de raspa de couro e equipe nas duas mãos.",
+          "actionId": "",
+          "successPoints": 200,
+          "failurePenalty": 30,
+          "ppePenalty": 0,
+          "requiredPPE": [
+            "Boots",
+            "GloveLeft",
+            "GloveRight"
+          ],
+          "hintText": "Use luvas de raspa de couro nas duas mãos para estruturas metálicas.",
+          "failureAdvice": "Luvas de raspa de couro são obrigatórias para manuseio de estruturas metálicas em altura.",
+          "ppeAdvice": ""
+        },
+        {
+          "name": "Equipar Óculos de Proteção",
+          "taskDescription": "Selecione os óculos de proteção e equipe no rosto.",
+          "actionId": "",
+          "successPoints": 100,
+          "failurePenalty": 30,
+          "ppePenalty": 0,
+          "requiredPPE": [
+            "Boots",
+            "GloveLeft",
+            "GloveRight",
+            "Goggles"
+          ],
+          "hintText": "Os óculos de proteção protegem contra partículas e respingos durante o trabalho.",
+          "failureAdvice": "Os óculos de proteção são equipamentos obrigatórios em ambientes de construção civil.",
+          "ppeAdvice": ""
+        },
+        {
+          "name": "Equipar Capacete com Jugular",
+          "taskDescription": "Selecione o capacete CORRETO (com jugular) e equipe na cabeça.",
+          "actionId": "",
+          "successPoints": 150,
+          "failurePenalty": 30,
+          "ppePenalty": 0,
+          "requiredPPE": [
+            "Boots",
+            "GloveLeft",
+            "GloveRight",
+            "Goggles",
+            "Helmet"
+          ],
+          "hintText": "O capacete DEVE ter jugular para trabalho em altura. Sem ela, o capacete pode cair durante a atividade.",
+          "failureAdvice": "Para trabalho em altura, o capacete deve possuir sistema de fixação (jugular) que impeça sua queda durante a atividade (seleção de EPI — NR-06 e NR-35).",
+          "ppeAdvice": ""
+        },
+        {
+          "name": "Equipar Cinto Paraquedista",
+          "taskDescription": "Selecione o cinto tipo paraquedista e vista corretamente.",
+          "actionId": "",
+          "successPoints": 200,
+          "failurePenalty": 30,
+          "ppePenalty": 0,
+          "requiredPPE": [
+            "Boots",
+            "GloveLeft",
+            "GloveRight",
+            "Goggles",
+            "Helmet",
+            "Harness"
+          ],
+          "hintText": "Use APENAS o cinto tipo paraquedista. Cintos abdominais não são aceitos para trabalho em altura.",
+          "failureAdvice": "No sistema de retenção de queda, o EPI deve ser o cinturão de segurança tipo paraquedista (NR-35 §35.6.9). Cintos abdominais não são aceitos para retenção de queda.",
+          "ppeAdvice": ""
+        }
+      ],
+      "requiredGroups": []
+    },
+    {
+      "name": "Inspeção em Andaime Fachadeiro",
+      "executionMode": "FreeOrder",
+      "timeLimit": 300.0,
+      "tasks": [
+        {
+          "name": "Conectar Talabarte ao Ponto de Ancoragem",
+          "taskDescription": "Conecte o talabarte do cinto ao ponto de ancoragem certificado na estrutura.",
+          "actionId": "connect_harness",
+          "successPoints": 200,
+          "failurePenalty": 50,
+          "ppePenalty": 50,
+          "requiredPPE": [
+            "Harness",
+            "Helmet"
+          ],
+          "hintText": "O talabarte deve estar conectado ao ponto de ancoragem certificado ANTES de qualquer atividade.",
+          "failureAdvice": "Conectar o talabarte ao ponto de ancoragem certificado é a primeira ação ao chegar na plataforma. Trabalhar desconectado é a principal causa de quedas fatais.",
+          "ppeAdvice": "Você conectou o talabarte, mas estava sem algum EPI obrigatório. Verifique todos os equipamentos ANTES de subir."
+        },
+        {
+          "name": "Instalar Guarda-corpo",
+          "taskDescription": "Instale a seção de guarda-corpo faltante no lado direito da plataforma.",
+          "actionId": "install_guardrail",
+          "successPoints": 200,
+          "failurePenalty": 50,
+          "ppePenalty": 50,
+          "requiredPPE": [
+            "Harness",
+            "Helmet",
+            "GloveLeft",
+            "GloveRight"
+          ],
+          "hintText": "O guarda-corpo do andaime deve ter travessão superior a 1,20 m, travessão intermediário a 0,70 m e rodapé (NR-18 §18.9.4.2; §18.12.1 'd').",
+          "failureAdvice": "O guarda-corpo deve estar presente em todo o perímetro do andaime, exceto na face de trabalho (NR-18 §18.12.1 'd'). Sua ausência expõe o trabalhador a queda direta.",
+          "ppeAdvice": "Instalar o guarda-corpo sem luvas de proteção e/ou capacete expõe suas mãos a cortes nas estruturas metálicas."
+        },
+        {
+          "name": "Instalar Rodapé",
+          "taskDescription": "Instale o rodapé de 20cm na seção faltante da plataforma.",
+          "actionId": "install_toeboard",
+          "successPoints": 150,
+          "failurePenalty": 50,
+          "ppePenalty": 50,
+          "requiredPPE": [
+            "Harness",
+            "Helmet",
+            "GloveLeft",
+            "GloveRight"
+          ],
+          "hintText": "O rodapé (altura mínima de 15 cm — NR-18 §18.9.4.2 'c') impede que ferramentas e materiais caiam sobre trabalhadores abaixo.",
+          "failureAdvice": "O rodapé impede que ferramentas e materiais caiam da plataforma sobre trabalhadores abaixo (NR-18 §18.9.4.2 'c' — altura mínima de 15 cm).",
+          "ppeAdvice": "Manipular peças metálicas sem luvas é uma violação de segurança."
+        }
+      ],
+      "requiredGroups": [
+        "Seleção de EPIs"
+      ]
+    }
+  ],
+  "script": []
+}
