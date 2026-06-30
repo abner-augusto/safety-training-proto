@@ -55,6 +55,7 @@
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scenarios\TaskGroupDef.cs"       Link="Domain\Scenarios\TaskGroupDef.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scenarios\ScenarioDef.cs"        Link="Domain\Scenarios\ScenarioDef.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scenarios\ScenarioLoader.cs"     Link="Domain\Scenarios\ScenarioLoader.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scenarios\ScenarioValidator.cs"  Link="Domain\Scenarios\ScenarioValidator.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Capabilities\CapabilityCatalog.cs" Link="Domain\Capabilities\CapabilityCatalog.cs" />
   </ItemGroup>
 </Project>
