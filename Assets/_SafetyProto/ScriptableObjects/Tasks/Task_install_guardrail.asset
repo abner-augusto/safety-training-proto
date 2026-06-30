@@ -21,10 +21,6 @@ MonoBehaviour:
   failurePenalty: 50
   ppePenalty: 50
   requiredPPE: 04000000010000000700000008000000
-  hintText: "O guarda-corpo deve ter 1,20m de altura com travess\xE3o intermedi\xE1rio
-    e rodap\xE9 (NR-18 \xA718.15)."
-  failureAdvice: "O guarda-corpo deve estar presente em todos os lados abertos da
-    plataforma (NR-18 \xA718.15). Sua aus\xEAncia exp\xF5e trabalhadores a queda
-    direta."
-  ppeAdvice: "Instalar o guarda-corpo sem luvas de prote\xE7\xE3o e/ou capecete exp\xF5e
-    suas m\xE3os a cortes nas estruturas met\xE1licas."
+  hintText: "O guarda-corpo do andaime deve ter travessão superior a 1,20 m, travessão intermediário a 0,70 m e rodapé (NR-18 §18.9.4.2; §18.12.1 'd')."
+  failureAdvice: "O guarda-corpo deve estar presente em todo o perímetro do andaime, exceto na face de trabalho (NR-18 §18.12.1 'd'). Sua ausência expõe o trabalhador a queda direta."
+  ppeAdvice: "Instalar o guarda-corpo sem luvas de proteção e/ou capacete expõe suas mãos a cortes nas estruturas metálicas."

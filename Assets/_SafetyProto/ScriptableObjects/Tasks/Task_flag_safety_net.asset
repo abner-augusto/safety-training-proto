@@ -22,7 +22,5 @@ MonoBehaviour:
   requiredPPE: 0400000001000000
   hintText: "Interaja com a placa de alerta pr\xF3xima \xE0 tela solta para registrar
     a irregularidade."
-  failureAdvice: "A tela de prote\xE7\xE3o \xE9 obrigat\xF3ria para prevenir queda
-    de objetos. Sinalizar sua aus\xEAncia \xE9 um procedimento cr\xEDtico antes de
-    iniciar qualquer atividade."
+  failureAdvice: "A tela de proteção é obrigatória no andaime montado em fachada (NR-18 §18.12.15) para impedir a projeção e queda de materiais. Sinalizar sua ausência é um procedimento crítico antes de iniciar a atividade."
   ppeAdvice: 

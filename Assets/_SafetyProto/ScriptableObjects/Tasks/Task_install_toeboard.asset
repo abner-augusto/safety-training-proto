@@ -20,9 +20,7 @@ MonoBehaviour:
   failurePenalty: 50
   ppePenalty: 50
   requiredPPE: 04000000010000000700000008000000
-  hintText: "O rodap\xE9 de 20cm impede que ferramentas e materiais caiam sobre trabalhadores
-    abaixo."
-  failureAdvice: "O rodap\xE9 de 20cm impede que ferramentas e materiais caiam da
-    plataforma sobre trabalhadores abaixo (NR-18 \xA718.15)."
+  hintText: "O rodapé (altura mínima de 15 cm — NR-18 §18.9.4.2 'c') impede que ferramentas e materiais caiam sobre trabalhadores abaixo."
+  failureAdvice: "O rodapé impede que ferramentas e materiais caiam da plataforma sobre trabalhadores abaixo (NR-18 §18.9.4.2 'c' — altura mínima de 15 cm)."
   ppeAdvice: "Manipular pe\xE7as met\xE1licas sem luvas \xE9 uma viola\xE7\xE3o de
     seguran\xE7a."
