@@ -13,6 +13,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Interfaces (Part 1) -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\IEventBus.cs"       Link="Core\Interfaces\IEventBus.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\IScoreService.cs"   Link="Core\Interfaces\IScoreService.cs" />
@@ -44,5 +48,13 @@
     <!-- Part 7 additions -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Tasks\TaskManagerCore.cs"        Link="Domain\Tasks\TaskManagerCore.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scoring\ScoreRuleEngineCore.cs"  Link="Domain\Scoring\ScoreRuleEngineCore.cs" />
+
+    <!-- Data refactor: unified scenario model + loader + capability catalog -->
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scenarios\ScriptStepDef.cs"      Link="Domain\Scenarios\ScriptStepDef.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scenarios\SafetyTaskDef.cs"      Link="Domain\Scenarios\SafetyTaskDef.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scenarios\TaskGroupDef.cs"       Link="Domain\Scenarios\TaskGroupDef.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scenarios\ScenarioDef.cs"        Link="Domain\Scenarios\ScenarioDef.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scenarios\ScenarioLoader.cs"     Link="Domain\Scenarios\ScenarioLoader.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Capabilities\CapabilityCatalog.cs" Link="Domain\Capabilities\CapabilityCatalog.cs" />
   </ItemGroup>
 </Project>

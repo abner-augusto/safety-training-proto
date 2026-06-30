@@ -8,6 +8,7 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Domain.Safety;
+using SafetyProto.Domain.Scenarios;
 using SafetyProto.Domain.Scoring;
 using SafetyProto.Domain.Sessions;
 using SafetyProto.Domain.Tasks;
@@ -36,11 +37,22 @@ public static class Program
             return 1;
         }
 
-        var scenario = LoadScenario(scenarioPath);
+        var loadResult = ScenarioLoader.Parse(File.ReadAllText(scenarioPath));
+        if (!loadResult.Success || loadResult.Scenario == null)
+        {
+            Console.Error.WriteLine($"Failed to load scenario '{scenarioPath}':");
+            foreach (var err in loadResult.Errors)
+            {
+                Console.Error.WriteLine($"  - {err}");
+            }
+            return 1;
+        }
+
+        var scenario = loadResult.Scenario;
         Console.WriteLine($"=== SafetyProto CLI Harness ===");
-        Console.WriteLine($"Scenario: {scenario.name}");
-        Console.WriteLine($"Participant: {scenario.participantId}");
-        Console.WriteLine($"Groups: {scenario.groups.Count}");
+        Console.WriteLine($"Scenario: {scenario.Name}");
+        Console.WriteLine($"Participant: {scenario.ParticipantId}");
+        Console.WriteLine($"Groups: {scenario.Groups.Count}");
         Console.WriteLine();
 
         var bus = new HarnessEventBus();
@@ -48,7 +60,7 @@ public static class Program
         var logger = new ConsoleHarnessLogger();
         var scoreService = new ScoreService();
 
-        var taskGroups = BuildTaskGroups(scenario);
+        var taskGroups = (IReadOnlyList<ITaskGroup>)scenario.Groups;
 
         var ruleEngine = new SafetyRuleEngineCore(
             bus: bus,
@@ -92,8 +104,8 @@ public static class Program
 
         EventContext.StartSession(
             sessionId: Guid.NewGuid().ToString(),
-            playerId: scenario.participantId,
-            scenarioId: scenario.name);
+            playerId: scenario.ParticipantId,
+            scenarioId: scenario.Name);
 
         bus.Publish(new SessionStartedEventArgs());
         Console.WriteLine("--- Transcript ---");
@@ -109,7 +121,7 @@ public static class Program
         }
         else
         {
-            var actor = new ScriptedActor(bus, scenario.script ?? new List<ScriptedActor.Step>());
+            var actor = new ScriptedActor(bus, scenario.Script ?? new List<ScriptStepDef>());
             await actor.PlayAsync();
         }
 
@@ -148,124 +160,5 @@ public static class Program
         EventContext.Clear();
 
         return 0;
-    }
-
-    private sealed class Scenario
-    {
-        public string name { get; set; } = "unnamed";
-        public string participantId { get; set; } = "P000";
-        public List<ScenarioGroup> groups { get; set; } = new();
-        public List<ScriptedActor.Step> script { get; set; } = new();
-    }
-
-    private sealed class ScenarioGroup
-    {
-        public string name { get; set; } = "unnamed";
-        public string executionMode { get; set; } = "Sequential";
-        public float timeLimit { get; set; } = 0f;
-        public List<string> requiredGroups { get; set; } = new();
-        public List<ScenarioTask> tasks { get; set; } = new();
-    }
-
-    private sealed class ScenarioTask
-    {
-        public string name { get; set; } = "unnamed";
-        public string actionId { get; set; } = string.Empty;
-        public int successPoints { get; set; } = 100;
-        public int failurePenalty { get; set; } = 0;
-        public int ppePenalty { get; set; } = 20;
-        public List<string> requiredPPE { get; set; } = new();
-        public string hintText { get; set; } = string.Empty;
-        public string failureAdvice { get; set; } = string.Empty;
-        public string ppeAdvice { get; set; } = string.Empty;
-        public string taskDescription { get; set; } = string.Empty;
-    }
-
-    private static Scenario LoadScenario(string path)
-    {
-        var json = File.ReadAllText(path);
-        var opts = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true,
-            IncludeFields = true
-        };
-        var scenario = JsonSerializer.Deserialize<Scenario>(json, opts)
-            ?? throw new InvalidDataException($"Failed to parse scenario: {path}");
-        return scenario;
-    }
-
-    private static TaskExecutionModeShared ParseExecutionMode(string value, string groupName)
-    {
-        if (Enum.TryParse<TaskExecutionModeShared>(value, ignoreCase: true, out var mode))
-            return mode;
-
-        var valid = string.Join(", ", Enum.GetNames(typeof(TaskExecutionModeShared)));
-        throw new InvalidDataException(
-            $"Unknown executionMode '{value}' in group '{groupName}'. Valid values: {valid}");
-    }
-
-    private static IReadOnlyList<ITaskGroup> BuildTaskGroups(Scenario scenario)
-    {
-        var result = new List<ITaskGroup>();
-        var groupMap = new Dictionary<string, InMemoryTaskGroup>();
-
-        foreach (var g in scenario.groups)
-        {
-            var group = new InMemoryTaskGroup
-            {
-                groupName = g.name,
-                executionMode = ParseExecutionMode(g.executionMode, g.name),
-                timeLimit = g.timeLimit,
-            };
-            foreach (var t in g.tasks)
-            {
-                var ppeList = new List<PPEType>();
-                foreach (var ppeStr in t.requiredPPE)
-                {
-                    if (Enum.TryParse<PPEType>(ppeStr, ignoreCase: true, out var ppe))
-                    {
-                        ppeList.Add(ppe);
-                    }
-                    else
-                    {
-                        var valid = string.Join(", ", Enum.GetNames(typeof(PPEType)));
-                        throw new InvalidDataException(
-                            $"Unknown PPE type '{ppeStr}' in task '{t.name}' (group '{g.name}'). " +
-                            $"Valid values: {valid}");
-                    }
-                }
-
-                group.tasks.Add(new InMemorySafetyTask
-                {
-                    taskName = t.name,
-                    taskDescription = t.taskDescription,
-                    ExpectedActionId = t.actionId,
-                    successPoints = t.successPoints,
-                    failurePenalty = t.failurePenalty,
-                    ppePenalty = t.ppePenalty,
-                    requiredPPE = ppeList,
-                    hintText = t.hintText,
-                    failureAdvice = t.failureAdvice,
-                    ppeAdvice = t.ppeAdvice
-                });
-            }
-            result.Add(group);
-            groupMap[g.name] = group;
-        }
-
-        foreach (var g in scenario.groups)
-        {
-            if (g.requiredGroups == null || g.requiredGroups.Count == 0) continue;
-            if (!groupMap.TryGetValue(g.name, out var group)) continue;
-            foreach (var reqName in g.requiredGroups)
-            {
-                if (groupMap.TryGetValue(reqName, out var reqGroup))
-                {
-                    group.requiredGroups.Add(reqGroup);
-                }
-            }
-        }
-
-        return result;
     }
 }
