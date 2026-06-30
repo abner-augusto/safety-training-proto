@@ -576,12 +576,11 @@ namespace SafetyProto.Networking.Dashboard
 
         private void RegisterKnownGroupsFromTaskManager(SafetyProto.Runtime.Task.TaskManager taskManager)
         {
-            if (taskManager == null || taskManager.taskGroups == null)
+            if (taskManager == null || taskManager.RuntimeGroups == null)
                 return;
 
-            for (int i = 0; i < taskManager.taskGroups.Count; i++)
+            foreach (var group in taskManager.RuntimeGroups)
             {
-                var group = taskManager.taskGroups[i];
                 if (group != null && !_knownGroups.Contains(group))
                     _knownGroups.Add(group);
             }
