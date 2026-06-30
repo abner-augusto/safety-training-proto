@@ -22,6 +22,5 @@ MonoBehaviour:
   requiredPPE: 06000000
   hintText: "A botina deve ser fechada e com bico de prote\xE7\xE3o. Verifique o
     CA."
-  failureAdvice: "A botina de seguran\xE7a protege contra perfura\xE7\xF5es e quedas
-    de objetos nos p\xE9s. NR-18 exige cal\xE7ado fechado em canteiro."
+  failureAdvice: "A botina de segurança protege contra perfurações e quedas de objetos nos pés. O uso de calçado de proteção em canteiro é obrigatório (NR-06)."
   ppeAdvice: 
