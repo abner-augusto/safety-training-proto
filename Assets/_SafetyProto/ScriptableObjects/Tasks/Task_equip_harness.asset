@@ -22,6 +22,5 @@ MonoBehaviour:
   requiredPPE: 060000000700000008000000030000000100000004000000
   hintText: "Use APENAS o cinto tipo paraquedista. Cintos abdominais n\xE3o s\xE3o
     aceitos para trabalho em altura."
-  failureAdvice: "O cinto tipo paraquedista \xE9 o \xFAnico modelo aceito para trabalho
-    em altura (NR-35). Cintos abdominais n\xE3o distribuem a for\xE7a de queda adequadamente."
+  failureAdvice: "No sistema de retenção de queda, o EPI deve ser o cinturão de segurança tipo paraquedista (NR-35 §35.6.9). Cintos abdominais não são aceitos para retenção de queda."
   ppeAdvice: 

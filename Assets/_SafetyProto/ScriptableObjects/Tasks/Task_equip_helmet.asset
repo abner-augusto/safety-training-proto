@@ -22,6 +22,5 @@ MonoBehaviour:
   requiredPPE: 0600000007000000080000000300000001000000
   hintText: O capacete DEVE ter jugular para trabalho em altura. Sem ela, o capacete
     pode cair durante a atividade.
-  failureAdvice: "O capacete com jugular \xE9 obrigat\xF3rio em qualquer trabalho
-    em altura (NR-35). Sem jugular, o capacete pode cair durante a atividade."
+  failureAdvice: "Para trabalho em altura, o capacete deve possuir sistema de fixação (jugular) que impeça sua queda durante a atividade (seleção de EPI — NR-06 e NR-35)."
   ppeAdvice: 
