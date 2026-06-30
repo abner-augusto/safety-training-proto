@@ -1,0 +1,21 @@
+{
+  "version": "0.6",
+  "actionIds": [
+    "connect_harness",
+    "flag_safety_net",
+    "install_guardrail",
+    "install_toeboard"
+  ],
+  "ppeTypes": [
+    "Helmet",
+    "Goggles",
+    "Harness",
+    "Vest",
+    "Boots",
+    "GloveLeft",
+    "GloveRight"
+  ],
+  "phases": [
+    "SafetyTraining"
+  ]
+}
