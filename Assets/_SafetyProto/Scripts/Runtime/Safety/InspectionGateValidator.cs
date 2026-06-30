@@ -6,7 +6,6 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
-using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Domain.Scoring;
 using SafetyProto.Runtime.Task;
 using RuntimeSafetyTask = SafetyProto.Core.RuntimeSafetyTask;
@@ -127,7 +126,7 @@ namespace SafetyProto.Runtime.Safety
             }
 
             // Guard: only operates on FreeOrder groups
-            if (currentGroup.executionMode != TaskExecutionMode.FreeOrder)
+            if (currentGroup.executionMode != TaskExecutionModeShared.FreeOrder)
             {
                 if (verboseLogging)
                     SafetyLog.Info("[InspectionGateValidator] Current group is Sequential — gate skipped.", this);
@@ -162,7 +161,7 @@ namespace SafetyProto.Runtime.Safety
 
         // B7: all tasks complete → success popup with a manual "Continuar" button that ends the
         // session (and shows the finish screen). No timed auto-dismiss.
-        private void ShowSuccessAndEnd(TaskGroup currentGroup)
+        private void ShowSuccessAndEnd(ITaskGroup currentGroup)
         {
             if (verboseLogging)
                 SafetyLog.Info("[InspectionGateValidator] Inspeção aprovada. Aguardando 'Continuar' para finalizar a sessão.", this);
@@ -188,7 +187,7 @@ namespace SafetyProto.Runtime.Safety
 
         private IEnumerator ExecuteConsequencesSequence(
             List<RuntimeSafetyTask> pendingTasks,
-            TaskGroup currentGroup)
+            ITaskGroup currentGroup)
         {
             _isProcessing = true;
 

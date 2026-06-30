@@ -7,11 +7,12 @@ using System.Text;
 using System.Threading.Tasks;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
+using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
-using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Utils;
 using UnityEngine;
 using System.IO;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace SafetyProto.Networking.Dashboard
@@ -45,7 +46,7 @@ namespace SafetyProto.Networking.Dashboard
         private EvaluatorWebSocketServer _wsServer;
         private Coroutine _pendingLogBroadcast;
         private Coroutine _poseSendCoroutine;
-        private readonly List<TaskGroup> _knownGroups = new List<TaskGroup>();
+        private readonly List<ITaskGroup> _knownGroups = new List<ITaskGroup>();
         private readonly Queue<Action> _mainThreadQueue = new Queue<Action>();
 
         private void Awake()
@@ -336,7 +337,7 @@ namespace SafetyProto.Networking.Dashboard
 
         private void OnGroupStarted(TaskGroupEventArgs args)
         {
-            var group = args.Group as TaskGroup;
+            var group = args.Group;
             var dto = new GroupDto
             {
                 sessionId = args.SessionId,
@@ -353,7 +354,7 @@ namespace SafetyProto.Networking.Dashboard
 
         private void OnGroupCompleted(TaskGroupEventArgs args)
         {
-            var group = args.Group as TaskGroup;
+            var group = args.Group;
             var dto = new GroupDto
             {
                 sessionId = args.SessionId,
@@ -476,7 +477,7 @@ namespace SafetyProto.Networking.Dashboard
 
         private TaskDto BuildTaskDto(TaskEventArgs args, string status)
         {
-            var task = args.Task as SafetyTask;
+            var task = args.Task;
             var name = task != null ? task.taskName : string.Empty;
             var id = task != null ? task.taskName : string.Empty; // Usar taskName como ID para consistência
             var meta = BuildTaskMetadata(task);
@@ -516,7 +517,7 @@ namespace SafetyProto.Networking.Dashboard
             }
         }
 
-        private TaskMetadata BuildTaskMetadata(SafetyTask task, bool includeDetails = true)
+        private TaskMetadata BuildTaskMetadata(ISafetyTask task, bool includeDetails = true)
         {
             if (task == null || _knownGroups.Count == 0)
             {
@@ -555,7 +556,7 @@ namespace SafetyProto.Networking.Dashboard
 
         Found:
             var required = includeDetails && task.requiredPPE != null
-                ? task.requiredPPE.ConvertAll(p => p.ToString()).ToArray()
+                ? task.requiredPPE.Select(p => p.ToString()).ToArray()
                 : System.Array.Empty<string>();
 
             return new TaskMetadata
@@ -597,7 +598,7 @@ namespace SafetyProto.Networking.Dashboard
                 var liveDtos = new List<TaskManifestItemDto>(sessionTasks.Count);
                 foreach (var runtimeTask in sessionTasks)
                 {
-                    var task = runtimeTask.TaskData as SafetyTask;
+                    var task = runtimeTask.TaskData;
                     if (task == null)
                         continue;
 
