@@ -162,8 +162,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2a79c63335f4b708f6b8c8a4b16610f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Scaffolding.ScaffoldPieceInstaller
-  installedAction: {fileID: 11400000, guid: 701c7648e46249a49b8f95f158076016, type: 2}
-  actionIdOverride: install_guardrail
+  actionId: install_guardrail
   sourceId: 
   context: scaffold_install
   interactorId: 0

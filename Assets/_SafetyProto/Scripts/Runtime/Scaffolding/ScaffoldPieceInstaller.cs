@@ -2,7 +2,6 @@ using Oculus.Interaction;
 using Oculus.Interaction.HandGrab;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
-using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Runtime.Feedback;
 using UnityEngine;
 using UnityEngine.Events;
@@ -27,8 +26,7 @@ namespace SafetyProto.Runtime.Scaffolding
         // ── Action ───────────────────────────────────────────────
 
         [Header("Action")]
-        [SerializeField] private ActionTypeSO installedAction;
-        [SerializeField] private string actionIdOverride = string.Empty;
+        [SerializeField] private string actionId = string.Empty;
         [SerializeField] private string sourceId = string.Empty;
         [SerializeField] private string context = "scaffold_install";
         [SerializeField] private int interactorId;
@@ -472,10 +470,7 @@ namespace SafetyProto.Runtime.Scaffolding
 
         private string GetConfiguredActionId()
         {
-            if (installedAction != null && !string.IsNullOrWhiteSpace(installedAction.ActionId))
-                return installedAction.ActionId.Trim();
-
-            return string.IsNullOrWhiteSpace(actionIdOverride) ? string.Empty : actionIdOverride.Trim();
+            return string.IsNullOrWhiteSpace(actionId) ? string.Empty : actionId.Trim();
         }
 
         // ── Editor ───────────────────────────────────────────────
@@ -483,10 +478,7 @@ namespace SafetyProto.Runtime.Scaffolding
 #if UNITY_EDITOR
         private void OnValidate()
         {
-            if (installedAction != null && !string.IsNullOrWhiteSpace(installedAction.ActionId))
-                actionIdOverride = installedAction.ActionId;
-            else if (!string.IsNullOrEmpty(actionIdOverride))
-                actionIdOverride = actionIdOverride.Trim();
+            if (!string.IsNullOrEmpty(actionId)) actionId = actionId.Trim();
 
             if (!string.IsNullOrEmpty(sourceId)) sourceId = sourceId.Trim();
             if (!string.IsNullOrEmpty(context))  context  = context.Trim();
