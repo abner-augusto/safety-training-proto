@@ -19,6 +19,8 @@ public partial class MainWindow : Window
 
     private MainWindowViewModel? Vm => DataContext as MainWindowViewModel;
 
+    private void OnNew(object? sender, RoutedEventArgs e) => Vm?.NewScenario();
+
     private async void OnOpenScenario(object? sender, RoutedEventArgs e)
     {
         var path = await PickJsonAsync("Abrir cenário");
@@ -33,19 +35,49 @@ public partial class MainWindow : Window
 
     private void OnValidate(object? sender, RoutedEventArgs e) => Vm?.Validate();
 
+    private void OnAddGroup(object? sender, RoutedEventArgs e) => Vm?.Editor?.AddGroup();
+    private void OnAddTask(object? sender, RoutedEventArgs e) => Vm?.Editor?.AddTask();
+    private void OnRemove(object? sender, RoutedEventArgs e) => Vm?.Editor?.RemoveSelected();
+
+    private async void OnSave(object? sender, RoutedEventArgs e)
+    {
+        var path = await PickSaveJsonAsync();
+        if (path != null) Vm?.Save(path);
+    }
+
+    private async void OnDeploy(object? sender, RoutedEventArgs e)
+    {
+        if (Vm != null) await Vm.DeployAsync();
+    }
+
     private async Task<string?> PickJsonAsync(string title)
     {
         var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             Title = title,
             AllowMultiple = false,
-            FileTypeFilter = new List<FilePickerFileType>
-            {
-                new("JSON") { Patterns = new[] { "*.json" } },
-                new("Todos os arquivos") { Patterns = new[] { "*" } },
-            },
+            FileTypeFilter = JsonFilters(),
         });
 
         return files.Count > 0 ? files[0].Path.LocalPath : null;
     }
+
+    private async Task<string?> PickSaveJsonAsync()
+    {
+        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Salvar cenário",
+            DefaultExtension = "json",
+            SuggestedFileName = "default.json",
+            FileTypeChoices = JsonFilters(),
+        });
+
+        return file?.Path.LocalPath;
+    }
+
+    private static List<FilePickerFileType> JsonFilters() => new()
+    {
+        new("JSON") { Patterns = new[] { "*.json" } },
+        new("Todos os arquivos") { Patterns = new[] { "*" } },
+    };
 }
