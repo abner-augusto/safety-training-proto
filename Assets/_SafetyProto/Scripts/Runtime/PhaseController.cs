@@ -34,8 +34,12 @@ namespace SafetyProto.Runtime
         [SerializeField] private GameObject transitionPanel;
 
         [Header("Trigger")]
-        [Tooltip("TaskGroup ScriptableObject que dispara a transição ao ser concluído.")]
+        [Tooltip("TaskGroup de autoria cujo término dispara a transição. Fonte de autoria apenas: " +
+                 "seu groupName é espelhado em triggerGroupName no editor (OnValidate). O runtime NÃO lê o SO.")]
         [SerializeField] private TaskGroup triggerGroup;
+        [Tooltip("Nome do grupo-gatilho (id). Espelhado de triggerGroup no editor; é o que o runtime compara " +
+                 "contra o TaskGroupDef vindo do JSON. Runtime 100% JSON — sem dependência de ScriptableObject.")]
+        [SerializeField] private string triggerGroupName = string.Empty;
 
         [Header("Anti-queda no teleporte")]
         [Tooltip("Locomotor do jogador (FirstPersonLocomotor). Desabilitado durante o teleporte para " +
@@ -94,10 +98,11 @@ namespace SafetyProto.Runtime
         private void OnGroupCompleted(TaskGroupEventArgs args)
         {
             if (_transitionExecuted) return;
-            // Match by group name (id), not reference: the event carries a JSON-backed
-            // TaskGroupDef at runtime, while triggerGroup is the authoring ScriptableObject.
-            if (triggerGroup == null || args.Group == null ||
-                !string.Equals(args.Group.groupName, triggerGroup.groupName, System.StringComparison.Ordinal))
+            // Match by group name (id): the event carries a JSON-backed TaskGroupDef at runtime.
+            // triggerGroupName is the authoritative runtime value (mirrored from the authoring SO
+            // in the editor), so no ScriptableObject is read here.
+            if (string.IsNullOrEmpty(triggerGroupName) || args.Group == null ||
+                !string.Equals(args.Group.groupName, triggerGroupName, System.StringComparison.Ordinal))
                 return;
 
             _transitionExecuted = true;
@@ -205,8 +210,8 @@ namespace SafetyProto.Runtime
 
         private void ValidateReferences()
         {
-            if (triggerGroup == null)
-                SafetyLog.Warning("[PhaseController] triggerGroup não atribuído no Inspector.", this);
+            if (string.IsNullOrEmpty(triggerGroupName))
+                SafetyLog.Warning("[PhaseController] triggerGroupName vazio (arraste um TaskGroup em triggerGroup para espelhar).", this);
             if (playerRig == null)
                 SafetyLog.Warning("[PhaseController] playerRig não atribuído no Inspector.", this);
             if (spawnPointAndaime == null)
@@ -220,6 +225,11 @@ namespace SafetyProto.Runtime
 #if UNITY_EDITOR
         private void OnValidate()
         {
+            // Mirror the authoring SO's group name into the string the runtime uses, so the built
+            // player needs no ScriptableObject reference (same pattern as ActionEmitter/ActionTrigger).
+            if (triggerGroup != null && !string.IsNullOrWhiteSpace(triggerGroup.groupName))
+                triggerGroupName = triggerGroup.groupName;
+
             // Warn in the Editor if no OVRScreenFade exists anywhere in the scene.
             if (FindAnyObjectByType<OVRScreenFade>() == null)
             {
