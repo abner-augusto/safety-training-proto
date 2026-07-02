@@ -4,6 +4,7 @@ using Oculus.Interaction.HandGrab;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
+using SafetyProto.Runtime.Actions;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -108,7 +109,7 @@ namespace SafetyProto.Runtime.PPE
 
         [Header("Action Integration")]
         [Tooltip("ActionId emitted when the lanyard locks to an anchor.")]
-        [SerializeField] private string connectActionId = "connect_harness";
+        [SerializeField, ActionId] private string connectActionId = "connect_harness";
 
         [Header("Events")]
         [Tooltip("Fired when the lanyard locks to an anchor. Bool = isCorrectAnchor.")]

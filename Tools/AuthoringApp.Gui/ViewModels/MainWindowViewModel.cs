@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using SafetyProto.Domain.Actions;
 using SafetyProto.Domain.Capabilities;
 using SafetyProto.Domain.Scenarios;
 
@@ -26,6 +28,11 @@ public sealed class MainWindowViewModel : ViewModelBase
     private static readonly string DeployRemotePath =
         $"/sdcard/Android/data/{AndroidPackage}/files/scenarios/{DeployFileName}";
 
+    private static readonly string ProjectRoot = FindProjectRoot();
+    private static readonly string DefaultScenarioPath = Path.Combine(ProjectRoot, "Assets", "_SafetyProto", "Resources", "Scenarios", "default.json");
+    private static readonly string DefaultCapabilityCatalogPath = Path.Combine(ProjectRoot, "Tools", "AuthoringApp", "capability_catalog.json");
+    private static readonly string DefaultActionCatalogPath = Path.Combine(ProjectRoot, "Assets", "_SafetyProto", "Resources", "Actions", "actions.json");
+
     private static readonly JsonSerializerSettings CatalogSettings = new()
     {
         MissingMemberHandling = MissingMemberHandling.Ignore,
@@ -33,12 +40,21 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     private string _scenarioPath = string.Empty;
     private string _catalogPath = string.Empty;
+    private string _actionCatalogPath = string.Empty;
     private string _status = "Abra um cenário ou crie um novo para começar.";
     private ScenarioEditorViewModel? _editor;
+    private ActionCatalogEditorViewModel? _actionEditor;
     private CapabilityCatalog? _catalog;
+    private ActionCatalogDef? _actionCatalog;
+
+    public MainWindowViewModel()
+    {
+        LoadDefaultAuthoringFiles();
+    }
 
     public string ScenarioPath { get => _scenarioPath; set => SetField(ref _scenarioPath, value); }
     public string CatalogPath { get => _catalogPath; set => SetField(ref _catalogPath, value); }
+    public string ActionCatalogPath { get => _actionCatalogPath; set => SetField(ref _actionCatalogPath, value); }
     public string Status { get => _status; set => SetField(ref _status, value); }
 
     public ScenarioEditorViewModel? Editor
@@ -51,6 +67,21 @@ public sealed class MainWindowViewModel : ViewModelBase
     }
 
     public bool HasScenario => _editor != null;
+
+    public ActionCatalogEditorViewModel? ActionEditor
+    {
+        get => _actionEditor;
+        private set
+        {
+            if (SetField(ref _actionEditor, value)) OnPropertyChanged(nameof(HasActionCatalog));
+        }
+    }
+
+    public bool HasActionCatalog => _actionEditor != null;
+
+    public string SuggestedScenarioDirectory => Path.GetDirectoryName(DefaultScenarioPath) ?? ProjectRoot;
+    public string SuggestedCapabilityCatalogDirectory => Path.GetDirectoryName(DefaultCapabilityCatalogPath) ?? ProjectRoot;
+    public string SuggestedActionCatalogDirectory => Path.GetDirectoryName(DefaultActionCatalogPath) ?? ProjectRoot;
 
     /// <summary>Starts a blank scenario with one group and one equip-set task as a seed.</summary>
     public void NewScenario()
@@ -70,7 +101,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             },
         };
 
-        Editor = new ScenarioEditorViewModel(seed, _catalog);
+        Editor = new ScenarioEditorViewModel(seed, _catalog, _actionCatalog);
         Editor.SelectedNode = Editor.Groups[0];
         ScenarioPath = string.Empty;
         Status = "Cenário novo criado. Edite e salve.";
@@ -98,7 +129,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         }
 
         ScenarioPath = path;
-        Editor = new ScenarioEditorViewModel(result.Scenario, _catalog);
+        Editor = new ScenarioEditorViewModel(result.Scenario, _catalog, _actionCatalog);
         Editor.SelectedNode = Editor.Groups.Count > 0 ? Editor.Groups[0] : null;
         Status = $"Cenário carregado: {Editor.Name} " +
                  $"({Editor.Groups.Count} grupos, {Editor.Groups.Sum(g => g.Tasks.Count)} tarefas).";
@@ -131,9 +162,144 @@ public sealed class MainWindowViewModel : ViewModelBase
         if (_editor != null)
         {
             var current = _editor.ToDef();
-            Editor = new ScenarioEditorViewModel(current, _catalog);
+            Editor = new ScenarioEditorViewModel(current, _catalog, _actionCatalog);
             Editor.SelectedNode = Editor.Groups.Count > 0 ? Editor.Groups[0] : null;
         }
+    }
+
+    /// <summary>Loads the editable logical action catalog (Resources/Actions/actions.json).</summary>
+    public void LoadActionCatalog(string path)
+    {
+        string json;
+        try
+        {
+            json = File.ReadAllText(path);
+        }
+        catch (IOException ex)
+        {
+            Status = $"✗ Falha ao ler o catálogo de ações:\n{ex.Message}";
+            return;
+        }
+
+        var result = ActionCatalogLoader.Parse(json);
+        if (!result.Success || result.Catalog == null)
+        {
+            Status = "✗ Catálogo de ações inválido:\n  - " + string.Join("\n  - ", result.Errors);
+            return;
+        }
+
+        _actionCatalog = result.Catalog;
+        ActionEditor = new ActionCatalogEditorViewModel(result.Catalog);
+        ActionEditor.SelectedAction = ActionEditor.Actions.FirstOrDefault();
+        ActionCatalogPath = path;
+        RefreshScenarioEditorOptions();
+        Status = $"Catálogo de ações carregado — {ActionEditor.Actions.Count} ações.";
+    }
+
+    private void LoadDefaultAuthoringFiles()
+    {
+        var messages = new List<string>();
+
+        if (File.Exists(DefaultCapabilityCatalogPath))
+        {
+            LoadCatalog(DefaultCapabilityCatalogPath);
+            messages.Add($"Catálogo de capacidades padrão carregado: {DefaultCapabilityCatalogPath}");
+        }
+        else
+        {
+            messages.Add($"Catálogo de capacidades padrão não encontrado: {DefaultCapabilityCatalogPath}");
+        }
+
+        if (File.Exists(DefaultActionCatalogPath))
+        {
+            LoadActionCatalog(DefaultActionCatalogPath);
+            messages.Add($"Catálogo de ações padrão carregado: {DefaultActionCatalogPath}");
+        }
+        else
+        {
+            messages.Add($"Catálogo de ações padrão não encontrado: {DefaultActionCatalogPath}");
+        }
+
+        messages.Add($"Cenários padrão: {SuggestedScenarioDirectory}");
+        Status = string.Join(Environment.NewLine, messages);
+    }
+
+    public void NewActionCatalog()
+    {
+        _actionCatalog = new ActionCatalogDef();
+        ActionEditor = new ActionCatalogEditorViewModel(_actionCatalog);
+        ActionCatalogPath = string.Empty;
+        Status = "Catálogo de ações novo criado. Adicione ações e salve.";
+    }
+
+    public void AddAction()
+    {
+        if (ActionEditor == null) NewActionCatalog();
+        ActionEditor!.AddAction();
+        SyncActionCatalogFromEditor();
+        RefreshScenarioEditorOptions();
+    }
+
+    public void RemoveSelectedAction()
+    {
+        if (ActionEditor == null) return;
+        ActionEditor.RemoveSelected();
+        SyncActionCatalogFromEditor();
+        RefreshScenarioEditorOptions();
+    }
+
+    public void ValidateActionCatalog()
+    {
+        if (ActionEditor == null)
+        {
+            Status = "Abra ou crie um catálogo de ações primeiro.";
+            return;
+        }
+
+        var catalog = ActionEditor.ToDef();
+        var errors = ActionCatalogEditor.Validate(catalog);
+        if (errors.Count == 0)
+        {
+            _actionCatalog = catalog;
+            RefreshScenarioEditorOptions();
+            Status = $"Catálogo de ações: ✓ válido ({catalog.Actions.Count} ações).";
+        }
+        else
+        {
+            Status = $"Catálogo de ações: ✗ {errors.Count} problema(s):\n  - " + string.Join("\n  - ", errors);
+        }
+    }
+
+    public void SaveActionCatalog(string path)
+    {
+        if (ActionEditor == null)
+        {
+            Status = "Nada para salvar — abra ou crie um catálogo de ações.";
+            return;
+        }
+
+        var catalog = ActionEditor.ToDef();
+        var errors = ActionCatalogEditor.Validate(catalog);
+        if (errors.Count > 0)
+        {
+            Status = "Salvamento cancelado — corrija o catálogo de ações:\n  - " + string.Join("\n  - ", errors);
+            return;
+        }
+
+        try
+        {
+            File.WriteAllText(path, JsonConvert.SerializeObject(catalog, Formatting.Indented));
+        }
+        catch (Exception ex)
+        {
+            Status = $"✗ Falha ao salvar catálogo de ações:\n{ex.Message}";
+            return;
+        }
+
+        _actionCatalog = catalog;
+        ActionCatalogPath = path;
+        RefreshScenarioEditorOptions();
+        Status = $"✓ Catálogo de ações salvo em {path}";
     }
 
     /// <summary>Runs the two-tier validation on the current in-memory edits.</summary>
@@ -186,6 +352,21 @@ public sealed class MainWindowViewModel : ViewModelBase
         }
 
         Status = sb.ToString();
+    }
+
+    private void RefreshScenarioEditorOptions()
+    {
+        if (_editor == null) return;
+
+        var selected = _editor.SelectedNode;
+        var current = _editor.ToDef();
+        Editor = new ScenarioEditorViewModel(current, _catalog, _actionCatalog);
+        Editor.SelectedNode = Editor.Groups.Count > 0 ? Editor.Groups[0] : selected;
+    }
+
+    private void SyncActionCatalogFromEditor()
+    {
+        if (ActionEditor != null) _actionCatalog = ActionEditor.ToDef();
     }
 
     /// <summary>Serializes the current edits to <paramref name="path"/> (Indented, matching the Unity baker).</summary>
@@ -288,5 +469,22 @@ public sealed class MainWindowViewModel : ViewModelBase
         {
             return (false, ex.Message);
         }
+    }
+
+    private static string FindProjectRoot()
+    {
+        var current = new DirectoryInfo(AppContext.BaseDirectory);
+        while (current != null)
+        {
+            if (Directory.Exists(Path.Combine(current.FullName, "Assets", "_SafetyProto")) &&
+                Directory.Exists(Path.Combine(current.FullName, "Tools", "AuthoringApp")))
+            {
+                return current.FullName;
+            }
+
+            current = current.Parent;
+        }
+
+        return Directory.GetCurrentDirectory();
     }
 }

@@ -68,29 +68,7 @@ namespace SafetyProto.Domain.Actions
                 return ActionCatalogLoadResult.Fail("JSON de catálogo de ações resultou em documento nulo.");
             }
 
-            var errors = new List<string>();
-            var seen = new System.Collections.Generic.HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
-
-            for (var i = 0; i < catalog.Actions.Count; i++)
-            {
-                var action = catalog.Actions[i];
-                if (action == null)
-                {
-                    errors.Add($"Ação nula no índice {i} do catálogo.");
-                    continue;
-                }
-
-                if (string.IsNullOrWhiteSpace(action.ActionId))
-                {
-                    errors.Add($"Ação no índice {i} tem 'actionId' vazio.");
-                    continue;
-                }
-
-                if (!seen.Add(action.ActionId.Trim()))
-                {
-                    errors.Add($"actionId duplicado '{action.ActionId.Trim()}' no catálogo de ações.");
-                }
-            }
+            var errors = new List<string>(ActionCatalogEditor.Validate(catalog));
 
             return errors.Count > 0
                 ? ActionCatalogLoadResult.Fail(errors)

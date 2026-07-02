@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using SafetyProto.Domain.Actions;
 using SafetyProto.Domain.Capabilities;
 using SafetyProto.Domain.Scenarios;
 
@@ -25,13 +26,13 @@ public sealed class ScenarioEditorViewModel : ViewModelBase
     private string _participantId;
     private object? _selectedNode;
 
-    public ScenarioEditorViewModel(ScenarioDef def, CapabilityCatalog? catalog)
+    public ScenarioEditorViewModel(ScenarioDef def, CapabilityCatalog? catalog, ActionCatalogDef? actionCatalog = null)
     {
         _name = def.Name;
         _participantId = def.ParticipantId;
         _script = def.Script ?? new List<ScriptStepDef>();
 
-        BuildOptions(def, catalog);
+        BuildOptions(def, catalog, actionCatalog);
 
         Groups = new ObservableCollection<GroupViewModel>(
             def.Groups.Select(g => new GroupViewModel(g, this)));
@@ -95,7 +96,7 @@ public sealed class ScenarioEditorViewModel : ViewModelBase
         Script = _script,
     };
 
-    private void BuildOptions(ScenarioDef def, CapabilityCatalog? catalog)
+    private void BuildOptions(ScenarioDef def, CapabilityCatalog? catalog, ActionCatalogDef? actionCatalog)
     {
         var actions = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
         var ppe = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -104,6 +105,14 @@ public sealed class ScenarioEditorViewModel : ViewModelBase
         {
             foreach (var a in catalog.ActionIds ?? Enumerable.Empty<string>()) actions.Add(a);
             foreach (var p in catalog.PpeTypes ?? Enumerable.Empty<string>()) ppe.Add(p);
+        }
+
+        if (actionCatalog != null)
+        {
+            foreach (var a in actionCatalog.Actions ?? Enumerable.Empty<ActionDef>())
+            {
+                if (!string.IsNullOrWhiteSpace(a.ActionId)) actions.Add(a.ActionId.Trim());
+            }
         }
 
         foreach (var group in def.Groups)

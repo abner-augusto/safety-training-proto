@@ -2,6 +2,7 @@ using Oculus.Interaction;
 using Oculus.Interaction.HandGrab;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
+using SafetyProto.Runtime.Actions;
 using SafetyProto.Runtime.Feedback;
 using UnityEngine;
 using UnityEngine.Events;
@@ -26,7 +27,7 @@ namespace SafetyProto.Runtime.Scaffolding
         // ── Action ───────────────────────────────────────────────
 
         [Header("Action")]
-        [SerializeField] private string actionId = string.Empty;
+        [SerializeField, ActionId] private string actionId = string.Empty;
         [SerializeField] private string sourceId = string.Empty;
         [SerializeField] private string context = "scaffold_install";
         [SerializeField] private int interactorId;

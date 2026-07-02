@@ -3,6 +3,7 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
+using SafetyProto.Runtime.Actions;
 using SafetyProto.Runtime.Task;
 using UnityEngine;
 using UnityEngine.Events;
@@ -45,7 +46,7 @@ namespace SafetyProto.Runtime.PPE
         public struct PPEActionMapping
         {
             public PPEType ppeType;
-            public string actionId;
+            [ActionId] public string actionId;
         }
 
         [Header("Visual Feedback")]
