@@ -25,9 +25,9 @@ namespace SafetyProto.Runtime.Task
         [SerializeField] private string scenarioResourceName = "default";
 
         [Header("Task Authoring (bake source)")]
-        [Tooltip("ScriptableObject authoring source for the scenario JSON. NOT used at runtime " +
-                 "(the loaded JSON is). Kept to bake/re-bake the JSON and as a resilience fallback " +
-                 "if the JSON fails to load. Removed in a later phase once authoring moves out of Unity.")]
+        [Tooltip("ScriptableObject authoring source for the scenario JSON. NOT used at runtime — " +
+                 "the loaded JSON is the sole runtime source (no SO fallback). Kept only to bake/re-bake " +
+                 "the JSON (SafetyProto/Bake Scene Scenario to JSON). Removed once authoring moves to the desktop app.")]
         public List<TaskGroup> taskGroups = new List<TaskGroup>();
 
         public bool startTasksAutomatically = true;
@@ -98,9 +98,11 @@ namespace SafetyProto.Runtime.Task
         }
 
         /// <summary>
-        /// Resolves the runtime groups from the unified scenario JSON (layered, fail-safe).
-        /// Falls back to the SO authoring list only if the JSON can't be loaded, so a missing
-        /// or corrupt scenario never leaves the session empty during the migration.
+        /// Resolves the runtime groups from the unified scenario JSON (layered, fail-safe):
+        /// <see cref="ScenarioSource"/> already guarantees a floor via the embedded default
+        /// baked into the build. Runtime is 100% JSON — the <c>taskGroups</c> SO list is kept
+        /// only as the authoring/bake source (read by ScenarioExporter), never as a runtime
+        /// fallback. If even the embedded JSON is unavailable, the session starts empty.
         /// </summary>
         private IReadOnlyList<ITaskGroup> LoadRuntimeGroups()
         {
@@ -110,15 +112,10 @@ namespace SafetyProto.Runtime.Task
                 return (IReadOnlyList<ITaskGroup>)scenario.Groups;
             }
 
-            var fallback = new List<ITaskGroup>(taskGroups.Count);
-            for (int i = 0; i < taskGroups.Count; i++)
-            {
-                if (taskGroups[i] != null) fallback.Add(taskGroups[i]);
-            }
-            SafetyLog.Warning(
-                $"[TaskManager] Cenário '{scenarioResourceName}' indisponível; usando os ScriptableObjects " +
-                $"de autoria como fallback ({fallback.Count} grupos).", this);
-            return fallback;
+            SafetyLog.Error(
+                $"[TaskManager] Cenário '{scenarioResourceName}' indisponível e o runtime é 100% JSON " +
+                "(sem fallback para ScriptableObjects). A sessão iniciará sem grupos.", this);
+            return new List<ITaskGroup>();
         }
 
         private void ValidateActions()
