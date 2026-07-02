@@ -45174,6 +45174,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 261ce1bca3294354488ffe0250d02dba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.Task.TaskManager
+  scenarioResourceName: default
   taskGroups:
   - {fileID: 11400000, guid: 6e1629f57347e014c96e89e215055d55, type: 2}
   - {fileID: 11400000, guid: ab0049cb9754fe54781c32950259bf5f, type: 2}
@@ -48430,6 +48431,7 @@ MonoBehaviour:
   fadeInDuration: 0.8
   transitionPanel: {fileID: 0}
   triggerGroup: {fileID: 11400000, guid: 6e1629f57347e014c96e89e215055d55, type: 2}
+  triggerGroupName: "Sele\xE7\xE3o de EPIs"
   playerLocomotor: {fileID: 1064163038}
   groundMask:
     serializedVersion: 2

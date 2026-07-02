@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
-using SafetyProto.Data.ScriptableObjects;
+using SafetyProto.Runtime.Task;
 using SafetyProto.Utils;
 using TMPro;
 using UnityEngine;
@@ -30,10 +30,8 @@ namespace SafetyProto.Runtime.Feedback
         [SerializeField] private AudioClip successSound;
         [SerializeField] private AudioClip warningSound;
 
-        [Header("Task Lookup")]
-        [SerializeField] private List<SafetyTask> knownTasks = new List<SafetyTask>();
-
-        private readonly Dictionary<string, SafetyTask> _taskLookup = new Dictionary<string, SafetyTask>();
+        // taskName -> hintText, built lazily from the runtime JSON groups (no ScriptableObjects).
+        private Dictionary<string, string>? _hintLookup;
         private Coroutine _popupRoutine;
         private Vector3 _initialLocalPosition;
         private int _lastScoreDelta;
@@ -41,7 +39,6 @@ namespace SafetyProto.Runtime.Feedback
         private void Awake()
         {
             _initialLocalPosition = popupTransform?.localPosition ?? Vector3.zero;
-            BuildLookup();
             HideImmediate();
         }
 
@@ -68,14 +65,26 @@ namespace SafetyProto.Runtime.Feedback
             }
         }
 
-        private void BuildLookup()
+        // Builds the taskName -> hintText map from the runtime groups (unified JSON) the first
+        // time a hint is needed. Deferred because TaskManager populates RuntimeGroups in Start,
+        // after this component's Awake; violations only occur well after the session starts.
+        private void EnsureHintLookup()
         {
-            _taskLookup.Clear();
-            foreach (var task in knownTasks)
+            if (_hintLookup != null) return;
+            _hintLookup = new Dictionary<string, string>();
+
+            var taskManager = FindFirstObjectByType<TaskManager>();
+            if (taskManager == null) return;
+
+            foreach (var group in taskManager.RuntimeGroups)
             {
-                if (task == null || string.IsNullOrEmpty(task.taskName)) continue;
-                if (!_taskLookup.ContainsKey(task.taskName))
-                    _taskLookup.Add(task.taskName, task);
+                if (group?.tasks == null) continue;
+                foreach (var task in group.tasks)
+                {
+                    if (task == null || string.IsNullOrEmpty(task.taskName)) continue;
+                    if (!_hintLookup.ContainsKey(task.taskName))
+                        _hintLookup[task.taskName] = task.hintText ?? string.Empty;
+                }
             }
         }
 
@@ -111,7 +120,8 @@ namespace SafetyProto.Runtime.Feedback
         private string GetHint(string taskId)
         {
             if (string.IsNullOrEmpty(taskId)) return string.Empty;
-            return _taskLookup.TryGetValue(taskId, out var task) ? task.hintText : string.Empty;
+            EnsureHintLookup();
+            return _hintLookup!.TryGetValue(taskId, out var hint) ? hint : string.Empty;
         }
 
         private void ShowPopup(string title, string body, Color bodyColor)
@@ -177,6 +187,7 @@ namespace SafetyProto.Runtime.Feedback
         public void ResetSession()
         {
             _lastScoreDelta = 0;
+            _hintLookup = null; // rebuild from the (possibly new) scenario's groups on next hint
             if (_popupRoutine != null)
             {
                 StopCoroutine(_popupRoutine);
