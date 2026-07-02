@@ -57,5 +57,10 @@
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scenarios\ScenarioLoader.cs"     Link="Domain\Scenarios\ScenarioLoader.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scenarios\ScenarioValidator.cs"  Link="Domain\Scenarios\ScenarioValidator.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Capabilities\CapabilityCatalog.cs" Link="Domain\Capabilities\CapabilityCatalog.cs" />
+
+    <!-- Data refactor Phase 5: action logical model (JSON) split from presentation (SO) -->
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Actions\ActionDef.cs"             Link="Domain\Actions\ActionDef.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Actions\ActionCatalogDef.cs"      Link="Domain\Actions\ActionCatalogDef.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Actions\ActionCatalogLoader.cs"   Link="Domain\Actions\ActionCatalogLoader.cs" />
   </ItemGroup>
 </Project>
