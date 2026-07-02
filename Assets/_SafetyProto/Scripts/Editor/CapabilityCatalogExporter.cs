@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
+using SafetyProto.Domain.Actions;
 using SafetyProto.Domain.Capabilities;
 using SafetyProto.Runtime.Actions;
 using UnityEditor;
@@ -45,15 +46,22 @@ namespace SafetyProto.Editor
 
         private static List<string> CollectActionIds()
         {
-            var registry = Resources.Load<ActionRegistry>("ActionRegistry");
-            if (registry == null)
+            var textAsset = Resources.Load<TextAsset>($"Actions/{ActionCatalogSource.DefaultCatalogName}");
+            if (textAsset == null)
             {
-                Debug.LogWarning("[CapabilityCatalogExporter] Resources/ActionRegistry not found; action list will be empty.");
+                Debug.LogWarning("[CapabilityCatalogExporter] Resources/Actions/actions not found; action list will be empty.");
                 return new List<string>();
             }
 
-            return registry.Actions
-                .Where(a => a != null && !string.IsNullOrWhiteSpace(a.ActionId))
+            var result = ActionCatalogLoader.Parse(textAsset.text);
+            if (!result.Success || result.Catalog == null)
+            {
+                Debug.LogWarning($"[CapabilityCatalogExporter] Resources/Actions/actions invalid: {result.ErrorSummary}");
+                return new List<string>();
+            }
+
+            return result.Catalog.Actions
+                .Where(a => !string.IsNullOrWhiteSpace(a.ActionId))
                 .Select(a => a.ActionId.Trim())
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)

@@ -1,7 +1,6 @@
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
-using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Utils;
 using UnityEngine;
 
@@ -10,8 +9,7 @@ namespace SafetyProto.Runtime.Actions
     public class ActionTrigger : MonoBehaviour
     {
         [Header("Action Configuration")]
-        [SerializeField] private ActionTypeSO action;
-        [SerializeField] private string actionIdOverride = string.Empty;
+        [SerializeField] private string actionId = string.Empty;
         [SerializeField] private string sourceIdOverride = string.Empty;
         [SerializeField] private string context = string.Empty;
         public int interactorId = 0; // 0 for player, could be specific for multi-user or hands
@@ -43,13 +41,9 @@ namespace SafetyProto.Runtime.Actions
 
         private void OnValidate()
         {
-            if (action != null && !string.IsNullOrWhiteSpace(action.ActionId))
+            if (!string.IsNullOrEmpty(actionId))
             {
-                actionIdOverride = action.ActionId;
-            }
-            else if (!string.IsNullOrEmpty(actionIdOverride))
-            {
-                actionIdOverride = actionIdOverride.Trim();
+                actionId = actionId.Trim();
             }
 
             if (!string.IsNullOrEmpty(sourceIdOverride))
@@ -65,12 +59,7 @@ namespace SafetyProto.Runtime.Actions
 
         private string GetConfiguredActionId()
         {
-            if (action != null && !string.IsNullOrWhiteSpace(action.ActionId))
-            {
-                return action.ActionId.Trim();
-            }
-
-            return string.IsNullOrWhiteSpace(actionIdOverride) ? string.Empty : actionIdOverride.Trim();
+            return string.IsNullOrWhiteSpace(actionId) ? string.Empty : actionId.Trim();
         }
     }
 }

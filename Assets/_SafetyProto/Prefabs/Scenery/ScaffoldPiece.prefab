@@ -389,8 +389,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2a79c63335f4b708f6b8c8a4b16610f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Scaffolding.ScaffoldPieceInstaller
-  installedAction: {fileID: 11400000, guid: 457b49329f3622f4cb0c24d5dd51ce62, type: 2}
-  actionIdOverride: install_toeboard
+  actionId: install_toeboard
   sourceId: 
   context: scaffold_install
   interactorId: 0

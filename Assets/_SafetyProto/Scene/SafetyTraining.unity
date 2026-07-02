@@ -6427,7 +6427,7 @@ MonoBehaviour:
       m_Calls: []
   ppeActionMappings:
   - ppeType: 6
-    action: {fileID: 0}
+    actionId: 
   highlightRenderer: {fileID: 306169573}
   idleColor: {r: 1, g: 1, b: 1, a: 0.043137256}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.5}
@@ -10068,9 +10068,9 @@ MonoBehaviour:
       m_Calls: []
   ppeActionMappings:
   - ppeType: 1
-    action: {fileID: 0}
+    actionId: 
   - ppeType: 3
-    action: {fileID: 0}
+    actionId: 
   highlightRenderer: {fileID: 499804247}
   idleColor: {r: 1, g: 1, b: 1, a: 0.043137256}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.5}
@@ -12216,7 +12216,7 @@ MonoBehaviour:
       m_Calls: []
   ppeActionMappings:
   - ppeType: 4
-    action: {fileID: 0}
+    actionId: 
   highlightRenderer: {fileID: 667127736}
   idleColor: {r: 1, g: 1, b: 1, a: 0.043137256}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.5}
@@ -14684,7 +14684,7 @@ MonoBehaviour:
       m_Calls: []
   ppeActionMappings:
   - ppeType: 8
-    action: {fileID: 0}
+    actionId: 
   highlightRenderer: {fileID: 876599391}
   idleColor: {r: 1, g: 1, b: 1, a: 0.14117648}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.7647059}
@@ -15393,7 +15393,7 @@ MonoBehaviour:
       m_Calls: []
   ppeActionMappings:
   - ppeType: 7
-    action: {fileID: 0}
+    actionId: 
   highlightRenderer: {fileID: 917602395}
   idleColor: {r: 1, g: 1, b: 1, a: 0.14117648}
   hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.7647059}
@@ -45175,9 +45175,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.Task.TaskManager
   scenarioResourceName: default
-  taskGroups:
-  - {fileID: 11400000, guid: 6e1629f57347e014c96e89e215055d55, type: 2}
-  - {fileID: 11400000, guid: ab0049cb9754fe54781c32950259bf5f, type: 2}
   startTasksAutomatically: 1
   delayBetweenTasks: 1
   timerSystem: {fileID: 6117016471838572653}
@@ -46447,7 +46444,6 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   carabinerAnimator: {fileID: 809119710}
-  connectHarnessAction: {fileID: 11400000, guid: 96e051c356f529345bd5082d2a19261f, type: 2}
   connectActionId: connect_harness
   onLanyardLocked:
     m_PersistentCalls:
@@ -48430,7 +48426,6 @@ MonoBehaviour:
   holdBlackDuration: 1.5
   fadeInDuration: 0.8
   transitionPanel: {fileID: 0}
-  triggerGroup: {fileID: 11400000, guid: 6e1629f57347e014c96e89e215055d55, type: 2}
   triggerGroupName: "Sele\xE7\xE3o de EPIs"
   playerLocomotor: {fileID: 1064163038}
   groundMask:
