@@ -71,8 +71,10 @@ safety-training-proto/
 │   │   │   ├── Events/        # Event facades: SessionEvents, TaskEvents, PPEEvents, ...
 │   │   │   ├── Interfaces/    # IEventBus, IScoreService, ISafetyTask, ISessionResettable, ...
 │   │   │   └── Logging/       # IHarnessLogger, SafetyLog
-│   │   ├── Data/              # ScriptableObjects: ActionTypeSO, SafetyTask, TaskGroup
 │   │   ├── Domain/            # Pure C# business logic (no UnityEngine), shared with harness
+│   │   │   ├── Actions/       # ActionDef, ActionCatalogDef, ActionCatalogLoader
+│   │   │   ├── Capabilities/  # CapabilityCatalog and scenario validation helpers
+│   │   │   ├── Scenarios/     # ScenarioDef, TaskGroupDef, SafetyTaskDef, ScenarioLoader
 │   │   │   ├── Safety/        # SafetyRuleEngineCore
 │   │   │   ├── Scoring/       # ScoreService, ScoreRuleEngineCore
 │   │   │   ├── Sessions/      # SessionLoggerCore
@@ -91,11 +93,11 @@ safety-training-proto/
 │   │   ├── UI/                # ScoreHUD, LogHUD, TaskUIController, Popup system
 │   │   │   └── Popup/
 │   │   ├── Utils/             # SessionLogger, MonoBehaviourExtensions, helpers
-│   │   └── Editor/            # ComponentFinder, SceneDumper, ActionValidation
+│   │   └── Editor/            # ComponentFinder, SceneDumper, CapabilityCatalogExporter
 │   ├── Scenes/
 │   │   └── SafetyTraining.unity
 │   ├── Prefabs/
-│   ├── Resources/             # EventBus.asset, ActionRegistry.asset, PoseChannel.asset
+│   ├── Resources/             # EventBus.asset, Scenarios/default.json, Actions/actions.json
 │   └── Tests/Editor/          # NUnit edit-mode tests (28 tests)
 │
 ├── Tools/
@@ -263,23 +265,21 @@ dotnet run --project Tools/CliHarness -- Tools/CliHarness/scenarios/your_scenari
 
 The harness will produce a transcript matching the Unity-side session log format.
 
-## Adding a new task or scenario (Unity)
+## Adding a new task or scenario
 
-Tasks are ScriptableObjects and come in two kinds:
+Tasks are JSON records and come in two kinds:
 
-- **Action task** — has an `expectedAction`; completes when a matching action is
+- **Action task** — has an `actionId`; completes when a matching action is
   raised (use for performing something).
-- **Equip-set task** — no action, only `requiredPPE`; completes when all those
+- **Equip-set task** — empty `actionId`, only `requiredPPE`; completes when all those
   PPE are worn, in any order (use for putting on PPE).
 
 Quick start:
 
-1. Create a `SafetyTask` via `Assets → Create → VRSafetyTraining → SafetyTask`.
-2. For an action task, set `expectedAction` + scoring; for an equip-set task,
-   leave `expectedAction` empty and set `requiredPPE`.
-3. Add the task to a `TaskGroup` (`Assets → Create → VRSafetyTraining → TaskGroup`)
-   and reference that group in the `TaskManager` in the `SafetyTraining` scene.
-4. Action tasks only: register the `ActionTypeSO` in `Resources/ActionRegistry.asset`.
+1. Use `Tools/AuthoringApp.Gui` or edit `Assets/_SafetyProto/Resources/Scenarios/default.json`.
+2. For an action task, set `actionId` + scoring; for an equip-set task, leave `actionId` empty and set `requiredPPE`.
+3. Add the task to a scenario group and validate with the authoring app/CLI harness.
+4. Action tasks only: make sure the action exists in `Assets/_SafetyProto/Resources/Actions/actions.json` and scene emitters use the same string id.
 
 See **[docs/authoring-tasks.md](docs/authoring-tasks.md)** for the full guide —
 field reference, equip-set/order-guard details, PPE slot wiring, and worked
