@@ -18,8 +18,10 @@ namespace SafetyProto.Runtime.Task
     public class TaskManager : MonoBehaviour, ISessionResettable
     {
         [Header("Scenario (runtime data source)")]
-        [Tooltip("Resources/Scenarios/<name> — embedded default, with optional override at " +
-                 "persistentDataPath/scenarios/<name>.json. Loaded via ScenarioSource.")]
+        [Tooltip("Single fixed name (no folder scan). Resolves Resources/Scenarios/<name> as the " +
+                 "embedded default, with an optional override at persistentDataPath/scenarios/<name>.json. " +
+                 "Only the file matching this exact name is loaded; other JSONs in the override folder are " +
+                 "ignored. Loaded via ScenarioSource. Default 'default' => override file must be default.json.")]
         [SerializeField] private string scenarioResourceName = "default";
 
         [Header("Task Authoring (bake source)")]
