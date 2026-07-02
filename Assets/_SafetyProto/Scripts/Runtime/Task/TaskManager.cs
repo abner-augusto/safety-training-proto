@@ -4,7 +4,6 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
-using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Domain.Scoring;
 using SafetyProto.Domain.Tasks;
 using SafetyProto.Runtime.Actions;
@@ -24,12 +23,6 @@ namespace SafetyProto.Runtime.Task
                  "ignored. Loaded via ScenarioSource. Default 'default' => override file must be default.json.")]
         [SerializeField] private string scenarioResourceName = "default";
 
-        [Header("Task Authoring (bake source)")]
-        [Tooltip("ScriptableObject authoring source for the scenario JSON. NOT used at runtime — " +
-                 "the loaded JSON is the sole runtime source (no SO fallback). Kept only to bake/re-bake " +
-                 "the JSON (SafetyProto/Bake Scene Scenario to JSON). Removed once authoring moves to the desktop app.")]
-        public List<TaskGroup> taskGroups = new List<TaskGroup>();
-
         public bool startTasksAutomatically = true;
         public float delayBetweenTasks = 2.0f;
 
@@ -38,7 +31,7 @@ namespace SafetyProto.Runtime.Task
 
         private TaskManagerCore? _core;
 
-        /// <summary>The groups actually driving this session (from JSON, or the SO fallback).</summary>
+        /// <summary>The groups actually driving this session, loaded from JSON.</summary>
         private IReadOnlyList<ITaskGroup> _runtimeGroups = new List<ITaskGroup>();
         public IReadOnlyList<ITaskGroup> RuntimeGroups => _runtimeGroups;
 
@@ -97,13 +90,7 @@ namespace SafetyProto.Runtime.Task
             _core = null;
         }
 
-        /// <summary>
-        /// Resolves the runtime groups from the unified scenario JSON (layered, fail-safe):
-        /// <see cref="ScenarioSource"/> already guarantees a floor via the embedded default
-        /// baked into the build. Runtime is 100% JSON — the <c>taskGroups</c> SO list is kept
-        /// only as the authoring/bake source (read by ScenarioExporter), never as a runtime
-        /// fallback. If even the embedded JSON is unavailable, the session starts empty.
-        /// </summary>
+        /// <summary>Resolves runtime groups from the unified scenario JSON.</summary>
         private IReadOnlyList<ITaskGroup> LoadRuntimeGroups()
         {
             var scenario = ScenarioSource.Load(scenarioResourceName);

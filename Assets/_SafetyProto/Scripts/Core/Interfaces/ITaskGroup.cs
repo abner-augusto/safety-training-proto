@@ -3,8 +3,7 @@ using System.Collections.Generic;
 namespace SafetyProto.Core.Interfaces
 {
     /// <summary>
-    /// Execution mode for a task group. Mirrors the Unity
-    /// <c>TaskExecutionMode</c> enum to avoid a shared dependency on the SO type.
+    /// Execution mode for a task group, shared by JSON, Unity runtime, and CLI harness.
     /// </summary>
     public enum TaskExecutionModeShared
     {

@@ -7,9 +7,8 @@ namespace SafetyProto.Domain.Actions
 {
     /// <summary>
     /// The set of action types a build understands, as a JSON document. Runtime source of
-    /// truth for action existence/metadata, replacing the ActionRegistry ScriptableObject as
-    /// the <em>logical</em> authority (the SO stays only for presentation + scene emission
-    /// handles). Case-insensitive lookup mirrors ActionRegistry's behaviour.
+    /// truth for action existence/metadata. Case-insensitive lookup keeps action ids forgiving
+    /// across hand-authored JSON and desktop-authored scenarios.
     /// </summary>
     public sealed class ActionCatalogDef
     {

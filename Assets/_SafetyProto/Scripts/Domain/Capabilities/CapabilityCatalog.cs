@@ -18,7 +18,7 @@ namespace SafetyProto.Domain.Capabilities
         [JsonProperty("version")]
         public string Version { get; set; } = "1";
 
-        /// <summary>Registered action ids (from ActionRegistry).</summary>
+        /// <summary>Registered action ids from the embedded action catalog.</summary>
         [JsonProperty("actionIds")]
         public List<string> ActionIds { get; set; } = new();
 

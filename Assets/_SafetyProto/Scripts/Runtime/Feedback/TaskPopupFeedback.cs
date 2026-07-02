@@ -31,7 +31,7 @@ namespace SafetyProto.Runtime.Feedback
         [SerializeField] private AudioClip warningSound;
 
         // taskName -> hintText, built lazily from the runtime JSON groups (no ScriptableObjects).
-        private Dictionary<string, string>? _hintLookup;
+        private Dictionary<string, string> _hintLookup;
         private Coroutine _popupRoutine;
         private Vector3 _initialLocalPosition;
         private int _lastScoreDelta;
@@ -121,7 +121,7 @@ namespace SafetyProto.Runtime.Feedback
         {
             if (string.IsNullOrEmpty(taskId)) return string.Empty;
             EnsureHintLookup();
-            return _hintLookup!.TryGetValue(taskId, out var hint) ? hint : string.Empty;
+            return _hintLookup.TryGetValue(taskId, out var hint) ? hint : string.Empty;
         }
 
         private void ShowPopup(string title, string body, Color bodyColor)

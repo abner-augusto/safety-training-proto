@@ -7,11 +7,7 @@ namespace SafetyProto.Domain.Actions
     /// <summary>
     /// Engine-independent, JSON-backed <em>logical</em> definition of an action type.
     /// This is the source of truth the runtime resolves against (via ActionResolver) and
-    /// the desktop authoring app validates against — everything that is <em>not</em>
-    /// presentation. Presentation (icon, colour, SFX, haptics) stays Unity-side in the
-    /// ActionTypeSO asset, keyed by <see cref="ActionId"/>; splitting the two is the whole
-    /// point of this model. Serialized fields mirror the logical half of ActionTypeSO so a
-    /// one-shot bake preserves the curated metadata exactly.
+    /// the desktop authoring app validates against.
     /// </summary>
     public sealed class ActionDef
     {
@@ -25,8 +21,7 @@ namespace SafetyProto.Domain.Actions
         [JsonProperty("description")]
         public string Description { get; set; } = string.Empty;
 
-        /// <summary>Category name (ActionTypeSO.ActionCategory), stored as a string for
-        /// human-editable JSON — mirrors how PPE/executionMode are serialized by name.</summary>
+        /// <summary>Category name, stored as a string for human-editable JSON.</summary>
         [JsonProperty("category")]
         public string Category { get; set; } = string.Empty;
 

@@ -11,8 +11,8 @@ namespace SafetyProto.Runtime.Actions
     /// (<see cref="ActionDef"/>). Source of truth is the unified action-catalog JSON, loaded
     /// via <see cref="ActionCatalogSource"/> (override → embedded default). Runtime is 100%
     /// JSON — there is no ScriptableObject fallback; the embedded <c>Resources/Actions/actions.json</c>
-    /// baked into the build is the guaranteed floor. Presentation (icon/SFX/haptics) is
-    /// intentionally not resolved here — it stays Unity-side on the ActionTypeSO, keyed by actionId.
+        /// baked into the build is the guaranteed floor. Presentation (icon/SFX/haptics) is
+        /// intentionally not resolved here.
     /// </summary>
     public static class ActionResolver
     {

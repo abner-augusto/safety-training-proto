@@ -3,7 +3,6 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
-using SafetyProto.Data.ScriptableObjects;
 using SafetyProto.Runtime.Task;
 using UnityEngine;
 using UnityEngine.Events;
@@ -39,14 +38,14 @@ namespace SafetyProto.Runtime.PPE
         public UnityEvent<PPEType> onWrongOrderSnapAttempted;
 
         [Header("Task Integration")]
-        [Tooltip("Opcional. Mapeia PPEType → ActionTypeSO para emissão de ActionAttemptedEvent por tipo de EPI encaixado.")]
+        [Tooltip("Opcional. Mapeia PPEType -> actionId para emissão de ActionAttemptedEvent por tipo de EPI encaixado.")]
         [SerializeField] private PPEActionMapping[] ppeActionMappings;
 
         [System.Serializable]
         public struct PPEActionMapping
         {
             public PPEType ppeType;
-            public ActionTypeSO action;
+            public string actionId;
         }
 
         [Header("Visual Feedback")]
@@ -224,15 +223,16 @@ namespace SafetyProto.Runtime.PPE
             {
                 foreach (var mapping in ppeActionMappings)
                 {
-                    if (mapping.ppeType == item.PpeType && mapping.action != null && !string.IsNullOrWhiteSpace(mapping.action.ActionId))
+                    if (mapping.ppeType == item.PpeType && !string.IsNullOrWhiteSpace(mapping.actionId))
                     {
+                        var actionId = mapping.actionId.Trim();
                         _emittedActions.Add(item.PpeType);
                         ActionEvents.PublishActionAttempt(
-                            mapping.action.ActionId,
+                            actionId,
                             sourceId: name,
                             context: "ppe_snap",
                             position: transform.position);
-                        SafetyLog.Info($"PPESnapSlot [{name}]: emitted ActionAttempt '{mapping.action.ActionId}' for {item.PpeType}", this);
+                        SafetyLog.Info($"PPESnapSlot [{name}]: emitted ActionAttempt '{actionId}' for {item.PpeType}", this);
                         break;
                     }
                 }

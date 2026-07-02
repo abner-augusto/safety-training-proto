@@ -4,7 +4,6 @@ using Oculus.Interaction.HandGrab;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
-using SafetyProto.Data.ScriptableObjects;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -108,10 +107,7 @@ namespace SafetyProto.Runtime.PPE
         [SerializeField] private Animator carabinerAnimator;
 
         [Header("Action Integration")]
-        [Tooltip("ActionType SO for 'connect_harness'. If set, emits ActionAttempt on lock.")]
-        [SerializeField] private ActionTypeSO connectHarnessAction;
-
-        [Tooltip("ActionId fallback if no SO is assigned.")]
+        [Tooltip("ActionId emitted when the lanyard locks to an anchor.")]
         [SerializeField] private string connectActionId = "connect_harness";
 
         [Header("Events")]
@@ -561,9 +557,12 @@ namespace SafetyProto.Runtime.PPE
         {
             if (EventBus.Instance == null) return;
 
-            string actionId = connectHarnessAction != null
-                ? connectHarnessAction.ActionId
-                : connectActionId;
+            string actionId = string.IsNullOrWhiteSpace(connectActionId) ? string.Empty : connectActionId.Trim();
+            if (string.IsNullOrEmpty(actionId))
+            {
+                SafetyLog.Warning($"[RetractableLanyardController] Nenhum ActionId configurado em {name}. Conexão sem evento de tarefa.", this);
+                return;
+            }
 
             string context = anchor.isCorrectAnchor
                 ? "correct_anchor_olhal"
