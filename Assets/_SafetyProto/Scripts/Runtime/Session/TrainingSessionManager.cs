@@ -17,6 +17,7 @@ namespace SafetyProto.Runtime.Session
 
         private bool _isPaused;
         private bool _sessionStarted;
+        private bool _sessionEnded;
 
         private void Start()
         {
@@ -25,10 +26,22 @@ namespace SafetyProto.Runtime.Session
                 return;
             }
 
+            // Observe the domain terminal signal so OnDestroy doesn't re-raise SessionEnded
+            // for a session that already ended logically (TaskManagerCore.EndSession publishes
+            // SessionEnded on normal completion or a group timeout). We only raise from
+            // OnDestroy for the abort case: app quit / scene unload mid-session, before the
+            // session reached its logical end.
+            EventBus.OnSessionEndedCSharp += OnSessionEnded;
+
             if (autoStartOnStart)
             {
                 BeginSession();
             }
+        }
+
+        private void OnSessionEnded(SessionEndedEventArgs _)
+        {
+            _sessionEnded = true;
         }
 
         /// <summary>
@@ -87,7 +100,14 @@ namespace SafetyProto.Runtime.Session
 
         private void OnDestroy()
         {
-            if (EventBus.Instance != null)
+            EventBus.OnSessionEndedCSharp -= OnSessionEnded;
+
+            // Only raise here for the abort case: the session is being torn down (app quit /
+            // scene unload) before it ended logically. When TaskManagerCore.EndSession already
+            // published SessionEnded (normal completion or timeout), _sessionEnded is set and we
+            // must not fire a second time — a double-fire toggles EventGameObjectListener twice
+            // and double-broadcasts/double-logs on the dashboard/HUD.
+            if (EventBus.Instance != null && !_sessionEnded)
             {
                 SessionEvents.RaiseSessionEnded();
                 SafetyLog.Info("TrainingSessionManager: Session Ended event raised.", this);
