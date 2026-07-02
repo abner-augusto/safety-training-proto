@@ -1,0 +1,56 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SafetyProto.AuthoringApp.Gui.ViewModels"
+        x:Class="SafetyProto.AuthoringApp.Gui.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Width="960" Height="680"
+        MinWidth="640" MinHeight="440"
+        Title="SafetyProto — Autoria de Cenários">
+
+  <DockPanel Margin="12">
+
+    <StackPanel DockPanel.Dock="Top" Spacing="8">
+      <Grid ColumnDefinitions="90,*,Auto" RowDefinitions="Auto,Auto">
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="Cenário:" VerticalAlignment="Center" Margin="0,0,8,6"/>
+        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding ScenarioPath}" IsReadOnly="True"
+                 Watermark="Nenhum cenário carregado" Margin="0,0,8,6"/>
+        <Button Grid.Row="0" Grid.Column="2" Content="Abrir…" Click="OnOpenScenario" Margin="0,0,0,6"/>
+
+        <TextBlock Grid.Row="1" Grid.Column="0" Text="Catálogo:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding CatalogPath}" IsReadOnly="True"
+                 Watermark="Opcional — capability_catalog.json" Margin="0,0,8,0"/>
+        <Button Grid.Row="1" Grid.Column="2" Content="Abrir…" Click="OnOpenCatalog"/>
+      </Grid>
+
+      <Button Content="Validar" Click="OnValidate" HorizontalAlignment="Left" MinWidth="120"/>
+      <Border BorderBrush="#40808080" BorderThickness="0,0,0,1" Margin="0,2,0,0"/>
+    </StackPanel>
+
+    <Grid ColumnDefinitions="*,*" Margin="0,10,0,0">
+      <DockPanel Grid.Column="0" Margin="0,0,6,0">
+        <TextBlock DockPanel.Dock="Top" Text="Cenário" FontWeight="Bold" Margin="0,0,0,4"/>
+        <Border BorderBrush="#40808080" BorderThickness="1" CornerRadius="4">
+          <TextBox Text="{Binding ScenarioSummary}" IsReadOnly="True" AcceptsReturn="True"
+                   TextWrapping="NoWrap" FontFamily="Cascadia Mono, Consolas, monospace"
+                   Background="Transparent" BorderThickness="0"
+                   VerticalAlignment="Stretch"
+                   VerticalContentAlignment="Top"
+                   ScrollViewer.VerticalScrollBarVisibility="Auto"
+                   ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
+        </Border>
+      </DockPanel>
+
+      <DockPanel Grid.Column="1" Margin="6,0,0,0">
+        <TextBlock DockPanel.Dock="Top" Text="Validação" FontWeight="Bold" Margin="0,0,0,4"/>
+        <Border BorderBrush="#40808080" BorderThickness="1" CornerRadius="4">
+          <TextBox Text="{Binding ValidationOutput}" IsReadOnly="True" AcceptsReturn="True"
+                   TextWrapping="Wrap" FontFamily="Cascadia Mono, Consolas, monospace"
+                   Background="Transparent" BorderThickness="0"
+                   VerticalContentAlignment="Top"
+                   ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+        </Border>
+      </DockPanel>
+    </Grid>
+
+  </DockPanel>
+</Window>
