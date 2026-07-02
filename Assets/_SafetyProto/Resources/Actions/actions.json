@@ -1,0 +1,73 @@
+{
+  "version": "1",
+  "actions": [
+    {
+      "actionId": "connect_harness",
+      "displayName": "Conectar Talabarte",
+      "description": "Conectar o talabarte do cinto ao ponto de ancoragem certificado.",
+      "category": "Safety",
+      "telemetryName": "connect_harness",
+      "tags": [],
+      "regulatoryRefs": [
+        "NR-35 §35.5"
+      ],
+      "isSafetyCritical": true,
+      "isHiddenInUI": false,
+      "cooldownSeconds": 0.0,
+      "expectedDurationSeconds": 90.0,
+      "baseScore": 0,
+      "severity": 0
+    },
+    {
+      "actionId": "install_guardrail",
+      "displayName": "Instalar Guarda-corpo",
+      "description": "Instalar a seção de guarda-corpo no lado direito da plataforma.",
+      "category": "Safety",
+      "telemetryName": "install_guardrail",
+      "tags": [],
+      "regulatoryRefs": [
+        "NR-18 §18.15"
+      ],
+      "isSafetyCritical": true,
+      "isHiddenInUI": false,
+      "cooldownSeconds": 0.0,
+      "expectedDurationSeconds": 90.0,
+      "baseScore": 0,
+      "severity": 0
+    },
+    {
+      "actionId": "install_toeboard",
+      "displayName": "Instalar Rodapé",
+      "description": "Instalar o rodapé de 20cm na seção faltante da plataforma.",
+      "category": "Safety",
+      "telemetryName": "install_toeboard",
+      "tags": [],
+      "regulatoryRefs": [
+        "NR-18 §18.15"
+      ],
+      "isSafetyCritical": true,
+      "isHiddenInUI": false,
+      "cooldownSeconds": 0.0,
+      "expectedDurationSeconds": 90.0,
+      "baseScore": 0,
+      "severity": 0
+    },
+    {
+      "actionId": "flag_safety_net",
+      "displayName": "Sinalizar Tela de Proteção",
+      "description": "Identificar e sinalizar a tela de proteção caída/solta na fachada.",
+      "category": "Safety",
+      "telemetryName": "flag_safety_net",
+      "tags": [],
+      "regulatoryRefs": [
+        "NR-18 §18.15"
+      ],
+      "isSafetyCritical": true,
+      "isHiddenInUI": false,
+      "cooldownSeconds": 0.0,
+      "expectedDurationSeconds": 60.0,
+      "baseScore": 0,
+      "severity": 0
+    }
+  ]
+}
