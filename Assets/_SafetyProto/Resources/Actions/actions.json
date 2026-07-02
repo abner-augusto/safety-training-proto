@@ -26,7 +26,7 @@
       "telemetryName": "install_guardrail",
       "tags": [],
       "regulatoryRefs": [
-        "NR-18 §18.15"
+        "NR-18 §18.9.4.2"
       ],
       "isSafetyCritical": true,
       "isHiddenInUI": false,
@@ -43,7 +43,7 @@
       "telemetryName": "install_toeboard",
       "tags": [],
       "regulatoryRefs": [
-        "NR-18 §18.15"
+        "NR-18 §18.9.4.2 'c'"
       ],
       "isSafetyCritical": true,
       "isHiddenInUI": false,
@@ -60,7 +60,7 @@
       "telemetryName": "flag_safety_net",
       "tags": [],
       "regulatoryRefs": [
-        "NR-18 §18.15"
+        "NR-18 §18.12.15"
       ],
       "isSafetyCritical": true,
       "isHiddenInUI": false,
