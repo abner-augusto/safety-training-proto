@@ -75,6 +75,11 @@ namespace SafetyProto.Runtime.Task
             _onSessionCompleted = _ => _core?.ForceCompleteAllPendingTasks();
             EventBus.Instance!.onSessionCompleted.AddListener(_onSessionCompleted);
 
+            if (timerSystem != null)
+            {
+                timerSystem.onTimerTimeout.AddListener(OnGroupTimerTimeout);
+            }
+
             if (startTasksAutomatically)
             {
                 _core.StartSession();
@@ -86,9 +91,22 @@ namespace SafetyProto.Runtime.Task
             if (EventBus.Instance != null && _onSessionCompleted != null)
                 EventBus.Instance.onSessionCompleted.RemoveListener(_onSessionCompleted);
 
+            if (timerSystem != null)
+            {
+                timerSystem.onTimerTimeout.RemoveListener(OnGroupTimerTimeout);
+            }
+
             _core?.Dispose();
             _core = null;
         }
+
+        /// <summary>
+        /// Bridges the Runtime timer (Unity-only UnityEvent, previously observed only by
+        /// TimerUI for cosmetic red-text feedback) into the domain layer so a group timeout
+        /// actually drives task/group/session state forward. See
+        /// <see cref="TaskManagerCore.HandleGroupTimeout"/> for the orchestration this triggers.
+        /// </summary>
+        private void OnGroupTimerTimeout() => _core?.HandleGroupTimeout();
 
         /// <summary>Resolves runtime groups from the unified scenario JSON.</summary>
         private IReadOnlyList<ITaskGroup> LoadRuntimeGroups()

@@ -100,6 +100,13 @@ public sealed class HarnessEventBus : IEventBus
                 sc.TimestampMs = EventContext.NowUnixMs();
                 boxed = sc;
                 break;
+            case SessionEndedEventArgs se2:
+                se2.SessionId = EventContext.CurrentSessionId ?? string.Empty;
+                se2.PlayerId = EventContext.CurrentPlayerId ?? string.Empty;
+                se2.ScenarioId = EventContext.CurrentScenarioId ?? string.Empty;
+                se2.TimestampMs = EventContext.NowUnixMs();
+                boxed = se2;
+                break;
             case ActionAttemptedEvent a:
                 a.SessionId = EventContext.CurrentSessionId ?? string.Empty;
                 a.PlayerId = EventContext.CurrentPlayerId ?? string.Empty;

@@ -151,6 +151,51 @@ namespace SafetyProto.Domain.Tasks
             }
         }
 
+        /// <summary>
+        /// Called when the current group's time limit elapses (driven by the Runtime timer —
+        /// see <c>TimerSystem.onTimerTimeout</c>). Force-fails any task in the current group
+        /// that hasn't reached a terminal state, then replays the exact same
+        /// completion/orchestration path a natural last-task completion would take
+        /// (<see cref="CheckGroupCompletion"/> → next task/group → <see cref="EndSession"/>).
+        /// This is what makes a group timeout drive the session to a terminal state — and, via
+        /// <see cref="EndSession"/>, dispatch <c>SessionCompleted</c>/<c>SessionEnded</c> — the
+        /// same way normal completion does, instead of leaving the session stuck with a dead
+        /// timer and a group that can never finish.
+        /// Mirrors <see cref="ForceCompleteAllPendingTasks"/> in that it does not publish a
+        /// <c>TaskEventArgs</c> per forced task (no per-task timeout penalty is scored for them),
+        /// consistent with how leftover pending tasks are already handled at session end.
+        /// Safe to call when there is no current group, or when the current group already
+        /// finished (e.g. the last task completed the same frame the timer expired) — both are
+        /// no-ops beyond the idempotent orchestration replay.
+        /// </summary>
+        public void HandleGroupTimeout()
+        {
+            var currentGroup = GetCurrentGroup();
+            if (currentGroup == null) return;
+
+            for (int i = 0; i < _sessionTasks.Count; i++)
+            {
+                var t = _sessionTasks[i];
+                if (!ContainsByReference(currentGroup.tasks, t.TaskData)) continue;
+
+                if (t.State == TaskState.NotStarted || t.State == TaskState.InProgress)
+                {
+                    t.State = TaskState.CompletedFailure;
+                    t.CompletionTime = _timer?.ElapsedSeconds ?? 0f;
+                }
+            }
+
+            _currentTask = null;
+            _currentTaskIndex = -1;
+
+            CheckGroupCompletion();
+
+            if (GetCurrentGroup() != null)
+            {
+                _ = WaitAndStartNextTaskAsync(_delayBetweenTasks);
+            }
+        }
+
         private void InitializeRuntimeTasks()
         {
             _sessionTasks.Clear();
@@ -323,6 +368,16 @@ namespace SafetyProto.Domain.Tasks
             );
             _lastSessionSummary = summary;
             _bus.Publish(summary);
+
+            // Domain-level terminal signal, published unconditionally alongside the summary so
+            // any path that reaches EndSession() (normal completion or a group-timeout cascade
+            // via HandleGroupTimeout) drives the session to the same terminal state. Previously
+            // SessionEnded was only raised by TrainingSessionManager.OnDestroy — a Unity
+            // lifecycle hook tied to scene unload/app quit, not to the session actually
+            // finishing — which meant a timed-out group never produced SessionEnded at all.
+            // Publishing it here also makes it observable from a pure-domain integration test
+            // (no Unity Mono layer required).
+            _bus.Publish(new SessionEndedEventArgs());
         }
 
         public IReadOnlyList<RuntimeSafetyTask> GetSessionTasks() => _sessionTasks;
