@@ -3,53 +3,174 @@
         xmlns:vm="using:SafetyProto.AuthoringApp.Gui.ViewModels"
         x:Class="SafetyProto.AuthoringApp.Gui.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Width="960" Height="680"
-        MinWidth="640" MinHeight="440"
+        Width="1080" Height="760"
+        MinWidth="820" MinHeight="520"
         Title="SafetyProto — Autoria de Cenários">
 
-  <DockPanel Margin="12">
+  <DockPanel Margin="8">
 
-    <StackPanel DockPanel.Dock="Top" Spacing="8">
-      <Grid ColumnDefinitions="90,*,Auto" RowDefinitions="Auto,Auto">
-        <TextBlock Grid.Row="0" Grid.Column="0" Text="Cenário:" VerticalAlignment="Center" Margin="0,0,8,6"/>
-        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding ScenarioPath}" IsReadOnly="True"
-                 Watermark="Nenhum cenário carregado" Margin="0,0,8,6"/>
-        <Button Grid.Row="0" Grid.Column="2" Content="Abrir…" Click="OnOpenScenario" Margin="0,0,0,6"/>
-
-        <TextBlock Grid.Row="1" Grid.Column="0" Text="Catálogo:" VerticalAlignment="Center" Margin="0,0,8,0"/>
-        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding CatalogPath}" IsReadOnly="True"
-                 Watermark="Opcional — capability_catalog.json" Margin="0,0,8,0"/>
-        <Button Grid.Row="1" Grid.Column="2" Content="Abrir…" Click="OnOpenCatalog"/>
-      </Grid>
-
-      <Button Content="Validar" Click="OnValidate" HorizontalAlignment="Left" MinWidth="120"/>
-      <Border BorderBrush="#40808080" BorderThickness="0,0,0,1" Margin="0,2,0,0"/>
+    <!-- Toolbar -->
+    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="0,0,0,8">
+      <Button Content="Novo" Click="OnNew"/>
+      <Button Content="Abrir…" Click="OnOpenScenario"/>
+      <Button Content="Catálogo…" Click="OnOpenCatalog"/>
+      <Border Width="1" Background="#40808080" Margin="4,2"/>
+      <Button Content="Validar" Click="OnValidate" IsEnabled="{Binding HasScenario}"/>
+      <Button Content="Salvar…" Click="OnSave" IsEnabled="{Binding HasScenario}"/>
+      <Button Content="Deploy (adb)" Click="OnDeploy" IsEnabled="{Binding HasScenario}"/>
     </StackPanel>
 
-    <Grid ColumnDefinitions="*,*" Margin="0,10,0,0">
-      <DockPanel Grid.Column="0" Margin="0,0,6,0">
-        <TextBlock DockPanel.Dock="Top" Text="Cenário" FontWeight="Bold" Margin="0,0,0,4"/>
-        <Border BorderBrush="#40808080" BorderThickness="1" CornerRadius="4">
-          <TextBox Text="{Binding ScenarioSummary}" IsReadOnly="True" AcceptsReturn="True"
-                   TextWrapping="NoWrap" FontFamily="Cascadia Mono, Consolas, monospace"
-                   Background="Transparent" BorderThickness="0"
-                   VerticalAlignment="Stretch"
-                   VerticalContentAlignment="Top"
-                   ScrollViewer.VerticalScrollBarVisibility="Auto"
-                   ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
+    <!-- Status bar -->
+    <Border DockPanel.Dock="Bottom" BorderBrush="#40808080" BorderThickness="1" CornerRadius="4"
+            Margin="0,8,0,0" Padding="8" MaxHeight="180">
+      <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Spacing="2" Margin="0,0,0,4">
+          <TextBlock Text="{Binding ScenarioPath, StringFormat='Cenário: {0}'}"
+                     FontSize="11" Foreground="#A0808080" TextTrimming="CharacterEllipsis"/>
+          <TextBlock Text="{Binding CatalogPath, StringFormat='Catálogo: {0}'}"
+                     FontSize="11" Foreground="#A0808080" TextTrimming="CharacterEllipsis"/>
+        </StackPanel>
+        <TextBox Text="{Binding Status}" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
+                 FontFamily="Cascadia Mono, Consolas, monospace" Background="Transparent"
+                 BorderThickness="0" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+      </DockPanel>
+    </Border>
+
+    <!-- Master / detail -->
+    <Grid ColumnDefinitions="2*,Auto,3*">
+
+      <!-- Master: scenario header + tree -->
+      <DockPanel Grid.Column="0">
+        <TextBlock DockPanel.Dock="Top" IsVisible="{Binding !HasScenario}"
+                   Text="Nenhum cenário aberto.&#x0a;Use Novo ou Abrir…"
+                   Foreground="#A0808080" Margin="4,12"/>
+
+        <StackPanel DockPanel.Dock="Top" IsVisible="{Binding HasScenario}" Spacing="6" Margin="0,0,8,8">
+          <Grid ColumnDefinitions="90,*" RowDefinitions="Auto,Auto">
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Nome:" VerticalAlignment="Center" Margin="0,0,6,4"/>
+            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Editor.Name}" Margin="0,0,0,4"/>
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="Participante:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Editor.ParticipantId}"/>
+          </Grid>
+
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <Button Content="+ Grupo" Click="OnAddGroup"/>
+            <Button Content="+ Tarefa" Click="OnAddTask"/>
+            <Button Content="Remover" Click="OnRemove"/>
+          </StackPanel>
+        </StackPanel>
+
+        <Border BorderBrush="#40808080" BorderThickness="1" CornerRadius="4" Margin="0,0,8,0"
+                IsVisible="{Binding HasScenario}">
+          <TreeView ItemsSource="{Binding Editor.Groups}"
+                    SelectedItem="{Binding Editor.SelectedNode, Mode=TwoWay}">
+            <TreeView.DataTemplates>
+              <TreeDataTemplate DataType="vm:GroupViewModel" ItemsSource="{Binding Tasks}">
+                <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/>
+              </TreeDataTemplate>
+              <DataTemplate DataType="vm:TaskViewModel">
+                <TextBlock Text="{Binding DisplayName}"/>
+              </DataTemplate>
+            </TreeView.DataTemplates>
+          </TreeView>
         </Border>
       </DockPanel>
 
-      <DockPanel Grid.Column="1" Margin="6,0,0,0">
-        <TextBlock DockPanel.Dock="Top" Text="Validação" FontWeight="Bold" Margin="0,0,0,4"/>
-        <Border BorderBrush="#40808080" BorderThickness="1" CornerRadius="4">
-          <TextBox Text="{Binding ValidationOutput}" IsReadOnly="True" AcceptsReturn="True"
-                   TextWrapping="Wrap" FontFamily="Cascadia Mono, Consolas, monospace"
-                   Background="Transparent" BorderThickness="0"
-                   VerticalContentAlignment="Top"
-                   ScrollViewer.VerticalScrollBarVisibility="Auto"/>
-        </Border>
-      </DockPanel>
+      <GridSplitter Grid.Column="1" Width="4" Background="#20808080" ResizeDirection="Columns"/>
+
+      <!-- Detail: editor for the selected node -->
+      <ScrollViewer Grid.Column="2" Margin="8,0,0,0">
+        <ContentControl Content="{Binding Editor.SelectedNode}">
+          <ContentControl.DataTemplates>
+
+            <!-- Group editor -->
+            <DataTemplate DataType="vm:GroupViewModel">
+              <StackPanel Spacing="8">
+                <TextBlock Text="Grupo" FontWeight="Bold" FontSize="15"/>
+                <StackPanel Spacing="2">
+                  <TextBlock Text="Nome" FontSize="12" Foreground="#A0808080"/>
+                  <TextBox Text="{Binding GroupName}"/>
+                </StackPanel>
+                <StackPanel Spacing="2">
+                  <TextBlock Text="Modo de execução" FontSize="12" Foreground="#A0808080"/>
+                  <ComboBox ItemsSource="{Binding ExecutionModes}" SelectedItem="{Binding ExecutionMode}"
+                            HorizontalAlignment="Left" MinWidth="200"/>
+                </StackPanel>
+                <StackPanel Spacing="2">
+                  <TextBlock Text="Tempo limite (s)" FontSize="12" Foreground="#A0808080"/>
+                  <TextBox Text="{Binding TimeLimit}" HorizontalAlignment="Left" MinWidth="120"/>
+                </StackPanel>
+                <StackPanel Spacing="2">
+                  <TextBlock Text="Grupos requeridos (separados por vírgula)" FontSize="12" Foreground="#A0808080"/>
+                  <TextBox Text="{Binding RequiredGroupsCsv}" Watermark="ex.: Seleção de EPIs"/>
+                </StackPanel>
+              </StackPanel>
+            </DataTemplate>
+
+            <!-- Task editor -->
+            <DataTemplate DataType="vm:TaskViewModel">
+              <StackPanel Spacing="8">
+                <TextBlock Text="Tarefa" FontWeight="Bold" FontSize="15"/>
+                <StackPanel Spacing="2">
+                  <TextBlock Text="Nome" FontSize="12" Foreground="#A0808080"/>
+                  <TextBox Text="{Binding TaskName}"/>
+                </StackPanel>
+                <StackPanel Spacing="2">
+                  <TextBlock Text="Descrição" FontSize="12" Foreground="#A0808080"/>
+                  <TextBox Text="{Binding TaskDescription}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
+                </StackPanel>
+                <StackPanel Spacing="2">
+                  <TextBlock Text="Ação" FontSize="12" Foreground="#A0808080"/>
+                  <ComboBox ItemsSource="{Binding ActionOptions}" SelectedItem="{Binding SelectedAction}"
+                            HorizontalAlignment="Left" MinWidth="260"/>
+                </StackPanel>
+
+                <Grid ColumnDefinitions="*,*,*" Margin="0,0,0,0">
+                  <StackPanel Grid.Column="0" Spacing="2" Margin="0,0,6,0">
+                    <TextBlock Text="Pontos" FontSize="12" Foreground="#A0808080"/>
+                    <TextBox Text="{Binding SuccessPoints}"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Spacing="2" Margin="0,0,6,0">
+                    <TextBlock Text="Penalidade (falha)" FontSize="12" Foreground="#A0808080"/>
+                    <TextBox Text="{Binding FailurePenalty}"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="2" Spacing="2">
+                    <TextBlock Text="Penalidade (EPI)" FontSize="12" Foreground="#A0808080"/>
+                    <TextBox Text="{Binding PpePenalty}"/>
+                  </StackPanel>
+                </Grid>
+
+                <StackPanel Spacing="2">
+                  <TextBlock Text="EPIs requeridos" FontSize="12" Foreground="#A0808080"/>
+                  <Border BorderBrush="#40808080" BorderThickness="1" CornerRadius="4" Padding="8">
+                    <ItemsControl ItemsSource="{Binding PpeOptions}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="vm:PpeToggleViewModel">
+                          <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}"/>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </Border>
+                </StackPanel>
+
+                <StackPanel Spacing="2">
+                  <TextBlock Text="Dica (hint)" FontSize="12" Foreground="#A0808080"/>
+                  <TextBox Text="{Binding HintText}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
+                </StackPanel>
+                <StackPanel Spacing="2">
+                  <TextBlock Text="Conselho em caso de falha" FontSize="12" Foreground="#A0808080"/>
+                  <TextBox Text="{Binding FailureAdvice}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
+                </StackPanel>
+                <StackPanel Spacing="2">
+                  <TextBlock Text="Conselho de EPI" FontSize="12" Foreground="#A0808080"/>
+                  <TextBox Text="{Binding PpeAdvice}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
+                </StackPanel>
+              </StackPanel>
+            </DataTemplate>
+
+          </ContentControl.DataTemplates>
+        </ContentControl>
+      </ScrollViewer>
     </Grid>
 
   </DockPanel>
