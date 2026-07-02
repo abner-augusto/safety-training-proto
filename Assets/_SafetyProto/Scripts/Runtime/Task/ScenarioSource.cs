@@ -19,6 +19,14 @@ namespace SafetyProto.Runtime.Task
     /// Any failure (missing/corrupt override, invalid default) is logged via
     /// <see cref="SafetyLog"/> and never thrown — callers get the best available
     /// scenario or <c>null</c>.
+    /// <para>
+    /// Resolution is by a single fixed name, not a folder scan: only
+    /// <c>{name}.json</c> is considered. Other JSON files in the override directory
+    /// are ignored — there is no "most recent" or "first found" rule. With the
+    /// default <c>scenarioResourceName == "default"</c>, the override file must be
+    /// named <c>default.json</c>. To switch scenarios via override, copy/rename the
+    /// desired file to that name (or change the field in the build).
+    /// </para>
     /// </summary>
     public static class ScenarioSource
     {
