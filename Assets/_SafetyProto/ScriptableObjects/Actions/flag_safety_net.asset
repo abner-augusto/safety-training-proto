@@ -20,7 +20,7 @@ MonoBehaviour:
   telemetryNameOverride: 
   tags: []
   regulatoryRefs:
-  - "NR-18 \xA718.15"
+  - "NR-18 \xA718.12.15"
   isSafetyCritical: 1
   isHiddenInUI: 0
   icon: {fileID: 0}
