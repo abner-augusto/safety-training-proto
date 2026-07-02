@@ -12,7 +12,7 @@ namespace SafetyProto.Runtime.Actions
     public class ActionEmitter : MonoBehaviour
     {
         [Header("Action")]
-        [SerializeField] private string actionId = string.Empty;
+        [SerializeField, ActionId] private string actionId = string.Empty;
 
         [Header("Metadata")]
         [SerializeField] private string sourceId = string.Empty;

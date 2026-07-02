@@ -14,6 +14,7 @@
       <Button Content="Novo" Click="OnNew"/>
       <Button Content="Abrir…" Click="OnOpenScenario"/>
       <Button Content="Catálogo…" Click="OnOpenCatalog"/>
+      <Button Content="Ações…" Click="OnOpenActionCatalog"/>
       <Border Width="1" Background="#40808080" Margin="4,2"/>
       <Button Content="Validar" Click="OnValidate" IsEnabled="{Binding HasScenario}"/>
       <Button Content="Salvar…" Click="OnSave" IsEnabled="{Binding HasScenario}"/>
@@ -29,6 +30,8 @@
                      FontSize="11" Foreground="#A0808080" TextTrimming="CharacterEllipsis"/>
           <TextBlock Text="{Binding CatalogPath, StringFormat='Catálogo: {0}'}"
                      FontSize="11" Foreground="#A0808080" TextTrimming="CharacterEllipsis"/>
+          <TextBlock Text="{Binding ActionCatalogPath, StringFormat='Ações: {0}'}"
+                     FontSize="11" Foreground="#A0808080" TextTrimming="CharacterEllipsis"/>
         </StackPanel>
         <TextBox Text="{Binding Status}" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
                  FontFamily="Cascadia Mono, Consolas, monospace" Background="Transparent"
@@ -36,7 +39,8 @@
       </DockPanel>
     </Border>
 
-    <!-- Master / detail -->
+    <TabControl>
+      <TabItem Header="Cenário">
     <Grid ColumnDefinitions="2*,Auto,3*">
 
       <!-- Master: scenario header + tree -->
@@ -172,6 +176,112 @@
         </ContentControl>
       </ScrollViewer>
     </Grid>
+      </TabItem>
+
+      <TabItem Header="Ações">
+        <Grid ColumnDefinitions="2*,Auto,3*">
+          <DockPanel Grid.Column="0">
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="0,0,8,8">
+              <Button Content="Novo catálogo" Click="OnNewActionCatalog"/>
+              <Button Content="+ Ação" Click="OnAddAction"/>
+              <Button Content="Remover" Click="OnRemoveAction" IsEnabled="{Binding HasActionCatalog}"/>
+              <Button Content="Validar" Click="OnValidateActionCatalog" IsEnabled="{Binding HasActionCatalog}"/>
+              <Button Content="Salvar ações…" Click="OnSaveActionCatalog" IsEnabled="{Binding HasActionCatalog}"/>
+            </StackPanel>
+
+            <TextBlock DockPanel.Dock="Top" IsVisible="{Binding !HasActionCatalog}"
+                       Text="Nenhum catálogo de ações aberto.&#x0a;Use Ações… ou Novo catálogo."
+                       Foreground="#A0808080" Margin="4,12"/>
+
+            <StackPanel DockPanel.Dock="Top" IsVisible="{Binding HasActionCatalog}" Spacing="2" Margin="0,0,8,8">
+              <TextBlock Text="Versão" FontSize="12" Foreground="#A0808080"/>
+              <TextBox Text="{Binding ActionEditor.Version}"/>
+            </StackPanel>
+
+            <Border BorderBrush="#40808080" BorderThickness="1" CornerRadius="4" Margin="0,0,8,0"
+                    IsVisible="{Binding HasActionCatalog}">
+              <ListBox ItemsSource="{Binding ActionEditor.Actions}"
+                       SelectedItem="{Binding ActionEditor.SelectedAction, Mode=TwoWay}">
+                <ListBox.ItemTemplate>
+                  <DataTemplate DataType="vm:ActionViewModel">
+                    <StackPanel Spacing="1">
+                      <TextBlock Text="{Binding TreeLabel}" FontWeight="SemiBold"/>
+                      <TextBlock Text="{Binding DisplayName}" FontSize="11" Foreground="#A0808080"/>
+                    </StackPanel>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </Border>
+          </DockPanel>
+
+          <GridSplitter Grid.Column="1" Width="4" Background="#20808080" ResizeDirection="Columns"/>
+
+          <ScrollViewer Grid.Column="2" Margin="8,0,0,0">
+            <ContentControl Content="{Binding ActionEditor.SelectedAction}">
+              <ContentControl.DataTemplates>
+                <DataTemplate DataType="vm:ActionViewModel">
+                  <StackPanel Spacing="8">
+                    <TextBlock Text="Ação" FontWeight="Bold" FontSize="15"/>
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="actionId" FontSize="12" Foreground="#A0808080"/>
+                      <TextBox Text="{Binding ActionId}" Watermark="ex.: inspect_ladder"/>
+                    </StackPanel>
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="Nome exibido" FontSize="12" Foreground="#A0808080"/>
+                      <TextBox Text="{Binding DisplayName}"/>
+                    </StackPanel>
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="Descrição" FontSize="12" Foreground="#A0808080"/>
+                      <TextBox Text="{Binding Description}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="56"/>
+                    </StackPanel>
+                    <Grid ColumnDefinitions="*,*">
+                      <StackPanel Grid.Column="0" Spacing="2" Margin="0,0,6,0">
+                        <TextBlock Text="Categoria" FontSize="12" Foreground="#A0808080"/>
+                        <TextBox Text="{Binding Category}" Watermark="TaskStep"/>
+                      </StackPanel>
+                      <StackPanel Grid.Column="1" Spacing="2">
+                        <TextBlock Text="Telemetry name" FontSize="12" Foreground="#A0808080"/>
+                        <TextBox Text="{Binding TelemetryName}" Watermark="usa actionId se vazio"/>
+                      </StackPanel>
+                    </Grid>
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="Tags (separadas por vírgula)" FontSize="12" Foreground="#A0808080"/>
+                      <TextBox Text="{Binding TagsCsv}"/>
+                    </StackPanel>
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="Referências normativas (separadas por vírgula)" FontSize="12" Foreground="#A0808080"/>
+                      <TextBox Text="{Binding RegulatoryRefsCsv}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="16">
+                      <CheckBox Content="Crítica para segurança" IsChecked="{Binding IsSafetyCritical}"/>
+                      <CheckBox Content="Ocultar na UI" IsChecked="{Binding IsHiddenInUI}"/>
+                    </StackPanel>
+                    <Grid ColumnDefinitions="*,*,*,*">
+                      <StackPanel Grid.Column="0" Spacing="2" Margin="0,0,6,0">
+                        <TextBlock Text="Cooldown (s)" FontSize="12" Foreground="#A0808080"/>
+                        <TextBox Text="{Binding CooldownSeconds}"/>
+                      </StackPanel>
+                      <StackPanel Grid.Column="1" Spacing="2" Margin="0,0,6,0">
+                        <TextBlock Text="Duração esperada (s)" FontSize="12" Foreground="#A0808080"/>
+                        <TextBox Text="{Binding ExpectedDurationSeconds}"/>
+                      </StackPanel>
+                      <StackPanel Grid.Column="2" Spacing="2" Margin="0,0,6,0">
+                        <TextBlock Text="Pontuação base" FontSize="12" Foreground="#A0808080"/>
+                        <TextBox Text="{Binding BaseScore}"/>
+                      </StackPanel>
+                      <StackPanel Grid.Column="3" Spacing="2">
+                        <TextBlock Text="Severidade" FontSize="12" Foreground="#A0808080"/>
+                        <TextBox Text="{Binding Severity}"/>
+                      </StackPanel>
+                    </Grid>
+                  </StackPanel>
+                </DataTemplate>
+              </ContentControl.DataTemplates>
+            </ContentControl>
+          </ScrollViewer>
+        </Grid>
+      </TabItem>
+    </TabControl>
 
   </DockPanel>
 </Window>

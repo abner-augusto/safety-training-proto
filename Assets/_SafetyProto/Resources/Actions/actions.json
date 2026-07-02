@@ -6,7 +6,7 @@
       "displayName": "Conectar Talabarte",
       "description": "Conectar o talabarte do cinto ao ponto de ancoragem certificado.",
       "category": "Safety",
-      "telemetryName": "connect_harness",
+      "telemetryName": "conectar_talabarte",
       "tags": [],
       "regulatoryRefs": [
         "NR-35 §35.5"
@@ -23,7 +23,7 @@
       "displayName": "Instalar Guarda-corpo",
       "description": "Instalar a seção de guarda-corpo no lado direito da plataforma.",
       "category": "Safety",
-      "telemetryName": "install_guardrail",
+      "telemetryName": "instalar_guarda_corpo",
       "tags": [],
       "regulatoryRefs": [
         "NR-18 §18.9.4.2"
@@ -40,7 +40,7 @@
       "displayName": "Instalar Rodapé",
       "description": "Instalar o rodapé de 20cm na seção faltante da plataforma.",
       "category": "Safety",
-      "telemetryName": "install_toeboard",
+      "telemetryName": "instalar_rodape",
       "tags": [],
       "regulatoryRefs": [
         "NR-18 §18.9.4.2 'c'"
@@ -57,7 +57,7 @@
       "displayName": "Sinalizar Tela de Proteção",
       "description": "Identificar e sinalizar a tela de proteção caída/solta na fachada.",
       "category": "Safety",
-      "telemetryName": "flag_safety_net",
+      "telemetryName": "sinalizar_tela_protecao",
       "tags": [],
       "regulatoryRefs": [
         "NR-18 §18.12.15"

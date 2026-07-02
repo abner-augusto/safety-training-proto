@@ -9,7 +9,7 @@ namespace SafetyProto.Runtime.Actions
     public class ActionTrigger : MonoBehaviour
     {
         [Header("Action Configuration")]
-        [SerializeField] private string actionId = string.Empty;
+        [SerializeField, ActionId] private string actionId = string.Empty;
         [SerializeField] private string sourceIdOverride = string.Empty;
         [SerializeField] private string context = string.Empty;
         public int interactorId = 0; // 0 for player, could be specific for multi-user or hands
