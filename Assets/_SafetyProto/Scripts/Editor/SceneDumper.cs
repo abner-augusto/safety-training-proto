@@ -23,7 +23,7 @@ public class SceneDumper : EditorWindow
     private Dictionary<int, List<RefEdge>> refGraph;
     private Dictionary<int, string> idToName;
 
-    // ── FILTROS DE HIERARQUIA ────────────────────────────────────────────────
+    // ── HIERARCHY FILTERS ───────────────────────────────────────────────────
 
     private static readonly string[] SkipNamePatterns = {
         "b_l_", "b_r_",
@@ -49,7 +49,7 @@ public class SceneDumper : EditorWindow
         "r_handMeshNode",    "l_handMeshNode",
         "OVRLeftHandDataSource",      "OVRRightHandDataSource",
         "OVRLeftControllerDataSource","OVRRightControllerDataSource",
-        // Subárvores de interactors do OVR SDK
+        // Subtrees of OVR SDK interactors
         "LeftInteractions",  "RightInteractions",
         "OVRControllerPrefab",
     };
@@ -58,17 +58,17 @@ public class SceneDumper : EditorWindow
         ("LeftInteractions",  "RightInteractions"),
     };
 
-    // ── FILTROS DE REFERÊNCIAS ───────────────────────────────────────────────
+    // ── REFERENCE FILTERS ───────────────────────────────────────────────────
 
-    // Componentes cujas referências são sempre wiring interno do ISDK
+    // Components whose references are always internal ISDK wiring
     private static readonly string[] SkipRefSourceComponents = {
         "HandGrabInteractable",
         "GrabInteractable",
         "HandGrabPose",
         "PointableUnityEventWrapper",
         "TouchHandGrabInteractable",
-        // Componentes de locomotion/interação do OVR SDK — só referenciam
-        // partes do rig, nunca objetos do projeto
+        // OVR SDK locomotion/interaction components — they only reference
+        // rig parts, never project objects
         "RayInteractor",
         "PokeInteractor",
         "HandGrabInteractor",
@@ -91,30 +91,30 @@ public class SceneDumper : EditorWindow
         "TunnelingEffect",
     };
 
-    // Prefixos de nomes de TARGET que indicam player rig do SDK.
-    // Qualquer aresta apontando para esses objetos é removida.
+    // TARGET name prefixes that indicate the SDK player rig.
+    // Any edge pointing to these objects is removed.
     private static readonly string[] SkipRefTargetPrefixes = {
-        // Anchors do OVRCameraRig
+        // OVRCameraRig anchors
         "CenterEyeAnchor/",
         "LeftEyeAnchor/",
         "RightEyeAnchor/",
         "LeftHandAnchor/",
         "RightHandAnchor/",
         "TrackingSpace/",
-        // Interactors internos (referenciados por uns aos outros)
+        // Internal interactors (referencing each other)
         "LeftInteractions/",
         "RightInteractions/",
         "OVRHands/",
         "OVRControllers/",
         "OVRHmd/",
-        // Componentes genéricos do rig que nunca são do projeto
+        // Generic rig components that are never part of the project
         "HandGrabAPI/",
         "HandWristPoint/",
         "GripPoint/",
         "PinchPoint/",
         "PinchPointRange/",
         "HandSphereMap/",
-        // Partes do rig visual sintético / controller
+        // Parts of the synthetic visual rig / controller
         "SyntheticHandData/",
         "ControllerInHandVisibilityActiveState/",
         "OVRLeftHandVisual/",
@@ -128,7 +128,7 @@ public class SceneDumper : EditorWindow
         "OpenXRRightHand/",
     };
 
-    // Tipos de componente no TARGET que são sempre infra do SDK
+    // Component types in the TARGET that are always SDK infrastructure
     private static readonly string[] SkipRefTargetComponentSuffixes = {
         "/HandRef",
         "/HmdRef",
@@ -146,7 +146,7 @@ public class SceneDumper : EditorWindow
         "/HandJoint",
     };
 
-    // Componentes que, sozinhos, indicam que um nó é puramente visual (sem lógica)
+        // Components that, on their own, indicate a node is purely visual (no logic)
     private static readonly HashSet<string> VisualOnlyComponents = new() {
         "MeshRenderer", "MeshCollider", "SkinnedMeshRenderer",
         "Animator", "SortingGroup", "ProBuilderMesh", "ProBuilderShape",
@@ -309,13 +309,13 @@ public class SceneDumper : EditorWindow
     {
         if (!filterSdkInternals) return false;
 
-        // Auto-referência (objeto apontando para si mesmo)
-        // Nota: sourceName não está disponível aqui, aplicamos isso em RegisterEdges
+        // Self-reference (object pointing to itself)
+        // Note: sourceName is not available here; we apply this in RegisterEdges
         
-        // Target é parte do player rig do SDK
+        // Target is part of the player's SDK rig
         if (SkipRefTargetPrefixes.Any(p => targetName.StartsWith(p))) return true;
 
-        // Target é um componente de infra do SDK (sufixo)
+        // Target is an SDK infrastructure component (suffix)
         if (SkipRefTargetComponentSuffixes.Any(s => targetName.EndsWith(s))) return true;
 
         return false;
@@ -375,14 +375,14 @@ public class SceneDumper : EditorWindow
                 RegisterEdges(go.GetInstanceID(), go.name, refs);
         }
 
-        // Espelho: emite nota e não expande
+        // Mirror: emit note and do not expand
         if (IsMirrorOf(go, out string mirrorNote))
         {
             sb.AppendLine($"{pad}  *(mirror of {mirrorNote} — omitted)*");
             return;
         }
 
-        // Subárvore SDK: expande o nó mas colapsa filhos
+        // SDK subtree: expand the node but collapse children
         if (ShouldCollapseSubtree(go))
         {
             if (go.transform.childCount > 0)

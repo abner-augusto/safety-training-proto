@@ -46,7 +46,7 @@ namespace SafetyProto.Core
         public string ScenarioId;
         public long TimestampMs;
 
-        public ISafetyTask Task;                  // was SafetyTask
+        public ISafetyTask Task;
         public RuntimeSafetyTask? RuntimeTask;
         public TaskPhase Phase;
 
@@ -90,7 +90,7 @@ namespace SafetyProto.Core
         public string ScenarioId;
         public long TimestampMs;
 
-        public ITaskGroup? Group;                  // was TaskGroup
+        public ITaskGroup? Group;
         public TaskGroupPhase Phase;
 
         public TaskGroupEventArgs(ITaskGroup? group)

@@ -70,12 +70,12 @@ namespace SafetyProto.UI
         {
             if (args.Group is not { } group) return;
 
-            // Cancelar remoções pendentes
+            // Cancel pending removals
             foreach (var kvp in _removalCoroutines)
                 if (kvp.Value != null) StopCoroutine(kvp.Value);
             _removalCoroutines.Clear();
 
-            // Destruir entradas existentes
+            // Destroy existing entries
             foreach (var go in _taskToGO.Values)
                 if (go != null) Destroy(go);
 
@@ -156,7 +156,7 @@ namespace SafetyProto.UI
 
         private void ScheduleRemoval(ISafetyTask task, TaskState state)
         {
-            if (_removalCoroutines.ContainsKey(task)) return; // já agendado
+            if (_removalCoroutines.ContainsKey(task)) return; // already scheduled
 
             if (_taskToEntry.TryGetValue(task, out var entry))
                 entry.UpdateState(state);

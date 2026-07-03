@@ -106,7 +106,7 @@ namespace SafetyProto.UI
 
         private void Populate(Transform parent, GameObject prefab, Action<GameObject, int> setup)
         {
-            // Limpa linhas de um disparo anterior (ou de um populate real do SessionReportUI).
+            // Clears rows from a previous trigger (or from a real populate by SessionReportUI).
             for (int i = parent.childCount - 1; i >= 0; i--)
                 DestroyImmediate(parent.GetChild(i).gameObject);
 
@@ -119,7 +119,7 @@ namespace SafetyProto.UI
 
         private static string Measure(Transform parent)
         {
-            // Força o ContentSizeFitter + layout para medir imediatamente.
+            // Force ContentSizeFitter + layout to measure immediately.
             Canvas.ForceUpdateCanvases();
             if (parent is not RectTransform content)
                 return "sem RectTransform";
