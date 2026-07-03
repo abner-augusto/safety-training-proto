@@ -31,7 +31,7 @@ namespace SafetyProto.Runtime.Session
             // SessionEnded on normal completion or a group timeout). We only raise from
             // OnDestroy for the abort case: app quit / scene unload mid-session, before the
             // session reached its logical end.
-            EventBus.OnSessionEndedCSharp += OnSessionEnded;
+            EventBus.Instance.onSessionEnded.AddListener(OnSessionEnded);
 
             if (autoStartOnStart)
             {
@@ -100,17 +100,19 @@ namespace SafetyProto.Runtime.Session
 
         private void OnDestroy()
         {
-            EventBus.OnSessionEndedCSharp -= OnSessionEnded;
-
             // Only raise here for the abort case: the session is being torn down (app quit /
             // scene unload) before it ended logically. When TaskManagerCore.EndSession already
             // published SessionEnded (normal completion or timeout), _sessionEnded is set and we
             // must not fire a second time — a double-fire toggles EventGameObjectListener twice
             // and double-broadcasts/double-logs on the dashboard/HUD.
-            if (EventBus.Instance != null && !_sessionEnded)
+            if (EventBus.Instance != null)
             {
-                SessionEvents.RaiseSessionEnded();
-                SafetyLog.Info("TrainingSessionManager: Session Ended event raised.", this);
+                EventBus.Instance.onSessionEnded.RemoveListener(OnSessionEnded);
+                if (!_sessionEnded)
+                {
+                    SessionEvents.RaiseSessionEnded();
+                    SafetyLog.Info("TrainingSessionManager: Session Ended event raised.", this);
+                }
             }
 
             ScoreService.DestroyInstance();

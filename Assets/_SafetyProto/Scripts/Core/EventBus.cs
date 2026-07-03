@@ -52,32 +52,7 @@ namespace SafetyProto.Core
 
         private void OnDisable()
         {
-            ClearStaticEvents();
             _instance = null;
-        }
-
-        private void OnDestroy()
-        {
-            ClearStaticEvents();
-        }
-
-        private static void ClearStaticEvents()
-        {
-            OnSessionStartedCSharp = null;
-            OnSessionPausedCSharp = null;
-            OnSessionResumedCSharp = null;
-            OnSessionEndedCSharp = null;
-            OnActionAttemptCSharp = null;
-            OnPpeStateChangedCSharp = null;
-            OnTaskStartedCSharp = null;
-            OnTaskCompletedCSharp = null;
-            OnTaskTimeoutCSharp = null;
-            OnScoreChangedCSharp = null;
-            OnGroupStartedCSharp = null;
-            OnGroupCompletedCSharp = null;
-            OnSafetyViolationCSharp = null;
-            OnCriticalSafetyFailureCSharp = null;
-            OnSafetyErrorCSharp = null;
         }
 
         private void Enqueue(Action action)
@@ -135,13 +110,22 @@ namespace SafetyProto.Core
                 try { handlers.Invoke(payload); }
                 catch (Exception ex)
                 {
-                    SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
-                    {
-                        Source = "EventBus.InvokeTyped",
-                        Message = "Typed subscriber threw",
-                        Details = ex.ToString()
-                    });
+                    ReportListenerError("EventBus.InvokeTyped", ex, payload is SafetyErrorEventArgs ? false : true);
                 }
+            }
+        }
+
+        private static void ReportListenerError(string source, Exception ex, bool raiseSafetyError)
+        {
+            SafetyLog.Error($"[EventBus] Listener threw during {source}: {ex}");
+            if (raiseSafetyError)
+            {
+                SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
+                {
+                    Source = source,
+                    Message = "UnityEvent listener threw",
+                    Details = ex.ToString()
+                });
             }
         }
 
@@ -249,22 +233,6 @@ namespace SafetyProto.Core
         [Header("Debug")]
         public bool verboseLogging;
 
-        public static event Action<SessionStartedEventArgs> OnSessionStartedCSharp;
-        public static event Action<SessionPausedEventArgs> OnSessionPausedCSharp;
-        public static event Action<SessionResumedEventArgs> OnSessionResumedCSharp;
-        public static event Action<SessionEndedEventArgs> OnSessionEndedCSharp;
-        public static event Action<ActionAttemptedEvent> OnActionAttemptCSharp;
-        public static event Action<PPEStateChangedEventArgs> OnPpeStateChangedCSharp;
-        public static event Action<TaskEventArgs> OnTaskStartedCSharp;
-        public static event Action<TaskEventArgs> OnTaskCompletedCSharp;
-        public static event Action<TaskEventArgs> OnTaskTimeoutCSharp;
-        public static event Action<ScoreChangedEventArgs> OnScoreChangedCSharp;
-        public static event Action<TaskGroupEventArgs> OnGroupStartedCSharp;
-        public static event Action<TaskGroupEventArgs> OnGroupCompletedCSharp;
-        public static event Action<SafetyViolationEventArgs> OnSafetyViolationCSharp;
-        public static event Action<CriticalSafetyFailureEventArgs> OnCriticalSafetyFailureCSharp;
-        public static event Action<SafetyErrorEventArgs> OnSafetyErrorCSharp;
-
         [Header("Session Events")]
         public UnityEvent<SessionStartedEventArgs> onSessionStarted;
         public UnityEvent<SessionPausedEventArgs> onSessionPaused;
@@ -299,8 +267,8 @@ namespace SafetyProto.Core
             Enqueue(() =>
             {
                 if (verboseLogging) SafetyLog.Info("[EventBus] SessionStarted");
-                OnSessionStartedCSharp?.Invoke(payload);
-                onSessionStarted?.Invoke(payload);
+                try { onSessionStarted?.Invoke(payload); }
+                catch (Exception ex) { ReportListenerError("EventBus.onSessionStarted", ex, raiseSafetyError: true); }
                 InvokeTyped(payload);
             });
         }
@@ -312,8 +280,8 @@ namespace SafetyProto.Core
             Enqueue(() =>
             {
                 if (verboseLogging) SafetyLog.Info("[EventBus] SessionPaused");
-                OnSessionPausedCSharp?.Invoke(payload);
-                onSessionPaused?.Invoke(payload);
+                try { onSessionPaused?.Invoke(payload); }
+                catch (Exception ex) { ReportListenerError("EventBus.onSessionPaused", ex, raiseSafetyError: true); }
                 InvokeTyped(payload);
             });
         }
@@ -325,8 +293,8 @@ namespace SafetyProto.Core
             Enqueue(() =>
             {
                 if (verboseLogging) SafetyLog.Info("[EventBus] SessionResumed");
-                OnSessionResumedCSharp?.Invoke(payload);
-                onSessionResumed?.Invoke(payload);
+                try { onSessionResumed?.Invoke(payload); }
+                catch (Exception ex) { ReportListenerError("EventBus.onSessionResumed", ex, raiseSafetyError: true); }
                 InvokeTyped(payload);
             });
         }
@@ -338,8 +306,8 @@ namespace SafetyProto.Core
             Enqueue(() =>
             {
                 if (verboseLogging) SafetyLog.Info("[EventBus] SessionEnded");
-                OnSessionEndedCSharp?.Invoke(payload);
-                onSessionEnded?.Invoke(payload);
+                try { onSessionEnded?.Invoke(payload); }
+                catch (Exception ex) { ReportListenerError("EventBus.onSessionEnded", ex, raiseSafetyError: true); }
                 InvokeTyped(payload);
             });
         }
@@ -355,8 +323,8 @@ namespace SafetyProto.Core
                     var positionText = payload.Position.HasValue ? payload.Position.Value.ToString() : "<none>";
                     SafetyLog.Info($"[EventBus] ActionAttempt: {payload.ActionId}, Interactor: {payload.InteractorId}, Pos: {positionText}");
                 }
-                OnActionAttemptCSharp?.Invoke(payload);
-                onActionAttempt?.Invoke(payload);
+                try { onActionAttempt?.Invoke(payload); }
+                catch (Exception ex) { ReportListenerError("EventBus.onActionAttempt", ex, raiseSafetyError: true); }
                 InvokeTyped(payload);
             });
         }
@@ -368,8 +336,8 @@ namespace SafetyProto.Core
             Enqueue(() =>
             {
                 if (verboseLogging) SafetyLog.Info($"[EventBus] PPEStateChanged: {payload.PpeType}, Wearing: {payload.IsWearing}");
-                OnPpeStateChangedCSharp?.Invoke(payload);
-                onPpeStateChanged?.Invoke(payload);
+                try { onPpeStateChanged?.Invoke(payload); }
+                catch (Exception ex) { ReportListenerError("EventBus.onPpeStateChanged", ex, raiseSafetyError: true); }
                 InvokeTyped(payload);
             });
         }
@@ -382,8 +350,8 @@ namespace SafetyProto.Core
             Enqueue(() =>
             {
                 if (verboseLogging && payload.Task != null) SafetyLog.Info($"[EventBus] TaskStarted: {payload.Task.taskName}");
-                OnTaskStartedCSharp?.Invoke(payload);
-                onTaskStarted?.Invoke(payload);
+                try { onTaskStarted?.Invoke(payload); }
+                catch (Exception ex) { ReportListenerError("EventBus.onTaskStarted", ex, raiseSafetyError: true); }
                 InvokeTyped(payload);
             });
         }
@@ -396,8 +364,8 @@ namespace SafetyProto.Core
             Enqueue(() =>
             {
                 if (verboseLogging && payload.Task != null) SafetyLog.Info($"[EventBus] TaskCompleted: {payload.Task.taskName}");
-                OnTaskCompletedCSharp?.Invoke(payload);
-                onTaskCompleted?.Invoke(payload);
+                try { onTaskCompleted?.Invoke(payload); }
+                catch (Exception ex) { ReportListenerError("EventBus.onTaskCompleted", ex, raiseSafetyError: true); }
                 InvokeTyped(payload);
             });
         }
@@ -410,8 +378,8 @@ namespace SafetyProto.Core
             Enqueue(() =>
             {
                 if (verboseLogging && payload.Task != null) SafetyLog.Info($"[EventBus] TaskTimeout: {payload.Task.taskName}");
-                OnTaskTimeoutCSharp?.Invoke(payload);
-                onTaskTimeout?.Invoke(payload);
+                try { onTaskTimeout?.Invoke(payload); }
+                catch (Exception ex) { ReportListenerError("EventBus.onTaskTimeout", ex, raiseSafetyError: true); }
                 InvokeTyped(payload);
             });
         }
@@ -423,8 +391,8 @@ namespace SafetyProto.Core
             Enqueue(() =>
             {
                 if (verboseLogging) SafetyLog.Info($"[EventBus] ScoreChanged: Total {payload.TotalScore}, Delta {payload.Delta}");
-                OnScoreChangedCSharp?.Invoke(payload);
-                onScoreChanged?.Invoke(payload);
+                try { onScoreChanged?.Invoke(payload); }
+                catch (Exception ex) { ReportListenerError("EventBus.onScoreChanged", ex, raiseSafetyError: true); }
                 InvokeTyped(payload);
             });
         }
@@ -437,8 +405,8 @@ namespace SafetyProto.Core
             Enqueue(() =>
             {
                 if (verboseLogging && payload.Group != null) SafetyLog.Info($"[EventBus] GroupStarted: {payload.Group.groupName}");
-                OnGroupStartedCSharp?.Invoke(payload);
-                onGroupStarted?.Invoke(payload);
+                try { onGroupStarted?.Invoke(payload); }
+                catch (Exception ex) { ReportListenerError("EventBus.onGroupStarted", ex, raiseSafetyError: true); }
                 InvokeTyped(payload);
             });
         }
@@ -451,8 +419,8 @@ namespace SafetyProto.Core
             Enqueue(() =>
             {
                 if (verboseLogging && payload.Group != null) SafetyLog.Info($"[EventBus] GroupCompleted: {payload.Group.groupName}");
-                OnGroupCompletedCSharp?.Invoke(payload);
-                onGroupCompleted?.Invoke(payload);
+                try { onGroupCompleted?.Invoke(payload); }
+                catch (Exception ex) { ReportListenerError("EventBus.onGroupCompleted", ex, raiseSafetyError: true); }
                 InvokeTyped(payload);
             });
         }
@@ -464,7 +432,8 @@ namespace SafetyProto.Core
             Enqueue(() =>
             {
                 if (verboseLogging) SafetyLog.Info($"[EventBus] SessionCompleted: {payload.tasksCompleted} tasks, {payload.totalElapsedTime:F2}s, Score: {payload.totalScore}");
-                onSessionCompleted?.Invoke(payload);
+                try { onSessionCompleted?.Invoke(payload); }
+                catch (Exception ex) { ReportListenerError("EventBus.onSessionCompleted", ex, raiseSafetyError: true); }
                 InvokeTyped(payload);
             });
         }
@@ -476,8 +445,8 @@ namespace SafetyProto.Core
             Enqueue(() =>
             {
                 if (verboseLogging) SafetyLog.Info($"[EventBus] SafetyViolation: {payload.ViolationCode} - {payload.Message}");
-                OnSafetyViolationCSharp?.Invoke(payload);
-                onSafetyViolation?.Invoke(payload);
+                try { onSafetyViolation?.Invoke(payload); }
+                catch (Exception ex) { ReportListenerError("EventBus.onSafetyViolation", ex, raiseSafetyError: true); }
                 InvokeTyped(payload);
             });
         }
@@ -489,8 +458,8 @@ namespace SafetyProto.Core
             Enqueue(() =>
             {
                 if (verboseLogging) SafetyLog.Info($"[EventBus] CriticalSafetyFailure: {payload.Reason} ({payload.ViolationCount} in {payload.WindowSeconds}s)");
-                OnCriticalSafetyFailureCSharp?.Invoke(payload);
-                onCriticalSafetyFailure?.Invoke(payload);
+                try { onCriticalSafetyFailure?.Invoke(payload); }
+                catch (Exception ex) { ReportListenerError("EventBus.onCriticalSafetyFailure", ex, raiseSafetyError: true); }
                 InvokeTyped(payload);
             });
         }
@@ -502,8 +471,8 @@ namespace SafetyProto.Core
             Enqueue(() =>
             {
                 if (verboseLogging) SafetyLog.Info($"[EventBus] SafetyError: {payload.Source} - {payload.Message}");
-                OnSafetyErrorCSharp?.Invoke(payload);
-                onSafetyError?.Invoke(payload);
+                try { onSafetyError?.Invoke(payload); }
+                catch (Exception ex) { ReportListenerError("EventBus.onSafetyError", ex, raiseSafetyError: false); }
                 InvokeTyped(payload);
             });
         }

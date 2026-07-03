@@ -28,58 +28,56 @@ namespace SafetyProto.UI
             if (!TryInitializeLogText())
                 return;
 
-            EventBus.OnSessionStartedCSharp += OnSessionStarted;
-            EventBus.OnSessionPausedCSharp += OnSessionPaused;
-            EventBus.OnSessionResumedCSharp += OnSessionResumed;
-            EventBus.OnSessionEndedCSharp += OnSessionEnded;
-
-            EventBus.OnActionAttemptCSharp += OnActionAttempt;
-            EventBus.OnPpeStateChangedCSharp += OnPpeStateChanged;
-
-            EventBus.OnTaskStartedCSharp += OnTaskStarted;
-            EventBus.OnTaskCompletedCSharp += OnTaskCompleted;
-            EventBus.OnTaskTimeoutCSharp += OnTaskTimeout;
-
-            EventBus.OnScoreChangedCSharp += OnScoreChanged;
-
-            EventBus.OnGroupStartedCSharp += OnGroupStarted;
-            EventBus.OnGroupCompletedCSharp += OnGroupCompleted;
-
-            EventBus.OnSafetyViolationCSharp += OnSafetyViolation;
-            EventBus.OnCriticalSafetyFailureCSharp += OnCriticalSafetyFailure;
-            EventBus.OnSafetyErrorCSharp += OnSafetyError;
-
             if (EventBus.Instance != null)
             {
+                EventBus.Instance.onSessionStarted.AddListener(OnSessionStarted);
+                EventBus.Instance.onSessionPaused.AddListener(OnSessionPaused);
+                EventBus.Instance.onSessionResumed.AddListener(OnSessionResumed);
+                EventBus.Instance.onSessionEnded.AddListener(OnSessionEnded);
+
+                EventBus.Instance.onActionAttempt.AddListener(OnActionAttempt);
+                EventBus.Instance.onPpeStateChanged.AddListener(OnPpeStateChanged);
+
+                EventBus.Instance.onTaskStarted.AddListener(OnTaskStarted);
+                EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
+                EventBus.Instance.onTaskTimeout.AddListener(OnTaskTimeout);
+
+                EventBus.Instance.onScoreChanged.AddListener(OnScoreChanged);
+
+                EventBus.Instance.onGroupStarted.AddListener(OnGroupStarted);
+                EventBus.Instance.onGroupCompleted.AddListener(OnGroupCompleted);
+
+                EventBus.Instance.onSafetyViolation.AddListener(OnSafetyViolation);
+                EventBus.Instance.onCriticalSafetyFailure.AddListener(OnCriticalSafetyFailure);
+                EventBus.Instance.onSafetyError.AddListener(OnSafetyError);
                 EventBus.Instance.onSessionCompleted.AddListener(OnSessionCompleted);
             }
         }
 
         private void OnDisable()
         {
-            EventBus.OnSessionStartedCSharp -= OnSessionStarted;
-            EventBus.OnSessionPausedCSharp -= OnSessionPaused;
-            EventBus.OnSessionResumedCSharp -= OnSessionResumed;
-            EventBus.OnSessionEndedCSharp -= OnSessionEnded;
-
-            EventBus.OnActionAttemptCSharp -= OnActionAttempt;
-            EventBus.OnPpeStateChangedCSharp -= OnPpeStateChanged;
-
-            EventBus.OnTaskStartedCSharp -= OnTaskStarted;
-            EventBus.OnTaskCompletedCSharp -= OnTaskCompleted;
-            EventBus.OnTaskTimeoutCSharp -= OnTaskTimeout;
-
-            EventBus.OnScoreChangedCSharp -= OnScoreChanged;
-
-            EventBus.OnGroupStartedCSharp -= OnGroupStarted;
-            EventBus.OnGroupCompletedCSharp -= OnGroupCompleted;
-
-            EventBus.OnSafetyViolationCSharp -= OnSafetyViolation;
-            EventBus.OnCriticalSafetyFailureCSharp -= OnCriticalSafetyFailure;
-            EventBus.OnSafetyErrorCSharp -= OnSafetyError;
-
             if (EventBus.Instance != null)
             {
+                EventBus.Instance.onSessionStarted.RemoveListener(OnSessionStarted);
+                EventBus.Instance.onSessionPaused.RemoveListener(OnSessionPaused);
+                EventBus.Instance.onSessionResumed.RemoveListener(OnSessionResumed);
+                EventBus.Instance.onSessionEnded.RemoveListener(OnSessionEnded);
+
+                EventBus.Instance.onActionAttempt.RemoveListener(OnActionAttempt);
+                EventBus.Instance.onPpeStateChanged.RemoveListener(OnPpeStateChanged);
+
+                EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStarted);
+                EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
+                EventBus.Instance.onTaskTimeout.RemoveListener(OnTaskTimeout);
+
+                EventBus.Instance.onScoreChanged.RemoveListener(OnScoreChanged);
+
+                EventBus.Instance.onGroupStarted.RemoveListener(OnGroupStarted);
+                EventBus.Instance.onGroupCompleted.RemoveListener(OnGroupCompleted);
+
+                EventBus.Instance.onSafetyViolation.RemoveListener(OnSafetyViolation);
+                EventBus.Instance.onCriticalSafetyFailure.RemoveListener(OnCriticalSafetyFailure);
+                EventBus.Instance.onSafetyError.RemoveListener(OnSafetyError);
                 EventBus.Instance.onSessionCompleted.RemoveListener(OnSessionCompleted);
             }
         }
