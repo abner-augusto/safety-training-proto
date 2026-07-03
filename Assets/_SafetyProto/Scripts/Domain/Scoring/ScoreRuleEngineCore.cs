@@ -56,7 +56,14 @@ namespace SafetyProto.Domain.Scoring
         {
             if (args.Task == null) return;
 
-            var state = args.RuntimeTask?.State ?? TaskState.CompletedSuccess;
+            // When RuntimeTask is null the emitter does not own the runtime instance and conveys
+            // PPE compliance via WasPpeCompliant instead (see TaskEventArgs docs; SafetyRuleEngineCore
+            // publishes completions this way). Honor that flag so a non-compliant completion is scored
+            // as unsafe and the ppePenalty below actually applies — otherwise the penalty branch is
+            // unreachable through the wired stack. WasPpeCompliant defaults to true, so compliant
+            // completions and RuntimeTask-bearing events are unaffected.
+            var state = args.RuntimeTask?.State
+                ?? (args.WasPpeCompliant ? TaskState.CompletedSuccess : TaskState.CompletedSuccessButUnsafe);
 
             if (state == TaskState.CompletedFailure) return;
 
