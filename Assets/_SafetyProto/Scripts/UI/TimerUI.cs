@@ -19,6 +19,12 @@ namespace SafetyProto.UI
 
         private void Start()
         {
+            if (!this.IsEventBusReady())
+            {
+                enabled = false;
+                return;
+            }
+
             _timerText = GetComponent<TextMeshProUGUI>();
             if (timerSystem == null)
             {
@@ -37,8 +43,8 @@ namespace SafetyProto.UI
             _timerText.text = "--:--";
             _timerText.color = Color.white;
 
-            EventBus.OnSessionPausedCSharp += OnSessionPaused;
-            EventBus.OnSessionResumedCSharp += OnSessionResumed;
+            EventBus.Instance.onSessionPaused.AddListener(OnSessionPaused);
+            EventBus.Instance.onSessionResumed.AddListener(OnSessionResumed);
         }
 
         private void OnDestroy()
@@ -50,8 +56,11 @@ namespace SafetyProto.UI
                 timerSystem.onTimerTimeout.RemoveListener(OnTimerTimeout);
             }
 
-            EventBus.OnSessionPausedCSharp -= OnSessionPaused;
-            EventBus.OnSessionResumedCSharp -= OnSessionResumed;
+            if (EventBus.Instance != null)
+            {
+                EventBus.Instance.onSessionPaused.RemoveListener(OnSessionPaused);
+                EventBus.Instance.onSessionResumed.RemoveListener(OnSessionResumed);
+            }
         }
 
         private void UpdateTimeDisplay(float timeRemaining)

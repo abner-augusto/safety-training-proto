@@ -65,6 +65,7 @@ namespace SafetyProto.Runtime.Task
         {
             if (EventBus.Instance != null)
             {
+                EventBus.Instance.onSessionStarted.RemoveListener(OnSessionStarted);
                 EventBus.Instance.onGroupStarted.RemoveListener(OnGroupStarted);
                 EventBus.Instance.onGroupCompleted.RemoveListener(OnGroupCompleted);
                 EventBus.Instance.onSessionCompleted.RemoveListener(OnSessionCompleted);
