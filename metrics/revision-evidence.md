@@ -194,3 +194,42 @@ wc -l on scenario files:
 A complete authored scenario is ~**120–160 lines of JSON**; authoring or swapping one recompiles
 nothing (contrast with the pre-migration ScriptableObject flow, which required Editor asset edits and
 domain reloads).
+
+---
+
+## T6 — Refreshed codebase indicators (Table 2)
+
+Recomputed after the −1438/+2656 LoC churn that made the submitted paper's table stale. `LoC` =
+physical lines (`wc -l`). All counts exclude the Unity Editor assembly (`Scripts/Editor/`); the test
+assemblies live under `Scripts/../Tests/` and are likewise excluded from "source" counts.
+
+| Indicator | Value | How computed (from repo root) |
+|---|---:|---|
+| Total source files | **126** | `find Assets/_SafetyProto/Scripts -name '*.cs' -not -path '*/Editor/*' \| wc -l` |
+| Total source LoC | **15,320** | `find … -not -path '*/Editor/*' -print0 \| xargs -0 cat \| wc -l` |
+| Engine-independent files | **42** | `grep -rLE 'UnityEngine' Scripts --include=*.cs \| grep -v /Editor/ \| wc -l` |
+| Engine-independent LoC | **2,871** | `cat` of that file list `\| wc -l` |
+| Domain Core files | **16** | `find Scripts/Domain -name '*.cs' \| wc -l` |
+| Domain Core LoC | **2,058** | `find Scripts/Domain -name '*.cs' -print0 \| xargs -0 cat \| wc -l` |
+| Files importing Meta XR SDK | **17** | `grep -rlE 'using Oculus\|using Meta\.\|OVR' Scripts --include=*.cs \| wc -l` |
+| Shared-library files (CLI-linked) | **31** | `grep -cE '<Compile Include=' Tools/SafetyProto.Shared/SafetyProto.Shared.csproj` |
+| Harness-specific LoC | **771** (8 files) | `cat Tools/CliHarness/*.cs \| wc -l` |
+| Typed EventBus channels | **16** | `grep -cE 'public UnityEvent<' Scripts/Core/EventBus.cs` |
+| Event payload types | **13** | 12 structs in `EventPayloads.cs` + `ActionAttemptedEvent` (separate file) |
+
+Notes / relationships (all cross-validated):
+
+- **Engine-independent (42) vs shared-library (31).** The 31 files the CLI harness compiles
+  (`SafetyProto.Shared.csproj`) are a build-verified *subset* of the 42 files that contain no
+  UnityEngine reference. The extra 11 (2871 − 2657 ≈ 214 LoC) are engine-independent event facades
+  (`SessionEvents`, `TaskEvents`, …) not needed by the CLI. Both figures agree with the per-module
+  split: Core 20/31, Domain 15/16, Runtime 4/42, UI 1/24, Networking 1/5, Utils 1/8 engine-independent.
+- **Domain Core is fully engine-independent.** The one Domain file that textually matches "UnityEngine"
+  (`SessionLoggerCore.cs`) does so only in a comment; it compiles in pure .NET via the shared project,
+  and `Domain.Core.asmdef` sets `noEngineReferences:true`, so all 16 files are engine-independent by a
+  build-enforced invariant.
+- **Meta XR SDK reach = 17 files**, all under `Runtime`/`Utils`/scene-facing code — none in `Domain`
+  (consistent with T5's finding that the 85→201 upgrade touched zero `Domain`/`Networking` code).
+- **Typed channels: 16** strongly-typed `UnityEvent<T>` dispatch channels, paralleled by **15** static
+  `Action<T>` C# events (`grep -cE 'public static event Action<' EventBus.cs`) for non-Unity subscribers
+  — two typed façades over the same event set. **13 event payload types** flow across them.
