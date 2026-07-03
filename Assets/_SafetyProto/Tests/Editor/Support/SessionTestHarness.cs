@@ -37,7 +37,7 @@ namespace SafetyProto.Tests.Editor.Support
     ///           also stubbed: PPE compliance is judged inside <see cref="SafetyRuleEngineCore"/>
     ///           from the <see cref="PPEStateChangedEventArgs"/> event cache, so the
     ///           <see cref="WearPpe"/>/<see cref="RemovePpe"/> events ARE the stubbed
-    ///           equivalent of <c>PPEManager</c>/<c>PPEZone</c> trigger callbacks — no separate
+    ///           equivalent of the PPE state callbacks — no separate
     ///           PPE-manager stub object is needed for the rule engine to see compliance state.
     ///
     /// REAL    — everything else (<see cref="TaskManagerCore"/>, <see cref="ScoreService"/>,

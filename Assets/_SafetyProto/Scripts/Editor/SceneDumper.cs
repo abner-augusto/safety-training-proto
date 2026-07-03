@@ -240,7 +240,7 @@ public class SceneDumper : EditorWindow
             IndexHierarchy(child.gameObject);
     }
 
-    // ── FILTROS: HIERARQUIA ──────────────────────────────────────────────────
+    // ── HIERARCHY FILTERS ───────────────────────────────────────────────────
 
     bool ShouldSkipObject(GameObject go)
     {
@@ -300,7 +300,7 @@ public class SceneDumper : EditorWindow
         return true;
     }
 
-    // ── FILTROS: REFERÊNCIAS ─────────────────────────────────────────────────
+    // ── REFERENCE FILTERS ───────────────────────────────────────────────────
 
     bool ShouldSkipRefSource(string componentType) =>
         filterSdkInternals && SkipRefSourceComponents.Contains(componentType);
