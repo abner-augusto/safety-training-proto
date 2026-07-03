@@ -22,7 +22,7 @@ namespace SafetyProto.Tests.Editor
     ///  • DRIVER = this fixture's method bodies, via the harness's WearPpe/Attempt/ReplayScript —
     ///    the scripted actor standing in for the VR player.
     ///  • STUBS  = FakeEventBus (deterministic in-process stand-in for Unity's deferred EventBus
-    ///    asset) and the PPE-sensor events themselves (stubbing PPEManager/PPEZone callbacks).
+    ///    asset) and the PPE-sensor events themselves (stubbing the PPE state callbacks).
     ///  • Everything else is the real production domain code, unmodified.
     ///
     /// Headless by construction: this file and all of its Support dependencies reference zero
