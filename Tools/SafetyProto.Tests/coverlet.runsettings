@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Coverage is scoped to [SafetyProto.Shared] — the engine-independent core (Domain + Core)
+  that is the subject of the paper's testability claim. The test assembly, NUnit, and
+  Newtonsoft.Json are excluded so the reported line/branch rates reflect production code only.
+  Run command is documented in metrics/revision-evidence.md.
+-->
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <Include>[SafetyProto.Shared]*</Include>
+          <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute,CompilerGeneratedAttribute</ExcludeByAttribute>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

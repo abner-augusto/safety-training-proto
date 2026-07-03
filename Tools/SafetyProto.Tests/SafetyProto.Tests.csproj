@@ -1,0 +1,62 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Headless test runner for the engine-independent domain stack.
+
+    This project compiles the SAME NUnit .cs test files that the Unity Editor Test Runner
+    compiles (linked from Assets/_SafetyProto/Tests/Editor), against the shared domain
+    assembly (SafetyProto.Shared), so the engine-independent tests run with `dotnet test`
+    WITHOUT the Unity Editor. It mirrors the SafetyProto.Shared.csproj linked-source pattern:
+    one source of truth, two hosts (Unity + .NET).
+
+    Scope: only test files that reference zero UnityEngine / SafetyProto.Runtime.* types are
+    linked here. Unity-coupled fixtures (e.g. SafetyPatternTests -> Runtime.Analytics) stay
+    Unity-only and are intentionally excluded.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+    <NoWarn>IDE1006</NoWarn>
+    <RootNamespace>SafetyProto.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- NUnit 3.x to match Unity's bundled NUnit (classic Assert.AreEqual / CollectionAssert /
+         StringAssert API), so the SAME test source compiles under both hosts. -->
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
+    <PackageReference Include="coverlet.collector" Version="6.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Domain + Core under test (also pulls in Newtonsoft.Json for ScenarioLoader). -->
+    <ProjectReference Include="..\SafetyProto.Shared\SafetyProto.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Shared test support (engine-independent). -->
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\Support\FakeEventBus.cs"            Link="Support\FakeEventBus.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\Support\FakeTaskBuilder.cs"         Link="Support\FakeTaskBuilder.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\Support\EventBusAssertions.cs"      Link="Support\EventBusAssertions.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\Support\SessionTestHarness.cs"      Link="Support\SessionTestHarness.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\Support\EventTimeline.cs"           Link="Support\EventTimeline.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\Support\PpeInspectionScenarioJson.cs" Link="Support\PpeInspectionScenarioJson.cs" />
+
+    <!-- Engine-independent fixtures. -->
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\SessionIntegrationTests.cs"         Link="SessionIntegrationTests.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\ScoreRuleEngineCoreTests.cs"        Link="ScoreRuleEngineCoreTests.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\SafetyRuleEngineCoreTests.cs"       Link="SafetyRuleEngineCoreTests.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\TaskManagerCoreTests.cs"            Link="TaskManagerCoreTests.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\SafetyRuleEngineDiagnosticTests.cs" Link="SafetyRuleEngineDiagnosticTests.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\PPEManagerEventProtocolTests.cs"    Link="PPEManagerEventProtocolTests.cs" />
+    <!-- Excluded (Unity-coupled): SafetyTrainingTests uses the Unity EventBus singleton + static
+         event facades (SessionEvents/TaskEvents/...), which live in the Unity assemblies, not
+         SafetyProto.Shared. SafetyPatternTests uses Runtime.Analytics. Both stay Unity-only. -->
+  </ItemGroup>
+
+</Project>
