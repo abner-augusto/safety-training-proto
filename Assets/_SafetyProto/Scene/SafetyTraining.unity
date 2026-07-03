@@ -51107,11 +51107,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ccf0dcd9cb73154abf416ee12bad8ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.XrPerformanceBootstrap
-  eyeTextureResolutionScale: 1
+  eyeTextureResolutionScale: 0.9
   fixedRenderViewportScale: 0.9
   enableFoveatedRendering: 1
   foveationLevel: 0.66
   dynamicFoveation: 1
+  hideHandDebugSpheres: 1
 --- !u!114 &7322035375745015846
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -26,7 +26,7 @@ namespace SafetyProto.Runtime
                  "1.0 = native recommended; below 1.0 trades sharpness for GPU headroom. " +
                  "Caps the supersampling overshoot seen in profiling (render_scale 160%).")]
         [Range(0.5f, 1.5f)]
-        [SerializeField] private float eyeTextureResolutionScale = 1.0f;
+        [SerializeField] private float eyeTextureResolutionScale = 0.9f;
 
         [Tooltip("If > 0, pins the dynamic viewport scale to this value so the runtime can't " +
                  "scale the eye buffer up past the cap. Leave at 0 to let the runtime manage it.")]
@@ -45,11 +45,20 @@ namespace SafetyProto.Runtime
         [Tooltip("Let the runtime raise/lower the foveation level dynamically with GPU load.")]
         [SerializeField] private bool dynamicFoveation = true;
 
+        [Header("Hand debug visuals")]
+        [Tooltip("Disable the Meta Interaction SDK HandSphereMap debug spheres (one Standard-shader " +
+                 "MeshRenderer per finger joint on both hands, ~144 total). They are pure grab-debug " +
+                 "visuals — hiding them removes ~144 draw calls, ~110k tris and their Standard-shader " +
+                 "fill-rate cost every frame with no gameplay effect. Confirmed on-device: the scene " +
+                 "is fill-rate bound, not triangle bound.")]
+        [SerializeField] private bool hideHandDebugSpheres = true;
+
         private static readonly List<XRDisplaySubsystem> s_Displays = new();
 
         private void Start()
         {
             ApplyRenderScale();
+            HideHandDebugSpheres();
             // Foveation needs the XR display subsystem running; it may not be ready on the
             // very first frame, so retry for a few frames until at least one display takes it.
             StartCoroutine(ApplyFoveationWhenReady());
@@ -65,6 +74,45 @@ namespace SafetyProto.Runtime
                 $"[XrPerformanceBootstrap] Render scale aplicado: eyeTextureResolutionScale={eyeTextureResolutionScale:0.00}" +
                 (fixedRenderViewportScale > 0f ? $", renderViewportScale fixo={fixedRenderViewportScale:0.00}" : ""),
                 this);
+        }
+
+        private void HideHandDebugSpheres()
+        {
+            if (!hideHandDebugSpheres)
+                return;
+
+            // The HandSphereMap debug spheres are named "sphere" and parented under a
+            // "HandSphereMap" node inside each TouchHandGrabInteractor. Match on both so we
+            // never touch unrelated sphere geometry in the scene. Include inactive so we still
+            // catch the hand branch that is disabled until its controller/hand is tracked.
+            var renderers = Object.FindObjectsByType<MeshRenderer>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            int disabled = 0;
+            foreach (var mr in renderers)
+            {
+                if (!mr.enabled)
+                    continue;
+                if (!mr.gameObject.name.StartsWith("sphere", System.StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (!HasAncestorNamed(mr.transform, "HandSphereMap"))
+                    continue;
+
+                mr.enabled = false;
+                disabled++;
+            }
+
+            SafetyLog.Info(
+                $"[XrPerformanceBootstrap] {disabled} esferas de debug da mão (HandSphereMap) desativadas.",
+                this);
+        }
+
+        private static bool HasAncestorNamed(Transform t, string namePart)
+        {
+            for (var p = t; p != null; p = p.parent)
+            {
+                if (p.name.Contains(namePart))
+                    return true;
+            }
+            return false;
         }
 
         private IEnumerator ApplyFoveationWhenReady()
