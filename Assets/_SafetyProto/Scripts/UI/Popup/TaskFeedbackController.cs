@@ -26,7 +26,7 @@ namespace SafetyProto.UI
 
         private void Start()
         {
-            _taskManager = FindFirstObjectByType<TaskManager>();
+            _taskManager = TaskManager.Instance != null ? TaskManager.Instance : FindFirstObjectByType<TaskManager>();
             if (_taskManager == null)
                 SafetyLog.Warning("[TaskFeedbackController] TaskManager not found.", this);
 

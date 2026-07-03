@@ -117,7 +117,7 @@ namespace SafetyProto.Runtime.PPE
 
             // Optional: only needed for the wrong-order guard. If absent, the guard is
             // skipped and the slot behaves as before (TryAcceptSnap null-checks it).
-            _taskManager = FindFirstObjectByType<TaskManager>();
+            _taskManager = TaskManager.Instance != null ? TaskManager.Instance : FindFirstObjectByType<TaskManager>();
             if (_taskManager == null)
                 SafetyLog.Warning($"PPESnapSlot on {name}: TaskManager not found — verificação de ordem desativada.", this);
         }

@@ -192,7 +192,7 @@ Actions are defined in `Assets/_SafetyProto/Resources/Actions/actions.json` as `
 
 ### Service Reset Pattern
 
-Systems that hold session state implement `ISessionResettable`. `TrainingSessionManager` calls `ResetSession()` on all of them between sessions/replays. Implementing classes: `TaskManager`, `TimerSystem`, `PPEManager`, `PPESnapSlot`, `AudioFeedbackManager`, `HapticManager`, `ScoreService`, `SessionLogger`, `SceneLoader`.
+Systems that hold session state implement `ISessionResettable`. `SceneLoader.ResetSession()` — wired to the Restart buttons in `FinishScreenPanel.prefab` and `MenuCanvas.prefab` — scans scene MonoBehaviours for `ISessionResettable`, calls `ResetSession()` on each, then reloads the scene. Non-MonoBehaviour state is reset by the `TrainingSessionManager` lifecycle instead: `BeginSession()` resets `ScoreService` and restamps `EventContext`; `OnDestroy` clears both. Implementing classes: `TaskManager`, `TimerSystem`, `PPEManager`, `PPESnapSlot`, `AudioFeedbackManager`, `HapticManager`, `FallFromHeightController`, `ScoreService`, `SessionLogger`, `SceneLoader`.
 
 ## Key File Locations
 
