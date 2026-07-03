@@ -233,3 +233,92 @@ Notes / relationships (all cross-validated):
 - **Typed channels: 16** strongly-typed `UnityEvent<T>` dispatch channels, paralleled by **15** static
   `Action<T>` C# events (`grep -cE 'public static event Action<' EventBus.cs`) for non-Unity subscribers
   — two typed façades over the same event set. **13 event payload types** flow across them.
+
+---
+
+## T2/T3 — Test suite
+
+Counts from `grep -cE '\[Test\b|\[TestCase' Assets/_SafetyProto/Tests/Editor/*.cs`:
+
+| | Tests | Notes |
+|---|---:|---|
+| Total test methods | **50** | across 8 fixtures |
+| Integration (`SessionIntegrationTests`) | **8** | the T2 battery — covers the plan's 7 cases (case 7 = 2 tests: unknown-PPE + malformed-JSON) |
+| Unit | **42** | `TaskManagerCore` (6), `SafetyRuleEngineCore` (8), `SafetyRuleEngineDiagnostic` (4), `ScoreRuleEngineCore` (13), `PPEManagerEventProtocol` (5), `SafetyPattern` (3), `SafetyTraining` (3) |
+| **Run headless** (`dotnet test`) | **44** | 0 failed, ~0.12 s, no Unity |
+| Unity-only (excluded from headless) | 6 | `SafetyPattern` (→ `Runtime.Analytics`), `SafetyTraining` (→ Unity `EventBus` singleton + facades) |
+
+Headless run + coverage commands (recap of T3):
+
+```
+# Run the engine-independent suite without Unity:
+dotnet test Tools/SafetyProto.Tests/SafetyProto.Tests.csproj
+  → Passed: 44, Failed: 0
+
+# Line + branch coverage of the engine-independent core [SafetyProto.Shared]:
+dotnet test Tools/SafetyProto.Tests/SafetyProto.Tests.csproj \
+  --collect:"XPlat Code Coverage" \
+  --settings Tools/SafetyProto.Tests/coverlet.runsettings
+  → Line 70.6% (801/1135), Branch 58.1% (280/482)
+```
+
+Per-class coverage of the core orchestration (cobertura, same run): `ScoreRuleEngineCore` 100% L /
+93.3% B · `SafetyRuleEngineCore` 86.4% / 75.5% · `ScenarioLoader` 82.6% / 81.2% · `SessionLoggerCore`
+89.8% / 60.7% · `TaskManagerCore` 77.2% / 63.0% · `ScoreService` 51.9% / 33.3%. The overall rate is
+pulled down by authoring-only code compiled into the shared library but not exercised by these tests
+(`ActionCatalog*`, `ActionDef`, `ScenarioValidator` = 0%).
+
+**Drivers vs stubs** (Reviewer E). In every integration case the **driver** is the scripted test body
+(via `SessionTestHarness.WearPpe/Attempt/ReplayScript`) — the in-process equivalent of the CLI
+harness's `ScriptedActor`, i.e. it publishes the exact events a VR player generates. The **stubs** are
+`FakeEventBus` (a real enqueue-then-drain bus standing in for Unity's deferred `EventBus` asset,
+deterministic and Unity-free) and the PPE-sensor events themselves (standing in for
+`PPEManager`/`PPEZone` trigger callbacks). Everything else — both rule engines, `TaskManagerCore`,
+`ScoreService`, `SessionLoggerCore` — is **real, unmodified production code**. This is documented
+in-source on `SessionTestHarness`.
+
+Two production defects were found and fixed while building the battery (both now guarded by tests):
+
+1. **Group timeout never ended the session** (`SessionEnded` undispatched) — fixed in T1; regression
+   test = integration case 6.
+2. **`ppePenalty` never applied end-to-end** — a PPE-missing task fired a violation but its penalty
+   was never scored, because `ScoreRuleEngineCore` ignored `WasPpeCompliant` when `RuntimeTask` was
+   null. Fixed (`ScoreRuleEngineCore` now honors the documented flag); guarded by integration case 2
+   plus a unit test.
+
+---
+
+## Claim → evidence seed table
+
+Each architectural claim the manuscript makes, mapped to the concrete, re-runnable evidence in this
+artifact. (The writing track turns this into the paper's centralized evidence table.)
+
+| Claim | Evidence |
+|---|---|
+| **Engine independence** (domain logic has no Unity dependency) | `Domain.Core.asmdef` `noEngineReferences:true` (build-enforced); 16 Domain files / 2,058 LoC compile in pure .NET via `SafetyProto.Shared`; module instability `Domain.Core` I=0.17, `EventBus.Core` I=0.00, .NET `SafetyProto.Shared` I=0.00 at the stable end (T4); the Meta XR 85→201 upgrade changed **0** Domain files (T5). |
+| **SDK isolation** (engine/SDK churn doesn't reach domain/evaluation) | Meta XR 85→201 = commit `f2a68e4`, 8 files, config/scene only, **zero C#**, zero `Domain`/`Networking` (T5); the 17 Meta-XR-importing files are all in `Runtime`/`Utils`, none in `Domain` (T6). |
+| **Testability outside Unity** | 44 tests run via `dotnet test` with no Unity Editor (T3); the same test `.cs` compile under both Unity and .NET (linked-source); full-stack `SessionIntegrationTests` drive the real domain through a real in-process bus (T2); coverage 70.6% line / 58.1% branch on the engine-independent core (T3). |
+| **Zero-modification scenario authoring** | Runtime is 100% JSON (commit `82352a7`); a scenario is a ~120–160-line JSON file, **0 C# changed, 0 recompilation** (T5); loader validates bad input without throwing (integration case 7). |
+| **Event-driven decoupling** | 16 typed EventBus channels + 13 payload types (T6); adding `SessionLogger` touched only `Core`+`Utils`, no gameplay producers, purely by subscribing (T5); strict layered DAG, no cycles (T4). |
+| **Correct safety/scoring semantics** | Group-timeout terminality (T1 + case 6); PPE-missing penalty applied end-to-end (scoring fix + case 2); Sequential/FreeOrder/group-gating behavior (integration cases 3–5). |
+
+---
+
+## Not computed / limitations
+
+- **Coverage scope is the engine-independent core only** (`[SafetyProto.Shared]`). The Unity
+  MonoBehaviour adapter layer (Runtime/UI/Networking hosts) is **not** measured by `dotnet test`;
+  covering it would require the Unity Test Runner in batchmode / PlayMode, out of scope for this pass.
+  The 6 Unity-only tests are therefore excluded from the coverage figure.
+- **Abstractness `A` / distance `D` are a lexical heuristic**, not a type-system analysis (see T4
+  caveats). `Ca`/`Ce`/`I` are exact (declared reference graph).
+- **Meta XR range** is reported as the repository's actual tracked upgrade **85.0.0 → 201.0.0**
+  (commit `f2a68e4`); the submitted paper's "v76→v201" framing does not match repo history and is
+  superseded here.
+- **LoC = physical lines** (`wc -l`, includes braces/blank/comment lines), not logical SLOC; git
+  ±figures include `.meta`/asset text as git counts them. Methods are stated so any stricter recount
+  is reproducible.
+- **Unity Editor test execution was not automated** in this pass (the Unity Test Runner via MCP did
+  not surface async results reliably); the reproducible runner of record is headless `dotnet test`.
+- Coverage `lines-valid=1135` counts only the instrumented `SafetyProto.Shared` production lines, not
+  the linked test code (excluded via `coverlet.runsettings`).
