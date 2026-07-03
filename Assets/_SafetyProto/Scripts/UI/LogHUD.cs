@@ -19,6 +19,7 @@ namespace SafetyProto.UI
         private readonly Queue<string> _entries = new();
         private readonly StringBuilder _allLogs = new();
         private readonly StringBuilder _displayBuilder = new();
+        private bool _dirty;
 
         private void OnEnable()
         {
@@ -210,6 +211,17 @@ namespace SafetyProto.UI
                 }
             }
 
+            // Coalesce: many events can arrive in a single frame (the EventBus drains
+            // its queue on completion), so flag dirty and repaint once in LateUpdate
+            // instead of forcing a full TMP mesh rebuild per line.
+            _dirty = true;
+        }
+
+        private void LateUpdate()
+        {
+            if (!_dirty)
+                return;
+            _dirty = false;
             RefreshDisplay();
         }
 
@@ -237,7 +249,9 @@ namespace SafetyProto.UI
             {
                 logText.SetText(_displayBuilder);
             }
-            Canvas.ForceUpdateCanvases();
+            // SetText already flags the mesh dirty; TMP regenerates it during the
+            // end-of-frame canvas update. ForceMeshUpdate() would regenerate the mesh
+            // synchronously on every call — the source of the per-line TMP/layout spikes.
         }
 
         public string GetFullLog() => _allLogs.ToString();

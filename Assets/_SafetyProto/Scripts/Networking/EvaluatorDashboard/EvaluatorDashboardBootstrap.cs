@@ -661,7 +661,9 @@ namespace SafetyProto.Networking.Dashboard
 
         private void Broadcast<T>(string eventType, T payload)
         {
-            _wsServer?.Broadcast(eventType, payload);
+            if (_wsServer == null || !_wsServer.HasConnections)
+                return;
+            _wsServer.Broadcast(eventType, payload);
         }
 
         private void QueueSessionLogBroadcast()
@@ -688,15 +690,21 @@ namespace SafetyProto.Networking.Dashboard
                 yield return null;
             }
 
-            TryBroadcastLatestSessionLog();
+            // Capture the Unity-thread-only path here, then run the disk read + JSON
+            // encode + frame enqueue on a background thread. The whole session log
+            // (which grows with session length) was being read and re-serialized on the
+            // main thread, causing a ~300ms freeze at session completion. The WebSocket
+            // send itself is already off-thread (per-client SenderThread), and both
+            // File IO and JsonUtility.ToJson over a plain struct are thread-safe.
+            string persistentDataPath = Application.persistentDataPath;
             _pendingLogBroadcast = null;
+            _ = System.Threading.Tasks.Task.Run(() => TryBroadcastLatestSessionLog(persistentDataPath));
         }
 
-        private void TryBroadcastLatestSessionLog()
+        private void TryBroadcastLatestSessionLog(string dir)
         {
             try
             {
-                var dir = Application.persistentDataPath;
                 if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir))
                     return;
 
