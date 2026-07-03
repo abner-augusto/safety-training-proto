@@ -185,3 +185,6 @@ harness-output/
 # ============================================================
 /Tools/generate_icon_pack_from_approved.py
 /docs/benchmarks
+
+# Headless test coverage output
+Tools/SafetyProto.Tests/TestResults/
