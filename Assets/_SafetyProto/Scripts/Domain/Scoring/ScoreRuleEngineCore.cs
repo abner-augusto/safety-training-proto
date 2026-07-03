@@ -67,7 +67,10 @@ namespace SafetyProto.Domain.Scoring
 
             if (state == TaskState.CompletedFailure) return;
 
-            _scoreService.AddPoints(args.Task.successPoints, $"Task '{args.Task.taskName}' completed");
+            if (args.Task.successPoints > 0)
+            {
+                _scoreService.AddPoints(args.Task.successPoints, $"Task '{args.Task.taskName}' completed");
+            }
 
             if (state == TaskState.CompletedSuccessButUnsafe)
             {
