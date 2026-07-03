@@ -1,6 +1,3 @@
-// Place this file inside any folder named "Editor" in your project.
-// e.g.  Assets/CollectionInstanceArray/Editor/CollectionInstanceArrayEditor.cs
-
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -22,11 +19,6 @@ public class CollectionInstanceArrayEditor : Editor
     int    _prevAxis;          // enum stored as int
     bool   _prevRelative;
     Object _prevPrefab;
-
-    // Drag state for the custom count control
-    bool  _isDragging;
-    float _dragStartX;
-    int   _dragStartCount;
 
     // -----------------------------------------------------------------------
     // Lifecycle
@@ -183,9 +175,8 @@ public class CollectionInstanceArrayEditor : Editor
         EditorGUI.LabelField(labelR, new GUIContent("Count"));
 
         float btnW    = 22f;
-        float dragW   = 24f; // This line can be removed
         float spacing = 2f;
-        float controlsW = dragW + spacing + btnW + spacing + btnW; // Update this line
+        float controlsW = btnW + spacing + btnW;
 
         // Slider occupies the space left of the right-side buttons
         Rect sliderR = new Rect(
@@ -200,46 +191,6 @@ public class CollectionInstanceArrayEditor : Editor
             _count.intValue = newCount;
 
         float btnX = sliderR.xMax + spacing;
-
-/*         // ── Drag button (≡) ─────────────────────────────────────────────
-        Rect dragR = new Rect(btnX, fullRect.y, dragW, fullRect.height); // This line can be removed
-        GUIContent dragContent = new GUIContent("≡", "Drag horizontally to adjust count"); // This line can be removed
-        GUI.Button(dragR, dragContent);   // visual only; input handled below // This line can be removed
-
-        Event e = Event.current;
-        if (dragR.Contains(e.mousePosition))
-        {
-            EditorGUIUtility.AddCursorRect(dragR, MouseCursor.ResizeHorizontal);
-
-            if (e.type == EventType.MouseDown && e.button == 0)
-            {
-                _isDragging    = true;
-                _dragStartX    = e.mousePosition.x;
-                _dragStartCount = _count.intValue;
-                e.Use();
-            }
-        }
-
-        if (_isDragging)
-        {
-            EditorGUIUtility.AddCursorRect(new Rect(0, 0, 9999, 9999), MouseCursor.ResizeHorizontal);
-
-            if (e.type == EventType.MouseDrag)
-            {
-                float delta = e.mousePosition.x - _dragStartX;
-                int   val   = Mathf.Clamp(Mathf.RoundToInt(_dragStartCount + delta / 8f), 1, 256);
-                _count.intValue = val;
-                e.Use();
-                Repaint();
-            }
-            else if (e.type == EventType.MouseUp)
-            {
-                _isDragging = false;
-                e.Use();
-            }
-        }
-
-        btnX += dragW + spacing; // Update this line */
 
         // ── Minus button ────────────────────────────────────────────────
         Rect minusR = new Rect(btnX, fullRect.y, btnW, fullRect.height);

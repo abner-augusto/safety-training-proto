@@ -95,7 +95,7 @@ namespace SafetyProto.UI
                 ? advice
                 : "Este equipamento não é adequado para trabalho em altura.";
 
-            // Anexa a dica da tarefa atual para reforçar o EPI correto.
+            // Attach the current task hint to reinforce the correct PPE.
             var hint = task?.hintText;
             if (!string.IsNullOrWhiteSpace(hint))
                 body += $"\n\nDica: {hint}";

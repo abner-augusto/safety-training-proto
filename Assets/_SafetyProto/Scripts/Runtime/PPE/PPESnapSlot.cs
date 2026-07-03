@@ -172,7 +172,7 @@ namespace SafetyProto.Runtime.PPE
             var ppeItem = item.GetComponent<PPEItem>();
 
             // Reject distractors before the type check. A distractor shares the
-            // valid PPEType (ex: capacete sem jugular ainda é Helmet), so Accepts()
+            // valid PPEType (e.g. a helmet without a chin strap is still Helmet), so Accepts()
             // would otherwise pass and the decoy would be reported as worn — exactly
             // the opposite of the educational intent. Firing here, before Accepts(),
             // means the slot the item legitimately hovers always triggers the popup.

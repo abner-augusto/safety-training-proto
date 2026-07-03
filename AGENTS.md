@@ -109,7 +109,7 @@ Available scenarios live in `Tools/CliHarness/scenarios/` (`ppe_equip.json`, `pp
 Scripts/
 ├── Core/           # EventBus(+Runner), EventPayloads, RuntimeSafetyTask, TaskState, PPEType,
 │   │               #   GameConstants, SceneLoader, PoseChannelSO, PoseReporter
-│   ├── Events/     # Event facades: SessionEvents, TaskEvents, ActionEvents, PPEEvents,
+│   ├── Events/     # Event facades: SessionEvents, ActionEvents, PPEEvents,
 │   │               #   ScoreEvents, SafetyEvents, ConsequenceEvents; EventContext
 │   ├── Interfaces/ # IEventBus, IScoreService, ISafetyTask, ISessionResettable, ...
 │   └── Logging/    # IHarnessLogger, SafetyLog
@@ -122,10 +122,10 @@ Scripts/
 │   ├── Sessions/   # SessionLoggerCore
 │   └── Tasks/      # TaskManagerCore
 ├── Runtime/        # Unity MonoBehaviour adapters and scene-side systems
-│   ├── Actions/    # ActionEmitter, ActionTrigger, ActionResolver, ActionCatalogSource, EventGameObjectListener
+│   ├── Actions/    # ActionResolver, ActionCatalogSource, EventGameObjectListener
 │   ├── Analytics/  # SafetyAnalyzer, SafetyPatternDetector
-│   ├── Feedback/   # AudioFeedbackManager, HapticManager, TaskPopupFeedback, ReturnObjectHome
-│   ├── PPE/        # PPEManager, PPEItem, PPESnapItem/Slot, PPEZone, AnchorPoint,
+│   ├── Feedback/   # AudioFeedbackManager, HapticManager, ReturnObjectHome
+│   ├── PPE/        # PPEManager, PPEItem, PPESnapItem/Slot, AnchorPoint,
 │   │               #   PPESlotBodyCalibrator, RetractableLanyardController, VerletLanyard, ...
 │   ├── Safety/     # SafetyRuleEngine (Mono wrapper), PPEComplianceAdapter, InspectionGateValidator
 │   ├── Scaffolding/# ScaffoldPieceInstaller
@@ -133,7 +133,7 @@ Scripts/
 │   ├── Task/       # TaskManager (Mono wrapper), TimerSystem(+Adapter), ScoreManagerAdapter, AwaitableAsyncSchedulerAdapter
 │   └── Tools/Drill/# DrillUse, FastenerSocket
 ├── Networking/     # EvaluatorDashboard HTTP/WebSocket server
-│   └── EvaluatorDashboard/  # MiniHttpServer, EvaluatorWebSocketServer, PoseSender, PersistentEventSystem, Bootstrap
+│   └── EvaluatorDashboard/  # MiniHttpServer, EvaluatorWebSocketServer, PoseSender, Bootstrap
 ├── UI/             # ScoreHUD, LogHUD, TaskUIController, Popup system
 │   └── Popup/
 ├── Utils/          # SessionLogger, MonoBehaviourExtensions, SafetyLogAdapter, ...
@@ -154,7 +154,7 @@ All systems subscribe/unsubscribe to EventBus, never calling each other directly
 
 Unity-side subscribers use `EventBus.Instance.onXxx.AddListener(...)` (with a matching `RemoveListener` in `OnDisable`/`OnDestroy`); the pure-C# Domain layer uses `IEventBus.Subscribe<T>`. The former static `OnXxxCSharp` events were removed — do not reintroduce them.
 
-Event facades in `Core/Events/` (`SessionEvents`, `TaskEvents`, `ActionEvents`, `PPEEvents`, `ScoreEvents`, `SafetyEvents`) provide static `Raise*` methods that stamp every event with `SessionId`, `PlayerId`, `ScenarioId`, and a Unix timestamp from `EventContext`.
+Event facades in `Core/Events/` (`SessionEvents`, `ActionEvents`, `PPEEvents`, `ScoreEvents`, `SafetyEvents`) provide static `Raise*` methods that stamp every event with `SessionId`, `PlayerId`, `ScenarioId`, and a Unix timestamp from `EventContext`.
 
 `ConsequenceEvents` is the exception: it is **synchronous and not routed through the EventBus queue** - `InspectionGateValidator` raises `ConsequenceStarted`/`ConsequenceEnded` directly so animation timing isn't deferred a frame. Its subscribers are audio/visual only, with no ordering dependency on queued events.
 
@@ -163,7 +163,7 @@ Event facades in `Core/Events/` (`SessionEvents`, `TaskEvents`, `ActionEvents`, 
 ```
 TrainingSessionManager.Start()         -> SessionStarted event
   └─ TaskManager (Mono)                -> delegates to TaskManagerCore
-       └─ [Player acts]                -> ActionEmitter -> ActionEvents.PublishActionAttempt()
+       └─ [Player acts]                -> scene emitter (e.g. PPESnapSlot) -> ActionEvents.PublishActionAttempt()
             └─ SafetyRuleEngine (Mono) -> delegates to SafetyRuleEngineCore
                  └─ TaskManagerCore    -> CheckGroupCompletion() -> GroupCompleted / SessionCompleted
 ```
@@ -178,7 +178,7 @@ TrainingSessionManager.Start()         -> SessionStarted event
 
 ### PPE Enforcement
 
-`PPEManager` uses trigger colliders (`PPEZone`) to detect when PPE is worn. `PPEComplianceAdapter` wraps it to `IPPEComplianceChecker`. `SafetyRuleEngineCore` checks compliance before completing tasks. If PPE is missing, task state becomes `CompletedSuccessButUnsafe` and a `ppePenalty` is applied.
+`PPESnapSlot` components report equip state to `PPEManager` via `ReportPPEStateChange` when PPE snaps into its body slot. `PPEComplianceAdapter` wraps it to `IPPEComplianceChecker`. `SafetyRuleEngineCore` checks compliance before completing tasks. If PPE is missing, task state becomes `CompletedSuccessButUnsafe` and a `ppePenalty` is applied.
 
 **PPEType enum** (in `Core/PPEType.cs`): `None=0 | Helmet=1 | Goggles=3 | Harness=4 | Vest=5 | Boots=6 | GloveLeft=7 | GloveRight=8`. Ordinal `2` is intentionally skipped - it was the legacy `Gloves` value (now split into `GloveLeft`/`GloveRight`); the gap preserves serialized-asset compatibility for `Goggles`..`Boots`.
 
@@ -188,11 +188,11 @@ TrainingSessionManager.Start()         -> SessionStarted event
 
 ### Action Catalog
 
-Actions are defined in `Assets/_SafetyProto/Resources/Actions/actions.json` as `ActionDef` records. `ActionResolver` provides case-insensitive lookup from that JSON catalog. Scene emitters store plain action-id strings (`ActionEmitter.actionId`, `ActionTrigger.actionId`, `ScaffoldPieceInstaller.actionId`, `RetractableLanyardController.connectActionId`).
+Actions are defined in `Assets/_SafetyProto/Resources/Actions/actions.json` as `ActionDef` records. `ActionResolver` provides case-insensitive lookup from that JSON catalog. Scene emitters store plain action-id strings (`ScaffoldPieceInstaller.actionId`, `RetractableLanyardController.connectActionId`).
 
 ### Service Reset Pattern
 
-Systems that hold session state implement `ISessionResettable`. `TrainingSessionManager` calls `ResetSession()` on all of them between sessions/replays. Implementing classes: `TaskManager`, `TimerSystem`, `PPEManager`, `PPESnapSlot`, `AudioFeedbackManager`, `HapticManager`, `TaskPopupFeedback`, `ScoreService`, `SessionLogger`, `SceneLoader`.
+Systems that hold session state implement `ISessionResettable`. `TrainingSessionManager` calls `ResetSession()` on all of them between sessions/replays. Implementing classes: `TaskManager`, `TimerSystem`, `PPEManager`, `PPESnapSlot`, `AudioFeedbackManager`, `HapticManager`, `ScoreService`, `SessionLogger`, `SceneLoader`.
 
 ## Key File Locations
 

@@ -13,7 +13,7 @@ using UnityEngine.UI;
 namespace SafetyProto.UI
 {
     /// <summary>
-    /// Full session report panel. Replaces SessionCompleteUI with a detailed breakdown of
+    /// Full session report panel. Shows a detailed breakdown of
     /// per-task performance, medal award, and contextual improvement tips.
     /// </summary>
     public class SessionReportUI : MonoBehaviour

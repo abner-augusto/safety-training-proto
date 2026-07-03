@@ -39,7 +39,7 @@ namespace SafetyProto.Tests.Editor
             EventBus.Instance.onActionAttempt.AddListener(SimulateRuleEngine);
 
             SessionEvents.RaiseSessionStarted();
-            TaskEvents.RaiseTaskStarted(new TaskEventArgs());
+            EventBus.Instance.RaiseTaskStarted(new TaskEventArgs());
 
             ActionEvents.PublishActionAttempt("test_action");
             ProcessEvents();
@@ -54,7 +54,7 @@ namespace SafetyProto.Tests.Editor
             EventBus.Instance.onActionAttempt.AddListener(SimulateViolationRule);
 
             SessionEvents.RaiseSessionStarted();
-            TaskEvents.RaiseTaskStarted(new TaskEventArgs());
+            EventBus.Instance.RaiseTaskStarted(new TaskEventArgs());
 
             ActionEvents.PublishActionAttempt("test_action");
             ProcessEvents();
@@ -81,7 +81,7 @@ namespace SafetyProto.Tests.Editor
 
         private void SimulateRuleEngine(ActionAttemptedEvent _)
         {
-            TaskEvents.RaiseTaskCompleted(new TaskEventArgs());
+            EventBus.Instance.RaiseTaskCompleted(new TaskEventArgs());
         }
 
         private void SimulateViolationRule(ActionAttemptedEvent _)

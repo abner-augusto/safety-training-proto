@@ -152,8 +152,6 @@ namespace SafetyProto.Runtime.Task
         public IReadOnlyList<RuntimeSafetyTask> GetSessionTasks() =>
             _core?.GetSessionTasks() ?? new List<RuntimeSafetyTask>();
 
-        public ISafetyTask? GetCurrentTaskData() => _core?.CurrentRuntimeTask?.TaskData;
-
         public ITaskGroup? GetCurrentGroup() => _core?.GetCurrentGroup();
 
         public RuntimeSafetyTask? FindPendingTaskByActionId(string actionId) =>
@@ -161,10 +159,6 @@ namespace SafetyProto.Runtime.Task
 
         public bool IsPpeAheadOfCurrentStep(PPEType type) =>
             _core?.IsPpeAheadOfCurrentStep(type) ?? false;
-
-        public void FocusTask(RuntimeSafetyTask runtimeTask) => _core?.FocusTask(runtimeTask);
-
-        public void RegisterOrderViolation(string description) => _core?.RegisterOrderViolation(description);
 
         public void ResetSession() => _core?.ResetSession();
     }

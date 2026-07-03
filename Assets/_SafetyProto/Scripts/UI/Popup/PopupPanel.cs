@@ -151,7 +151,7 @@ namespace SafetyProto.UI
 
             Shown?.Invoke();
 
-            // Auto-fechamento opcional. Interactive nunca fecha sozinho — exige clique do usuário.
+            // Optional auto-close. Interactive popups never close on their own — they require a user click.
             StopAutoClose();
             if (!isInteractive && data.autoCloseSeconds > 0f)
                 _autoCloseCoroutine = StartCoroutine(AutoCloseRoutine(data.autoCloseSeconds));
