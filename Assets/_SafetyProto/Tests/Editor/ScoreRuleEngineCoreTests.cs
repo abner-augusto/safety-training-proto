@@ -2,8 +2,6 @@ using NUnit.Framework;
 using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Domain.Scoring;
-using SafetyProto.Runtime.Safety;
-using SafetyProto.Runtime.Task;
 using SafetyProto.Tests.Editor.Support;
 
 namespace SafetyProto.Tests.Editor
@@ -84,17 +82,37 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
-        public void TaskCompleted_NullRuntimeTask_DefaultsToSuccess()
+        public void TaskCompleted_NullRuntimeTask_CompliantDefaultsToSuccess()
         {
             var task = _builder.Task("t1", "action_a");
             task.successPoints = 100;
+            task.ppePenalty = 50;
 
             _core = new ScoreRuleEngineCore(_bus, _score);
             _core.Subscribe();
 
+            // TaskEventArgs ctor defaults WasPpeCompliant = true → treated as a clean completion,
+            // no penalty even though RuntimeTask is null.
             _bus.Publish(new TaskEventArgs(task, null, TaskPhase.Completed));
 
             Assert.AreEqual(100, _score.CurrentScore);
+        }
+
+        [Test]
+        public void TaskCompleted_NullRuntimeTask_NotCompliant_AppliesPpePenalty()
+        {
+            var task = _builder.Task("t1", "action_a");
+            task.successPoints = 100;
+            task.ppePenalty = 50;
+
+            _core = new ScoreRuleEngineCore(_bus, _score);
+            _core.Subscribe();
+
+            // Non-compliant completion with no RuntimeTask instance: unsafe state is conveyed via
+            // WasPpeCompliant=false (the path SafetyRuleEngineCore uses). The penalty must apply.
+            _bus.Publish(new TaskEventArgs(task, null, TaskPhase.Completed) { WasPpeCompliant = false });
+
+            Assert.AreEqual(50, _score.CurrentScore, "successPoints(100) - ppePenalty(50) = 50");
         }
 
         [Test]
