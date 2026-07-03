@@ -82,6 +82,42 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
+        public void ZeroPointTask_Completed_DoesNotThrow_ScoreUnchanged()
+        {
+            var task = _builder.Task("t1", "action_a");
+            task.successPoints = 0;
+
+            IScoreService score = new ScoreService();
+            _core = new ScoreRuleEngineCore(_bus, score);
+            _core.Subscribe();
+
+            _bus.Publish(new TaskEventArgs(task, null, TaskPhase.Completed));
+
+            Assert.AreEqual(0, score.CurrentScore);
+        }
+
+        [Test]
+        public void ZeroPointTask_UnsafeCompletion_StillAppliesPpePenalty()
+        {
+            var task = _builder.Task("t1", "action_a");
+            task.successPoints = 0;
+            task.ppePenalty = 50;
+
+            IScoreService score = new ScoreService();
+            _core = new ScoreRuleEngineCore(_bus, score);
+            _core.Subscribe();
+
+            var runtimeTask = new RuntimeSafetyTask(task)
+            {
+                State = TaskState.CompletedSuccessButUnsafe
+            };
+
+            _bus.Publish(new TaskEventArgs(task, runtimeTask, TaskPhase.Completed));
+
+            Assert.AreEqual(-50, score.CurrentScore);
+        }
+
+        [Test]
         public void TaskCompleted_NullRuntimeTask_CompliantDefaultsToSuccess()
         {
             var task = _builder.Task("t1", "action_a");
