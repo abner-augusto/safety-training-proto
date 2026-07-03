@@ -109,3 +109,88 @@ signal; see caveats.
   reference graph, not a heuristic).
 - NDepend was intentionally not used (out of scope for this pass); the reference-graph method above is
   fully reproducible from the repository without it.
+
+---
+
+## T5 — Change-impact metrics (git)
+
+All figures come from `git diff --shortstat` / `--stat` / `--dirstat` over the stated commit ranges.
+Line counts are additions/deletions as git reports them (includes `.meta` and asset text).
+
+### SO→JSON data-layer migration (Phases 1–6)
+
+Range: **`fbcab4c^ .. 284e6a1`** — from just before the first phase (`fbcab4c` "unify scenario model
++ loader across Unity and CLI") through the deletion commit (`284e6a1` "remove legacy ScriptableObject
+authoring"). Phase mapping is documented in `docs/refatoracao-sistema-dados.md`.
+
+```
+git diff --shortstat fbcab4c^ 284e6a1
+  → 121 files changed, 2562 insertions(+), 1463 deletions(-)
+
+git diff --shortstat fbcab4c^ 284e6a1 -- Assets/_SafetyProto/Scripts Tools   (code only)
+  → 79 files changed, 2293 insertions(+), 885 deletions(-)
+```
+
+Net code delta ≈ **+1408 LoC** across 79 source files. `--dirstat` shows the change concentrated in
+`Domain/Scenarios` (15.1%), `Runtime/Actions` (8.8%), `Domain/Actions` (7.5%), the new
+`AuthoringApp.Gui` (10.0% across ViewModels+Views), and `Editor` (6.3%) — i.e. the new unified model,
+its consumers, and the desktop authoring tool, exactly the surface the migration was scoped to.
+
+### Meta XR SDK update (85.0.0 → 201.0.0)
+
+Isolable to a single commit **`f2a68e4`** ("upgrade Meta XR SDK from 85.0.0 to 201.0.0 with Horizon OS
+support"). (The submitted paper's "v76→v201" framing is superseded by the actual repo history: the
+tracked upgrade is 85→201.)
+
+```
+git show --shortstat f2a68e4
+  → 8 files changed, 668 insertions(+), 55 deletions(-)
+```
+
+The 8 files are **entirely configuration / scene wiring — zero C# scripts**:
+`Packages/manifest.json`, `Packages/packages-lock.json`, `ProjectSettings/ProjectSettings.asset`,
+`ProjectSettings/DynamicsManager.asset`, `Assets/XR/Settings/OpenXRPackageSettings.asset`,
+`Assets/Plugins/Android/AndroidManifest.xml`, and the two scene files (`SafetyTraining.unity`,
+`TestScene.unity`).
+
+```
+git show --stat f2a68e4 -- Assets/_SafetyProto/Scripts/Domain Assets/_SafetyProto/Scripts/Networking
+  → (empty)   # zero Domain Core / Evaluator-dashboard files changed
+```
+
+**Confirmed: the SDK bump changed no gameplay, Domain, or Evaluation code** — the evidence for SDK
+isolation. The scene-file deltas are Inspector/prefab rewiring, not logic.
+
+### Add SessionLogger
+
+Commit **`afbe400`** ("Part 4: extract session logging logic and add harness logger adapter") — the
+extraction of session logging into the testable, engine-independent `SessionLoggerCore` plus its
+adapter.
+
+```
+git show --shortstat afbe400
+  → 7 files changed, 264 insertions(+), 172 deletions(-)
+```
+
+Modules touched: **`Core` (1 file) and `Utils` (SessionLogger, SessionLoggerCore, SafetyLogAdapter)** —
+two modules. No gameplay producer (`TaskManager`, `SafetyRuleEngine`, PPE, scoring) was modified:
+session logging integrates purely by **subscribing to existing EventBus events**, which is the
+event-driven-decoupling claim made concrete. (An earlier noisier commit `9551469` first introduced
+logging mixed with unrelated work — 12 files, +2824/−819 — and is not the representative measure.)
+
+### Add / swap a scenario (now a JSON edit)
+
+After the migration, runtime scenario data is 100% JSON (commit `82352a7`, "runtime 100% JSON — drop SO
+dependency"), loaded via `Resources.Load` + `ScenarioLoader`. Swapping or adding a scenario is a single
+JSON file edit — **0 C# files changed, 0 recompilation**.
+
+```
+wc -l on scenario files:
+  Assets/_SafetyProto/Resources/Scenarios/default.json   157 lines
+  Tools/CliHarness/scenarios/ppe_inspection.json         117 lines
+  Tools/CliHarness/scenarios/ppe_equip.json               51 lines
+```
+
+A complete authored scenario is ~**120–160 lines of JSON**; authoring or swapping one recompiles
+nothing (contrast with the pre-migration ScriptableObject flow, which required Editor asset edits and
+domain reloads).
