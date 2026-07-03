@@ -26,7 +26,7 @@ namespace SafetyProto.Runtime
                  "1.0 = native recommended; below 1.0 trades sharpness for GPU headroom. " +
                  "Caps the supersampling overshoot seen in profiling (render_scale 160%).")]
         [Range(0.5f, 1.5f)]
-        [SerializeField] private float eyeTextureResolutionScale = 0.9f;
+        [SerializeField] private float eyeTextureResolutionScale = 1.0f;
 
         [Tooltip("If > 0, pins the dynamic viewport scale to this value so the runtime can't " +
                  "scale the eye buffer up past the cap. Leave at 0 to let the runtime manage it.")]
