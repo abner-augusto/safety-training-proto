@@ -27,6 +27,12 @@ namespace SafetyProto.Networking.Dashboard
         private Thread _listenerThread;
         private volatile bool _running;
 
+        // Event broadcasts defer their JSON serialization + framing to this single
+        // encoder thread, so the main thread never pays that cost during event bursts.
+        // One thread + a FIFO queue preserves message ordering across clients.
+        private BlockingCollection<Func<byte[]>> _encodeQueue;
+        private Thread _encoderThread;
+
         public event Action<ClientConnection, string> MessageReceived;
 
         public void SendToClient<T>(ClientConnection conn, string eventType, T payload)
@@ -61,6 +67,10 @@ namespace SafetyProto.Networking.Dashboard
             _listener = new TcpListener(IPAddress.Any, port);
             _listener.Start();
 
+            _encodeQueue = new BlockingCollection<Func<byte[]>>();
+            _encoderThread = new Thread(EncodeLoop) { IsBackground = true };
+            _encoderThread.Start();
+
             _listenerThread = new Thread(ListenLoop) { IsBackground = true };
             _listenerThread.Start();
         }
@@ -91,6 +101,14 @@ namespace SafetyProto.Networking.Dashboard
             {
                 try { _listenerThread.Join(100); } catch { /* ignore */ }
             }
+
+            _encodeQueue?.CompleteAdding();
+            if (_encoderThread != null && _encoderThread.IsAlive)
+            {
+                try { _encoderThread.Join(100); } catch { /* ignore */ }
+            }
+            try { _encodeQueue?.Dispose(); } catch { /* ignore */ }
+            _encodeQueue = null;
         }
 
         public void BroadcastJson(string json)
@@ -107,7 +125,13 @@ namespace SafetyProto.Networking.Dashboard
             if (!_running || utf8Json == null || length <= 0)
                 return;
 
-            var frame = BuildTextFrame(utf8Json, length);
+            EnqueueFrameToClients(BuildTextFrame(utf8Json, length));
+        }
+
+        private void EnqueueFrameToClients(byte[] frame)
+        {
+            if (frame == null)
+                return;
 
             List<ClientConnection> disconnected = null;
 
@@ -138,8 +162,46 @@ namespace SafetyProto.Networking.Dashboard
 
         public void Broadcast<T>(string eventType, T payload)
         {
+            var queue = _encodeQueue;
+            if (!_running || queue == null || queue.IsAddingCompleted)
+                return;
+
+            // Only the (cheap) envelope allocation happens on the calling thread; the
+            // JsonUtility.ToJson + UTF8 encode + framing run on the encoder thread.
+            // JsonUtility.ToJson over a plain [Serializable] struct is thread-safe.
             var envelope = new Envelope<T> { eventType = eventType, payload = payload };
-            BroadcastJson(JsonUtility.ToJson(envelope));
+            try
+            {
+                queue.Add(() =>
+                {
+                    var utf8 = Encoding.UTF8.GetBytes(JsonUtility.ToJson(envelope));
+                    return BuildTextFrame(utf8, utf8.Length);
+                });
+            }
+            catch (InvalidOperationException)
+            {
+                // CompleteAdding() was called concurrently during shutdown; drop.
+            }
+        }
+
+        private void EncodeLoop()
+        {
+            try
+            {
+                foreach (var encode in _encodeQueue.GetConsumingEnumerable())
+                {
+                    try
+                    {
+                        EnqueueFrameToClients(encode());
+                    }
+                    catch
+                    {
+                        // A single failed encode must not tear down the encoder loop.
+                    }
+                }
+            }
+            catch (ObjectDisposedException) { /* queue disposed during shutdown */ }
+            catch (InvalidOperationException) { /* CompleteAdding/dispose race */ }
         }
 
         private void ListenLoop()
