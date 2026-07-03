@@ -129,9 +129,9 @@ namespace SafetyProto.Runtime.PPE
             bool wasGrabbed = _isGrabbed;
 
             if (evt.Type == PointerEventType.Select)
-                _isGrabbed = true;
-            else if (evt.Type == PointerEventType.Unselect)
-                _isGrabbed = false;
+                _isGrabbed = _grabbable != null && _grabbable.SelectingPointsCount > 0;
+            else if (evt.Type == PointerEventType.Unselect || evt.Type == PointerEventType.Cancel)
+                _isGrabbed = _grabbable != null && _grabbable.SelectingPointsCount > 0;
             else
                 return;
 
