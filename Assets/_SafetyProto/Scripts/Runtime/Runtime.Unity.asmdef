@@ -17,6 +17,12 @@
   "precompiledReferences": [],
   "autoReferenced": true,
   "defineConstraints": [],
-  "versionDefines": [],
+  "versionDefines": [
+    {
+      "name": "com.meta.xr.sdk.all",
+      "expression": "",
+      "define": "USING_META_XR"
+    }
+  ],
   "noEngineReferences": false
 }

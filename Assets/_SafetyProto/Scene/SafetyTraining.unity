@@ -47848,6 +47848,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7322035375745015844}
   - component: {fileID: 7322035375745015845}
+  - component: {fileID: 7322035375745015846}
   m_Layer: 0
   m_Name: '[GameManagers]'
   m_TagString: Untagged
@@ -51111,6 +51112,22 @@ MonoBehaviour:
   enableFoveatedRendering: 1
   foveationLevel: 0.66
   dynamicFoveation: 1
+--- !u!114 &7322035375745015846
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3845684147740200076}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bd00d6f39d240f780ca7683ca90e3f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Feedback.HapticManager
+  clickAmplitude: 0.25
+  clickDuration: 0.05
+  errorAmplitude: 0.75
+  errorDuration: 0.15
 --- !u!4 &7328727151093172279
 Transform:
   m_ObjectHideFlags: 0
