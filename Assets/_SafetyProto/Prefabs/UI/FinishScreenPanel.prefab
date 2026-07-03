@@ -910,7 +910,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: SafetyProto.Core.SceneLoader, SafetyProto.EventBus.Core
-        m_MethodName: ReloadCurrentScene
+        m_MethodName: ResetSession
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

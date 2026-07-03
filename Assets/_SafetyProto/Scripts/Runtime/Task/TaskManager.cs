@@ -41,6 +41,13 @@ namespace SafetyProto.Runtime.Task
 
         private UnityEngine.Events.UnityAction<SessionCompletedEventArgs>? _onSessionCompleted;
 
+        public static TaskManager? Instance { get; private set; }
+
+        private void Awake()
+        {
+            Instance = this;
+        }
+
         private void Start()
         {
             if (!this.IsEventBusReady()) return;
@@ -88,6 +95,9 @@ namespace SafetyProto.Runtime.Task
 
         private void OnDestroy()
         {
+            if (Instance == this)
+                Instance = null;
+
             if (EventBus.Instance != null && _onSessionCompleted != null)
                 EventBus.Instance.onSessionCompleted.RemoveListener(_onSessionCompleted);
 

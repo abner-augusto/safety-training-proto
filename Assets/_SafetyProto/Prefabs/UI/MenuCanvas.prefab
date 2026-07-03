@@ -1568,7 +1568,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8932131362346552640, guid: 33069c731aab6074288e1f1b7bd3e555, type: 3}
       propertyPath: _onClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: ReloadCurrentScene
+      value: ResetSession
       objectReference: {fileID: 0}
     - target: {fileID: 8932131362346552640, guid: 33069c731aab6074288e1f1b7bd3e555, type: 3}
       propertyPath: _onClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
