@@ -69,7 +69,7 @@ namespace SafetyProto.Domain.Scoring
 
             if (args.Task.successPoints > 0)
             {
-                _scoreService.AddPoints(args.Task.successPoints, $"Task '{args.Task.taskName}' completed");
+                _scoreService.AddPoints(args.Task.successPoints, $"Task '{args.Task.taskName}' completed", args.Task.id);
             }
 
             if (state == TaskState.CompletedSuccessButUnsafe)
@@ -77,7 +77,7 @@ namespace SafetyProto.Domain.Scoring
                 int penalty = args.Task.ppePenalty;
                 if (penalty > 0)
                 {
-                    _scoreService.SubtractPoints(penalty, $"Safety Violation: Missing PPE during '{args.Task.taskName}'");
+                    _scoreService.SubtractPoints(penalty, $"Safety Violation: Missing PPE during '{args.Task.taskName}'", args.Task.id);
                 }
             }
         }
@@ -86,7 +86,7 @@ namespace SafetyProto.Domain.Scoring
         {
             if (args.Task == null) return;
             if (args.Task.failurePenalty > 0)
-                _scoreService.SubtractPoints(args.Task.failurePenalty, $"Task '{args.Task.taskName}' timed out");
+                _scoreService.SubtractPoints(args.Task.failurePenalty, $"Task '{args.Task.taskName}' timed out", args.Task.id);
         }
 
         public void Dispose()

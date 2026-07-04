@@ -40,12 +40,29 @@ namespace SafetyProto.Runtime.Task
         public SessionCompletedEventArgs? LastSessionSummary => _core?.LastSessionSummary;
 
         private UnityEngine.Events.UnityAction<SessionCompletedEventArgs>? _onSessionCompleted;
+        private UnityEngine.Events.UnityAction<SessionStartedEventArgs>? _onSessionStarted;
+        private bool _tasksStarted;
 
         public static TaskManager? Instance { get; private set; }
 
         private void Awake()
         {
             Instance = this;
+            // Load groups in Awake (before any Start) so TotalTaskCount is available to whoever
+            // stamps SessionStarted, regardless of script execution order.
+            _runtimeGroups = LoadRuntimeGroups();
+        }
+
+        /// <summary>Total number of tasks across all groups in the loaded scenario.</summary>
+        public int TotalTaskCount
+        {
+            get
+            {
+                int count = 0;
+                foreach (var group in _runtimeGroups)
+                    if (group?.tasks != null) count += group.tasks.Count;
+                return count;
+            }
         }
 
         private void Start()
@@ -54,7 +71,6 @@ namespace SafetyProto.Runtime.Task
 
             IScoreService scoreService = ScoreService.Instance;
 
-            _runtimeGroups = LoadRuntimeGroups();
             ValidateActions();
 
             if (timerSystem == null)
@@ -87,10 +103,25 @@ namespace SafetyProto.Runtime.Task
                 timerSystem.onTimerTimeout.AddListener(OnGroupTimerTimeout);
             }
 
+            // Start tasks only once the session has actually begun, so GroupStarted/TaskStarted are
+            // stamped with the session context. In the name-entry flow BeginSession is deferred until
+            // the participant id is captured; starting here (scene load) would emit orphan lifecycle
+            // events with empty session ids. The EventBus is a deferred queue, so a SessionStarted
+            // raised during another component's Start() is still dispatched after this listener is set.
             if (startTasksAutomatically)
             {
-                _core.StartSession();
+                _onSessionStarted = _ => StartTasksOnce();
+                EventBus.Instance!.onSessionStarted.AddListener(_onSessionStarted);
             }
+        }
+
+        /// <summary>Kicks off the first group/task exactly once (SessionStarted may only fire once per
+        /// scene load, but this guards against any re-raise).</summary>
+        private void StartTasksOnce()
+        {
+            if (_tasksStarted) return;
+            _tasksStarted = true;
+            _core?.StartSession();
         }
 
         private void OnDestroy()
@@ -100,6 +131,9 @@ namespace SafetyProto.Runtime.Task
 
             if (EventBus.Instance != null && _onSessionCompleted != null)
                 EventBus.Instance.onSessionCompleted.RemoveListener(_onSessionCompleted);
+
+            if (EventBus.Instance != null && _onSessionStarted != null)
+                EventBus.Instance.onSessionStarted.RemoveListener(_onSessionStarted);
 
             if (timerSystem != null)
             {

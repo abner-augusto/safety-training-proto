@@ -14,24 +14,24 @@ namespace SafetyProto.Domain.Sessions
     public sealed class SessionLoggerCore : IDisposable
     {
         /// <summary>
-        /// JSON DTOs use public fields (not properties) and carry the
-        /// <c>[Serializable]</c> attribute for compatibility with
-        /// <c>UnityEngine.JsonUtility</c>, which the Unity wrapper injects as
-        /// its serializer via the <c>Func&lt;SessionLog, string&gt;</c> constructor
-        /// parameter. Unity ships a restricted <c>System.Text.Json</c> assembly
-        /// where <c>JsonSerializerOptions</c> is inaccessible, forcing this
-        /// injection-based design.
-        ///
-        /// When the CLI harness (net10.0 target, Part 8) serializes these types
-        /// via <c>System.Text.Json.JsonSerializer</c>, it MUST configure:
-        ///
-        /// <code>
-        /// new JsonSerializerOptions { IncludeFields = true, WriteIndented = true }
-        /// </code>
-        ///
-        /// because <c>System.Text.Json</c> ignores fields by default. Without this
-        /// flag the harness would silently emit empty objects.
+        /// Serializer for the session log. Both hosts (Unity wrapper and CLI harness) pass
+        /// <see cref="SerializeIndentedOmittingDefaults"/> as the injected
+        /// <c>Func&lt;SessionLog, string&gt;</c>. It uses Newtonsoft.Json (a shared dependency of the
+        /// Domain assembly) with <c>DefaultValueHandling.Ignore</c> so each entry emits only the
+        /// fields that actually carry a value — an all-default <see cref="LogData"/> is dropped
+        /// entirely instead of the old wall of empty fields. Newtonsoft serializes the public fields
+        /// of these DTOs by default, so no attributes are required.
         /// </summary>
+        public static string SerializeIndentedOmittingDefaults(SessionLog log) =>
+            Newtonsoft.Json.JsonConvert.SerializeObject(
+                log,
+                Newtonsoft.Json.Formatting.Indented,
+                new Newtonsoft.Json.JsonSerializerSettings
+                {
+                    NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore,
+                    DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore
+                });
+
         /// <summary>
         /// Typed, structured counterpart to <see cref="LogEntry.details"/>. Lets the
         /// web dashboard format and localize the report detail line instead of relying
@@ -141,6 +141,8 @@ namespace SafetyProto.Domain.Sessions
         private long _lastEventMs;
         private int _lastTotalScore;
         private int _tasksCompletedCount;
+        private int _totalTasks;
+        private string _sessionId = string.Empty;
 
         public SessionLoggerCore(IEventBus eventBus, string outputDirectory, Func<SessionLog, string> serialize, IHarnessLogger? logger = null, Func<string, string>? actionNameResolver = null)
         {
@@ -153,7 +155,9 @@ namespace SafetyProto.Domain.Sessions
             _onSessionStarted        = args =>
             {
                 ResetTallies(args.TimestampMs);
-                LogEvent("SessionStarted", string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
+                _totalTasks = args.TotalTasks;
+                _sessionId = args.SessionId ?? string.Empty;
+                LogEvent("SessionStarted", string.Empty, _sessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
             };
             _onSessionPaused         = args => LogEvent("SessionPaused",     string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
             _onSessionResumed        = args => LogEvent("SessionResumed",    string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
@@ -187,7 +191,7 @@ namespace SafetyProto.Domain.Sessions
                 _lastTotalScore = args.TotalScore;
                 LogEvent("ScoreChanged", $"Delta={args.Delta}, Total={args.TotalScore}",
                     args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
-                    new LogData { delta = args.Delta, totalScore = args.TotalScore });
+                    new LogData { delta = args.Delta, totalScore = args.TotalScore, taskId = args.TaskId, reason = args.Reason });
             };
             _onGroupLifecycle = args =>
             {
@@ -297,6 +301,8 @@ namespace SafetyProto.Domain.Sessions
             _lastEventMs = _sessionStartMs;
             _lastTotalScore = 0;
             _tasksCompletedCount = 0;
+            _totalTasks = 0;
+            _sessionId = string.Empty;
         }
 
         private SessionSummary BuildFallbackSummary() => new SessionSummary
@@ -304,7 +310,7 @@ namespace SafetyProto.Domain.Sessions
             completed = false,
             totalScore = _lastTotalScore,
             tasksCompleted = _tasksCompletedCount,
-            totalTasks = 0, // unknown without a SessionCompleted event; `completed=false` disambiguates
+            totalTasks = _totalTasks, // from SessionStarted; 0 only if that event never carried it
             totalElapsedTime = _sessionStartMs > 0 ? (_lastEventMs - _sessionStartMs) / 1000f : 0f
         };
 
@@ -317,8 +323,18 @@ namespace SafetyProto.Domain.Sessions
                     Directory.CreateDirectory(_outputDirectory);
                 }
 
-                var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
-                var fileName = $"session_log_{timestamp}.json";
+                // Name the file after the SESSION START (not the wall-clock time of this write), so
+                // the two writes a normal session makes — one on SessionCompleted, one on the restart
+                // ResetSession — resolve to the same path and the later write overwrites the earlier
+                // one. Previously each write minted a new timestamped file, littering the folder with
+                // near-duplicate pairs. A short session-id suffix disambiguates sessions that happen to
+                // start within the same second.
+                var startMs = _sessionStartMs > 0 ? _sessionStartMs : DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                var timestamp = DateTimeOffset.FromUnixTimeMilliseconds(startMs).UtcDateTime.ToString("yyyyMMdd_HHmmss");
+                var idSuffix = string.IsNullOrEmpty(_sessionId)
+                    ? string.Empty
+                    : "_" + _sessionId.Substring(0, Math.Min(8, _sessionId.Length));
+                var fileName = $"session_log_{timestamp}{idSuffix}.json";
                 var path = Path.Combine(_outputDirectory, fileName);
 
                 // Synthesize an accurate summary from the events logged so far when the session

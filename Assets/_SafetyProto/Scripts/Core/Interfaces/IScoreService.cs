@@ -11,13 +11,15 @@ namespace SafetyProto.Core.Interfaces
         /// <summary>Current running score.</summary>
         int CurrentScore { get; }
 
-        /// <summary>Adds points; <paramref name="amount"/> must be positive.</summary>
-        void AddPoints(int amount, string reason);
+        /// <summary>Adds points; <paramref name="amount"/> must be positive. <paramref name="taskId"/>
+        /// is the stable id of the task that caused the change (empty when not task-driven).</summary>
+        void AddPoints(int amount, string reason, string taskId = "");
 
-        /// <summary>Subtracts points; <paramref name="amount"/> must be positive.</summary>
-        void SubtractPoints(int amount, string reason);
+        /// <summary>Subtracts points; <paramref name="amount"/> must be positive. <paramref name="taskId"/>
+        /// is the stable id of the task that caused the change (empty when not task-driven).</summary>
+        void SubtractPoints(int amount, string reason, string taskId = "");
 
         /// <summary>Raised every time the score changes.</summary>
-        event Action<int /*newScore*/, int /*delta*/, string /*reason*/> ScoreChanged;
+        event Action<int /*newScore*/, int /*delta*/, string /*reason*/, string /*taskId*/> ScoreChanged;
     }
 }

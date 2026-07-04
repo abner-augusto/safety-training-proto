@@ -106,9 +106,9 @@ namespace SafetyProto.Tests.Editor.Support
                 scenarioId: scenarioName);
         }
 
-        private void OnScoreChanged(int newScore, int delta, string reason)
+        private void OnScoreChanged(int newScore, int delta, string reason, string taskId)
         {
-            Bus.Publish(new ScoreChangedEventArgs(newScore, delta));
+            Bus.Publish(new ScoreChangedEventArgs(newScore, delta) { TaskId = taskId, Reason = reason });
         }
 
         /// <summary>Publishes SessionStarted, then kicks off the first task group.</summary>

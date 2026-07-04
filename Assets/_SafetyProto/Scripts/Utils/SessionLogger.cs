@@ -22,7 +22,7 @@ namespace SafetyProto.Utils
             _core = new SessionLoggerCore(
                 EventBus.Instance,
                 Application.persistentDataPath,
-                log => JsonUtility.ToJson(log, true),
+                SessionLoggerCore.SerializeIndentedOmittingDefaults,
                 new SafetyLogAdapter(),
                 BuildActionNameResolver());
             _core.Subscribe();
