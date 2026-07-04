@@ -312,8 +312,10 @@ namespace SafetyProto.Domain.Safety
             {
                 ViolationCode = code,
                 Message = message,
-                TaskId = task != null ? task.taskName : string.Empty,
-                GroupId = group != null ? group.groupName : string.Empty
+                TaskId = task != null ? task.id : string.Empty,
+                GroupId = group != null ? group.id : string.Empty,
+                TaskName = task != null ? task.taskName : string.Empty,
+                GroupName = group != null ? group.groupName : string.Empty
             });
         }
 

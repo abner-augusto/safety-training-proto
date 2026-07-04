@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
+using SafetyProto.Domain.Actions;
 using SafetyProto.Domain.Safety;
 using SafetyProto.Domain.Scenarios;
 using SafetyProto.Domain.Scoring;
@@ -96,7 +97,8 @@ public static class Program
                 IncludeFields = true,
                 WriteIndented = true
             }),
-            logger: logger);
+            logger: logger,
+            actionNameResolver: BuildActionNameResolver(scenarioPath));
         sessionLogger.Subscribe();
 
         var transcript = new TranscriptRecorder(bus);
@@ -160,5 +162,40 @@ public static class Program
         EventContext.Clear();
 
         return 0;
+    }
+
+    /// <summary>
+    /// Best-effort actionId → friendly-name resolver for nicer harness logs. Walks up from the
+    /// scenario file and the working directory looking for the repo's embedded action catalog
+    /// (<c>Assets/_SafetyProto/Resources/Actions/actions.json</c>). Returns the raw id when the
+    /// catalog can't be found, so the harness works standalone.
+    /// </summary>
+    private static Func<string, string> BuildActionNameResolver(string scenarioPath)
+    {
+        const string relative = "Assets/_SafetyProto/Resources/Actions/actions.json";
+        var seeds = new[]
+        {
+            Path.GetDirectoryName(Path.GetFullPath(scenarioPath)),
+            Directory.GetCurrentDirectory()
+        };
+
+        string? catalogPath = null;
+        foreach (var seed in seeds)
+        {
+            for (var dir = seed; dir != null; dir = Path.GetDirectoryName(dir))
+            {
+                var candidate = Path.Combine(dir, relative);
+                if (File.Exists(candidate)) { catalogPath = candidate; break; }
+            }
+            if (catalogPath != null) break;
+        }
+
+        var catalog = catalogPath != null
+            ? ActionCatalogLoader.Parse(File.ReadAllText(catalogPath)).Catalog
+            : null;
+
+        return id => (catalog != null && catalog.TryGet(id, out var def) && def != null)
+            ? def.ResolveLogName()
+            : id;
     }
 }

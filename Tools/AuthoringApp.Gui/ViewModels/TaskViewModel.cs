@@ -18,6 +18,7 @@ public sealed class TaskViewModel : ViewModelBase
 
     private readonly ScenarioEditorViewModel _editor;
 
+    private string _taskId;
     private string _taskName;
     private string _taskDescription;
     private string _actionId;
@@ -33,6 +34,7 @@ public sealed class TaskViewModel : ViewModelBase
         Group = group;
         _editor = editor;
 
+        _taskId = def.RawId;
         _taskName = def.taskName;
         _taskDescription = def.taskDescription;
         _actionId = def.ActionId ?? string.Empty;
@@ -54,6 +56,13 @@ public sealed class TaskViewModel : ViewModelBase
     public IReadOnlyList<string> ActionOptions => _editor.ActionOptions;
 
     public ObservableCollection<PpeToggleViewModel> PpeOptions { get; }
+
+    /// <summary>
+    /// Stable, language-independent id (e.g. "equip_helmet"). Optional: when left blank the
+    /// runtime and session log fall back to <see cref="TaskName"/>, so existing scenarios keep
+    /// working, but authoring a real id keeps analysis keys stable across copy edits.
+    /// </summary>
+    public string TaskId { get => _taskId; set => SetField(ref _taskId, value); }
 
     public string TaskName
     {
@@ -94,6 +103,7 @@ public sealed class TaskViewModel : ViewModelBase
 
     public SafetyTaskDef ToDef() => new()
     {
+        RawId = _taskId?.Trim() ?? string.Empty,
         taskName = _taskName,
         taskDescription = _taskDescription,
         ActionId = _actionId,

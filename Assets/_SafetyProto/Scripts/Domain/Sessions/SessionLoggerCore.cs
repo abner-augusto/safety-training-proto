@@ -45,6 +45,8 @@ namespace SafetyProto.Domain.Sessions
         [Serializable]
         public struct LogData
         {
+            // ActionAttempt (stable id; the friendly name goes in LogEntry.details)
+            public string actionId;
             // PpeStateChanged
             public string ppeType;
             public bool wearing;
@@ -85,6 +87,13 @@ namespace SafetyProto.Domain.Sessions
         [Serializable]
         public sealed class SessionSummary
         {
+            /// <summary>
+            /// <c>true</c> only when the session reached <c>SessionCompleted</c>. When the
+            /// participant resets or abandons mid-session the summary is synthesized from the
+            /// events logged so far and this stays <c>false</c> (and <see cref="totalTasks"/>
+            /// is 0/unknown), so a reset session no longer masquerades as an all-zero completion.
+            /// </summary>
+            public bool completed;
             public float totalElapsedTime;
             public int totalScore;
             public int tasksCompleted;
@@ -104,6 +113,12 @@ namespace SafetyProto.Domain.Sessions
         private readonly Func<SessionLog, string> _serialize;
         private readonly IHarnessLogger? _logger;
 
+        /// <summary>
+        /// Optional actionId → friendly-name resolver (host injects it, backed by the action
+        /// catalog). When null the raw action id is logged as the detail, preserving old behavior.
+        /// </summary>
+        private readonly Func<string, string>? _actionNameResolver;
+
         private readonly Action<SessionStartedEventArgs>          _onSessionStarted;
         private readonly Action<SessionPausedEventArgs>           _onSessionPaused;
         private readonly Action<SessionResumedEventArgs>          _onSessionResumed;
@@ -120,18 +135,37 @@ namespace SafetyProto.Domain.Sessions
         private bool _subscribed;
         private bool _disposed;
 
-        public SessionLoggerCore(IEventBus eventBus, string outputDirectory, Func<SessionLog, string> serialize, IHarnessLogger? logger = null)
+        // Running tallies, kept so a summary can be synthesized when the session is reset or
+        // abandoned before SessionCompleted fires (see BuildFallbackSummary / WriteLogAsync).
+        private long _sessionStartMs;
+        private long _lastEventMs;
+        private int _lastTotalScore;
+        private int _tasksCompletedCount;
+
+        public SessionLoggerCore(IEventBus eventBus, string outputDirectory, Func<SessionLog, string> serialize, IHarnessLogger? logger = null, Func<string, string>? actionNameResolver = null)
         {
             _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
             _outputDirectory = outputDirectory ?? throw new ArgumentNullException(nameof(outputDirectory));
             _serialize = serialize ?? throw new ArgumentNullException(nameof(serialize));
             _logger = logger;
+            _actionNameResolver = actionNameResolver;
 
-            _onSessionStarted        = args => LogEvent("SessionStarted",    string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
+            _onSessionStarted        = args =>
+            {
+                ResetTallies(args.TimestampMs);
+                LogEvent("SessionStarted", string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
+            };
             _onSessionPaused         = args => LogEvent("SessionPaused",     string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
             _onSessionResumed        = args => LogEvent("SessionResumed",    string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
             _onSessionCompleted      = OnSessionCompleted;
-            _onActionAttempt         = args => LogEvent("ActionAttempt",     args.ActionId ?? string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
+            _onActionAttempt         = args =>
+            {
+                var actionId = args.ActionId ?? string.Empty;
+                var friendly = _actionNameResolver?.Invoke(actionId);
+                var details = string.IsNullOrWhiteSpace(friendly) ? actionId : friendly;
+                LogEvent("ActionAttempt", details, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                    new LogData { actionId = actionId });
+            };
             _onPpeStateChanged       = args => LogEvent("PpeStateChanged",   $"PPE={args.PpeType}, Wearing={args.IsWearing}", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                 new LogData { ppeType = args.PpeType.ToString(), wearing = args.IsWearing });
             _onTaskLifecycle = args =>
@@ -143,12 +177,18 @@ namespace SafetyProto.Domain.Sessions
                     TaskPhase.Timeout => "TaskTimeout",
                     _ => "TaskUnknown"
                 };
+                if (args.Phase == TaskPhase.Completed) _tasksCompletedCount++;
                 LogEvent(eventName, args.Task?.taskName ?? string.Empty,
-                    args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
+                    args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                    new LogData { taskId = args.Task?.id ?? string.Empty });
             };
-            _onScoreChanged = args => LogEvent("ScoreChanged", $"Delta={args.Delta}, Total={args.TotalScore}",
-                args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
-                new LogData { delta = args.Delta, totalScore = args.TotalScore });
+            _onScoreChanged = args =>
+            {
+                _lastTotalScore = args.TotalScore;
+                LogEvent("ScoreChanged", $"Delta={args.Delta}, Total={args.TotalScore}",
+                    args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                    new LogData { delta = args.Delta, totalScore = args.TotalScore });
+            };
             _onGroupLifecycle = args =>
             {
                 string eventName = args.Phase switch
@@ -158,9 +198,10 @@ namespace SafetyProto.Domain.Sessions
                     _ => "GroupUnknown"
                 };
                 LogEvent(eventName, args.Group?.groupName ?? string.Empty,
-                    args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
+                    args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                    new LogData { groupId = args.Group?.id ?? string.Empty });
             };
-            _onSafetyViolation       = args => LogEvent("SafetyViolation",   $"{args.ViolationCode} | {args.Message} (Task={args.TaskId}, Group={args.GroupId})", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+            _onSafetyViolation       = args => LogEvent("SafetyViolation",   $"{args.ViolationCode} | {args.Message} (Task={args.TaskName}, Group={args.GroupName})", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                 new LogData { violationCode = args.ViolationCode, message = args.Message, taskId = args.TaskId, groupId = args.GroupId });
             _onSafetyError           = args => LogEvent("SafetyError",       $"{args.Source}: {args.Message} ({args.Details})", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                 new LogData { source = args.Source, message = args.Message, errorDetails = args.Details });
@@ -221,6 +262,7 @@ namespace SafetyProto.Domain.Sessions
 
             _log.summary = new SessionSummary
             {
+                completed = true,
                 totalElapsedTime = args.totalElapsedTime,
                 totalScore = args.totalScore,
                 tasksCompleted = args.tasksCompleted,
@@ -234,6 +276,7 @@ namespace SafetyProto.Domain.Sessions
         {
             long actualTimestamp = timestampMs == 0 ? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() : timestampMs;
             var timestampIso = DateTimeOffset.FromUnixTimeMilliseconds(actualTimestamp).ToString("o");
+            _lastEventMs = actualTimestamp;
 
             _log.entries.Add(new LogEntry
             {
@@ -248,6 +291,23 @@ namespace SafetyProto.Domain.Sessions
             });
         }
 
+        private void ResetTallies(long timestampMs)
+        {
+            _sessionStartMs = timestampMs == 0 ? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() : timestampMs;
+            _lastEventMs = _sessionStartMs;
+            _lastTotalScore = 0;
+            _tasksCompletedCount = 0;
+        }
+
+        private SessionSummary BuildFallbackSummary() => new SessionSummary
+        {
+            completed = false,
+            totalScore = _lastTotalScore,
+            tasksCompleted = _tasksCompletedCount,
+            totalTasks = 0, // unknown without a SessionCompleted event; `completed=false` disambiguates
+            totalElapsedTime = _sessionStartMs > 0 ? (_lastEventMs - _sessionStartMs) / 1000f : 0f
+        };
+
         public async Task<string?> WriteLogAsync()
         {
             try
@@ -260,6 +320,11 @@ namespace SafetyProto.Domain.Sessions
                 var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
                 var fileName = $"session_log_{timestamp}.json";
                 var path = Path.Combine(_outputDirectory, fileName);
+
+                // Synthesize an accurate summary from the events logged so far when the session
+                // ended without a SessionCompleted event (reset / abandoned). Guarantees the file
+                // never carries the old all-zero placeholder summary.
+                _log.summary ??= BuildFallbackSummary();
 
                 var json = _serialize(_log);
                 await File.WriteAllTextAsync(path, json);
@@ -287,6 +352,7 @@ namespace SafetyProto.Domain.Sessions
             _ = WriteLogAsync();
             _log.entries.Clear();
             _log.summary = null;
+            ResetTallies(0);
         }
 
         public void Dispose()

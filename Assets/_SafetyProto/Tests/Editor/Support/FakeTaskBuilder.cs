@@ -28,6 +28,7 @@ namespace SafetyProto.Tests.Editor.Support
 
         public sealed class FakeSafetyTask : ISafetyTask
         {
+            public string id => taskName;
             public string taskName { get; set; } = string.Empty;
             public string taskDescription { get; set; } = string.Empty;
             public int successPoints { get; set; } = 100;
@@ -46,6 +47,7 @@ namespace SafetyProto.Tests.Editor.Support
 
         public sealed class FakeTaskGroup : ITaskGroup
         {
+            public string id => groupName;
             public string groupName { get; set; } = string.Empty;
             public TaskExecutionModeShared executionMode { get; set; } = TaskExecutionModeShared.Sequential;
             public float timeLimit { get; set; } = 0f;

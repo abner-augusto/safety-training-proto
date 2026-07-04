@@ -16,6 +16,13 @@ namespace SafetyProto.Core.Interfaces
     /// </summary>
     public interface ITaskGroup
     {
+        /// <summary>
+        /// Stable, language-independent identifier for the group (e.g. "ppe_selection").
+        /// Used as the analysis key in session logs; unlike <see cref="groupName"/> it is not
+        /// localized. Implementations that lack an authored id fall back to <see cref="groupName"/>.
+        /// </summary>
+        string id { get; }
+
         string groupName { get; }
         TaskExecutionModeShared executionMode { get; }
         float timeLimit { get; }

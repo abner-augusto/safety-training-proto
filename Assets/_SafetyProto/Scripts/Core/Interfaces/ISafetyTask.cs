@@ -9,6 +9,14 @@ namespace SafetyProto.Core.Interfaces
     /// </summary>
     public interface ISafetyTask
     {
+        /// <summary>
+        /// Stable, language-independent identifier for the task (e.g. "equip_helmet").
+        /// Used as the analysis key in session logs; unlike <see cref="taskName"/> it is not
+        /// localized and does not change when display copy is edited. Implementations that lack
+        /// an authored id fall back to <see cref="taskName"/> so this is never empty.
+        /// </summary>
+        string id { get; }
+
         string taskName { get; }
         string taskDescription { get; }
         int successPoints { get; }

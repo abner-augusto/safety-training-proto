@@ -12,6 +12,13 @@ namespace SafetyProto.Domain.Scenarios
     /// </summary>
     public sealed class TaskGroupDef : ITaskGroup
     {
+        /// <summary>Raw stable id as authored in JSON. May be empty; <see cref="id"/> falls back to the name.</summary>
+        [JsonProperty("id")]
+        public string RawId { get; set; } = string.Empty;
+
+        [JsonIgnore]
+        public string id => string.IsNullOrWhiteSpace(RawId) ? groupName : RawId;
+
         [JsonProperty("name")]
         public string groupName { get; set; } = "unnamed";
 

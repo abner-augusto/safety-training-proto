@@ -18,6 +18,13 @@ namespace SafetyProto.Domain.Scenarios
     /// </remarks>
     public sealed class SafetyTaskDef : ISafetyTask
     {
+        /// <summary>Raw stable id as authored in JSON. May be empty; <see cref="id"/> falls back to the name.</summary>
+        [JsonProperty("id")]
+        public string RawId { get; set; } = string.Empty;
+
+        [JsonIgnore]
+        public string id => string.IsNullOrWhiteSpace(RawId) ? taskName : RawId;
+
         [JsonProperty("name")]
         public string taskName { get; set; } = "unnamed";
 
