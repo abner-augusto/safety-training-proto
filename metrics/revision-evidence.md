@@ -11,6 +11,13 @@
 > **Repo state.** Metrics were computed on branch `main`. Commands are written relative to the repo
 > root (`safety-training-proto/`) and run under Git Bash on Windows unless noted. Where a number
 > depends on the working tree, the commit is stated.
+>
+> **Refreshed to `6e8de2d` (2026-07-03).** The test-suite and coverage figures (T2/T3) were re-run at
+> HEAD after eight commits landed past the original T7 snapshot (the `ppePenalty` end-to-end fix and
+> its two tests, a zero-point-task guard, EventBus-dispatch isolation, session-reset rewire). Headless
+> test count moved 44 → 46 and total 50 → 52 (both from the two new `ScoreRuleEngineCore` tests);
+> coverage moved by < 0.2 pp. The T4/T5/T6 graph, change-impact, and codebase figures were unaffected
+> (no module edges, tracked ranges, or indicator inputs changed) and are carried forward.
 
 ---
 
@@ -242,28 +249,31 @@ Counts from `grep -cE '\[Test\b|\[TestCase' Assets/_SafetyProto/Tests/Editor/*.c
 
 | | Tests | Notes |
 |---|---:|---|
-| Total test methods | **50** | across 8 fixtures |
+| Total test methods | **52** | across 8 fixtures |
 | Integration (`SessionIntegrationTests`) | **8** | the T2 battery — covers the plan's 7 cases (case 7 = 2 tests: unknown-PPE + malformed-JSON) |
-| Unit | **42** | `TaskManagerCore` (6), `SafetyRuleEngineCore` (8), `SafetyRuleEngineDiagnostic` (4), `ScoreRuleEngineCore` (13), `PPEManagerEventProtocol` (5), `SafetyPattern` (3), `SafetyTraining` (3) |
-| **Run headless** (`dotnet test`) | **44** | 0 failed, ~0.12 s, no Unity |
+| Unit | **44** | `ScoreRuleEngineCore` (15), `SafetyRuleEngineCore` (8), `TaskManagerCore` (6), `PPEManagerEventProtocol` (5), `SafetyRuleEngineDiagnostic` (4), `SafetyPattern` (3), `SafetyTraining` (3) |
+| **Run headless** (`dotnet test`) | **46** | 0 failed, ~0.14 s, no Unity |
 | Unity-only (excluded from headless) | 6 | `SafetyPattern` (→ `Runtime.Analytics`), `SafetyTraining` (→ Unity `EventBus` singleton + facades) |
+
+The `ScoreRuleEngineCore` fixture grew 13 → 15 (hence total 50 → 52, headless 44 → 46): the two added
+tests guard the `ppePenalty` end-to-end fix documented below.
 
 Headless run + coverage commands (recap of T3):
 
 ```
 # Run the engine-independent suite without Unity:
 dotnet test Tools/SafetyProto.Tests/SafetyProto.Tests.csproj
-  → Passed: 44, Failed: 0
+  → Passed: 46, Failed: 0
 
 # Line + branch coverage of the engine-independent core [SafetyProto.Shared]:
 dotnet test Tools/SafetyProto.Tests/SafetyProto.Tests.csproj \
   --collect:"XPlat Code Coverage" \
   --settings Tools/SafetyProto.Tests/coverlet.runsettings
-  → Line 70.6% (801/1135), Branch 58.1% (280/482)
+  → Line 70.7% (804/1138), Branch 58.3% (282/484)
 ```
 
 Per-class coverage of the core orchestration (cobertura, same run): `ScoreRuleEngineCore` 100% L /
-93.3% B · `SafetyRuleEngineCore` 86.4% / 75.5% · `ScenarioLoader` 82.6% / 81.2% · `SessionLoggerCore`
+93.8% B · `SafetyRuleEngineCore` 86.4% / 75.5% · `ScenarioLoader` 82.6% / 81.3% · `SessionLoggerCore`
 89.8% / 60.7% · `TaskManagerCore` 77.2% / 63.0% · `ScoreService` 51.9% / 33.3%. The overall rate is
 pulled down by authoring-only code compiled into the shared library but not exercised by these tests
 (`ActionCatalog*`, `ActionDef`, `ScenarioValidator` = 0%).
@@ -285,6 +295,36 @@ Two production defects were found and fixed while building the battery (both now
    was never scored, because `ScoreRuleEngineCore` ignored `WasPpeCompliant` when `RuntimeTask` was
    null. Fixed (`ScoreRuleEngineCore` now honors the documented flag); guarded by integration case 2
    plus a unit test.
+
+---
+
+## Scenario scores — host attribution (read before citing any score)
+
+Re-verified at HEAD by running the CLI harness on each shipped scenario:
+
+```
+dotnet run --project Tools/CliHarness -- Tools/CliHarness/scenarios/ppe_equip.json
+  → Session summary: 5/5 tasks, score 750, 1.28s
+dotnet run --project Tools/CliHarness -- Tools/CliHarness/scenarios/ppe_inspection.json
+  → Session summary: 9/9 tasks, score 1400, 2.10s
+```
+
+**The `1300` vs `1400` gap is a host difference, not a theoretical-vs-real one.** The CLI harness
+reaches **1400** because `ScriptedActor` drives *all nine* inspection tasks, including
+"Sinalizar Tela de Proteção" (the `flag_safety_net` collective-protection check, 100 pts). The Unity
+prototype yields **1300** on-device because that ninth task is **not yet wired as an interactive task**
+— a real player never triggers it. Same task, same 100 pts; the difference is purely which host runs it.
+
+- **CLI harness:** 9/9 = **1400** (driver completes every scripted task).
+- **Unity prototype (on-device):** 8/9 interactive = **1300**.
+
+The `ppePenalty` end-to-end fix does **not** change these clean-run totals — the penalty applies only on
+a PPE violation, and both scripted runs are fully compliant. So 750 / 1400 are stable across the fix.
+
+**Writing guidance.** Do not state "CLI and Unity produce identical scores" without qualification: they
+produce identical *per-task* scoring behavior, but the reported *session* totals differ (1400 vs 1300)
+because the prototype implements 8 of the 9 tasks as interactions. Attribute each number to its host, or
+close the gap by implementing / removing the safety-net task (tracked in the master's Kanban).
 
 ---
 
@@ -320,5 +360,5 @@ artifact. (The writing track turns this into the paper's centralized evidence ta
   is reproducible.
 - **Unity Editor test execution was not automated** in this pass (the Unity Test Runner via MCP did
   not surface async results reliably); the reproducible runner of record is headless `dotnet test`.
-- Coverage `lines-valid=1135` counts only the instrumented `SafetyProto.Shared` production lines, not
+- Coverage `lines-valid=1138` counts only the instrumented `SafetyProto.Shared` production lines, not
   the linked test code (excluded via `coverlet.runsettings`).
