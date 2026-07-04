@@ -180,6 +180,7 @@ namespace SafetyProto.UI
 
             public FakeTask(string name) => taskName = name;
 
+            public string id => taskName;
             public string taskName { get; }
             public string taskDescription => string.Empty;
             public int successPoints => 100;

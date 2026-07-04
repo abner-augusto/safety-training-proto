@@ -53,6 +53,19 @@ namespace SafetyProto.Domain.Actions
         [JsonProperty("severity")]
         public int Severity { get; set; }
 
+        /// <summary>
+        /// Human-facing name for logs/telemetry: the authored <see cref="DisplayName"/> if any,
+        /// else the <see cref="TelemetryName"/>, else the raw <see cref="ActionId"/>. Never empty.
+        /// Used by the session logger so <c>ActionAttempt</c> entries read as a friendly name while
+        /// the stable <see cref="ActionId"/> is kept in the structured data.
+        /// </summary>
+        public string ResolveLogName()
+        {
+            if (!string.IsNullOrWhiteSpace(DisplayName)) return DisplayName;
+            if (!string.IsNullOrWhiteSpace(TelemetryName)) return TelemetryName;
+            return ActionId;
+        }
+
         public override string ToString() =>
             string.IsNullOrWhiteSpace(DisplayName) ? ActionId : DisplayName;
     }

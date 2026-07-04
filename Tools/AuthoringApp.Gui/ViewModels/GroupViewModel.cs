@@ -13,6 +13,7 @@ public sealed class GroupViewModel : ViewModelBase
 {
     private readonly ScenarioEditorViewModel _editor;
 
+    private string _groupId;
     private string _groupName;
     private string _executionMode;
     private float _timeLimit;
@@ -21,6 +22,7 @@ public sealed class GroupViewModel : ViewModelBase
     public GroupViewModel(TaskGroupDef def, ScenarioEditorViewModel editor)
     {
         _editor = editor;
+        _groupId = def.RawId;
         _groupName = def.groupName;
         _executionMode = def.ExecutionModeName;
         _timeLimit = def.timeLimit;
@@ -33,6 +35,12 @@ public sealed class GroupViewModel : ViewModelBase
     public ObservableCollection<TaskViewModel> Tasks { get; }
 
     public IReadOnlyList<string> ExecutionModes => ScenarioEditorViewModel.ExecutionModeNames;
+
+    /// <summary>
+    /// Stable, language-independent id (e.g. "ppe_selection"). Optional; falls back to
+    /// <see cref="GroupName"/> at runtime when blank.
+    /// </summary>
+    public string GroupId { get => _groupId; set => SetField(ref _groupId, value); }
 
     public string GroupName
     {
@@ -70,6 +78,7 @@ public sealed class GroupViewModel : ViewModelBase
 
     public TaskGroupDef ToDef() => new()
     {
+        RawId = _groupId?.Trim() ?? string.Empty,
         groupName = _groupName,
         ExecutionModeName = _executionMode,
         timeLimit = _timeLimit,

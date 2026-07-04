@@ -146,8 +146,13 @@ namespace SafetyProto.Core
 
         public string ViolationCode;
         public string Message;
+        // TaskId/GroupId are stable, language-independent ids (analysis keys in the session log).
+        // TaskName/GroupName carry the localized display strings for human-facing surfaces
+        // (LogHUD, evaluator dashboard) so those stay readable without parsing the log id.
         public string TaskId;
         public string GroupId;
+        public string TaskName;
+        public string GroupName;
     }
 
     [System.Serializable]

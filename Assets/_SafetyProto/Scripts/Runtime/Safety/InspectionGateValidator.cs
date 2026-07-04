@@ -215,8 +215,10 @@ namespace SafetyProto.Runtime.Safety
                 {
                     ViolationCode = mapping != null ? "GATE_FAILED" : "INSPECTION_INCOMPLETE",
                     Message = $"Tentou iniciar sem corrigir: {mapping?.displayName ?? task.taskName}",
-                    TaskId = task.taskName,
-                    GroupId = currentGroup.groupName
+                    TaskId = task.id,
+                    GroupId = currentGroup.id,
+                    TaskName = task.taskName,
+                    GroupName = currentGroup.groupName
                 });
 
                 if (mapping == null)

@@ -30,6 +30,7 @@ namespace SafetyProto.Core
             State = TaskState.NotStarted;
         }
 
+        public string id => TaskData?.id ?? string.Empty;
         public string taskName => TaskData?.taskName ?? string.Empty;
         public string ExpectedActionId => TaskData?.ResolveExpectedActionId() ?? string.Empty;
 

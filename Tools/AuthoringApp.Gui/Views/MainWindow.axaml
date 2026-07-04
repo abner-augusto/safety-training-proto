@@ -92,6 +92,10 @@
               <StackPanel Spacing="8">
                 <TextBlock Text="Grupo" FontWeight="Bold" FontSize="15"/>
                 <StackPanel Spacing="2">
+                  <TextBlock Text="Id (opcional — usa o nome se vazio)" FontSize="12" Foreground="#A0808080"/>
+                  <TextBox Text="{Binding GroupId}" Watermark="ex.: ppe_selection"/>
+                </StackPanel>
+                <StackPanel Spacing="2">
                   <TextBlock Text="Nome" FontSize="12" Foreground="#A0808080"/>
                   <TextBox Text="{Binding GroupName}"/>
                 </StackPanel>
@@ -115,6 +119,10 @@
             <DataTemplate DataType="vm:TaskViewModel">
               <StackPanel Spacing="8">
                 <TextBlock Text="Tarefa" FontWeight="Bold" FontSize="15"/>
+                <StackPanel Spacing="2">
+                  <TextBlock Text="Id (opcional — usa o nome se vazio)" FontSize="12" Foreground="#A0808080"/>
+                  <TextBox Text="{Binding TaskId}" Watermark="ex.: equip_helmet"/>
+                </StackPanel>
                 <StackPanel Spacing="2">
                   <TextBlock Text="Nome" FontSize="12" Foreground="#A0808080"/>
                   <TextBox Text="{Binding TaskName}"/>

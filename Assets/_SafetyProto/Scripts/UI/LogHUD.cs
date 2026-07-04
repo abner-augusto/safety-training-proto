@@ -170,9 +170,9 @@ namespace SafetyProto.UI
         {
             string code = string.IsNullOrEmpty(args.ViolationCode) ? "UNKNOWN" : args.ViolationCode;
             string message = string.IsNullOrEmpty(args.Message) ? "No details" : args.Message;
-            string taskId = string.IsNullOrEmpty(args.TaskId) ? "-" : args.TaskId;
-            string groupId = string.IsNullOrEmpty(args.GroupId) ? "-" : args.GroupId;
-            AppendLog($"[Safety] VIOLATION {code} | {message} (Task={taskId}, Group={groupId})");
+            string task = string.IsNullOrEmpty(args.TaskName) ? "-" : args.TaskName;
+            string group = string.IsNullOrEmpty(args.GroupName) ? "-" : args.GroupName;
+            AppendLog($"[Safety] VIOLATION {code} | {message} (Task={task}, Group={group})");
         }
 
         private void OnCriticalSafetyFailure(CriticalSafetyFailureEventArgs args)

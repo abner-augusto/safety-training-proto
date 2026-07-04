@@ -3,11 +3,13 @@
   "participantId": "P000",
   "groups": [
     {
+      "id": "ppe_selection",
       "name": "Seleção de EPIs",
       "executionMode": "Sequential",
       "timeLimit": 420.0,
       "tasks": [
         {
+          "id": "equip_boots",
           "name": "Equipar Botina de Segurança",
           "taskDescription": "Selecione a botina de segurança correta e equipe nos pés.",
           "actionId": "",
@@ -22,6 +24,7 @@
           "ppeAdvice": ""
         },
         {
+          "id": "equip_gloves",
           "name": "Equipar Luvas",
           "taskDescription": "Selecione as luvas de raspa de couro e equipe nas duas mãos.",
           "actionId": "",
@@ -38,6 +41,7 @@
           "ppeAdvice": ""
         },
         {
+          "id": "equip_goggles",
           "name": "Equipar Óculos de Proteção",
           "taskDescription": "Selecione os óculos de proteção e equipe no rosto.",
           "actionId": "",
@@ -55,6 +59,7 @@
           "ppeAdvice": ""
         },
         {
+          "id": "equip_helmet",
           "name": "Equipar Capacete com Jugular",
           "taskDescription": "Selecione o capacete CORRETO (com jugular) e equipe na cabeça.",
           "actionId": "",
@@ -73,6 +78,7 @@
           "ppeAdvice": ""
         },
         {
+          "id": "equip_harness",
           "name": "Equipar Cinto Paraquedista",
           "taskDescription": "Selecione o cinto tipo paraquedista e vista corretamente.",
           "actionId": "",
@@ -95,11 +101,13 @@
       "requiredGroups": []
     },
     {
+      "id": "scaffold_inspection",
       "name": "Inspeção em Andaime Fachadeiro",
       "executionMode": "FreeOrder",
       "timeLimit": 300.0,
       "tasks": [
         {
+          "id": "connect_lanyard",
           "name": "Conectar Talabarte ao Ponto de Ancoragem",
           "taskDescription": "Conecte o talabarte do cinto ao ponto de ancoragem certificado na estrutura.",
           "actionId": "connect_harness",
@@ -115,6 +123,7 @@
           "ppeAdvice": "Você conectou o talabarte, mas estava sem algum EPI obrigatório. Verifique todos os equipamentos ANTES de subir."
         },
         {
+          "id": "install_guardrail",
           "name": "Instalar Guarda-corpo",
           "taskDescription": "Instale a seção de guarda-corpo faltante no lado direito da plataforma.",
           "actionId": "install_guardrail",
@@ -132,6 +141,7 @@
           "ppeAdvice": "Instalar o guarda-corpo sem luvas de proteção e/ou capacete expõe suas mãos a cortes nas estruturas metálicas."
         },
         {
+          "id": "install_toeboard",
           "name": "Instalar Rodapé",
           "taskDescription": "Instale o rodapé de 20cm na seção faltante da plataforma.",
           "actionId": "install_toeboard",
