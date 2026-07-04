@@ -42,10 +42,10 @@ namespace SafetyProto.Runtime.Task
                 _scoreService.ScoreChanged -= HandleScoreChanged;
         }
 
-        private void HandleScoreChanged(int newScore, int delta, string reason)
+        private void HandleScoreChanged(int newScore, int delta, string reason, string taskId)
         {
             SafetyLog.Info($"[ScoreManagerAdapter] [Score] {reason}: {(delta >= 0 ? "+" : "")}{delta} (Total: {newScore})", this);
-            ScoreEvents.RaiseScoreChanged(new ScoreChangedEventArgs(newScore, delta));
+            ScoreEvents.RaiseScoreChanged(new ScoreChangedEventArgs(newScore, delta) { TaskId = taskId, Reason = reason });
         }
     }
 }

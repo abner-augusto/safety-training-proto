@@ -124,6 +124,10 @@ namespace SafetyProto.Core
 
         public int TotalScore;
         public int Delta;
+        // Stable id of the task that caused the change (empty when not task-driven, e.g. reset or
+        // gate penalty) and the human-readable reason (distinguishes completion/ppe-penalty/timeout).
+        public string TaskId;
+        public string Reason;
 
         public ScoreChangedEventArgs(int totalScore, int delta)
         {
@@ -133,6 +137,8 @@ namespace SafetyProto.Core
             TimestampMs = 0L;
             TotalScore = totalScore;
             Delta = delta;
+            TaskId = string.Empty;
+            Reason = string.Empty;
         }
     }
 
@@ -227,6 +233,10 @@ namespace SafetyProto.Core
         public string PlayerId;
         public string ScenarioId;
         public long TimestampMs;
+
+        /// <summary>Total number of tasks in the loaded scenario. Lets the session logger report an
+        /// accurate denominator even when the session is abandoned before SessionCompleted fires.</summary>
+        public int TotalTasks;
     }
     [System.Serializable]
     public struct SessionPausedEventArgs

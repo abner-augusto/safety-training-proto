@@ -3,6 +3,7 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
 using SafetyProto.Domain.Scoring;
+using SafetyProto.Runtime.Task;
 using SafetyProto.Utils;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -68,7 +69,8 @@ namespace SafetyProto.Runtime.Session
                 playerId,
                 SceneManager.GetActiveScene().name);
 
-            SessionEvents.RaiseSessionStarted();
+            int totalTasks = TaskManager.Instance != null ? TaskManager.Instance.TotalTaskCount : 0;
+            SessionEvents.RaiseSessionStarted(new SessionStartedEventArgs { TotalTasks = totalTasks });
             SafetyLog.Info($"TrainingSessionManager: Session Started event raised (participante {playerId}).", this);
         }
 

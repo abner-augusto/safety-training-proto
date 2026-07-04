@@ -25,33 +25,33 @@ namespace SafetyProto.Domain.Scoring
 
         public int CurrentScore { get; private set; }
 
-        public event Action<int, int, string> ScoreChanged = delegate { };
+        public event Action<int, int, string, string> ScoreChanged = delegate { };
 
         public ScoreService() { }
 
-        public void AddPoints(int amount, string reason)
+        public void AddPoints(int amount, string reason, string taskId = "")
         {
             if (amount <= 0) throw new ArgumentException("Amount must be positive", nameof(amount));
-            ChangeScore(+amount, reason);
+            ChangeScore(+amount, reason, taskId);
         }
 
-        public void SubtractPoints(int amount, string reason)
+        public void SubtractPoints(int amount, string reason, string taskId = "")
         {
             if (amount <= 0) throw new ArgumentException("Amount must be positive", nameof(amount));
-            ChangeScore(-amount, reason);
+            ChangeScore(-amount, reason, taskId);
         }
 
-        private void ChangeScore(int delta, string reason)
+        private void ChangeScore(int delta, string reason, string taskId)
         {
             CurrentScore += delta;
-            ScoreChanged.Invoke(CurrentScore, delta, reason);
+            ScoreChanged.Invoke(CurrentScore, delta, reason, taskId ?? string.Empty);
         }
 
         public void ResetSession()
         {
             var old = CurrentScore;
             CurrentScore = 0;
-            ScoreChanged.Invoke(0, -old, "Point reset");
+            ScoreChanged.Invoke(0, -old, "Point reset", string.Empty);
         }
     }
 }

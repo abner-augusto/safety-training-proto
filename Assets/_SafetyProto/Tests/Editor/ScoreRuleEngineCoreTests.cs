@@ -276,10 +276,10 @@ namespace SafetyProto.Tests.Editor
         private sealed class FakeScoreService : IScoreService
         {
             public int CurrentScore { get; private set; }
-            public void AddPoints(int amount, string reason = null) => CurrentScore += amount;
-            public void SubtractPoints(int amount, string reason = null) => CurrentScore -= amount;
+            public void AddPoints(int amount, string reason = null, string taskId = null) => CurrentScore += amount;
+            public void SubtractPoints(int amount, string reason = null, string taskId = null) => CurrentScore -= amount;
 #pragma warning disable CS0067
-            public event System.Action<int, int, string> ScoreChanged;
+            public event System.Action<int, int, string, string> ScoreChanged;
 #pragma warning restore CS0067
         }
     }

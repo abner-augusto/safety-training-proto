@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
@@ -76,8 +75,8 @@ public static class Program
             logger: logger);
         scoreRuleEngine.Subscribe();
 
-        scoreService.ScoreChanged += (newScore, delta, reason) =>
-            bus.Publish(new ScoreChangedEventArgs(newScore, delta));
+        scoreService.ScoreChanged += (newScore, delta, reason, taskId) =>
+            bus.Publish(new ScoreChangedEventArgs(newScore, delta) { TaskId = taskId, Reason = reason });
 
         var taskManager = new TaskManagerCore(
             bus: bus,
@@ -92,11 +91,7 @@ public static class Program
         var sessionLogger = new SessionLoggerCore(
             eventBus: bus,
             outputDirectory: outputDir,
-            serialize: log => JsonSerializer.Serialize(log, new JsonSerializerOptions
-            {
-                IncludeFields = true,
-                WriteIndented = true
-            }),
+            serialize: SessionLoggerCore.SerializeIndentedOmittingDefaults,
             logger: logger,
             actionNameResolver: BuildActionNameResolver(scenarioPath));
         sessionLogger.Subscribe();
@@ -109,7 +104,8 @@ public static class Program
             playerId: scenario.ParticipantId,
             scenarioId: scenario.Name);
 
-        bus.Publish(new SessionStartedEventArgs());
+        var totalTasks = scenario.Groups.Sum(g => g.TaskDefs.Count);
+        bus.Publish(new SessionStartedEventArgs { TotalTasks = totalTasks });
         Console.WriteLine("--- Transcript ---");
         taskManager.StartSession();
 
