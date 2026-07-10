@@ -102,6 +102,7 @@ safety-training-proto/
 │
 ├── Tools/
 │   ├── SafetyProto.Shared/    # .NET 10 library, links Core/ + Domain/ source files
+│   ├── DashboardSrc/      # Evaluator dashboard source (index.html/style.css/app.js)
 │   └── CliHarness/            # .NET 10 console app consuming Shared.dll
 │       └── scenarios/         # JSON scenario files
 │
@@ -202,6 +203,14 @@ After an APK build, install to Quest via `adb install`. On the device:
   `Application.persistentDataPath` and `JsonUtility.ToJson` as the serializer.
 - **`EvaluatorDashboardBootstrap`** — HTTP/WebSocket server served from the
   headset for real-time observation via a web browser on the local network.
+
+  > **⚠ Dashboard source sync**: the dashboard's web files are authored in
+  > `Tools/DashboardSrc/` and mirrored by `DashboardSourceSync` (editor
+  > script) into `Assets/_SafetyProto/Resources/Dashboard/{index,style,app}.txt`
+  > — Unity only imports `.txt` as `TextAsset`. **Both copies are committed
+  > to git**; never edit the `.txt` copies (they carry a GENERATED banner
+  > and are overwritten on every Play/build). Sync manually via
+  > `SafetyProto → Sync Dashboard Source`.
 
 ### Shared (engine-independent) modules
 
