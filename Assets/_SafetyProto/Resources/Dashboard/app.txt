@@ -1,0 +1,1611 @@
+// GENERATED FILE — DO NOT EDIT. Source: Tools/DashboardSrc/app.js (menu: SafetyProto → Sync Dashboard Source)
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    /* ================================================================
+     * CONSTANTS
+     * ============================================================== */
+    const WS_PORT           = 7071;
+    const WS_PATH           = '/eval';
+    const RECONNECT_BASE_MS = 1_500;
+    const RECONNECT_MAX_MS  = 30_000;
+    const RECONNECT_JITTER  = 0.25;
+    const MAX_LOG_ITEMS     = 60;
+    // Meta Quest player casting (opened on demand in a side-by-side popup).
+    const CAST_URL          = 'https://horizon.meta.com/casting/';
+
+    /* ================================================================
+     * TRANSLATIONS
+     * ============================================================== */
+    const i18n = {
+      en: {
+        currentScore: 'Score',
+        elapsed: 'Elapsed',
+        violations: 'Violations',
+        ppeShort: 'PPE',
+        activeTasks: 'Active Tasks',
+        activityLog: 'Activity Log',
+        sessionReport: 'Session Report',
+        violationsOnly: 'Violations only',
+        legendTitle: 'Scene Legend',
+        legendHmd: 'HMD · gaze',
+        legendHands: 'Hands',
+        legendPpeLoose: 'PPE (loose)',
+        legendPpeWorn: 'PPE (worn)',
+        legendInteract: 'Interacting object',
+        posture: 'Posture',
+        postureStanding: 'STANDING',
+        postureLowering: 'LOWERING',
+        postureCrouched: 'CROUCHED',
+        hand: 'HAND',
+        modeSequential: 'SEQUENTIAL',
+        modeFreeOrder: 'FREE ORDER',
+        group: 'GROUP',
+        sessionRecorded: 'SESSION RECORDED',
+        viewport3dFailed: 'Could not load the 3D view. The rest of the panel keeps working.',
+        waitingSession: 'Waiting for session to start…',
+        noActivity: 'No activity yet',
+        reportAfterSession: 'Report available after session',
+        viewFullReport: 'View Full Report',
+        downloadJson: 'Download JSON',
+        duration: 'Duration',
+        finalScore: 'Final Score',
+        tasks: 'Tasks',
+        events: 'Events',
+        totalDuration: 'Total Duration',
+        tasksCompleted: 'Tasks Completed',
+        totalTasks: 'Total Tasks',
+        eventTimeline: 'Event Timeline',
+        sessionHistory: 'Session History',
+        noHistory: 'No saved sessions yet',
+        exportAll: 'Export all',
+        clearHistory: 'Clear',
+        confirmClearHistory: 'Clear all saved sessions?',
+        noSession: 'No Session',
+        session: 'Session',
+        participant: 'Participant',
+        disconnected: 'Disconnected',
+        connected: 'Connected',
+        connecting: 'Connecting…',
+        pending: 'Pending', active: 'Active', completed: 'Done', failed: 'Failed',
+        hideCompleted: 'Hide completed',
+        // log (o glifo tipado vem da coluna-guia, não do texto)
+        logConnected: 'Connected to training session',
+        logDisconnected: 'Connection lost. Reconnecting…',
+        logSessionStarted: 'Training session started',
+        logStarted: 'Started', logCompleted: 'Completed', logTimeout: 'Timeout',
+        logScorePlus: 'Score', logScoreMinus: 'Score', logTotal: 'Total',
+        logViolation: 'Safety Violation', logCritical: 'CRITICAL',
+        logSessionComplete: 'Session Complete! Score',
+        logGroupStarted: 'Group Started', logGroupCompleted: 'Group Completed',
+        logSessionReset: 'Session reset', logReportAvailable: 'Report available',
+        logSessionPaused: 'Session paused', logSessionResumed: 'Session resumed',
+        logSessionEnded: 'Session ended',
+        logPpeEquipped: 'PPE Equipped', logPpeRemoved: 'PPE Removed',
+        logActionAttempt: 'Action', logSafetyError: 'Safety Error', at: 'at',
+        // report detail line (scaffolding labels)
+        detailPpe: 'PPE', detailWorn: 'worn', detailRemoved: 'removed',
+        detailDelta: 'Delta', detailTotal: 'Total', detailIn: 'in',
+        detailTime: 'Time', detailScore: 'Score', detailCompleted: 'Completed',
+      },
+      pt: {
+        currentScore: 'Pontuação',
+        elapsed: 'Tempo',
+        violations: 'Violações',
+        ppeShort: 'EPI',
+        activeTasks: 'Tarefas Ativas',
+        activityLog: 'Registro de Atividades',
+        sessionReport: 'Relatório da Sessão',
+        hideCompleted: 'Ocultar concluídas',
+        violationsOnly: 'Só violações',
+        legendTitle: 'Legenda do Espaço',
+        legendHmd: 'HMD · olhar',
+        legendHands: 'Mãos',
+        legendPpeLoose: 'EPI solto',
+        legendPpeWorn: 'EPI equipado',
+        legendInteract: 'Objeto em interação',
+        posture: 'Postura',
+        postureStanding: 'EM PÉ',
+        postureLowering: 'ABAIXANDO',
+        postureCrouched: 'AGACHADO',
+        hand: 'MÃO',
+        modeSequential: 'SEQUENCIAL',
+        modeFreeOrder: 'ORDEM LIVRE',
+        group: 'GRUPO',
+        sessionRecorded: 'SESSÃO REGISTRADA',
+        viewport3dFailed: 'Não foi possível carregar a visualização 3D. O restante do painel continua funcionando.',
+        waitingSession: 'Aguardando início da sessão…',
+        noActivity: 'Nenhuma atividade ainda',
+        reportAfterSession: 'Relatório disponível após a sessão',
+        viewFullReport: 'Ver Relatório Completo',
+        downloadJson: 'Baixar JSON',
+        duration: 'Duração',
+        finalScore: 'Pontuação Final',
+        tasks: 'Tarefas',
+        events: 'Eventos',
+        totalDuration: 'Duração Total',
+        tasksCompleted: 'Tarefas Concluídas',
+        totalTasks: 'Total de Tarefas',
+        eventTimeline: 'Linha do Tempo',
+        sessionHistory: 'Histórico de Sessões',
+        noHistory: 'Nenhuma sessão salva ainda',
+        exportAll: 'Exportar tudo',
+        clearHistory: 'Limpar histórico',
+        confirmClearHistory: 'Limpar todas as sessões salvas?',
+        noSession: 'Sem Sessão',
+        session: 'Sessão',
+        participant: 'Participante',
+        disconnected: 'Desconectado',
+        connected: 'Conectado',
+        connecting: 'Conectando…',
+        pending: 'Pendente', active: 'Ativa', completed: 'Concluída', failed: 'Falhou',
+        // log (o glifo tipado vem da coluna-guia, não do texto)
+        logConnected: 'Conectado à sessão de treinamento',
+        logDisconnected: 'Conexão perdida. Reconectando…',
+        logSessionStarted: 'Sessão de treinamento iniciada',
+        logStarted: 'Iniciada', logCompleted: 'Concluída', logTimeout: 'Tempo esgotado',
+        logScorePlus: 'Pontos', logScoreMinus: 'Pontos', logTotal: 'Total',
+        logViolation: 'Violação de Segurança', logCritical: 'CRÍTICO',
+        logSessionComplete: 'Sessão Completa! Pontuação',
+        logGroupStarted: 'Grupo Iniciado', logGroupCompleted: 'Grupo Concluído',
+        logSessionReset: 'Sessão reiniciada', logReportAvailable: 'Relatório disponível',
+        logSessionPaused: 'Sessão pausada', logSessionResumed: 'Sessão retomada',
+        logSessionEnded: 'Sessão encerrada',
+        logPpeEquipped: 'EPI Equipado', logPpeRemoved: 'EPI Removido',
+        logActionAttempt: 'Ação', logSafetyError: 'Erro de Segurança', at: 'em',
+        // report detail line (scaffolding labels)
+        detailPpe: 'EPI', detailWorn: 'equipado', detailRemoved: 'removido',
+        detailDelta: 'Variação', detailTotal: 'Total', detailIn: 'em',
+        detailTime: 'Tempo', detailScore: 'Pontuação', detailCompleted: 'Concluídas',
+      }
+    };
+
+    let lang = localStorage.getItem('sp_lang') || 'pt';
+    const t = k => (i18n[lang][k] ?? i18n['en'][k] ?? k);
+
+    function applyTranslations() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.textContent = t(el.dataset.i18n);
+      });
+      // FAB shows the currently-active language (PT / EN)
+      document.getElementById('lang-flag').textContent = lang === 'pt' ? 'PT' : 'EN';
+      // keep the document language in sync for screen readers / hyphenation
+      document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+    }
+
+    /* ================================================================
+     * THEME — escuro (uso vivo) ↔ claro (modo figura). Troca só de
+     * tokens; o viewport 3D relê os valores via setTheme().
+     * ============================================================== */
+    let theme = localStorage.getItem('sp_theme') || 'dark';
+
+    function applyTheme() {
+      document.documentElement.dataset.theme = theme;
+      document.getElementById('theme-icon-moon').style.display = theme === 'dark' ? 'block' : 'none';
+      document.getElementById('theme-icon-sun').style.display  = theme === 'dark' ? 'none' : 'block';
+      document.getElementById('btn-theme').setAttribute('aria-pressed', String(theme === 'light'));
+      window.__spViewport?.setTheme();
+    }
+
+    /* ================================================================
+     * STATE
+     * ============================================================== */
+    /**
+     * tasks: Map<taskId, { id, name, description, groupName, order,
+     *   executionMode, expectedAction, requiredPpe[], successPoints,
+     *   failurePenalty, ppePenalty, status }>
+     */
+    const tasks      = new Map();
+    let currentScore = 0;
+    let sessionReport= null;
+    let hideCompleted = false;
+    let violationsOnly = false;
+
+    /* Contadores do cluster (violações + EPI vestido/exigido) */
+    let violationCount = 0;
+    const wornPpe = new Set();     // ppeType com isWearing=true
+
+    /* ── Session history (persisted in localStorage; survives resets + reloads) ── */
+    const HISTORY_KEY = 'sp_session_history';
+    const MAX_HISTORY = 50;
+    let sessionHistory = [];               // [{ sessionId, participantId, savedAt, report }]
+    let currentParticipantId = '—';        // captured on SessionStarted, stamped on save
+    let currentSessionId = null;
+
+    /* ── Live session timer (driven by session lifecycle events) ── */
+    const sessionTimer = {
+      _start: 0, _accum: 0, _running: false, _interval: null,
+      _fmt(s) { const m = Math.floor(s / 60), r = Math.floor(s % 60);
+                return `${m}:${String(r).padStart(2, '0')}`; },
+      _render() { const el = document.getElementById('clock-value');
+                  if (el) el.textContent = this._fmt(this.elapsed()); },
+      elapsed() { return this._accum + (this._running ? (Date.now() - this._start) / 1000 : 0); },
+      start() { this.reset(); this._start = Date.now(); this._running = true;
+                this._interval = setInterval(() => this._render(), 1000); this._render(); },
+      pause() { if (!this._running) return; this._accum = this.elapsed(); this._running = false; },
+      resume() { if (this._running) return; this._start = Date.now(); this._running = true; },
+      stop() { this.pause(); clearInterval(this._interval); this._interval = null; },
+      reset() { this.stop(); this._accum = 0; this._running = false;
+                const el = document.getElementById('clock-value'); if (el) el.textContent = '0:00'; },
+    };
+
+    /* ================================================================
+     * WsManager — exponential backoff, jitter, keepalive ping
+     * ============================================================== */
+    class WsManager {
+      constructor(url, onMessage) {
+        this._url       = url;
+        this._onMessage = onMessage;
+        this._ws        = null;
+        this._retries   = 0;
+        this._retryTimer= null;
+        this._pingTimer = null;
+        this._intentional = false;
+      }
+
+      connect() {
+        this._intentional = false;
+        this._attempt();
+      }
+
+      _attempt() {
+        clearTimeout(this._retryTimer);
+        setStatusUI('connecting');
+
+        try {
+          this._ws = new WebSocket(this._url);
+        } catch {
+          this._scheduleRetry();
+          return;
+        }
+
+        this._ws.onopen = () => {
+          this._retries = 0;
+          setStatusUI('connected');
+          addLog(t('logConnected'), 'success');
+
+          // NOVO: Pedir sincronização de estado (evita amnésia após queda de conexão)
+          try {
+            this._ws.send(JSON.stringify({ eventType: "RequestSync" }));
+          } catch (e) {
+            console.error("Erro ao solicitar sync:", e);
+          }
+
+          // keepalive ping every 8 s
+          this._pingTimer = setInterval(() => {
+            if (this._ws?.readyState === WebSocket.OPEN) {
+              try { this._ws.send('ping'); } catch (_) {}
+            }
+          }, 8_000);
+        };
+
+        this._ws.onmessage = ev => {
+          try { this._onMessage(JSON.parse(ev.data)); }
+          catch { /* ignore malformed */ }
+        };
+
+        this._ws.onerror = () => { /* handled in onclose */ };
+
+        this._ws.onclose = () => {
+          clearInterval(this._pingTimer);
+          if (this._intentional) return;
+          setStatusUI('disconnected');
+          addLog(t('logDisconnected'), 'violation');
+          this._scheduleRetry();
+        };
+      }
+
+      _scheduleRetry() {
+        const base = Math.min(RECONNECT_BASE_MS * (2 ** this._retries), RECONNECT_MAX_MS);
+        const delay = base * (1 + (Math.random() * 2 - 1) * RECONNECT_JITTER);
+        this._retries++;
+        this._retryTimer = setTimeout(() => this._attempt(), delay);
+      }
+
+      destroy() {
+        this._intentional = true;
+        clearTimeout(this._retryTimer);
+        clearInterval(this._pingTimer);
+        this._ws?.close();
+      }
+    }
+
+    /* ================================================================
+     * EVENT ROUTER — declarative handler map
+     * ============================================================== */
+    const handlers = {};
+    const on = (type, fn) => { handlers[type] = fn; };
+
+    function route(envelope) {
+      const { eventType, payload } = envelope;
+      if (!eventType) return;
+      const fn = handlers[eventType];
+      if (fn) { try { fn(payload); } catch (e) { console.error(`[handler:${eventType}]`, e); } }
+      // PoseFrame handled inline (high frequency — skip addLog)
+    }
+
+    /* ── Session lifecycle ── */
+    on('SessionStarted', p => {
+      currentSessionId = p.sessionId ?? null;
+      currentParticipantId = p.participantId ?? '—';
+      document.getElementById('session-id-label').textContent =
+        `${t('session')}: ${p.sessionId?.substring(0, 8) ?? '?'}`;
+      document.getElementById('participant-label').textContent =
+        `${t('participant')}: ${currentParticipantId}`;
+      sessionTimer.start();
+      violationCount = 0;
+      wornPpe.clear();
+      renderCluster();
+      addLog(t('logSessionStarted'), 'success');
+    });
+
+    on('SessionManifest', p => {
+      const snapshot = p.tasks ?? [];
+      const seen = new Set();
+
+      snapshot.forEach((task, idx) => {
+        const id = task.taskName;
+        if (!id) return;
+
+        seen.add(id);
+        const existing = tasks.get(id) ?? {};
+        tasks.set(id, {
+          id,
+          name:          task.taskName     ?? existing.name          ?? id,
+          description:   task.description  ?? existing.description   ?? '',
+          groupName:     task.groupName    ?? existing.groupName     ?? '',
+          order:         task.order        ?? existing.order         ?? (idx + 1),
+          executionMode: existing.executionMode ?? '',
+          expectedAction:existing.expectedAction?? '',
+          requiredPpe:   existing.requiredPpe   ?? [],
+          successPoints: existing.successPoints ?? 0,
+          failurePenalty:existing.failurePenalty?? 0,
+          ppePenalty:    existing.ppePenalty    ?? 0,
+          status:        task.status       ?? existing.status        ?? 'pending',
+        });
+      });
+
+      Array.from(tasks.keys()).forEach(id => {
+        if (!seen.has(id)) tasks.delete(id);
+      });
+
+      renderTasks();
+    });
+
+    on('SessionPaused',   () => { sessionTimer.pause();  addLog(t('logSessionPaused')); });
+    on('SessionResumed',  () => { sessionTimer.resume(); addLog(t('logSessionResumed'), 'success'); });
+    on('SessionEnded',    () => { sessionTimer.stop();   addLog(t('logSessionEnded')); });
+
+    on('SessionCompleted', p => {
+      sessionTimer.stop();
+      addLog(`${t('logSessionComplete')}: ${p.totalScore} | ${t('tasks')}: ${p.tasksCompleted}/${p.totalTasks}`, 'success');
+    });
+
+    on('SessionReset', () => {
+      tasks.clear();
+      sessionReport = null;
+      currentScore  = 0;
+      sessionTimer.reset();
+      setScoreUI(0);
+      resetTaskUI();
+      violationCount = 0;
+      wornPpe.clear();
+      renderCluster();
+      window.__spViewport?.clearSession();   // sem malhas de EPI órfãs entre participantes
+      document.getElementById('report-section').innerHTML = emptyState('', t('reportAfterSession'));
+      document.getElementById('session-id-label').textContent = t('noSession');
+      document.getElementById('participant-label').textContent = `${t('participant')}: —`;
+      addLog(t('logSessionReset'));
+    });
+
+    /* ── Task events ── */
+    function upsertTask(p, status) {
+      const existing = tasks.get(p.taskId) ?? {};
+      tasks.set(p.taskId, {
+        id:            p.taskId,
+        name:          p.taskName          ?? existing.name          ?? p.taskId,
+        description:   p.taskDescription   ?? existing.description   ?? '',
+        groupName:     p.groupName         ?? existing.groupName     ?? '',
+        order:         p.order             ?? existing.order         ?? 0,
+        executionMode: p.executionMode     ?? existing.executionMode ?? '',
+        expectedAction:p.expectedAction    ?? existing.expectedAction?? '',
+        requiredPpe:   p.requiredPpe       ?? existing.requiredPpe   ?? [],
+        successPoints: p.successPoints     ?? existing.successPoints ?? 0,
+        failurePenalty:p.failurePenalty    ?? existing.failurePenalty?? 0,
+        ppePenalty:    p.ppePenalty        ?? existing.ppePenalty    ?? 0,
+        status,
+      });
+      renderTasks();
+    }
+
+    on('TaskStarted',   p => { upsertTask(p, 'active');    addLog(`${t('logStarted')}: ${p.taskName}`); });
+    on('TaskCompleted', p => { upsertTask(p, 'completed'); addLog(`${t('logCompleted')}: ${p.taskName}`, 'success'); });
+    on('TaskTimeout',   p => { upsertTask(p, 'failed');    addLog(`${t('logTimeout')}: ${p.taskName}`, 'violation'); });
+
+    /* ── Group events ── */
+    on('GroupStarted',   p => addLog(`${t('logGroupStarted')}: ${p.groupName}`));
+    on('GroupCompleted', p => addLog(`${t('logGroupCompleted')}: ${p.groupName}`, 'success'));
+
+    /* ── Score ── */
+    on('ScoreChanged', p => {
+      setScoreUI(p.totalScore);
+      const d = p.delta;
+      if (d > 0)      addLog(`${t('logScorePlus')} +${d} (${t('logTotal')}: ${p.totalScore})`, 'success');
+      else if (d < 0) addLog(`${t('logScoreMinus')} ${d} (${t('logTotal')}: ${p.totalScore})`, 'violation');
+    });
+
+    /* ── PPE ── */
+    on('PpeChanged', p => {
+      if (p.isWearing) { wornPpe.add(String(p.ppeType)); addLog(`${t('logPpeEquipped')}: ${p.ppeType}`, 'success'); }
+      else             { wornPpe.delete(String(p.ppeType)); addLog(`${t('logPpeRemoved')}: ${p.ppeType}`, 'violation'); }
+      renderCluster();
+    });
+
+    /* ── Safety ── */
+    on('ActionAttempt', p => {
+      const pos = p.hasPosition ? ` ${t('at')} (${p.px?.toFixed(1)},${p.py?.toFixed(1)},${p.pz?.toFixed(1)})` : '';
+      addLog(`${t('logActionAttempt')}: ${p.actionId} (${p.sourceId ?? ''})${pos}`);
+      /* instrumento de interação: anel + balão no ponto da ação */
+      if (p.hasPosition) window.__spViewport?.showInteraction(p.actionId, p.px, p.py, p.pz);
+    });
+
+    on('SafetyViolation',      p => { violationCount++; renderCluster(); addLog(`${t('logViolation')}: ${p.message}`, 'violation'); });
+    on('CriticalSafetyFailure',p => { violationCount++; renderCluster(); addLog(`${t('logCritical')}: ${p.reason}`, 'violation'); });
+    on('SafetyError',          p => addLog(`${t('logSafetyError')}: [${p.source}] ${p.message}`, 'violation'));
+
+    /* ── Session Log File ── */
+    on('SessionLogFile', p => {
+      if (!p.content) return;
+      try {
+        const report = JSON.parse(p.content);
+        renderReportSection(report);
+        saveSessionToHistory(report);
+        addLog(t('logReportAvailable'), 'success');
+      } catch (e) {
+        console.error('Failed to parse session log:', e);
+      }
+    });
+
+    /* ================================================================
+     * UI HELPERS
+     * ============================================================== */
+    /** Escape text before interpolating it into innerHTML (session data is untrusted). */
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function setStatusUI(state) {
+      const dot   = document.getElementById('status-dot');
+      const label = document.getElementById('conn-status-label');
+      dot.className = 'status-dot' + (state === 'connected' ? ' connected' : state === 'connecting' ? ' connecting' : '');
+      label.textContent = t(state === 'connected' ? 'connected' : state === 'connecting' ? 'connecting' : 'disconnected');
+    }
+
+    function setScoreUI(score) {
+      currentScore = score;
+      const el = document.getElementById('score-value');
+      el.textContent = score;
+      el.classList.remove('bump');
+      void el.offsetWidth; // reflow to retrigger animation
+      el.classList.add('bump');
+      setTimeout(() => el.classList.remove('bump'), 180);
+    }
+
+    // Neutral institutional placeholder mark for empty states (replaces emoji).
+    const EMPTY_ICON = '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6"/><circle cx="12" cy="16.5" r="0.6" fill="currentColor" stroke="none"/></svg>';
+
+    function emptyState(_icon, text) {
+      return `<div class="empty-state"><div class="empty-state-icon">${EMPTY_ICON}</div><div>${text}</div></div>`;
+    }
+
+    /** Glifo tipado (coluna-guia) para um evento do relatório —
+        mesmo vocabulário do registro em tempo real, sem emoji. */
+    function eventGlyph(name) {
+      const n = (name ?? '').toLowerCase();
+      if (n.includes('critical'))         return '▲';
+      if (n.includes('violation'))        return '▲';
+      if (n.includes('safetyerror'))      return '✕';
+      if (n.includes('tasktimeout'))      return '✕';
+      if (n.includes('taskcompleted'))    return '✔';
+      if (n.includes('groupcompleted'))   return '✔';
+      if (n.includes('sessioncompleted')) return '⚑';
+      if (n.includes('taskstarted'))      return '▶';
+      if (n.includes('groupstarted'))     return '▶';
+      return '●';
+    }
+
+    /* ── Cluster: violações + EPI vestido/exigido ── */
+    function renderCluster() {
+      const violEl = document.getElementById('viol-value');
+      if (violEl) violEl.textContent = violationCount;
+
+      const required = new Set();
+      tasks.forEach(tk => (tk.requiredPpe ?? []).forEach(p => required.add(String(p))));
+
+      const ppeEl = document.getElementById('ppe-value');
+      if (!ppeEl) return;
+      if (required.size > 0) {
+        let worn = 0;
+        required.forEach(p => { if (wornPpe.has(p)) worn++; });
+        ppeEl.textContent = `${worn}/${required.size}`;
+      } else {
+        ppeEl.textContent = wornPpe.size > 0 ? String(wornPpe.size) : '—';
+      }
+    }
+
+    /* Localized display label for a logged event name (JSON keeps English). */
+    function eventLabel(name) {
+      const labels = {
+        pt: {
+          SessionStarted: 'Sessão iniciada',
+          SessionPaused: 'Sessão pausada',
+          SessionResumed: 'Sessão retomada',
+          SessionEnded: 'Sessão encerrada',
+          SessionCompleted: 'Sessão concluída',
+          SessionReset: 'Sessão reiniciada',
+          ActionAttempt: 'Tentativa de ação',
+          PpeStateChanged: 'EPI alterado',
+          TaskStarted: 'Tarefa iniciada',
+          TaskCompleted: 'Tarefa concluída',
+          TaskTimeout: 'Tempo da tarefa esgotado',
+          ScoreChanged: 'Pontuação alterada',
+          GroupStarted: 'Grupo iniciado',
+          GroupCompleted: 'Grupo concluído',
+          SafetyViolation: 'Violação de segurança',
+          SafetyError: 'Erro de segurança',
+          CriticalSafetyFailure: 'Falha crítica de segurança',
+        },
+        en: {
+          SessionStarted: 'Session started',
+          SessionPaused: 'Session paused',
+          SessionResumed: 'Session resumed',
+          SessionEnded: 'Session ended',
+          SessionCompleted: 'Session completed',
+          SessionReset: 'Session reset',
+          ActionAttempt: 'Action attempt',
+          PpeStateChanged: 'PPE changed',
+          TaskStarted: 'Task started',
+          TaskCompleted: 'Task completed',
+          TaskTimeout: 'Task timeout',
+          ScoreChanged: 'Score changed',
+          GroupStarted: 'Group started',
+          GroupCompleted: 'Group completed',
+          SafetyViolation: 'Safety violation',
+          SafetyError: 'Safety error',
+          CriticalSafetyFailure: 'Critical safety failure',
+        },
+      };
+      const table = labels[lang] || labels.en;
+      return table[name] ?? name;
+    }
+
+    /* Localized detail line from structured entry.data (falls back to entry.details
+       for older saved reports that predate the structured schema). */
+    function formatDetails(entry) {
+      const d = entry.data;
+      if (!d) return entry.details || '';
+      switch (entry.eventName) {
+        case 'PpeStateChanged':
+          return `${t('detailPpe')}: ${d.ppeType} · ${d.wearing ? t('detailWorn') : t('detailRemoved')}`;
+        case 'ScoreChanged':
+          return `${t('detailDelta')}: ${d.delta >= 0 ? '+' : ''}${d.delta} · ${t('detailTotal')}: ${d.totalScore}`;
+        case 'SafetyViolation':
+          return `${d.violationCode}${d.message ? ` | ${d.message}` : ''}`;
+        case 'SafetyError':
+          return `${d.source}: ${d.message}${d.errorDetails ? ` (${d.errorDetails})` : ''}`;
+        case 'CriticalSafetyFailure':
+          return `${d.reason} · ${d.violationCount} ${t('detailIn')} ${d.windowSeconds}s`;
+        case 'SessionCompleted': {
+          const m = Math.floor((d.totalElapsedTime ?? 0) / 60);
+          const s = Math.floor((d.totalElapsedTime ?? 0) % 60);
+          return `${t('detailTime')}: ${m}:${String(s).padStart(2, '0')} · ${t('detailScore')}: ${d.totalScore} · ${t('detailCompleted')}: ${d.tasksCompleted}/${d.totalTasks}`;
+        }
+        default:
+          return entry.details || '';
+      }
+    }
+
+    function resetTaskUI() {
+      document.getElementById('task-list').innerHTML = emptyState('', t('waitingSession'));
+    }
+
+    /* ── Task renderer — manifesto de procedimento: grupos com
+       cabeçalho (modo de execução + progresso) e linhas numeradas
+       num trilho de glifos. A tarefa ativa é a única expandida. ── */
+    const STATUS_GLYPH = { completed: '✔', active: '▶', pending: '·', failed: '✕' };
+
+    function modeLabel(mode) {
+      const m = String(mode ?? '').toLowerCase();
+      if (m.startsWith('seq'))  return t('modeSequential');
+      if (m.startsWith('free')) return t('modeFreeOrder');
+      return '';
+    }
+
+    function renderTasks() {
+      const container = document.getElementById('task-list');
+      if (tasks.size === 0) { resetTaskUI(); renderCluster(); return; }
+
+      /* agrupa por groupName preservando a ordem das tarefas */
+      const groups = new Map();
+      [...tasks.values()]
+        .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
+        .forEach(tk => {
+          const g = tk.groupName || '—';
+          if (!groups.has(g)) groups.set(g, []);
+          groups.get(g).push(tk);
+        });
+
+      container.innerHTML = '';
+      let gi = 0;
+      groups.forEach((list, groupName) => {
+        gi++;
+        const done = list.filter(tk => tk.status === 'completed').length;
+        const mode = modeLabel(list.find(tk => tk.executionMode)?.executionMode);
+
+        const header = document.createElement('div');
+        header.className = 'mg-h';
+        header.innerHTML = `
+          <b>${t('group')} ${String(gi).padStart(2, '0')} · ${esc(groupName)}</b>
+          <span>${mode ? `<span class="mg-mode">${mode}</span> · ` : ''}<span class="mg-count">${done}/${list.length}</span></span>`;
+        container.appendChild(header);
+
+        list.forEach((task, idx) => {
+          if (hideCompleted && (task.status === 'completed' || task.status === 'failed')) return;
+
+          let pt = '';
+          if (task.status === 'active')      pt = t('active').toUpperCase();
+          else if (task.status === 'failed') pt = task.failurePenalty ? `−${task.failurePenalty}` : '✕';
+          else if (task.successPoints)       pt = `+${task.successPoints}`;
+
+          let expand = '';
+          if (task.status === 'active') {
+            const chips = [];
+            (task.requiredPpe ?? []).forEach(p => chips.push(`<span class="chip">${t('detailPpe')}: ${esc(p)}</span>`));
+            if (task.failurePenalty) chips.push(`<span class="chip pen">−${task.failurePenalty}</span>`);
+            if (task.ppePenalty)     chips.push(`<span class="chip pen">−${task.ppePenalty} ${t('detailPpe')}</span>`);
+            expand = `
+              <div class="tr-x">
+                ${task.description ? `<p>${esc(task.description)}</p>` : ''}
+                ${chips.length ? `<div class="chips">${chips.join('')}</div>` : ''}
+              </div>`;
+          }
+
+          const row = document.createElement('div');
+          row.className = `tr ${task.status}`;
+          row.innerHTML = `
+            <span class="g">${STATUS_GLYPH[task.status] ?? '·'}</span>
+            <span class="ix">${String(idx + 1).padStart(2, '0')}</span>
+            <span class="nm">${esc(task.name)}</span>
+            <span class="pt">${pt}</span>
+            ${expand}`;
+          container.appendChild(row);
+        });
+      });
+      renderCluster();
+    }
+
+    /* ── Log: hora · glifo tipado · mensagem ── */
+    const LOG_GLYPH = { success: '✔', violation: '▲', info: '●' };
+
+    function addLog(message, type = 'info') {
+      const container = document.getElementById('log-container');
+      const empty = container.querySelector('.empty-state');
+      if (empty) container.innerHTML = '';
+
+      const item = document.createElement('div');
+      item.className = `log-item ${type}`;
+      const time = new Date().toLocaleTimeString(lang === 'pt' ? 'pt-BR' : 'en-US', { hour12: false });
+      item.innerHTML = `<span class="log-time">${time}</span><span class="g">${LOG_GLYPH[type] ?? '●'}</span><span>${esc(message)}</span>`;
+      container.insertBefore(item, container.firstChild);
+
+      while (container.children.length > MAX_LOG_ITEMS) {
+        container.removeChild(container.lastChild);
+      }
+    }
+
+    /* ── Report Section — documento carimbado (régua dupla) ── */
+    function renderReportSection(report) {
+      sessionReport = report;
+      const summary = report.summary ?? {};
+      const mins    = Math.floor((summary.totalElapsedTime ?? 0) / 60);
+      const secs    = Math.floor((summary.totalElapsedTime ?? 0) % 60);
+      const locale  = lang === 'pt' ? 'pt-BR' : 'en-US';
+      const when    = new Date().toLocaleString(locale,
+        { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+
+      document.getElementById('report-section').innerHTML = `
+        <div class="report-card"><div class="report-card-in">
+          <div class="report-head">
+            <b>${esc(currentParticipantId)}</b>
+            <span>${esc(when)}</span>
+          </div>
+          <div class="report-summary">
+            <div>
+              <div class="report-stat-value">${mins}:${String(secs).padStart(2,'0')}</div>
+              <div class="report-stat-label">${t('duration')}</div>
+            </div>
+            <div>
+              <div class="report-stat-value">${summary.totalScore ?? 0}</div>
+              <div class="report-stat-label">${t('finalScore')}</div>
+            </div>
+            <div>
+              <div class="report-stat-value">${summary.tasksCompleted ?? 0}/${summary.totalTasks ?? 0}</div>
+              <div class="report-stat-label">${t('tasks')}</div>
+            </div>
+          </div>
+          ${summary.completed ? `<div class="report-stamp">${t('sessionRecorded')}</div>` : ''}
+          <div class="report-actions">
+            <button class="report-btn primary" id="btn-view-report">${t('viewFullReport')}</button>
+            <button class="report-btn secondary" id="btn-dl-report">${t('downloadJson')}</button>
+          </div>
+        </div></div>
+      `;
+
+      document.getElementById('btn-view-report').onclick = () => openReportModal();
+      document.getElementById('btn-dl-report').onclick   = downloadReport;
+    }
+
+    function openReportModal(report) {
+      // Defaults to the live report; history rows pass their own stored report.
+      report = (report && report.summary) ? report : sessionReport;
+      if (!report) return;
+      const summary = report.summary ?? {};
+      const entries = report.entries ?? [];
+      const mins = Math.floor((summary.totalElapsedTime ?? 0) / 60);
+      const secs = Math.floor((summary.totalElapsedTime ?? 0) % 60);
+
+      const timelineHtml = entries.map(entry => {
+        const time  = new Date(entry.timestamp).toLocaleTimeString(lang === 'pt' ? 'pt-BR' : 'en-US', { hour12: false });
+        const en    = entry.eventName ?? '';
+        const glyph = eventGlyph(en);
+        const isViol = /violation|critical|safetyerror/i.test(en);
+        const detail = formatDetails(entry);
+        return `
+          <div class="timeline-item ${isViol ? 'violation' : ''}">
+            <div class="timeline-time">${time}</div>
+            <div class="g">${glyph}</div>
+            <div>
+              <div class="timeline-event">${esc(eventLabel(en))}</div>
+              ${detail ? `<div class="timeline-detail">${esc(detail)}</div>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+
+      document.getElementById('modal-body').innerHTML = `
+        <div class="session-summary-grid">
+          <div class="summary-card">
+            <div class="summary-card-value">${mins}:${String(secs).padStart(2,'0')}</div>
+            <div class="summary-card-label">${t('totalDuration')}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-value">${summary.totalScore ?? 0}</div>
+            <div class="summary-card-label">${t('finalScore')}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-value">${summary.tasksCompleted ?? 0}</div>
+            <div class="summary-card-label">${t('tasksCompleted')}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-value">${summary.totalTasks ?? 0}</div>
+            <div class="summary-card-label">${t('totalTasks')}</div>
+          </div>
+        </div>
+        <h3 style="margin-bottom:14px;color:var(--accent)">${t('eventTimeline')}</h3>
+        <div class="timeline">${timelineHtml}</div>
+      `;
+      document.getElementById('report-modal').classList.add('open');
+      _lastFocused = document.activeElement;
+      document.addEventListener('keydown', _onModalKey);
+      document.getElementById('btn-close-modal').focus();
+    }
+
+    /* ── Modal close + keyboard accessibility ── */
+    let _lastFocused = null;
+    function closeReportModal() {
+      document.getElementById('report-modal').classList.remove('open');
+      document.removeEventListener('keydown', _onModalKey);
+      if (_lastFocused && typeof _lastFocused.focus === 'function') _lastFocused.focus();
+      _lastFocused = null;
+    }
+    function _onModalKey(e) {
+      if (e.key === 'Escape') closeReportModal();
+    }
+
+    function downloadReport() {
+      if (!sessionReport) return;
+      const blob = new Blob([JSON.stringify(sessionReport, null, 2)], { type: 'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = Object.assign(document.createElement('a'), {
+        href: url,
+        download: `session_report_${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+      });
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    /* ================================================================
+     * SESSION HISTORY — persisted in localStorage, survives resets/reloads
+     * ============================================================== */
+    function loadHistory() {
+      try {
+        const raw = localStorage.getItem(HISTORY_KEY);
+        sessionHistory = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(sessionHistory)) sessionHistory = [];
+      } catch (e) {
+        console.error('Failed to load session history:', e);
+        sessionHistory = [];
+      }
+    }
+
+    function persistHistory() {
+      try {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(sessionHistory));
+      } catch (e) {
+        // Most likely quota exceeded — drop the oldest and retry once.
+        console.error('Failed to persist session history:', e);
+        if (sessionHistory.length > 1) {
+          sessionHistory = sessionHistory.slice(0, Math.floor(sessionHistory.length / 2));
+          try { localStorage.setItem(HISTORY_KEY, JSON.stringify(sessionHistory)); } catch (_) {}
+        }
+      }
+    }
+
+    /** Capture the just-finished session report into history (newest first). */
+    function saveSessionToHistory(report) {
+      if (!report) return;
+      sessionHistory.unshift({
+        sessionId:     currentSessionId,
+        participantId: currentParticipantId,
+        savedAt:       Date.now(),
+        report,
+      });
+      if (sessionHistory.length > MAX_HISTORY) sessionHistory.length = MAX_HISTORY;
+      persistHistory();
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const list    = document.getElementById('history-list');
+      const actions = document.getElementById('history-actions');
+      const count   = document.getElementById('history-count');
+
+      count.textContent = sessionHistory.length ? `(${sessionHistory.length})` : '';
+
+      if (sessionHistory.length === 0) {
+        list.innerHTML = emptyState('', t('noHistory'));
+        actions.style.display = 'none';
+        return;
+      }
+      actions.style.display = 'flex';
+
+      const locale = lang === 'pt' ? 'pt-BR' : 'en-US';
+      list.innerHTML = sessionHistory.map((h, i) => {
+        const s     = h.report?.summary ?? {};
+        const score = s.totalScore ?? 0;
+        const done  = s.tasksCompleted ?? 0;
+        const total = s.totalTasks ?? 0;
+        const when  = new Date(h.savedAt ?? Date.now())
+          .toLocaleString(locale, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+        return `
+          <div class="history-item" data-idx="${i}" role="button" tabindex="0"
+               aria-label="${esc(h.participantId ?? '—')} — ${score} pts">
+            <div class="history-item-top">
+              <span class="history-pid">${esc(h.participantId ?? '—')}</span>
+              <span class="history-score">${score} pts</span>
+            </div>
+            <div class="history-item-sub">${done}/${total} · ${esc(when)}</div>
+          </div>`;
+      }).join('');
+
+      list.querySelectorAll('.history-item').forEach(el => {
+        const open = () => {
+          const idx = Number(el.dataset.idx);
+          const entry = sessionHistory[idx];
+          if (entry) openReportModal(entry.report);
+        };
+        el.onclick = open;
+        el.onkeydown = e => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+        };
+      });
+    }
+
+    function clearHistory() {
+      if (sessionHistory.length === 0) return;
+      if (!window.confirm(t('confirmClearHistory'))) return;
+      sessionHistory = [];
+      persistHistory();
+      renderHistory();
+    }
+
+    function exportAllHistory() {
+      if (sessionHistory.length === 0) return;
+      const blob = new Blob([JSON.stringify(sessionHistory, null, 2)], { type: 'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = Object.assign(document.createElement('a'), {
+        href: url,
+        download: `session_history_${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+      });
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    /* ── History section wiring ── */
+    document.getElementById('btn-export-history').onclick = exportAllHistory;
+    document.getElementById('btn-clear-history').onclick  = clearHistory;
+    (function () {
+      const header  = document.getElementById('history-header');
+      const section = document.getElementById('history-section');
+      header.onclick = () => {
+        const collapsed = section.classList.toggle('collapsed');
+        document.getElementById('history-body').classList.toggle('collapsed', collapsed);
+        header.setAttribute('aria-expanded', String(!collapsed));
+      };
+      header.onkeydown = e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); header.onclick(); }
+      };
+    })();
+
+    /* ── Close modal (button + backdrop click; Escape handled in _onModalKey) ── */
+    document.getElementById('btn-close-modal').onclick = closeReportModal;
+    document.getElementById('report-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeReportModal();
+    });
+
+    /* ── Mobile sidebar toggle ── */
+    document.getElementById('btn-menu').onclick = () =>
+      document.getElementById('sidebar').classList.toggle('open');
+
+    /* ── Optional: open Meta Quest player casting in a side-by-side popup ──
+       The casting page sets X-Frame-Options: DENY, so it cannot be embedded;
+       a popup on the right half of the screen is the supported alternative.
+       Requires the evaluator to be signed in to the same Meta account as the
+       headset, with the Quest casting to the browser. */
+    let _castWin = null;
+    document.getElementById('btn-cast').onclick = () => {
+      if (_castWin && !_castWin.closed) { _castWin.focus(); return; }
+      const w = Math.min(1100, Math.floor(screen.availWidth * 0.5));
+      const h = Math.floor(screen.availHeight * 0.92);
+      const left = Math.max(0, screen.availWidth - w);
+      _castWin = window.open(CAST_URL, 'spPlayerCast',
+        `width=${w},height=${h},left=${left},top=0`);
+      if (_castWin) _castWin.focus();
+    };
+
+    /* ── Language toggle ── */
+    document.getElementById('btn-lang').onclick = () => {
+      lang = lang === 'pt' ? 'en' : 'pt';
+      localStorage.setItem('sp_lang', lang);
+      applyTranslations();
+      // Re-render dynamic UI in new language
+      renderTasks();
+      renderHistory();
+    };
+
+    /* ── Theme toggle: escuro (uso vivo) ↔ claro (modo figura) ── */
+    document.getElementById('btn-theme').onclick = () => {
+      theme = theme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('sp_theme', theme);
+      applyTheme();
+    };
+
+    document.getElementById('chk-hide-completed').onchange = e => {
+      hideCompleted = e.target.checked;
+      renderTasks();
+    };
+
+    /* Activity-log "violations only" filter — CSS-driven, no re-render needed */
+    document.getElementById('chk-violations-only').onchange = e => {
+      violationsOnly = e.target.checked;
+      document.getElementById('log-container').classList.toggle('violations-only', violationsOnly);
+    };
+
+    /* ================================================================
+     * EvaluatorViewport — cena Three.js do instrumento de campo.
+     * Cores vêm dos tokens CSS (setTheme). O avatar é um esqueleto
+     * DERIVADO do rastreamento (cabeça + mãos reais; ombros/coluna/
+     * quadril deduzidos; fio de prumo + disco no chão em vez de
+     * pernas inventadas). Render on demand: só desenha quando a pose,
+     * a câmera ou o tema mudam, ou enquanto há um anel de interação.
+     * ============================================================== */
+    class EvaluatorViewport {
+      constructor(containerEl) {
+        this._container = containerEl;
+        this._dirty = true;
+
+        /* Scene (cores aplicadas em setTheme) */
+        this._scene = new THREE.Scene();
+
+        /* Camera — FOV de instrumento (55), não de FPS */
+        this._camera = new THREE.PerspectiveCamera(
+          55,
+          containerEl.clientWidth / containerEl.clientHeight,
+          0.1, 100
+        );
+        this._camera.position.set(0, 1.8, 3.2);
+
+        /* Renderer — pixel ratio limitado (telas 4K não custam 9×) */
+        this._renderer = new THREE.WebGLRenderer({ antialias: true });
+        this._renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this._renderer.setSize(containerEl.clientWidth, containerEl.clientHeight);
+        containerEl.appendChild(this._renderer.domElement);
+
+        /* Controls — damping para leitura suave; 'change' marca sujo */
+        this._controls = new OrbitControls(this._camera, this._renderer.domElement);
+        this._controls.target.set(0, 1.0, 0);
+        this._controls.enableDamping = true;
+        this._controls.dampingFactor = 0.08;
+        this._controls.addEventListener('change', () => { this._dirty = true; });
+        this._controls.update();
+
+        /* Lighting */
+        this._scene.add(new THREE.AmbientLight(0xffffff, 1.6));
+        const dir = new THREE.DirectionalLight(0xffffff, 1.2);
+        dir.position.set(2, 5, 2);
+        this._scene.add(dir);
+
+        /* Label overlay */
+        this._labelOverlay = document.createElement('div');
+        Object.assign(this._labelOverlay.style, {
+          position: 'absolute', top: '0', left: '0',
+          width: '100%', height: '100%', pointerEvents: 'none',
+        });
+        containerEl.appendChild(this._labelOverlay);
+
+        /* Object + label pools */
+        this._objects = { hmd: null, leftHand: null, rightHand: null, ppe: {} };
+        this._labels  = new Map();   // mesh → { el, yOffset }
+
+        /* Shared geometries */
+        this._geoHead = new THREE.BoxGeometry(0.2, 0.15, 0.25);
+        this._geoHand = new THREE.SphereGeometry(0.05, 16, 16);
+        this._geoPPE  = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+        this._geoRing = new THREE.RingGeometry(0.10, 0.125, 32);
+
+        /* Shared materials — cores atribuídas em setTheme */
+        this._matHead        = new THREE.MeshLambertMaterial();
+        this._matHand        = new THREE.MeshLambertMaterial();
+        this._matPPELoose    = new THREE.MeshLambertMaterial();   // pendente = âmbar
+        this._matPPEAttached = new THREE.MeshLambertMaterial();   // cumprido = neutro
+        this._matRing        = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide });
+
+        /* Esqueleto derivado: coluna, ombros, quadril, 2 braços (5 segmentos) */
+        this._skelPos = new Float32Array(5 * 2 * 3);
+        const skelGeo = new THREE.BufferGeometry();
+        skelGeo.setAttribute('position', new THREE.BufferAttribute(this._skelPos, 3));
+        this._matSkel = new THREE.LineBasicMaterial({ transparent: true, opacity: 0.85 });
+        this._skel = new THREE.LineSegments(skelGeo, this._matSkel);
+        this._skel.visible = false;
+        this._skel.frustumCulled = false;
+        this._scene.add(this._skel);
+
+        /* Fio de prumo (quadril → chão), tracejado — honesto: derivado */
+        this._plumbPos = new Float32Array(2 * 3);
+        const plumbGeo = new THREE.BufferGeometry();
+        plumbGeo.setAttribute('position', new THREE.BufferAttribute(this._plumbPos, 3));
+        this._matPlumb = new THREE.LineDashedMaterial({ dashSize: 0.05, gapSize: 0.06, transparent: true, opacity: 0.6 });
+        this._plumb = new THREE.Line(plumbGeo, this._matPlumb);
+        this._plumb.visible = false;
+        this._plumb.frustumCulled = false;
+        this._scene.add(this._plumb);
+
+        /* Leque do olhar (2 segmentos a partir do HMD) */
+        this._gazePos = new Float32Array(2 * 2 * 3);
+        const gazeGeo = new THREE.BufferGeometry();
+        gazeGeo.setAttribute('position', new THREE.BufferAttribute(this._gazePos, 3));
+        this._matGaze = new THREE.LineBasicMaterial({ transparent: true, opacity: 0.35 });
+        this._gaze = new THREE.LineSegments(gazeGeo, this._matGaze);
+        this._gaze.visible = false;
+        this._gaze.frustumCulled = false;
+        this._scene.add(this._gaze);
+
+        /* Disco de chão sob o participante */
+        this._matDisc = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.12, depthWrite: false });
+        this._disc = new THREE.Mesh(new THREE.CircleGeometry(0.3, 28), this._matDisc);
+        this._disc.rotation.x = -Math.PI / 2;
+        this._disc.position.y = 0.005;
+        this._disc.visible = false;
+        this._scene.add(this._disc);
+
+        /* Suavização da pose (dados chegam a 10 Hz) */
+        this._smooth = { head: null, yaw: 0 };
+
+        /* Instrumentos DOM */
+        this._calloutEl    = document.getElementById('vp-callout');
+        this._postureChip  = document.getElementById('posture-chip');
+        this._postureValue = document.getElementById('posture-value');
+
+        /* Anéis de interação ativos (ActionAttempt com posição) */
+        this._interactions = [];
+
+        /* Grid é recriado por setTheme (GridHelper fixa as cores) */
+        this._grid = null;
+        this.setTheme();
+
+        /* Resize listener */
+        this._onResize = () => this.resize();
+        window.addEventListener('resize', this._onResize);
+
+        /* Start loop */
+        this._animate();
+      }
+
+      /* ── Public API ───────────────────────────────────────────── */
+
+      /** Relê os tokens CSS ativos e aplica ao cenário (claro/escuro). */
+      setTheme() {
+        const css = getComputedStyle(document.documentElement);
+        const tok = name => new THREE.Color(css.getPropertyValue(name).trim() || '#ff00ff');
+        const bg  = tok('--bg');
+        const isLight = document.documentElement.dataset.theme === 'light';
+
+        this._scene.background = bg;
+        this._scene.fog = new THREE.Fog(bg, 8, 30);
+        this._matHead.color        = tok('--accent');
+        this._matHand.color        = tok('--text-muted');
+        this._matPPELoose.color    = tok('--orange');
+        this._matPPEAttached.color = tok('--ppe-worn');
+        this._matSkel.color        = tok('--text-muted');
+        this._matPlumb.color       = tok('--text-dim');
+        this._matGaze.color        = tok('--accent');
+        this._matDisc.color        = tok('--accent');
+        this._matRing.color        = tok('--accent');
+
+        if (this._grid) {
+          this._scene.remove(this._grid);
+          this._grid.geometry.dispose();
+          this._grid.material.dispose();
+        }
+        const gridColor = tok('--text-dim');
+        this._grid = new THREE.GridHelper(10, 10, gridColor, gridColor);
+        this._grid.material.transparent = true;
+        this._grid.material.opacity = isLight ? 0.35 : 0.25;
+        this._scene.add(this._grid);
+
+        this._dirty = true;
+      }
+
+      /** Call after the container element changes size (e.g. sidebar resize). */
+      resize() {
+        const w = this._container.clientWidth;
+        const h = this._container.clientHeight;
+        if (!w || !h) return;
+        this._camera.aspect = w / h;
+        this._camera.updateProjectionMatrix();
+        this._renderer.setSize(w, h);
+        this._dirty = true;
+      }
+
+      /** Frame de pose completo (10 Hz): HMD, mãos, EPIs e esqueleto derivado. */
+      updateFrame(p) {
+        if (p.hmd)       this._updateObject('hmd',       p.hmd,       'hmd');
+        if (p.leftHand)  this._updateObject('leftHand',  p.leftHand,  'hand');
+        if (p.rightHand) this._updateObject('rightHand', p.rightHand, 'hand');
+        if (Array.isArray(p.ppe)) {
+          p.ppe.forEach(item => this._updateObject(item.id, item.pose, 'ppe', item.attachedTo));
+        }
+        this._updateBody();
+        this._dirty = true;
+      }
+
+      /** ActionAttempt com posição: anel pulsante + balão nomeando a ação. */
+      showInteraction(actionId, px, py, pz) {
+        const pos = new THREE.Vector3(px, py, -pz);
+        const mesh = new THREE.Mesh(this._geoRing, this._matRing.clone());
+        mesh.position.copy(pos);
+        this._scene.add(mesh);
+        this._interactions.push({ mesh, label: String(actionId ?? ''), pos, t0: performance.now() });
+        while (this._interactions.length > 3) this._removeInteraction(this._interactions.shift());
+        this._dirty = true;
+      }
+
+      /** Remove EPIs, esqueleto e interações — chamado no SessionReset. */
+      clearSession() {
+        Object.values(this._objects.ppe).forEach(mesh => {
+          this._scene.remove(mesh);
+          const ld = this._labels.get(mesh);
+          if (ld) { ld.el.remove(); this._labels.delete(mesh); }
+        });
+        this._objects.ppe = {};
+        this._interactions.forEach(it => this._removeInteraction(it));
+        this._interactions = [];
+        this._skel.visible = this._plumb.visible = this._gaze.visible = this._disc.visible = false;
+        this._smooth.head = null;
+        if (this._postureChip) this._postureChip.style.display = 'none';
+        this._calloutEl?.classList.remove('on');
+        this._dirty = true;
+      }
+
+      /** Release GPU resources (call if viewport is ever torn down). */
+      dispose() {
+        window.removeEventListener('resize', this._onResize);
+        this.clearSession();
+        [this._geoHead, this._geoHand, this._geoPPE, this._geoRing].forEach(g => g.dispose());
+        [this._matHead, this._matHand, this._matPPELoose, this._matPPEAttached,
+         this._matSkel, this._matPlumb, this._matGaze, this._matDisc, this._matRing].forEach(m => m.dispose());
+        this._labels.forEach(ld => ld.el.remove());
+        this._labels.clear();
+        this._renderer.dispose();
+      }
+
+      /* ── Private helpers ──────────────────────────────────────── */
+
+      _updateObject(id, pose, type, attachedTo = '') {
+        let obj = type === 'ppe' ? this._objects.ppe[id] : this._objects[id];
+        if (!obj) obj = this._createObject(id, type);
+
+        obj.position.set(pose.px, pose.py, -pose.pz);
+        obj.quaternion.set(-pose.qx, pose.qy, pose.qz, -pose.qw);
+
+        if (type === 'ppe') {
+          /* semântica, não identidade: solto = obrigação pendente (âmbar);
+             vestido = obrigação cumprida (neutro, encolhido) */
+          if (attachedTo) { obj.material = this._matPPEAttached; obj.scale.setScalar(0.8); }
+          else            { obj.material = this._matPPELoose;    obj.scale.setScalar(1); }
+        }
+      }
+
+      /* Esqueleto derivado + prumo + olhar + disco + postura.
+         Nada aqui é animado — tudo é deduzido da pose rastreada,
+         então locomoção nunca produz uma "caminhada" quebrada. */
+      _updateBody() {
+        const hmd = this._objects.hmd;
+        if (!hmd) return;
+
+        if (!this._smooth.head) this._smooth.head = hmd.position.clone();
+        this._smooth.head.lerp(hmd.position, 0.35);
+        const H = this._smooth.head;
+
+        /* yaw do HMD amortecido orienta os ombros */
+        const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(hmd.quaternion);
+        const targetYaw = Math.atan2(fwd.x, fwd.z);
+        let dy = targetYaw - this._smooth.yaw;
+        while (dy >  Math.PI) dy -= 2 * Math.PI;
+        while (dy < -Math.PI) dy += 2 * Math.PI;
+        this._smooth.yaw += dy * 0.25;
+        const rx = Math.cos(this._smooth.yaw), rz = -Math.sin(this._smooth.yaw);
+
+        const headY = H.y;
+        const shY   = headY - 0.24;
+        const hipY  = Math.max(headY - 0.72, 0.25);
+        const SH = 0.19, HIP = 0.11;
+
+        const set = (i, ax, ay, az, bx, by, bz) => {
+          const o = i * 6;
+          this._skelPos[o]   = ax; this._skelPos[o+1] = ay; this._skelPos[o+2] = az;
+          this._skelPos[o+3] = bx; this._skelPos[o+4] = by; this._skelPos[o+5] = bz;
+        };
+        set(0, H.x, headY - 0.10, H.z, H.x, hipY, H.z);                              /* coluna  */
+        set(1, H.x - rx*SH, shY, H.z - rz*SH, H.x + rx*SH, shY, H.z + rz*SH);        /* ombros  */
+        set(2, H.x - rx*HIP, hipY, H.z - rz*HIP, H.x + rx*HIP, hipY, H.z + rz*HIP);  /* quadril */
+        const lh = this._objects.leftHand, rh = this._objects.rightHand;
+        set(3, H.x - rx*SH, shY, H.z - rz*SH,
+               lh ? lh.position.x : H.x - rx*SH, lh ? lh.position.y : shY, lh ? lh.position.z : H.z - rz*SH);
+        set(4, H.x + rx*SH, shY, H.z + rz*SH,
+               rh ? rh.position.x : H.x + rx*SH, rh ? rh.position.y : shY, rh ? rh.position.z : H.z + rz*SH);
+        this._skel.geometry.attributes.position.needsUpdate = true;
+        this._skel.visible = true;
+
+        this._plumbPos[0] = H.x; this._plumbPos[1] = hipY; this._plumbPos[2] = H.z;
+        this._plumbPos[3] = H.x; this._plumbPos[4] = 0.02; this._plumbPos[5] = H.z;
+        this._plumb.geometry.attributes.position.needsUpdate = true;
+        this._plumb.computeLineDistances();
+        this._plumb.visible = true;
+
+        /* leque do olhar */
+        const gLen = 1.1;
+        const up = new THREE.Vector3(0, 1, 0);
+        for (let s = 0; s < 2; s++) {
+          const dir = fwd.clone().applyAxisAngle(up, s === 0 ? -0.22 : 0.22);
+          const o = s * 6;
+          this._gazePos[o]   = H.x;                 this._gazePos[o+1] = headY;                 this._gazePos[o+2] = H.z;
+          this._gazePos[o+3] = H.x + dir.x * gLen;  this._gazePos[o+4] = headY + dir.y * gLen;  this._gazePos[o+5] = H.z + dir.z * gLen;
+        }
+        this._gaze.geometry.attributes.position.needsUpdate = true;
+        this._gaze.visible = true;
+
+        this._disc.position.set(H.x, 0.005, H.z);
+        this._disc.visible = true;
+
+        this._updatePosture(headY);
+      }
+
+      _updatePosture(headY) {
+        if (!this._postureChip) return;
+        this._postureChip.style.display = 'flex';
+        let key = 'postureStanding', low = false;
+        if (headY <= 1.15)      { key = 'postureCrouched'; low = true; }
+        else if (headY <= 1.42) { key = 'postureLowering'; low = true; }
+        this._postureValue.textContent = `${t(key)} · ${headY.toFixed(2)} m`;
+        this._postureValue.classList.toggle('low', low);
+      }
+
+      _removeInteraction(it) {
+        this._scene.remove(it.mesh);
+        it.mesh.material.dispose();
+      }
+
+      _updateInteractions() {
+        const now = performance.now();
+        const LIFE = 2600, FADE = 600;
+        for (let i = this._interactions.length - 1; i >= 0; i--) {
+          const it = this._interactions[i];
+          const age = now - it.t0;
+          if (age > LIFE) { this._removeInteraction(it); this._interactions.splice(i, 1); continue; }
+          it.mesh.scale.setScalar(1 + 0.15 * Math.sin(age / 1000 * 8));
+          it.mesh.lookAt(this._camera.position);
+          it.mesh.material.opacity = age > LIFE - FADE ? (LIFE - age) / FADE : 1;
+        }
+        /* o balão segue a interação mais recente */
+        const latest = this._interactions[this._interactions.length - 1];
+        if (latest && this._calloutEl) {
+          const v = latest.pos.clone().project(this._camera);
+          if (v.z <= 1) {
+            this._calloutEl.textContent = latest.label;
+            this._calloutEl.style.left = `${(v.x * 0.5 + 0.5) * this._container.clientWidth}px`;
+            this._calloutEl.style.top  = `${(v.y * -0.5 + 0.5) * this._container.clientHeight}px`;
+            this._calloutEl.classList.add('on');
+          }
+        } else if (this._calloutEl) {
+          this._calloutEl.classList.remove('on');
+        }
+      }
+
+      _createObject(id, type) {
+        let mesh;
+        if      (type === 'hmd')  mesh = new THREE.Mesh(this._geoHead, this._matHead);
+        else if (type === 'hand') mesh = new THREE.Mesh(this._geoHand, this._matHand);
+        else                      mesh = new THREE.Mesh(this._geoPPE, this._matPPELoose);
+
+        this._scene.add(mesh);
+        if (type === 'ppe') this._objects.ppe[id] = mesh;
+        else                this._objects[id] = mesh;
+
+        /* Create matching label (estilo via .vp-label — troca com o tema) */
+        let text = '', yOffset = 0.15;
+        if (type === 'hmd') { text = 'HMD'; yOffset = 0.28; }
+        else if (type === 'hand') {
+          const side = id === 'leftHand' ? (lang === 'pt' ? 'E' : 'L') : (lang === 'pt' ? 'D' : 'R');
+          text = `${t('hand')} ${side}`;
+          yOffset = 0.12;
+        }
+        else { text = id.toUpperCase(); yOffset = 0.14; }
+        this._labels.set(mesh, this._createLabel(text, yOffset));
+
+        return mesh;
+      }
+
+      _createLabel(text, yOffset) {
+        const el = document.createElement('div');
+        el.className = 'vp-label';
+        el.textContent = text;
+        this._labelOverlay.appendChild(el);
+        return { el, yOffset };
+      }
+
+      _projectLabel(ld, worldPos) {
+        const v = worldPos.clone().project(this._camera);
+        const x = (v.x * 0.5 + 0.5) * this._container.clientWidth;
+        const y = (v.y * -0.5 + 0.5) * this._container.clientHeight;
+        const visible = v.z <= 1;
+        ld.el.style.display = visible ? 'block' : 'none';
+        ld.el.style.left = `${x}px`;
+        ld.el.style.top  = `${y}px`;
+        return { x, y, visible };
+      }
+
+      _animate() {
+        requestAnimationFrame(() => this._animate());
+        if (document.hidden) return;                 /* aba oculta: nada a desenhar */
+        this._controls.update();                     /* damping dispara 'change' → _dirty */
+        const hasFx = this._interactions.length > 0;
+        if (hasFx) this._updateInteractions();
+        if (!this._dirty && !hasFx) return;          /* render on demand */
+        this._dirty = false;
+        this._updateLabels();
+        this._renderer.render(this._scene, this._camera);
+      }
+
+      _updateLabels() {
+        const visible = [];
+        this._labels.forEach((ld, obj) => {
+          if (!obj?.position) return;
+          const wp = obj.position.clone();
+          wp.y += ld.yOffset;
+          const sp = this._projectLabel(ld, wp);
+          if (sp.visible) visible.push({ el: ld.el, x: sp.x, y: sp.y });
+        });
+
+        /* Iterative screen-space push-apart (4 passes, 96×22 px label estimate) */
+        const LW = 96, LH = 22, PAD = 6;
+        for (let iter = 0; iter < 4; iter++) {
+          for (let i = 0; i < visible.length; i++) {
+            for (let j = i + 1; j < visible.length; j++) {
+              const a = visible[i], b = visible[j];
+              const ox = (LW + PAD) - Math.abs(b.x - a.x);
+              const oy = (LH + PAD) - Math.abs(b.y - a.y);
+              if (ox > 0 && oy > 0) {
+                if (ox < oy) {
+                  const push = ox / 2 * Math.sign(b.x - a.x || 1);
+                  a.x -= push; b.x += push;
+                } else {
+                  const push = oy / 2 * Math.sign(b.y - a.y || -1);
+                  a.y -= push; b.y += push;
+                }
+              }
+            }
+          }
+        }
+        visible.forEach(({ el, x, y }) => {
+          el.style.left = `${x}px`;
+          el.style.top  = `${y}px`;
+        });
+      }
+    }
+
+    /* ================================================================
+     * SidebarResizeManager — drag-to-resize with localStorage persist
+     * ============================================================== */
+    class SidebarResizeManager {
+      /**
+       * @param {HTMLElement} sidebar   — the element whose width changes
+       * @param {HTMLElement} handle    — the drag target on the right edge
+       * @param {EvaluatorViewport} viewport — notified after each resize
+       * @param {{ min: number, max: number, default: number }} opts
+       */
+      constructor(sidebar, handle, viewport, opts = {}) {
+        this._sidebar  = sidebar;
+        this._handle   = handle;
+        this._viewport = viewport;
+        this._min      = opts.min     ?? 260;
+        this._max      = opts.max     ?? 700;
+        this._default  = opts.default ?? 380;
+        this._storageKey = 'sp_sidebar_w';
+
+        this._dragging  = false;
+        this._startX    = 0;
+        this._startW    = 0;
+
+        this._restore();
+        this._bind();
+      }
+
+      /* ── Private ── */
+
+      _restore() {
+        const saved = parseInt(localStorage.getItem(this._storageKey), 10);
+        const w = (!isNaN(saved) && saved >= this._min && saved <= this._max)
+          ? saved : this._default;
+        this._applyWidth(w);
+      }
+
+      _applyWidth(w) {
+        const clamped = Math.max(this._min, Math.min(this._max, w));
+        this._sidebar.style.setProperty('--sidebar-w', `${clamped}px`);
+        // Override the CSS var directly on the element for immediate effect
+        this._sidebar.style.width = `${clamped}px`;
+      }
+
+      _bind() {
+        this._handle.addEventListener('mousedown', e => this._onMouseDown(e));
+        /* Touch support */
+        this._handle.addEventListener('touchstart', e => this._onTouchStart(e), { passive: false });
+      }
+
+      _onMouseDown(e) {
+        e.preventDefault();
+        this._dragging = true;
+        this._startX   = e.clientX;
+        this._startW   = this._sidebar.offsetWidth;
+        this._handle.classList.add('dragging');
+        document.body.classList.add('resizing');
+
+        const onMove = e => this._onMouseMove(e);
+        const onUp   = () => {
+          this._dragging = false;
+          this._handle.classList.remove('dragging');
+          document.body.classList.remove('resizing');
+          this._save();
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+          /* Tell the viewport its container changed size */
+          this._viewport?.resize();
+        };
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      }
+
+      _onMouseMove(e) {
+        if (!this._dragging) return;
+        const delta = e.clientX - this._startX;
+        this._applyWidth(this._startW + delta);
+        /* mantém o aspecto do canvas correto DURANTE o arrasto (1×/frame) */
+        if (!this._resizeQueued) {
+          this._resizeQueued = true;
+          requestAnimationFrame(() => { this._resizeQueued = false; this._viewport?.resize(); });
+        }
+      }
+
+      _onTouchStart(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        this._dragging = true;
+        this._startX   = touch.clientX;
+        this._startW   = this._sidebar.offsetWidth;
+        this._handle.classList.add('dragging');
+
+        const onMove = e => {
+          const t = e.touches[0];
+          const delta = t.clientX - this._startX;
+          this._applyWidth(this._startW + delta);
+        };
+        const onEnd = () => {
+          this._dragging = false;
+          this._handle.classList.remove('dragging');
+          this._save();
+          this._viewport?.resize();
+          document.removeEventListener('touchmove', onMove);
+          document.removeEventListener('touchend', onEnd);
+        };
+
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onEnd);
+      }
+
+      _save() {
+        localStorage.setItem(this._storageKey, this._sidebar.offsetWidth);
+      }
+    }
+
+    /* ================================================================
+     * MAIN ENTRY POINT
+     * ============================================================== */
+    const canvasContainer = document.getElementById('three-canvas');
+
+    /* Tema antes do viewport: o construtor lê os tokens ativos */
+    applyTheme();
+
+    /* Boot 3D viewport */
+    const viewport = new EvaluatorViewport(canvasContainer);
+    window.__spViewport = viewport;   // acessível aos handlers (evita TDZ)
+
+    /* PoseFrame handler — bypasses router (high-frequency) */
+    function handlePoseFrame(p) {
+      viewport.updateFrame(p);
+    }
+
+    /* Boot sidebar resize manager (needs viewport reference for resize callback) */
+    new SidebarResizeManager(
+      document.getElementById('sidebar'),
+      document.getElementById('resize-handle'),
+      viewport,
+      { min: 260, max: 700, default: 380 }
+    );
+
+    /* Boot WebSocket */
+    const ws = new WsManager(
+      `ws://${window.location.hostname}:${WS_PORT}${WS_PATH}`,
+      envelope => {
+        if (envelope.eventType === 'PoseFrame') {
+          handlePoseFrame(envelope.payload);
+        } else {
+          route(envelope);
+        }
+      }
+    );
+
+    ws.connect();
+    applyTranslations();
+    loadHistory();
+    renderHistory();
+
+    /* Gancho de teste: permite injetar eventos/poses pelo console do
+       navegador quando não há headset (ex.: __spRoute({eventType, payload})). */
+    window.__spRoute = route;
+    window.__spPose  = handlePoseFrame;
+
+    // Signal the load-failure watchdog that the 3D module booted successfully.
+    window.__spViewportReady = true;
+
