@@ -80,11 +80,40 @@
       --red:         #d84450;   /* violation / failed  */
       --violet:      #4d8df0;   /* folded into the single accent */
 
+      --on-accent:   #08121f;   /* texto sobre o acento */
+      --ppe-worn:    #5a6472;   /* EPI equipado: obrigação cumprida, neutro */
+
       --mono:        'IBM Plex Mono', ui-monospace, monospace;
 
       --radius:      6px;
       --radius-lg:   10px;
       --radius-xl:   14px;
+      --shadow:      0 2px 12px rgba(0,0,0,0.3);
+    }
+
+    /* ── Modo figura (claro): troca só de tokens — ver DESIGN.md.
+         O viewport 3D relê estes valores em setTheme(). ─────────── */
+    html[data-theme="light"] {
+      --bg:          #e9edf3;
+      --bg-sidebar:  #ffffff;
+      --bg-rail:     #dee5ee;
+      --bg-elev:     #f2f5fa;
+      --bg-surface:  rgba(23,34,46,0.03);
+      --bg-hover:    rgba(23,34,46,0.06);
+      --border:      rgba(23,34,46,0.15);
+      --border-strong: rgba(23,34,46,0.34);
+      --text:        #17222e;
+      --text-muted:  #46566a;
+      --text-dim:    #6b7a8d;
+      --accent:      #2264c4;
+      --accent-weak: rgba(34,100,196,0.09);
+      --green:       #1a7c4d;
+      --orange:      #96660a;
+      --red:         #b8302f;
+      --violet:      #2264c4;
+      --on-accent:   #ffffff;
+      --ppe-worn:    #8494a6;
+      --shadow:      0 2px 12px rgba(23,34,46,0.10);
     }
 
     html, body {
@@ -125,7 +154,7 @@
       min-width: 260px;
       max-width: 700px;
       flex-shrink: 0;
-      background: linear-gradient(180deg, var(--bg-sidebar) 0%, #0f1229 100%);
+      background: var(--bg-sidebar);
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
@@ -149,7 +178,7 @@
 
     .resize-handle:hover,
     .resize-handle.dragging {
-      background: rgba(100, 200, 255, 0.35);
+      background: color-mix(in srgb, var(--accent) 40%, transparent);
     }
 
     /* Drag ghost prevents text selection on the page while resizing */
@@ -165,15 +194,15 @@
     }
 
     .sidebar-scroll::-webkit-scrollbar { width: 6px; }
-    .sidebar-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
-    .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(77,141,240,0.3); border-radius: 3px; }
+    .sidebar-scroll::-webkit-scrollbar-track { background: var(--bg-surface); }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--accent) 30%, transparent); border-radius: 3px; }
 
     /* ── Sidebar Header ───────────────────────────────────────── */
     .s-header {
       padding: 16px 18px 14px;
       background: var(--bg-rail);
       border-bottom: 1px solid var(--border);
-      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+      box-shadow: var(--shadow);
       flex-shrink: 0;
       position: relative;
     }
@@ -200,7 +229,7 @@
       transition: background 0.3s;
     }
     .status-dot.connected { background: var(--green); animation: none; }
-    .status-dot.connecting { background: #ffc107; animation: blink 1s ease-in-out infinite; }
+    .status-dot.connecting { background: var(--orange); animation: blink 1s ease-in-out infinite; }
 
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.35} }
 
@@ -223,7 +252,8 @@
       gap: 6px;
     }
 
-    /* ── Instrument cluster: score + live clock ───────────────── */
+    /* ── Instrument cluster: 4 células em 2×2 (pontuação, tempo,
+         violações, EPI) — rótulos nunca cortam. ─────────────────── */
     .cluster {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -237,28 +267,31 @@
 
     .score-card {
       background: var(--bg-elev);
-      padding: 15px 16px;
+      padding: 12px 10px 13px;
       text-align: center;
     }
 
     .score-label {
-      font-size: 9.5px;
+      font-size: 11px;
+      font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 1.5px;
+      letter-spacing: 1px;
       color: var(--text-dim);
     }
 
     .score-value {
       font-family: var(--mono);
       font-variant-numeric: tabular-nums;
-      font-size: 34px;
+      font-size: 24px;
       font-weight: 600;
-      line-height: 1.05;
-      margin: 7px 0 0;
+      line-height: 1.1;
+      margin: 5px 0 0;
       color: var(--accent);
       transition: transform 0.15s ease;
     }
     #clock-value { color: var(--text); }
+    #ppe-value   { color: var(--text); }
+    #viol-value  { color: var(--red); }
 
     .score-value.bump {
       transform: scale(1.12);
@@ -280,77 +313,69 @@
       border-bottom: 2px solid var(--border);
     }
 
-    /* ── Tasks ────────────────────────────────────────────────── */
+    /* ── Tarefas: manifesto de procedimento (linhas em trilho de
+         glifos, agrupadas por grupo — não cartões). Status vive na
+         coluna-guia; nada de listras laterais nem pílulas. ──────── */
     .task-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 12px;
     }
 
-    .task-item {
-      background: var(--bg-surface);
-      border-radius: var(--radius-lg);
-      padding: 12px 14px;
-      border-left: 4px solid transparent;
-      transition: background 0.25s, border-color 0.25s, box-shadow 0.25s;
-    }
-
-    .task-item.pending  { border-left-color: var(--orange); }
-    .task-item.active   { border-left-color: var(--accent); background: rgba(77,141,240,0.09);
-                          box-shadow: 0 0 18px rgba(77,141,240,0.18); }
-    .task-item.completed{ border-left-color: var(--green);  opacity: 0.75; }
-    .task-item.failed   { border-left-color: var(--red);    opacity: 0.75; }
-
-    .task-header {
+    .mg-h {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: baseline;
       gap: 8px;
-      margin-bottom: 4px;
-    }
-
-    .task-name {
-      font-weight: 600;
-      font-size: 13px;
-      flex: 1;
-      /* allow long names to wrap when sidebar is narrow;
-         use word-break so camelCase identifiers also wrap */
-      word-break: break-word;
-      overflow-wrap: anywhere;
-    }
-
-    .task-badge {
-      padding: 3px 9px;
-      border-radius: 20px;
-      font-size: 10px;
-      text-transform: uppercase;
-      font-weight: 600;
-      flex-shrink: 0;
-    }
-
-    .task-badge.pending   { background: rgba(217,155,37,0.2);   color: var(--orange); }
-    .task-badge.active    { background: rgba(77,141,240,0.2); color: var(--accent);
-                            animation: blink 1.5s ease-in-out infinite; }
-    .task-badge.completed { background: rgba(47,164,106,0.2);   color: var(--green); }
-    .task-badge.failed    { background: rgba(216,68,80,0.2);   color: var(--red); }
-
-    .task-description {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .task-meta {
-      display: flex;
-      gap: 10px;
-      margin-top: 4px;
       font-family: var(--mono);
-      font-size: 10px;
-      color: var(--text-dim);
-      flex-wrap: wrap;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 4px 2px;
+      border-bottom: 1px solid var(--border-strong);
+      margin-bottom: 3px;
     }
+    .mg-h b { color: var(--text); font-weight: 600; letter-spacing: 0.4px; }
+    .mg-h .mg-mode  { color: var(--text-dim); font-weight: 400; }
+    .mg-h .mg-count { color: var(--accent); font-variant-numeric: tabular-nums; }
 
-    .task-pts { color: var(--accent); }
+    .tr {
+      display: grid;
+      grid-template-columns: 18px 24px 1fr auto;
+      align-items: baseline;
+      gap: 6px;
+      padding: 7px 6px 7px 4px;
+      border-radius: var(--radius);
+      font-size: 12.5px;
+      transition: background 0.2s;
+    }
+    .tr .g  { font-family: var(--mono); font-size: 12px; text-align: center; }
+    .tr .ix { font-family: var(--mono); font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+    .tr .nm { font-weight: 500; word-break: break-word; overflow-wrap: anywhere; }
+    .tr .pt { font-family: var(--mono); font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+    .tr.completed .g, .tr.completed .pt { color: var(--green); }
+    .tr.completed .nm { color: var(--text-muted); font-weight: 400; }
+    .tr.failed .g, .tr.failed .pt { color: var(--red); }
+    .tr.failed .nm { color: var(--text-muted); }
+    .tr.pending .g { color: var(--text-dim); }
+    .tr.active { background: var(--accent-weak); outline: 1px solid var(--accent); outline-offset: -1px; }
+    .tr.active .g, .tr.active .pt { color: var(--accent); }
+    .tr.active .nm { font-weight: 600; }
+
+    .tr-x { grid-column: 3 / 5; margin-top: 3px; }
+    .tr-x p { margin: 0 0 6px; font-size: 11.5px; color: var(--text-muted); line-height: 1.45; }
+    .chips { display: flex; gap: 5px; flex-wrap: wrap; }
+    .chip {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      background: var(--bg-elev);
+    }
+    .chip.pen { color: var(--red); border-color: var(--red); }
 
     /* ── Log ──────────────────────────────────────────────────── */
     .log-container {
@@ -362,15 +387,19 @@
     }
 
     .log-container::-webkit-scrollbar { width: 5px; }
-    .log-container::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
-    .log-container::-webkit-scrollbar-thumb { background: rgba(77,141,240,0.25); border-radius: 3px; }
+    .log-container::-webkit-scrollbar-track { background: var(--bg-surface); }
+    .log-container::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--accent) 25%, transparent); border-radius: 3px; }
 
+    /* Linha de registro: hora (mono) · glifo tipado · mensagem */
     .log-item {
-      background: rgba(255,255,255,0.03);
-      padding: 7px 10px;
-      border-radius: 6px;
-      font-size: 11px;
-      border-left: 3px solid rgba(77,141,240,0.25);
+      display: grid;
+      grid-template-columns: 52px 14px 1fr;
+      gap: 7px;
+      align-items: baseline;
+      background: var(--bg-surface);
+      padding: 6px 8px;
+      border-radius: var(--radius);
+      font-size: 11.5px;
       animation: slideIn 0.2s ease;
     }
 
@@ -379,51 +408,78 @@
       to   { opacity: 1; transform: translateX(0); }
     }
 
-    .log-item.violation { border-left-color: var(--red);   background: rgba(216,68,80,0.05); }
-    .log-item.success   { border-left-color: var(--green); background: rgba(47,164,106,0.04); }
+    .log-item .g { font-family: var(--mono); font-size: 11px; text-align: center; color: var(--text-dim); }
+    .log-item.success .g { color: var(--green); }
+    .log-item.violation  { background: color-mix(in srgb, var(--red) 7%, transparent); }
+    .log-item.violation .g { color: var(--red); }
 
     .log-time {
       font-family: var(--mono);
       color: var(--text-dim);
-      font-size: 10px;
-      margin-right: 6px;
+      font-size: 10.5px;
+      font-variant-numeric: tabular-nums;
     }
 
-    /* ── Report Section (sidebar) ─────────────────────────────── */
+    /* ── Relatório (sidebar): documento carimbado — régua dupla
+         como um formulário de permissão de trabalho. ────────────── */
     .report-card {
-      background: var(--bg-surface);
+      border: 1px solid var(--border-strong);
       border-radius: var(--radius-lg);
-      padding: 14px;
+      padding: 4px;
     }
+    .report-card-in {
+      border: 1px solid var(--border-strong);
+      border-radius: 7px;
+      padding: 12px;
+    }
+    .report-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: var(--mono);
+      font-size: 10.5px;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+    }
+    .report-head b { font-size: 12px; color: var(--text); letter-spacing: 0.5px; }
 
     .report-summary {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, 1fr);
       gap: 8px;
       margin-bottom: 12px;
-    }
-
-    .report-stat {
-      background: rgba(77,141,240,0.08);
-      padding: 10px;
-      border-radius: var(--radius);
       text-align: center;
     }
 
     .report-stat-value {
       font-family: var(--mono);
       font-variant-numeric: tabular-nums;
-      font-size: 19px;
+      font-size: 18px;
       font-weight: 600;
       color: var(--accent);
     }
 
     .report-stat-label {
-      font-size: 10px;
-      opacity: 0.65;
+      font-size: 10.5px;
+      color: var(--text-dim);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
       margin-top: 2px;
+    }
+
+    .report-stamp {
+      margin: 2px 0 12px;
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2.5px;
+      color: var(--green);
+      border: 1.5px solid var(--green);
+      border-radius: 4px;
+      padding: 4px;
+      transform: rotate(-1.6deg);
+      opacity: 0.9;
     }
 
     .report-actions { display: flex; gap: 8px; }
@@ -443,15 +499,15 @@
 
     .report-btn.primary {
       background: var(--accent);
-      color: #08121f;
+      color: var(--on-accent);
     }
-    .report-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(77,141,240,0.45); }
+    .report-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 45%, transparent); }
 
     .report-btn.secondary {
-      background: rgba(255,255,255,0.1);
-      color: #fff;
+      background: var(--bg-hover);
+      color: var(--text);
     }
-    .report-btn.secondary:hover { background: rgba(255,255,255,0.15); }
+    .report-btn.secondary:hover { background: var(--border); }
 
     /* ── Session History ──────────────────────────────────────── */
     .history-count {
@@ -474,13 +530,12 @@
 
     .history-item {
       background: var(--bg-surface);
-      border-radius: var(--radius-lg);
-      padding: 10px 12px;
-      border-left: 4px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 9px 11px;
       cursor: pointer;
-      transition: background 0.2s, transform 0.15s;
+      transition: background 0.15s;
     }
-    .history-item:hover { background: rgba(77,141,240,0.12); transform: translateX(2px); }
+    .history-item:hover { background: var(--accent-weak); }
     .history-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
     .history-item-top {
@@ -574,7 +629,7 @@
     .modal-title { font-size: 18px; font-weight: 600; }
 
     .modal-close {
-      background: none; border: none; color: #fff;
+      background: none; border: none; color: var(--text);
       font-size: 26px; cursor: pointer;
       opacity: 0.6; transition: opacity 0.2s;
       width: 32px; height: 32px;
@@ -589,8 +644,8 @@
     }
 
     .modal-body::-webkit-scrollbar { width: 7px; }
-    .modal-body::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); }
-    .modal-body::-webkit-scrollbar-thumb { background: rgba(77,141,240,0.3); border-radius: 4px; }
+    .modal-body::-webkit-scrollbar-track { background: var(--bg-surface); }
+    .modal-body::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--accent) 30%, transparent); border-radius: 4px; }
 
     .session-summary-grid {
       display: grid;
@@ -600,62 +655,48 @@
     }
 
     .summary-card {
-      background: rgba(77,141,240,0.1);
-      padding: 14px;
-      border-radius: var(--radius-lg);
-      border-left: 4px solid var(--accent);
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      padding: 13px;
+      border-radius: var(--radius);
+      text-align: center;
     }
 
-    .summary-card-value { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 24px; font-weight: 600; color: var(--accent); margin-bottom: 4px; }
-    .summary-card-label { font-size: 11px; opacity: 0.65; }
+    .summary-card-value { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 22px; font-weight: 600; color: var(--accent); margin-bottom: 4px; }
+    .summary-card-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
 
-    .timeline { position: relative; padding-left: 28px; }
-    .timeline::before {
-      content: '';
-      position: absolute;
-      left: 9px; top: 0; bottom: 0;
-      width: 2px;
-      background: rgba(77,141,240,0.25);
-    }
+    /* Linha do tempo: mesma gramática do registro — hora · glifo · evento */
+    .timeline { display: flex; flex-direction: column; gap: 4px; }
 
     .timeline-item {
-      position: relative;
-      margin-bottom: 16px;
-      padding: 12px 14px;
-      background: rgba(255,255,255,0.03);
+      display: grid;
+      grid-template-columns: 58px 14px 1fr;
+      gap: 8px;
+      align-items: baseline;
+      padding: 8px 10px;
+      background: var(--bg-surface);
       border-radius: var(--radius);
-      border-left: 3px solid rgba(77,141,240,0.4);
     }
+    .timeline-item .g { font-family: var(--mono); font-size: 11.5px; text-align: center; color: var(--text-dim); }
+    .timeline-item.violation { background: color-mix(in srgb, var(--red) 7%, transparent); }
+    .timeline-item.violation .g { color: var(--red); }
 
-    .timeline-item::before {
-      content: '';
-      position: absolute;
-      left: -22px; top: 18px;
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--accent);
-      border: 2px solid var(--bg-sidebar);
-    }
-
-    .timeline-item.violation { border-left-color: var(--red); }
-    .timeline-item.violation::before { background: var(--red); }
-
-    .timeline-time   { font-size: 10px; opacity: 0.55; margin-bottom: 4px; }
-    .timeline-event  { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
-    .timeline-detail { font-size: 12px; opacity: 0.75; }
+    .timeline-time   { font-family: var(--mono); font-size: 10.5px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+    .timeline-event  { font-weight: 600; font-size: 12.5px; }
+    .timeline-detail { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
 
     /* ── Floating buttons ─────────────────────────────────────── */
     .fab {
       position: fixed;
       border: none;
-      color: #fff;
+      color: var(--on-accent);
       width: 48px; height: 48px;
       border-radius: 50%;
       font-size: 22px;
       cursor: pointer;
       box-shadow: 0 4px 20px rgba(0,0,0,0.35);
       backdrop-filter: blur(10px);
-      background: rgba(77,141,240,0.88);
+      background: color-mix(in srgb, var(--accent) 88%, transparent);
       z-index: 200;
       display: flex;
       align-items: center;
@@ -666,11 +707,14 @@
     .fab:hover  { transform: scale(1.08); }
     .fab:active { transform: scale(0.94); }
 
-    .fab-menu { top: 18px; left: 18px; display: none; }
-    .fab-lang { top: 18px; right: 18px; }
+    .fab-menu  { top: 18px; left: 18px; display: none; }
+    .fab-lang  { top: 18px; right: 18px; }
     /* Optional "watch player cast" FAB, sits left of the language toggle */
-    .fab-cast { top: 18px; right: 78px; }
+    .fab-cast  { top: 18px; right: 78px; }
     .fab-cast svg { width: 22px; height: 22px; }
+    /* Theme toggle (dark live mode ↔ light figure mode) */
+    .fab-theme { top: 18px; right: 138px; }
+    .fab-theme svg { width: 21px; height: 21px; }
 
     /* ── Responsive ───────────────────────────────────────────── */
     @media (max-width: 768px) {
@@ -681,9 +725,10 @@
         box-shadow: 4px 0 24px rgba(0,0,0,0.5);
       }
       .sidebar.open { transform: translateX(0); }
-      .fab-menu { display: flex; }
+      .fab-menu  { display: flex; }
       .fab-lang  { top: 80px; }
       .fab-cast  { top: 142px; right: 18px; }
+      .fab-theme { top: 204px; right: 18px; }
     }
     /* ── Inline SVG icons (replace emoji chrome) ──────────────── */
     .s-icon { width: 14px; height: 14px; flex-shrink: 0; color: var(--accent); opacity: 0.9; vertical-align: -2px; margin-right: 7px; }
@@ -692,10 +737,10 @@
     /* ── Activity-log "violations only" filter (wired by behavior plan) ── */
     .log-container.violations-only .log-item:not(.violation) { display: none; }
 
-    /* ── Viewport legend + load-failure fallback ──────────────── */
+    /* ── Viewport: legenda, instrumentos e fallback ────────────── */
     .vp-legend {
       position: absolute; top: 16px; left: 16px;
-      background: rgba(10,13,17,0.82);
+      background: color-mix(in srgb, var(--bg-rail) 85%, transparent);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       padding: 12px 14px;
@@ -704,11 +749,72 @@
       z-index: 10;
     }
     .vp-legend h4 {
-      font-size: 9.5px; letter-spacing: 1.8px; text-transform: uppercase;
+      font-size: 10px; letter-spacing: 1.6px; text-transform: uppercase;
       color: var(--text-dim); margin-bottom: 9px; font-weight: 600;
     }
     .vp-legend-row { display: flex; align-items: center; gap: 9px; font-family: var(--mono); font-size: 11px; color: var(--text-muted); margin: 5px 0; }
     .vp-swatch { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+    /* Cores da legenda vêm dos tokens — trocam junto com o tema */
+    .vp-swatch.c-accent { background: var(--accent); }
+    .vp-swatch.c-hand   { background: var(--text-muted); }
+    .vp-swatch.c-loose  { background: var(--orange); }
+    .vp-swatch.c-worn   { background: var(--ppe-worn); }
+    .vp-swatch.c-ring   { background: transparent; border: 1.5px solid var(--accent); }
+
+    /* Chip de postura (abaixo da fileira de FABs, que é fixed/z-200) */
+    .vp-chip {
+      position: absolute; top: 80px; right: 16px; z-index: 10;
+      display: flex; align-items: baseline; gap: 8px;
+      background: color-mix(in srgb, var(--bg-rail) 85%, transparent);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 8px 12px;
+      backdrop-filter: blur(8px);
+      font-family: var(--mono);
+    }
+    .vp-chip small { font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
+    .vp-chip b { font-size: 12.5px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .vp-chip b.low { color: var(--orange); }
+
+    /* Balão de interação (projetado sobre a posição da ação) */
+    .vp-callout {
+      position: absolute; z-index: 11;
+      transform: translate(-50%, -135%);
+      font-family: var(--mono); font-size: 10.5px; font-weight: 600;
+      white-space: nowrap;
+      background: color-mix(in srgb, var(--bg-rail) 88%, transparent);
+      border: 1px solid var(--accent);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 4px 9px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.18s;
+    }
+    .vp-callout.on { opacity: 1; }
+    .vp-callout em { font-style: normal; color: var(--accent); }
+
+    /* Cantos de HUD emoldurando o instrumento */
+    .hud { position: absolute; width: 16px; height: 16px; z-index: 9; border-color: var(--border-strong); border-style: solid; border-width: 0; pointer-events: none; }
+    .hud.tl { top: 10px; left: 10px;  border-top-width: 1.5px; border-left-width: 1.5px; }
+    .hud.tr { top: 10px; right: 10px; border-top-width: 1.5px; border-right-width: 1.5px; }
+    .hud.bl { bottom: 10px; left: 10px;  border-bottom-width: 1.5px; border-left-width: 1.5px; }
+    .hud.br { bottom: 10px; right: 10px; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+
+    /* Rótulos 3D (HMD, mãos, EPI) — mesmo chip do cabeçalho */
+    .vp-label {
+      position: absolute;
+      font-family: var(--mono); font-size: 11px;
+      color: var(--text-muted);
+      background: color-mix(in srgb, var(--bg-rail) 82%, transparent);
+      border: 1px solid var(--border);
+      padding: 2px 7px;
+      border-radius: 4px;
+      white-space: nowrap;
+      transform: translate(-50%, -100%);
+      margin-top: -10px;
+      pointer-events: none;
+    }
 
     #viewport-error {
       position: absolute; inset: 0;
@@ -727,6 +833,15 @@
   <button class="fab fab-menu" id="btn-menu" aria-label="Menu">☰</button>
   <!-- FAB: language toggle -->
   <button class="fab fab-lang" id="btn-lang" aria-label="Idioma"><span id="lang-flag">PT</span></button>
+  <!-- FAB: theme toggle — dark (live) ↔ light (figure mode) -->
+  <button class="fab fab-theme" id="btn-theme" aria-label="Alternar tema claro/escuro" title="Alternar tema" aria-pressed="false">
+    <svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/>
+    </svg>
+    <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none">
+      <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.9 4.9 1.4 1.4"/><path d="m17.7 17.7 1.4 1.4"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.3 17.7-1.4 1.4"/><path d="m19.1 4.9-1.4 1.4"/>
+    </svg>
+  </button>
   <!-- FAB: open Meta Quest player casting in a side-by-side popup (optional) -->
   <button class="fab fab-cast" id="btn-cast" aria-label="Transmissão do jogador" title="Transmissão do jogador">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -762,15 +877,23 @@
 
       <div class="sidebar-scroll">
 
-        <!-- Instrument cluster: score + live session clock -->
+        <!-- Instrument cluster: score, clock, violations, PPE (2×2) -->
         <div class="cluster">
           <div class="score-card">
-            <div class="score-label" data-i18n="currentScore">Pontuação Atual</div>
+            <div class="score-label" data-i18n="currentScore">Pontuação</div>
             <div class="score-value" id="score-value">0</div>
           </div>
           <div class="score-card">
             <div class="score-label" data-i18n="elapsed">Tempo</div>
             <div class="score-value" id="clock-value">0:00</div>
+          </div>
+          <div class="score-card">
+            <div class="score-label" data-i18n="violations">Violações</div>
+            <div class="score-value" id="viol-value">0</div>
+          </div>
+          <div class="score-card">
+            <div class="score-label" data-i18n="ppeShort">EPI</div>
+            <div class="score-value" id="ppe-value">—</div>
           </div>
         </div>
 
@@ -851,13 +974,22 @@
     <!-- ── 3D Viewport ─────────────────────────────────────────── -->
     <div class="viewport">
       <div id="three-canvas"></div>
+      <span class="hud tl"></span><span class="hud tr"></span><span class="hud bl"></span><span class="hud br"></span>
       <div class="vp-legend">
         <h4 data-i18n="legendTitle">Legenda do Espaço</h4>
-        <div class="vp-legend-row"><span class="vp-swatch" style="background:#00aaff"></span><span data-i18n="legendHmd">HMD (capacete)</span></div>
-        <div class="vp-legend-row"><span class="vp-swatch" style="background:#00ffaa"></span><span data-i18n="legendHands">Mãos</span></div>
-        <div class="vp-legend-row"><span class="vp-swatch" style="background:#ff6b35"></span><span data-i18n="legendPpeLoose">EPI solto</span></div>
-        <div class="vp-legend-row"><span class="vp-swatch" style="background:#aaaaaa"></span><span data-i18n="legendPpeWorn">EPI equipado</span></div>
+        <div class="vp-legend-row"><span class="vp-swatch c-accent"></span><span data-i18n="legendHmd">HMD · olhar</span></div>
+        <div class="vp-legend-row"><span class="vp-swatch c-hand"></span><span data-i18n="legendHands">Mãos</span></div>
+        <div class="vp-legend-row"><span class="vp-swatch c-loose"></span><span data-i18n="legendPpeLoose">EPI solto</span></div>
+        <div class="vp-legend-row"><span class="vp-swatch c-worn"></span><span data-i18n="legendPpeWorn">EPI equipado</span></div>
+        <div class="vp-legend-row"><span class="vp-swatch c-ring"></span><span data-i18n="legendInteract">Objeto em interação</span></div>
       </div>
+      <!-- Instrumento de postura: estado + altura do HMD -->
+      <div class="vp-chip" id="posture-chip" style="display:none">
+        <small data-i18n="posture">Postura</small>
+        <b id="posture-value">—</b>
+      </div>
+      <!-- Balão de interação (posicionado por projeção do ponto da ação) -->
+      <div class="vp-callout" id="vp-callout" aria-hidden="true"></div>
       <!-- Shown by the load-failure watchdog if the 3D module never initializes -->
       <div id="viewport-error" style="display:none;">
         <span data-i18n="viewport3dFailed">Não foi possível carregar a visualização 3D. O restante do painel continua funcionando.</span>
@@ -898,17 +1030,29 @@
      * ============================================================== */
     const i18n = {
       en: {
-        currentScore: 'Current Score',
+        currentScore: 'Score',
         elapsed: 'Elapsed',
+        violations: 'Violations',
+        ppeShort: 'PPE',
         activeTasks: 'Active Tasks',
         activityLog: 'Activity Log',
         sessionReport: 'Session Report',
         violationsOnly: 'Violations only',
         legendTitle: 'Scene Legend',
-        legendHmd: 'HMD (head)',
+        legendHmd: 'HMD · gaze',
         legendHands: 'Hands',
         legendPpeLoose: 'PPE (loose)',
         legendPpeWorn: 'PPE (worn)',
+        legendInteract: 'Interacting object',
+        posture: 'Posture',
+        postureStanding: 'STANDING',
+        postureLowering: 'LOWERING',
+        postureCrouched: 'CROUCHED',
+        hand: 'HAND',
+        modeSequential: 'SEQUENTIAL',
+        modeFreeOrder: 'FREE ORDER',
+        group: 'GROUP',
+        sessionRecorded: 'SESSION RECORDED',
         viewport3dFailed: 'Could not load the 3D view. The rest of the panel keeps working.',
         waitingSession: 'Waiting for session to start…',
         noActivity: 'No activity yet',
@@ -936,38 +1080,50 @@
         connecting: 'Connecting…',
         pending: 'Pending', active: 'Active', completed: 'Done', failed: 'Failed',
         hideCompleted: 'Hide completed',
-        // log
-        logConnected: '🟢 Connected to training session',
-        logDisconnected: '🔴 Connection lost. Reconnecting…',
-        logSessionStarted: '🎮 Training session started',
-        logStarted: '▶️ Started', logCompleted: '✅ Completed', logTimeout: '⏰ Timeout',
-        logScorePlus: '➕ Score', logScoreMinus: '➖ Score', logTotal: 'Total',
-        logViolation: '⚠️ Safety Violation', logCritical: '🚨 CRITICAL',
-        logSessionComplete: '🏁 Session Complete! Score',
-        logGroupStarted: '📂 Group Started', logGroupCompleted: '📁 Group Completed',
-        logSessionReset: '🔄 Session reset', logReportAvailable: '📊 Report available',
-        logSessionPaused: '⏸️ Session paused', logSessionResumed: '▶️ Session resumed',
-        logSessionEnded: '🔚 Session ended',
-        logPpeEquipped: '🦺 PPE Equipped', logPpeRemoved: '🦺 PPE Removed',
-        logActionAttempt: '🎯 Action', logSafetyError: '❌ Safety Error', at: 'at',
+        // log (o glifo tipado vem da coluna-guia, não do texto)
+        logConnected: 'Connected to training session',
+        logDisconnected: 'Connection lost. Reconnecting…',
+        logSessionStarted: 'Training session started',
+        logStarted: 'Started', logCompleted: 'Completed', logTimeout: 'Timeout',
+        logScorePlus: 'Score', logScoreMinus: 'Score', logTotal: 'Total',
+        logViolation: 'Safety Violation', logCritical: 'CRITICAL',
+        logSessionComplete: 'Session Complete! Score',
+        logGroupStarted: 'Group Started', logGroupCompleted: 'Group Completed',
+        logSessionReset: 'Session reset', logReportAvailable: 'Report available',
+        logSessionPaused: 'Session paused', logSessionResumed: 'Session resumed',
+        logSessionEnded: 'Session ended',
+        logPpeEquipped: 'PPE Equipped', logPpeRemoved: 'PPE Removed',
+        logActionAttempt: 'Action', logSafetyError: 'Safety Error', at: 'at',
         // report detail line (scaffolding labels)
         detailPpe: 'PPE', detailWorn: 'worn', detailRemoved: 'removed',
         detailDelta: 'Delta', detailTotal: 'Total', detailIn: 'in',
         detailTime: 'Time', detailScore: 'Score', detailCompleted: 'Completed',
       },
       pt: {
-        currentScore: 'Pontuação Atual',
+        currentScore: 'Pontuação',
         elapsed: 'Tempo',
+        violations: 'Violações',
+        ppeShort: 'EPI',
         activeTasks: 'Tarefas Ativas',
         activityLog: 'Registro de Atividades',
         sessionReport: 'Relatório da Sessão',
         hideCompleted: 'Ocultar concluídas',
         violationsOnly: 'Só violações',
         legendTitle: 'Legenda do Espaço',
-        legendHmd: 'HMD (capacete)',
+        legendHmd: 'HMD · olhar',
         legendHands: 'Mãos',
         legendPpeLoose: 'EPI solto',
         legendPpeWorn: 'EPI equipado',
+        legendInteract: 'Objeto em interação',
+        posture: 'Postura',
+        postureStanding: 'EM PÉ',
+        postureLowering: 'ABAIXANDO',
+        postureCrouched: 'AGACHADO',
+        hand: 'MÃO',
+        modeSequential: 'SEQUENCIAL',
+        modeFreeOrder: 'ORDEM LIVRE',
+        group: 'GRUPO',
+        sessionRecorded: 'SESSÃO REGISTRADA',
         viewport3dFailed: 'Não foi possível carregar a visualização 3D. O restante do painel continua funcionando.',
         waitingSession: 'Aguardando início da sessão…',
         noActivity: 'Nenhuma atividade ainda',
@@ -994,20 +1150,20 @@
         connected: 'Conectado',
         connecting: 'Conectando…',
         pending: 'Pendente', active: 'Ativa', completed: 'Concluída', failed: 'Falhou',
-        // log
-        logConnected: '🟢 Conectado à sessão de treinamento',
-        logDisconnected: '🔴 Conexão perdida. Reconectando…',
-        logSessionStarted: '🎮 Sessão de treinamento iniciada',
-        logStarted: '▶️ Iniciada', logCompleted: '✅ Concluída', logTimeout: '⏰ Tempo esgotado',
-        logScorePlus: '➕ Pontos', logScoreMinus: '➖ Pontos', logTotal: 'Total',
-        logViolation: '⚠️ Violação de Segurança', logCritical: '🚨 CRÍTICO',
-        logSessionComplete: '🏁 Sessão Completa! Pontuação',
-        logGroupStarted: '📂 Grupo Iniciado', logGroupCompleted: '📁 Grupo Concluído',
-        logSessionReset: '🔄 Sessão reiniciada', logReportAvailable: '📊 Relatório disponível',
-        logSessionPaused: '⏸️ Sessão pausada', logSessionResumed: '▶️ Sessão retomada',
-        logSessionEnded: '🔚 Sessão encerrada',
-        logPpeEquipped: '🦺 EPI Equipado', logPpeRemoved: '🦺 EPI Removido',
-        logActionAttempt: '🎯 Ação', logSafetyError: '❌ Erro de Segurança', at: 'em',
+        // log (o glifo tipado vem da coluna-guia, não do texto)
+        logConnected: 'Conectado à sessão de treinamento',
+        logDisconnected: 'Conexão perdida. Reconectando…',
+        logSessionStarted: 'Sessão de treinamento iniciada',
+        logStarted: 'Iniciada', logCompleted: 'Concluída', logTimeout: 'Tempo esgotado',
+        logScorePlus: 'Pontos', logScoreMinus: 'Pontos', logTotal: 'Total',
+        logViolation: 'Violação de Segurança', logCritical: 'CRÍTICO',
+        logSessionComplete: 'Sessão Completa! Pontuação',
+        logGroupStarted: 'Grupo Iniciado', logGroupCompleted: 'Grupo Concluído',
+        logSessionReset: 'Sessão reiniciada', logReportAvailable: 'Relatório disponível',
+        logSessionPaused: 'Sessão pausada', logSessionResumed: 'Sessão retomada',
+        logSessionEnded: 'Sessão encerrada',
+        logPpeEquipped: 'EPI Equipado', logPpeRemoved: 'EPI Removido',
+        logActionAttempt: 'Ação', logSafetyError: 'Erro de Segurança', at: 'em',
         // report detail line (scaffolding labels)
         detailPpe: 'EPI', detailWorn: 'equipado', detailRemoved: 'removido',
         detailDelta: 'Variação', detailTotal: 'Total', detailIn: 'em',
@@ -1029,6 +1185,20 @@
     }
 
     /* ================================================================
+     * THEME — escuro (uso vivo) ↔ claro (modo figura). Troca só de
+     * tokens; o viewport 3D relê os valores via setTheme().
+     * ============================================================== */
+    let theme = localStorage.getItem('sp_theme') || 'dark';
+
+    function applyTheme() {
+      document.documentElement.dataset.theme = theme;
+      document.getElementById('theme-icon-moon').style.display = theme === 'dark' ? 'block' : 'none';
+      document.getElementById('theme-icon-sun').style.display  = theme === 'dark' ? 'none' : 'block';
+      document.getElementById('btn-theme').setAttribute('aria-pressed', String(theme === 'light'));
+      window.__spViewport?.setTheme();
+    }
+
+    /* ================================================================
      * STATE
      * ============================================================== */
     /**
@@ -1041,6 +1211,10 @@
     let sessionReport= null;
     let hideCompleted = false;
     let violationsOnly = false;
+
+    /* Contadores do cluster (violações + EPI vestido/exigido) */
+    let violationCount = 0;
+    const wornPpe = new Set();     // ppeType com isWearing=true
 
     /* ── Session history (persisted in localStorage; survives resets + reloads) ── */
     const HISTORY_KEY = 'sp_session_history';
@@ -1170,6 +1344,9 @@
       document.getElementById('participant-label').textContent =
         `${t('participant')}: ${currentParticipantId}`;
       sessionTimer.start();
+      violationCount = 0;
+      wornPpe.clear();
+      renderCluster();
       addLog(t('logSessionStarted'), 'success');
     });
 
@@ -1222,6 +1399,10 @@
       sessionTimer.reset();
       setScoreUI(0);
       resetTaskUI();
+      violationCount = 0;
+      wornPpe.clear();
+      renderCluster();
+      window.__spViewport?.clearSession();   // sem malhas de EPI órfãs entre participantes
       document.getElementById('report-section').innerHTML = emptyState('', t('reportAfterSession'));
       document.getElementById('session-id-label').textContent = t('noSession');
       document.getElementById('participant-label').textContent = `${t('participant')}: —`;
@@ -1266,18 +1447,21 @@
 
     /* ── PPE ── */
     on('PpeChanged', p => {
-      if (p.isWearing) addLog(`${t('logPpeEquipped')}: ${p.ppeType}`, 'success');
-      else             addLog(`${t('logPpeRemoved')}: ${p.ppeType}`, 'violation');
+      if (p.isWearing) { wornPpe.add(String(p.ppeType)); addLog(`${t('logPpeEquipped')}: ${p.ppeType}`, 'success'); }
+      else             { wornPpe.delete(String(p.ppeType)); addLog(`${t('logPpeRemoved')}: ${p.ppeType}`, 'violation'); }
+      renderCluster();
     });
 
     /* ── Safety ── */
     on('ActionAttempt', p => {
       const pos = p.hasPosition ? ` ${t('at')} (${p.px?.toFixed(1)},${p.py?.toFixed(1)},${p.pz?.toFixed(1)})` : '';
       addLog(`${t('logActionAttempt')}: ${p.actionId} (${p.sourceId ?? ''})${pos}`);
+      /* instrumento de interação: anel + balão no ponto da ação */
+      if (p.hasPosition) window.__spViewport?.showInteraction(p.actionId, p.px, p.py, p.pz);
     });
 
-    on('SafetyViolation',      p => addLog(`${t('logViolation')}: ${p.message}`, 'violation'));
-    on('CriticalSafetyFailure',p => addLog(`${t('logCritical')}: ${p.reason}`, 'violation'));
+    on('SafetyViolation',      p => { violationCount++; renderCluster(); addLog(`${t('logViolation')}: ${p.message}`, 'violation'); });
+    on('CriticalSafetyFailure',p => { violationCount++; renderCluster(); addLog(`${t('logCritical')}: ${p.reason}`, 'violation'); });
     on('SafetyError',          p => addLog(`${t('logSafetyError')}: [${p.source}] ${p.message}`, 'violation'));
 
     /* ── Session Log File ── */
@@ -1326,27 +1510,39 @@
       return `<div class="empty-state"><div class="empty-state-icon">${EMPTY_ICON}</div><div>${text}</div></div>`;
     }
 
-    /** Returns an emoji icon for a session-log event name, matching the real-time log icons. */
-    function eventIcon(name) {
+    /** Glifo tipado (coluna-guia) para um evento do relatório —
+        mesmo vocabulário do registro em tempo real, sem emoji. */
+    function eventGlyph(name) {
       const n = (name ?? '').toLowerCase();
-      if (n.includes('critical'))           return '🚨';
-      if (n.includes('violation'))          return '⚠️';
-      if (n.includes('safetyerror'))        return '❌';
-      if (n.includes('taskstarted'))        return '▶️';
-      if (n.includes('taskcompleted'))      return '✅';
-      if (n.includes('tasktimeout'))        return '⏰';
-      if (n.includes('groupstarted'))       return '📂';
-      if (n.includes('groupcompleted'))     return '📁';
-      if (n.includes('scorechanged'))       return '📊';
-      if (n.includes('ppestatechanged'))    return '🦺';
-      if (n.includes('actionattempt'))      return '🎯';
-      if (n.includes('sessioncompleted'))   return '🏁';
-      if (n.includes('sessionstarted'))     return '🎮';
-      if (n.includes('sessionpaused'))      return '⏸️';
-      if (n.includes('sessionresumed'))     return '▶️';
-      if (n.includes('sessionreset'))       return '🔄';
-      if (n.includes('sessionended'))       return '🔚';
-      return '📋';
+      if (n.includes('critical'))         return '▲';
+      if (n.includes('violation'))        return '▲';
+      if (n.includes('safetyerror'))      return '✕';
+      if (n.includes('tasktimeout'))      return '✕';
+      if (n.includes('taskcompleted'))    return '✔';
+      if (n.includes('groupcompleted'))   return '✔';
+      if (n.includes('sessioncompleted')) return '⚑';
+      if (n.includes('taskstarted'))      return '▶';
+      if (n.includes('groupstarted'))     return '▶';
+      return '●';
+    }
+
+    /* ── Cluster: violações + EPI vestido/exigido ── */
+    function renderCluster() {
+      const violEl = document.getElementById('viol-value');
+      if (violEl) violEl.textContent = violationCount;
+
+      const required = new Set();
+      tasks.forEach(tk => (tk.requiredPpe ?? []).forEach(p => required.add(String(p))));
+
+      const ppeEl = document.getElementById('ppe-value');
+      if (!ppeEl) return;
+      if (required.size > 0) {
+        let worn = 0;
+        required.forEach(p => { if (wornPpe.has(p)) worn++; });
+        ppeEl.textContent = `${worn}/${required.size}`;
+      } else {
+        ppeEl.textContent = wornPpe.size > 0 ? String(wornPpe.size) : '—';
+      }
     }
 
     /* Localized display label for a logged event name (JSON keeps English). */
@@ -1425,53 +1621,84 @@
       document.getElementById('task-list').innerHTML = emptyState('', t('waitingSession'));
     }
 
-    /* ── Task renderer — full rebuild from Map ── */
-    function renderTasks() {
-      const container = document.getElementById('task-list');
-      if (tasks.size === 0) { resetTaskUI(); return; }
+    /* ── Task renderer — manifesto de procedimento: grupos com
+       cabeçalho (modo de execução + progresso) e linhas numeradas
+       num trilho de glifos. A tarefa ativa é a única expandida. ── */
+    const STATUS_GLYPH = { completed: '✔', active: '▶', pending: '·', failed: '✕' };
 
-      // Sort: active first, then by order
-      let sorted = [...tasks.values()];
-
-      if (hideCompleted) {
-        sorted = sorted.filter(t => t.status !== 'completed' && t.status !== 'failed');
-      }
-
-      sorted.sort((a, b) => {
-        const priority = s => s === 'active' ? 0 : s === 'pending' ? 1 : 2;
-        const pd = priority(a.status) - priority(b.status);
-        if (pd !== 0) return pd;
-        return (a.order ?? 999) - (b.order ?? 999);
-      });
-
-      container.innerHTML = '';
-      sorted.forEach(task => {
-        const pts = [];
-        if (task.successPoints)  pts.push(`+${task.successPoints}pts`);
-        if (task.ppePenalty)     pts.push(`-${task.ppePenalty} EPI`);
-        if (task.failurePenalty) pts.push(`-${task.failurePenalty} falha`);
-
-        const ppe = (task.requiredPpe ?? []).map(esc).join(', ');
-
-        const el = document.createElement('div');
-        el.className = `task-item ${task.status}`;
-        el.innerHTML = `
-          <div class="task-header">
-            <div class="task-name">${esc(task.name)}</div>
-            <div class="task-badge ${task.status}">${t(task.status)}</div>
-          </div>
-          ${task.description ? `<div class="task-description">${esc(task.description)}</div>` : ''}
-          <div class="task-meta">
-            ${task.groupName ? `<span>Grupo: ${esc(task.groupName)}</span>` : ''}
-            ${pts.length ? `<span class="task-pts">${pts.join(' / ')}</span>` : ''}
-            ${ppe ? `<span>EPI: ${ppe}</span>` : ''}
-          </div>
-        `;
-        container.appendChild(el);
-      });
+    function modeLabel(mode) {
+      const m = String(mode ?? '').toLowerCase();
+      if (m.startsWith('seq'))  return t('modeSequential');
+      if (m.startsWith('free')) return t('modeFreeOrder');
+      return '';
     }
 
-    /* ── Log ── */
+    function renderTasks() {
+      const container = document.getElementById('task-list');
+      if (tasks.size === 0) { resetTaskUI(); renderCluster(); return; }
+
+      /* agrupa por groupName preservando a ordem das tarefas */
+      const groups = new Map();
+      [...tasks.values()]
+        .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
+        .forEach(tk => {
+          const g = tk.groupName || '—';
+          if (!groups.has(g)) groups.set(g, []);
+          groups.get(g).push(tk);
+        });
+
+      container.innerHTML = '';
+      let gi = 0;
+      groups.forEach((list, groupName) => {
+        gi++;
+        const done = list.filter(tk => tk.status === 'completed').length;
+        const mode = modeLabel(list.find(tk => tk.executionMode)?.executionMode);
+
+        const header = document.createElement('div');
+        header.className = 'mg-h';
+        header.innerHTML = `
+          <b>${t('group')} ${String(gi).padStart(2, '0')} · ${esc(groupName)}</b>
+          <span>${mode ? `<span class="mg-mode">${mode}</span> · ` : ''}<span class="mg-count">${done}/${list.length}</span></span>`;
+        container.appendChild(header);
+
+        list.forEach((task, idx) => {
+          if (hideCompleted && (task.status === 'completed' || task.status === 'failed')) return;
+
+          let pt = '';
+          if (task.status === 'active')      pt = t('active').toUpperCase();
+          else if (task.status === 'failed') pt = task.failurePenalty ? `−${task.failurePenalty}` : '✕';
+          else if (task.successPoints)       pt = `+${task.successPoints}`;
+
+          let expand = '';
+          if (task.status === 'active') {
+            const chips = [];
+            (task.requiredPpe ?? []).forEach(p => chips.push(`<span class="chip">${t('detailPpe')}: ${esc(p)}</span>`));
+            if (task.failurePenalty) chips.push(`<span class="chip pen">−${task.failurePenalty}</span>`);
+            if (task.ppePenalty)     chips.push(`<span class="chip pen">−${task.ppePenalty} ${t('detailPpe')}</span>`);
+            expand = `
+              <div class="tr-x">
+                ${task.description ? `<p>${esc(task.description)}</p>` : ''}
+                ${chips.length ? `<div class="chips">${chips.join('')}</div>` : ''}
+              </div>`;
+          }
+
+          const row = document.createElement('div');
+          row.className = `tr ${task.status}`;
+          row.innerHTML = `
+            <span class="g">${STATUS_GLYPH[task.status] ?? '·'}</span>
+            <span class="ix">${String(idx + 1).padStart(2, '0')}</span>
+            <span class="nm">${esc(task.name)}</span>
+            <span class="pt">${pt}</span>
+            ${expand}`;
+          container.appendChild(row);
+        });
+      });
+      renderCluster();
+    }
+
+    /* ── Log: hora · glifo tipado · mensagem ── */
+    const LOG_GLYPH = { success: '✔', violation: '▲', info: '●' };
+
     function addLog(message, type = 'info') {
       const container = document.getElementById('log-container');
       const empty = container.querySelector('.empty-state');
@@ -1480,7 +1707,7 @@
       const item = document.createElement('div');
       item.className = `log-item ${type}`;
       const time = new Date().toLocaleTimeString(lang === 'pt' ? 'pt-BR' : 'en-US', { hour12: false });
-      item.innerHTML = `<span class="log-time">${time}</span>${esc(message)}`;
+      item.innerHTML = `<span class="log-time">${time}</span><span class="g">${LOG_GLYPH[type] ?? '●'}</span><span>${esc(message)}</span>`;
       container.insertBefore(item, container.firstChild);
 
       while (container.children.length > MAX_LOG_ITEMS) {
@@ -1488,38 +1715,42 @@
       }
     }
 
-    /* ── Report Section ── */
+    /* ── Report Section — documento carimbado (régua dupla) ── */
     function renderReportSection(report) {
       sessionReport = report;
       const summary = report.summary ?? {};
       const mins    = Math.floor((summary.totalElapsedTime ?? 0) / 60);
       const secs    = Math.floor((summary.totalElapsedTime ?? 0) % 60);
+      const locale  = lang === 'pt' ? 'pt-BR' : 'en-US';
+      const when    = new Date().toLocaleString(locale,
+        { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
 
       document.getElementById('report-section').innerHTML = `
-        <div class="report-card">
+        <div class="report-card"><div class="report-card-in">
+          <div class="report-head">
+            <b>${esc(currentParticipantId)}</b>
+            <span>${esc(when)}</span>
+          </div>
           <div class="report-summary">
-            <div class="report-stat">
+            <div>
               <div class="report-stat-value">${mins}:${String(secs).padStart(2,'0')}</div>
               <div class="report-stat-label">${t('duration')}</div>
             </div>
-            <div class="report-stat">
+            <div>
               <div class="report-stat-value">${summary.totalScore ?? 0}</div>
               <div class="report-stat-label">${t('finalScore')}</div>
             </div>
-            <div class="report-stat">
+            <div>
               <div class="report-stat-value">${summary.tasksCompleted ?? 0}/${summary.totalTasks ?? 0}</div>
               <div class="report-stat-label">${t('tasks')}</div>
             </div>
-            <div class="report-stat">
-              <div class="report-stat-value">${report.entries?.length ?? 0}</div>
-              <div class="report-stat-label">${t('events')}</div>
-            </div>
           </div>
+          ${summary.completed ? `<div class="report-stamp">${t('sessionRecorded')}</div>` : ''}
           <div class="report-actions">
             <button class="report-btn primary" id="btn-view-report">${t('viewFullReport')}</button>
             <button class="report-btn secondary" id="btn-dl-report">${t('downloadJson')}</button>
           </div>
-        </div>
+        </div></div>
       `;
 
       document.getElementById('btn-view-report').onclick = () => openReportModal();
@@ -1538,14 +1769,17 @@
       const timelineHtml = entries.map(entry => {
         const time  = new Date(entry.timestamp).toLocaleTimeString(lang === 'pt' ? 'pt-BR' : 'en-US', { hour12: false });
         const en    = entry.eventName ?? '';
-        const icon  = eventIcon(en);
+        const glyph = eventGlyph(en);
         const isViol = /violation|critical|safetyerror/i.test(en);
         const detail = formatDetails(entry);
         return `
           <div class="timeline-item ${isViol ? 'violation' : ''}">
             <div class="timeline-time">${time}</div>
-            <div class="timeline-event">${icon} ${esc(eventLabel(en))}</div>
-            ${detail ? `<div class="timeline-detail">${esc(detail)}</div>` : ''}
+            <div class="g">${glyph}</div>
+            <div>
+              <div class="timeline-event">${esc(eventLabel(en))}</div>
+              ${detail ? `<div class="timeline-detail">${esc(detail)}</div>` : ''}
+            </div>
           </div>`;
       }).join('');
 
@@ -1760,6 +1994,13 @@
       renderHistory();
     };
 
+    /* ── Theme toggle: escuro (uso vivo) ↔ claro (modo figura) ── */
+    document.getElementById('btn-theme').onclick = () => {
+      theme = theme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('sp_theme', theme);
+      applyTheme();
+    };
+
     document.getElementById('chk-hide-completed').onchange = e => {
       hideCompleted = e.target.checked;
       renderTasks();
@@ -1772,46 +2013,48 @@
     };
 
     /* ================================================================
-     * EvaluatorViewport — encapsulates Three.js scene, object pool,
-     * label system and render loop. Completely decoupled from UI state.
+     * EvaluatorViewport — cena Three.js do instrumento de campo.
+     * Cores vêm dos tokens CSS (setTheme). O avatar é um esqueleto
+     * DERIVADO do rastreamento (cabeça + mãos reais; ombros/coluna/
+     * quadril deduzidos; fio de prumo + disco no chão em vez de
+     * pernas inventadas). Render on demand: só desenha quando a pose,
+     * a câmera ou o tema mudam, ou enquanto há um anel de interação.
      * ============================================================== */
     class EvaluatorViewport {
       constructor(containerEl) {
         this._container = containerEl;
+        this._dirty = true;
 
-        /* Scene */
+        /* Scene (cores aplicadas em setTheme) */
         this._scene = new THREE.Scene();
-        this._scene.background = new THREE.Color(0x0a0e27);
-        this._scene.fog = new THREE.Fog(0x0a0e27, 6, 30);
 
-        /* Camera */
+        /* Camera — FOV de instrumento (55), não de FPS */
         this._camera = new THREE.PerspectiveCamera(
-          75,
+          55,
           containerEl.clientWidth / containerEl.clientHeight,
-          0.1, 1000
+          0.1, 100
         );
-        this._camera.position.set(0, 1.6, 3);
+        this._camera.position.set(0, 1.8, 3.2);
 
-        /* Renderer */
+        /* Renderer — pixel ratio limitado (telas 4K não custam 9×) */
         this._renderer = new THREE.WebGLRenderer({ antialias: true });
-        this._renderer.setPixelRatio(window.devicePixelRatio);
+        this._renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this._renderer.setSize(containerEl.clientWidth, containerEl.clientHeight);
         containerEl.appendChild(this._renderer.domElement);
 
-        /* Controls */
+        /* Controls — damping para leitura suave; 'change' marca sujo */
         this._controls = new OrbitControls(this._camera, this._renderer.domElement);
         this._controls.target.set(0, 1.0, 0);
+        this._controls.enableDamping = true;
+        this._controls.dampingFactor = 0.08;
+        this._controls.addEventListener('change', () => { this._dirty = true; });
         this._controls.update();
 
         /* Lighting */
-        this._scene.add(new THREE.AmbientLight(0x404040, 2));
-        const dir = new THREE.DirectionalLight(0xffffff, 1);
+        this._scene.add(new THREE.AmbientLight(0xffffff, 1.6));
+        const dir = new THREE.DirectionalLight(0xffffff, 1.2);
         dir.position.set(2, 5, 2);
         this._scene.add(dir);
-
-        /* Environment helpers */
-        this._scene.add(new THREE.GridHelper(10, 10, 0x333355, 0x222244));
-        this._scene.add(new THREE.AxesHelper(1));
 
         /* Label overlay */
         this._labelOverlay = document.createElement('div');
@@ -1822,28 +2065,74 @@
         containerEl.appendChild(this._labelOverlay);
 
         /* Object + label pools */
-        this._objects   = { hmd: null, leftHand: null, rightHand: null, ppe: {} };
-        this._labels    = new Map();   // mesh → { el, yOffset }
-        this._ppeColors = new Map();   // ppeId → { css, mat }
-        this._ppeColorIdx = 0;
+        this._objects = { hmd: null, leftHand: null, rightHand: null, ppe: {} };
+        this._labels  = new Map();   // mesh → { el, yOffset }
 
         /* Shared geometries */
         this._geoHead = new THREE.BoxGeometry(0.2, 0.15, 0.25);
         this._geoHand = new THREE.SphereGeometry(0.05, 16, 16);
         this._geoPPE  = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+        this._geoRing = new THREE.RingGeometry(0.10, 0.125, 32);
 
-        /* Shared materials */
-        this._matHead       = new THREE.MeshLambertMaterial({ color: 0x00aaff });
-        this._matHand       = new THREE.MeshLambertMaterial({ color: 0x00ffaa });
-        this._matPPEAttached= new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
+        /* Shared materials — cores atribuídas em setTheme */
+        this._matHead        = new THREE.MeshLambertMaterial();
+        this._matHand        = new THREE.MeshLambertMaterial();
+        this._matPPELoose    = new THREE.MeshLambertMaterial();   // pendente = âmbar
+        this._matPPEAttached = new THREE.MeshLambertMaterial();   // cumprido = neutro
+        this._matRing        = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide });
 
-        this._PPE_PALETTE = [
-          { hex: 0xff6b35, css: '#ff6b35' },
-          { hex: 0xc44dff, css: '#c44dff' },
-          { hex: 0x00cfff, css: '#00cfff' },
-          { hex: 0xff4da6, css: '#ff4da6' },
-          { hex: 0x44ff88, css: '#44ff88' },
-        ];
+        /* Esqueleto derivado: coluna, ombros, quadril, 2 braços (5 segmentos) */
+        this._skelPos = new Float32Array(5 * 2 * 3);
+        const skelGeo = new THREE.BufferGeometry();
+        skelGeo.setAttribute('position', new THREE.BufferAttribute(this._skelPos, 3));
+        this._matSkel = new THREE.LineBasicMaterial({ transparent: true, opacity: 0.85 });
+        this._skel = new THREE.LineSegments(skelGeo, this._matSkel);
+        this._skel.visible = false;
+        this._skel.frustumCulled = false;
+        this._scene.add(this._skel);
+
+        /* Fio de prumo (quadril → chão), tracejado — honesto: derivado */
+        this._plumbPos = new Float32Array(2 * 3);
+        const plumbGeo = new THREE.BufferGeometry();
+        plumbGeo.setAttribute('position', new THREE.BufferAttribute(this._plumbPos, 3));
+        this._matPlumb = new THREE.LineDashedMaterial({ dashSize: 0.05, gapSize: 0.06, transparent: true, opacity: 0.6 });
+        this._plumb = new THREE.Line(plumbGeo, this._matPlumb);
+        this._plumb.visible = false;
+        this._plumb.frustumCulled = false;
+        this._scene.add(this._plumb);
+
+        /* Leque do olhar (2 segmentos a partir do HMD) */
+        this._gazePos = new Float32Array(2 * 2 * 3);
+        const gazeGeo = new THREE.BufferGeometry();
+        gazeGeo.setAttribute('position', new THREE.BufferAttribute(this._gazePos, 3));
+        this._matGaze = new THREE.LineBasicMaterial({ transparent: true, opacity: 0.35 });
+        this._gaze = new THREE.LineSegments(gazeGeo, this._matGaze);
+        this._gaze.visible = false;
+        this._gaze.frustumCulled = false;
+        this._scene.add(this._gaze);
+
+        /* Disco de chão sob o participante */
+        this._matDisc = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.12, depthWrite: false });
+        this._disc = new THREE.Mesh(new THREE.CircleGeometry(0.3, 28), this._matDisc);
+        this._disc.rotation.x = -Math.PI / 2;
+        this._disc.position.y = 0.005;
+        this._disc.visible = false;
+        this._scene.add(this._disc);
+
+        /* Suavização da pose (dados chegam a 10 Hz) */
+        this._smooth = { head: null, yaw: 0 };
+
+        /* Instrumentos DOM */
+        this._calloutEl    = document.getElementById('vp-callout');
+        this._postureChip  = document.getElementById('posture-chip');
+        this._postureValue = document.getElementById('posture-value');
+
+        /* Anéis de interação ativos (ActionAttempt com posição) */
+        this._interactions = [];
+
+        /* Grid é recriado por setTheme (GridHelper fixa as cores) */
+        this._grid = null;
+        this.setTheme();
 
         /* Resize listener */
         this._onResize = () => this.resize();
@@ -1855,87 +2144,252 @@
 
       /* ── Public API ───────────────────────────────────────────── */
 
+      /** Relê os tokens CSS ativos e aplica ao cenário (claro/escuro). */
+      setTheme() {
+        const css = getComputedStyle(document.documentElement);
+        const tok = name => new THREE.Color(css.getPropertyValue(name).trim() || '#ff00ff');
+        const bg  = tok('--bg');
+        const isLight = document.documentElement.dataset.theme === 'light';
+
+        this._scene.background = bg;
+        this._scene.fog = new THREE.Fog(bg, 8, 30);
+        this._matHead.color        = tok('--accent');
+        this._matHand.color        = tok('--text-muted');
+        this._matPPELoose.color    = tok('--orange');
+        this._matPPEAttached.color = tok('--ppe-worn');
+        this._matSkel.color        = tok('--text-muted');
+        this._matPlumb.color       = tok('--text-dim');
+        this._matGaze.color        = tok('--accent');
+        this._matDisc.color        = tok('--accent');
+        this._matRing.color        = tok('--accent');
+
+        if (this._grid) {
+          this._scene.remove(this._grid);
+          this._grid.geometry.dispose();
+          this._grid.material.dispose();
+        }
+        const gridColor = tok('--text-dim');
+        this._grid = new THREE.GridHelper(10, 10, gridColor, gridColor);
+        this._grid.material.transparent = true;
+        this._grid.material.opacity = isLight ? 0.35 : 0.25;
+        this._scene.add(this._grid);
+
+        this._dirty = true;
+      }
+
       /** Call after the container element changes size (e.g. sidebar resize). */
       resize() {
         const w = this._container.clientWidth;
         const h = this._container.clientHeight;
+        if (!w || !h) return;
         this._camera.aspect = w / h;
         this._camera.updateProjectionMatrix();
         this._renderer.setSize(w, h);
+        this._dirty = true;
       }
 
-      /** Update pose for hmd / hand / ppe. Called at 10 Hz from PoseFrame. */
-      updatePose(id, pose, type, attachedTo = '') {
-        let obj = type === 'ppe' ? this._objects.ppe[id] : this._objects[id];
-
-        if (!obj) {
-          obj = this._createObject(id, type);
+      /** Frame de pose completo (10 Hz): HMD, mãos, EPIs e esqueleto derivado. */
+      updateFrame(p) {
+        if (p.hmd)       this._updateObject('hmd',       p.hmd,       'hmd');
+        if (p.leftHand)  this._updateObject('leftHand',  p.leftHand,  'hand');
+        if (p.rightHand) this._updateObject('rightHand', p.rightHand, 'hand');
+        if (Array.isArray(p.ppe)) {
+          p.ppe.forEach(item => this._updateObject(item.id, item.pose, 'ppe', item.attachedTo));
         }
+        this._updateBody();
+        this._dirty = true;
+      }
 
-        obj.position.set(pose.px, pose.py, -pose.pz);
-        obj.quaternion.set(-pose.qx, pose.qy, pose.qz, -pose.qw);
+      /** ActionAttempt com posição: anel pulsante + balão nomeando a ação. */
+      showInteraction(actionId, px, py, pz) {
+        const pos = new THREE.Vector3(px, py, -pz);
+        const mesh = new THREE.Mesh(this._geoRing, this._matRing.clone());
+        mesh.position.copy(pos);
+        this._scene.add(mesh);
+        this._interactions.push({ mesh, label: String(actionId ?? ''), pos, t0: performance.now() });
+        while (this._interactions.length > 3) this._removeInteraction(this._interactions.shift());
+        this._dirty = true;
+      }
 
-        if (type === 'ppe') {
-          if (attachedTo) {
-            obj.material = this._matPPEAttached;
-            obj.scale.setScalar(0.8);
-          } else {
-            obj.material = this._ppeColors.get(id)?.mat ?? this._matPPEAttached;
-            obj.scale.setScalar(1);
-          }
-        }
+      /** Remove EPIs, esqueleto e interações — chamado no SessionReset. */
+      clearSession() {
+        Object.values(this._objects.ppe).forEach(mesh => {
+          this._scene.remove(mesh);
+          const ld = this._labels.get(mesh);
+          if (ld) { ld.el.remove(); this._labels.delete(mesh); }
+        });
+        this._objects.ppe = {};
+        this._interactions.forEach(it => this._removeInteraction(it));
+        this._interactions = [];
+        this._skel.visible = this._plumb.visible = this._gaze.visible = this._disc.visible = false;
+        this._smooth.head = null;
+        if (this._postureChip) this._postureChip.style.display = 'none';
+        this._calloutEl?.classList.remove('on');
+        this._dirty = true;
       }
 
       /** Release GPU resources (call if viewport is ever torn down). */
       dispose() {
         window.removeEventListener('resize', this._onResize);
+        this.clearSession();
+        [this._geoHead, this._geoHand, this._geoPPE, this._geoRing].forEach(g => g.dispose());
+        [this._matHead, this._matHand, this._matPPELoose, this._matPPEAttached,
+         this._matSkel, this._matPlumb, this._matGaze, this._matDisc, this._matRing].forEach(m => m.dispose());
+        this._labels.forEach(ld => ld.el.remove());
+        this._labels.clear();
         this._renderer.dispose();
       }
 
       /* ── Private helpers ──────────────────────────────────────── */
 
+      _updateObject(id, pose, type, attachedTo = '') {
+        let obj = type === 'ppe' ? this._objects.ppe[id] : this._objects[id];
+        if (!obj) obj = this._createObject(id, type);
+
+        obj.position.set(pose.px, pose.py, -pose.pz);
+        obj.quaternion.set(-pose.qx, pose.qy, pose.qz, -pose.qw);
+
+        if (type === 'ppe') {
+          /* semântica, não identidade: solto = obrigação pendente (âmbar);
+             vestido = obrigação cumprida (neutro, encolhido) */
+          if (attachedTo) { obj.material = this._matPPEAttached; obj.scale.setScalar(0.8); }
+          else            { obj.material = this._matPPELoose;    obj.scale.setScalar(1); }
+        }
+      }
+
+      /* Esqueleto derivado + prumo + olhar + disco + postura.
+         Nada aqui é animado — tudo é deduzido da pose rastreada,
+         então locomoção nunca produz uma "caminhada" quebrada. */
+      _updateBody() {
+        const hmd = this._objects.hmd;
+        if (!hmd) return;
+
+        if (!this._smooth.head) this._smooth.head = hmd.position.clone();
+        this._smooth.head.lerp(hmd.position, 0.35);
+        const H = this._smooth.head;
+
+        /* yaw do HMD amortecido orienta os ombros */
+        const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(hmd.quaternion);
+        const targetYaw = Math.atan2(fwd.x, fwd.z);
+        let dy = targetYaw - this._smooth.yaw;
+        while (dy >  Math.PI) dy -= 2 * Math.PI;
+        while (dy < -Math.PI) dy += 2 * Math.PI;
+        this._smooth.yaw += dy * 0.25;
+        const rx = Math.cos(this._smooth.yaw), rz = -Math.sin(this._smooth.yaw);
+
+        const headY = H.y;
+        const shY   = headY - 0.24;
+        const hipY  = Math.max(headY - 0.72, 0.25);
+        const SH = 0.19, HIP = 0.11;
+
+        const set = (i, ax, ay, az, bx, by, bz) => {
+          const o = i * 6;
+          this._skelPos[o]   = ax; this._skelPos[o+1] = ay; this._skelPos[o+2] = az;
+          this._skelPos[o+3] = bx; this._skelPos[o+4] = by; this._skelPos[o+5] = bz;
+        };
+        set(0, H.x, headY - 0.10, H.z, H.x, hipY, H.z);                              /* coluna  */
+        set(1, H.x - rx*SH, shY, H.z - rz*SH, H.x + rx*SH, shY, H.z + rz*SH);        /* ombros  */
+        set(2, H.x - rx*HIP, hipY, H.z - rz*HIP, H.x + rx*HIP, hipY, H.z + rz*HIP);  /* quadril */
+        const lh = this._objects.leftHand, rh = this._objects.rightHand;
+        set(3, H.x - rx*SH, shY, H.z - rz*SH,
+               lh ? lh.position.x : H.x - rx*SH, lh ? lh.position.y : shY, lh ? lh.position.z : H.z - rz*SH);
+        set(4, H.x + rx*SH, shY, H.z + rz*SH,
+               rh ? rh.position.x : H.x + rx*SH, rh ? rh.position.y : shY, rh ? rh.position.z : H.z + rz*SH);
+        this._skel.geometry.attributes.position.needsUpdate = true;
+        this._skel.visible = true;
+
+        this._plumbPos[0] = H.x; this._plumbPos[1] = hipY; this._plumbPos[2] = H.z;
+        this._plumbPos[3] = H.x; this._plumbPos[4] = 0.02; this._plumbPos[5] = H.z;
+        this._plumb.geometry.attributes.position.needsUpdate = true;
+        this._plumb.computeLineDistances();
+        this._plumb.visible = true;
+
+        /* leque do olhar */
+        const gLen = 1.1;
+        const up = new THREE.Vector3(0, 1, 0);
+        for (let s = 0; s < 2; s++) {
+          const dir = fwd.clone().applyAxisAngle(up, s === 0 ? -0.22 : 0.22);
+          const o = s * 6;
+          this._gazePos[o]   = H.x;                 this._gazePos[o+1] = headY;                 this._gazePos[o+2] = H.z;
+          this._gazePos[o+3] = H.x + dir.x * gLen;  this._gazePos[o+4] = headY + dir.y * gLen;  this._gazePos[o+5] = H.z + dir.z * gLen;
+        }
+        this._gaze.geometry.attributes.position.needsUpdate = true;
+        this._gaze.visible = true;
+
+        this._disc.position.set(H.x, 0.005, H.z);
+        this._disc.visible = true;
+
+        this._updatePosture(headY);
+      }
+
+      _updatePosture(headY) {
+        if (!this._postureChip) return;
+        this._postureChip.style.display = 'flex';
+        let key = 'postureStanding', low = false;
+        if (headY <= 1.15)      { key = 'postureCrouched'; low = true; }
+        else if (headY <= 1.42) { key = 'postureLowering'; low = true; }
+        this._postureValue.textContent = `${t(key)} · ${headY.toFixed(2)} m`;
+        this._postureValue.classList.toggle('low', low);
+      }
+
+      _removeInteraction(it) {
+        this._scene.remove(it.mesh);
+        it.mesh.material.dispose();
+      }
+
+      _updateInteractions() {
+        const now = performance.now();
+        const LIFE = 2600, FADE = 600;
+        for (let i = this._interactions.length - 1; i >= 0; i--) {
+          const it = this._interactions[i];
+          const age = now - it.t0;
+          if (age > LIFE) { this._removeInteraction(it); this._interactions.splice(i, 1); continue; }
+          it.mesh.scale.setScalar(1 + 0.15 * Math.sin(age / 1000 * 8));
+          it.mesh.lookAt(this._camera.position);
+          it.mesh.material.opacity = age > LIFE - FADE ? (LIFE - age) / FADE : 1;
+        }
+        /* o balão segue a interação mais recente */
+        const latest = this._interactions[this._interactions.length - 1];
+        if (latest && this._calloutEl) {
+          const v = latest.pos.clone().project(this._camera);
+          if (v.z <= 1) {
+            this._calloutEl.textContent = latest.label;
+            this._calloutEl.style.left = `${(v.x * 0.5 + 0.5) * this._container.clientWidth}px`;
+            this._calloutEl.style.top  = `${(v.y * -0.5 + 0.5) * this._container.clientHeight}px`;
+            this._calloutEl.classList.add('on');
+          }
+        } else if (this._calloutEl) {
+          this._calloutEl.classList.remove('on');
+        }
+      }
+
       _createObject(id, type) {
         let mesh;
-        if (type === 'hmd') {
-          mesh = new THREE.Mesh(this._geoHead, this._matHead);
-        } else if (type === 'hand') {
-          mesh = new THREE.Mesh(this._geoHand, this._matHand);
-        } else {
-          const p = this._PPE_PALETTE[this._ppeColorIdx % this._PPE_PALETTE.length];
-          const mat = new THREE.MeshLambertMaterial({ color: p.hex });
-          this._ppeColors.set(id, { css: p.css, mat });
-          this._ppeColorIdx++;
-          mesh = new THREE.Mesh(this._geoPPE, mat);
-        }
+        if      (type === 'hmd')  mesh = new THREE.Mesh(this._geoHead, this._matHead);
+        else if (type === 'hand') mesh = new THREE.Mesh(this._geoHand, this._matHand);
+        else                      mesh = new THREE.Mesh(this._geoPPE, this._matPPELoose);
 
         this._scene.add(mesh);
         if (type === 'ppe') this._objects.ppe[id] = mesh;
         else                this._objects[id] = mesh;
 
-        /* Create matching label */
-        let text = '', color = '#ffffff', yOffset = 0.15;
-        if      (type === 'hmd')  { text = 'HMD';  color = '#00aaff'; yOffset = 0.28; }
-        else if (type === 'hand') { text = id === 'leftHand' ? 'Left Hand' : 'Right Hand';
-                                    color = '#00ffaa'; yOffset = 0.12; }
-        else                      { text = id.toUpperCase();
-                                    color = this._ppeColors.get(id)?.css ?? '#ffaa00'; yOffset = 0.14; }
-        this._labels.set(mesh, this._createLabel(text, color, yOffset));
+        /* Create matching label (estilo via .vp-label — troca com o tema) */
+        let text = '', yOffset = 0.15;
+        if (type === 'hmd') { text = 'HMD'; yOffset = 0.28; }
+        else if (type === 'hand') {
+          const side = id === 'leftHand' ? (lang === 'pt' ? 'E' : 'L') : (lang === 'pt' ? 'D' : 'R');
+          text = `${t('hand')} ${side}`;
+          yOffset = 0.12;
+        }
+        else { text = id.toUpperCase(); yOffset = 0.14; }
+        this._labels.set(mesh, this._createLabel(text, yOffset));
 
         return mesh;
       }
 
-      _createLabel(text, color, yOffset) {
+      _createLabel(text, yOffset) {
         const el = document.createElement('div');
-        Object.assign(el.style, {
-          position: 'absolute', color,
-          fontSize: '12px', fontWeight: 'bold',
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          padding: '3px 8px', borderRadius: '4px',
-          border: `1px solid ${color}`,
-          whiteSpace: 'nowrap',
-          transform: 'translate(-50%,-100%)',
-          marginTop: '-10px',
-        });
+        el.className = 'vp-label';
         el.textContent = text;
         this._labelOverlay.appendChild(el);
         return { el, yOffset };
@@ -1954,7 +2408,12 @@
 
       _animate() {
         requestAnimationFrame(() => this._animate());
-        this._controls.update();
+        if (document.hidden) return;                 /* aba oculta: nada a desenhar */
+        this._controls.update();                     /* damping dispara 'change' → _dirty */
+        const hasFx = this._interactions.length > 0;
+        if (hasFx) this._updateInteractions();
+        if (!this._dirty && !hasFx) return;          /* render on demand */
+        this._dirty = false;
         this._updateLabels();
         this._renderer.render(this._scene, this._camera);
       }
@@ -2073,6 +2532,11 @@
         if (!this._dragging) return;
         const delta = e.clientX - this._startX;
         this._applyWidth(this._startW + delta);
+        /* mantém o aspecto do canvas correto DURANTE o arrasto (1×/frame) */
+        if (!this._resizeQueued) {
+          this._resizeQueued = true;
+          requestAnimationFrame(() => { this._resizeQueued = false; this._viewport?.resize(); });
+        }
       }
 
       _onTouchStart(e) {
@@ -2111,17 +2575,16 @@
      * ============================================================== */
     const canvasContainer = document.getElementById('three-canvas');
 
+    /* Tema antes do viewport: o construtor lê os tokens ativos */
+    applyTheme();
+
     /* Boot 3D viewport */
     const viewport = new EvaluatorViewport(canvasContainer);
+    window.__spViewport = viewport;   // acessível aos handlers (evita TDZ)
 
     /* PoseFrame handler — bypasses router (high-frequency) */
     function handlePoseFrame(p) {
-      if (p.hmd)       viewport.updatePose('hmd',       p.hmd,       'hmd');
-      if (p.leftHand)  viewport.updatePose('leftHand',  p.leftHand,  'hand');
-      if (p.rightHand) viewport.updatePose('rightHand', p.rightHand, 'hand');
-      if (Array.isArray(p.ppe)) {
-        p.ppe.forEach(item => viewport.updatePose(item.id, item.pose, 'ppe', item.attachedTo));
-      }
+      viewport.updateFrame(p);
     }
 
     /* Boot sidebar resize manager (needs viewport reference for resize callback) */
@@ -2148,6 +2611,11 @@
     applyTranslations();
     loadHistory();
     renderHistory();
+
+    /* Gancho de teste: permite injetar eventos/poses pelo console do
+       navegador quando não há headset (ex.: __spRoute({eventType, payload})). */
+    window.__spRoute = route;
+    window.__spPose  = handlePoseFrame;
 
     // Signal the load-failure watchdog that the 3D module booted successfully.
     window.__spViewportReady = true;
