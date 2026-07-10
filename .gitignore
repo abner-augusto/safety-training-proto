@@ -188,3 +188,4 @@ harness-output/
 
 # Headless test coverage output
 Tools/SafetyProto.Tests/TestResults/
+/ProfilerCaptures
