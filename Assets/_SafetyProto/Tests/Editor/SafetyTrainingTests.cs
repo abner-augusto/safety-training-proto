@@ -68,7 +68,7 @@ namespace SafetyProto.Tests.Editor
             EventBus.Instance.onScoreChanged.AddListener(OnScoreChanged);
             var scoreService = new ScoreService();
 
-            scoreService.ScoreChanged += (newScore, delta, reason) =>
+            scoreService.ScoreChanged += (newScore, delta, reason, taskId) =>
             {
                 ScoreEvents.RaiseScoreChanged(new ScoreChangedEventArgs(newScore, delta));
             };
