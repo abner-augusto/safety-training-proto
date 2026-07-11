@@ -769,7 +769,8 @@
     .hud.bl { bottom: 10px; left: 10px;  border-bottom-width: 1.5px; border-left-width: 1.5px; }
     .hud.br { bottom: 10px; right: 10px; border-bottom-width: 1.5px; border-right-width: 1.5px; }
 
-    /* Rótulos 3D (HMD, mãos, EPI) — mesmo chip do cabeçalho */
+    /* Rótulos 3D dos EPIs — apagados por padrão para não poluir a cena;
+       acendem quando uma mão do participante se aproxima do objeto */
     .vp-label {
       position: absolute;
       font-family: var(--mono); font-size: 11px;
@@ -782,6 +783,14 @@
       transform: translate(-50%, -100%);
       margin-top: -10px;
       pointer-events: none;
+      opacity: 0.18;
+      transition: opacity 0.25s ease;
+    }
+    .vp-label.near {
+      opacity: 1;
+      color: var(--text);
+      border-color: var(--border-strong);
+      z-index: 1;
     }
 
     #viewport-error {

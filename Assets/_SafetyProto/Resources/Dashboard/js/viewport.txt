@@ -1,7 +1,7 @@
 // GENERATED FILE — DO NOT EDIT. Source: Tools/DashboardSrc/js/viewport.js (menu: SafetyProto → Sync Dashboard Source)
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-    import { t, getLang } from './i18n.js';
+    import { t } from './i18n.js';
 
     /* ================================================================
      * EvaluatorViewport — cena Three.js do instrumento de campo.
@@ -245,6 +245,7 @@
              vestido = obrigação cumprida (neutro, encolhido) */
           if (attachedTo) { obj.material = this._matPPEAttached; obj.scale.setScalar(0.8); }
           else            { obj.material = this._matPPELoose;    obj.scale.setScalar(1); }
+          obj.userData.worn = !!attachedTo;
         }
       }
 
@@ -368,16 +369,9 @@
         if (type === 'ppe') this._objects.ppe[id] = mesh;
         else                this._objects[id] = mesh;
 
-        /* Create matching label (estilo via .vp-label — troca com o tema) */
-        let text = '', yOffset = 0.15;
-        if (type === 'hmd') { text = 'HMD'; yOffset = 0.28; }
-        else if (type === 'hand') {
-          const side = id === 'leftHand' ? (getLang() === 'pt' ? 'E' : 'L') : (getLang() === 'pt' ? 'D' : 'R');
-          text = `${t('hand')} ${side}`;
-          yOffset = 0.12;
-        }
-        else { text = id.toUpperCase(); yOffset = 0.14; }
-        this._labels.set(mesh, this._createLabel(text, yOffset));
+        /* Rótulo apenas para EPIs — cabeça e mãos já são legíveis pela
+           forma/legenda; o rótulo fica apagado até uma mão se aproximar */
+        if (type === 'ppe') this._labels.set(mesh, this._createLabel(id.toUpperCase(), 0.14));
 
         return mesh;
       }
@@ -414,9 +408,25 @@
       }
 
       _updateLabels() {
+        /* Um rótulo só "acende" quando é o EPI solto MAIS PRÓXIMO de uma mão
+           (dentro do alcance) — com objetos agrupados, acender todos num raio
+           poluiria a cena; EPIs vestidos ficam apagados mesmo com a mão perto */
+        const NEAR = 0.35; /* m */
+        const nearMeshes = new Set();
+        for (const hand of [this._objects.leftHand, this._objects.rightHand]) {
+          if (!hand) continue;
+          let best = null, bestD = NEAR;
+          this._labels.forEach((ld, obj) => {
+            if (obj.userData.worn) return;
+            const d = hand.position.distanceTo(obj.position);
+            if (d < bestD) { bestD = d; best = obj; }
+          });
+          if (best) nearMeshes.add(best);
+        }
         const visible = [];
         this._labels.forEach((ld, obj) => {
           if (!obj?.position) return;
+          ld.el.classList.toggle('near', nearMeshes.has(obj));
           const wp = obj.position.clone();
           wp.y += ld.yOffset;
           const sp = this._projectLabel(ld, wp);
