@@ -1,0 +1,165 @@
+    /* ================================================================
+     * TRANSLATIONS
+     * ============================================================== */
+    const i18n = {
+      en: {
+        currentScore: 'Score',
+        elapsed: 'Elapsed',
+        violations: 'Violations',
+        ppeShort: 'PPE',
+        activeTasks: 'Active Tasks',
+        activityLog: 'Activity Log',
+        sessionReport: 'Session Report',
+        violationsOnly: 'Violations only',
+        legendTitle: 'Scene Legend',
+        legendHmd: 'HMD · gaze',
+        legendHands: 'Hands',
+        legendPpeLoose: 'PPE (loose)',
+        legendPpeWorn: 'PPE (worn)',
+        legendInteract: 'Interacting object',
+        posture: 'Posture',
+        postureStanding: 'STANDING',
+        postureLowering: 'LOWERING',
+        postureCrouched: 'CROUCHED',
+        hand: 'HAND',
+        modeSequential: 'SEQUENTIAL',
+        modeFreeOrder: 'FREE ORDER',
+        group: 'GROUP',
+        sessionRecorded: 'SESSION RECORDED',
+        viewport3dFailed: 'Could not load the 3D view. The rest of the panel keeps working.',
+        waitingSession: 'Waiting for session to start…',
+        noActivity: 'No activity yet',
+        reportAfterSession: 'Report available after session',
+        viewFullReport: 'View Full Report',
+        downloadJson: 'Download JSON',
+        duration: 'Duration',
+        finalScore: 'Final Score',
+        tasks: 'Tasks',
+        events: 'Events',
+        totalDuration: 'Total Duration',
+        tasksCompleted: 'Tasks Completed',
+        totalTasks: 'Total Tasks',
+        eventTimeline: 'Event Timeline',
+        sessionHistory: 'Session History',
+        noHistory: 'No saved sessions yet',
+        exportAll: 'Export all',
+        clearHistory: 'Clear',
+        confirmClearHistory: 'Clear all saved sessions?',
+        noSession: 'No Session',
+        session: 'Session',
+        participant: 'Participant',
+        disconnected: 'Disconnected',
+        connected: 'Connected',
+        connecting: 'Connecting…',
+        pending: 'Pending', active: 'Active', completed: 'Done', failed: 'Failed',
+        hideCompleted: 'Hide completed',
+        // log (o glifo tipado vem da coluna-guia, não do texto)
+        logConnected: 'Connected to training session',
+        logDisconnected: 'Connection lost. Reconnecting…',
+        logSessionStarted: 'Training session started',
+        logStarted: 'Started', logCompleted: 'Completed', logTimeout: 'Timeout',
+        logScorePlus: 'Score', logScoreMinus: 'Score', logTotal: 'Total',
+        logViolation: 'Safety Violation', logCritical: 'CRITICAL',
+        logSessionComplete: 'Session Complete! Score',
+        logGroupStarted: 'Group Started', logGroupCompleted: 'Group Completed',
+        logSessionReset: 'Session reset', logReportAvailable: 'Report available',
+        logSessionPaused: 'Session paused', logSessionResumed: 'Session resumed',
+        logSessionEnded: 'Session ended',
+        logPpeEquipped: 'PPE Equipped', logPpeRemoved: 'PPE Removed',
+        logActionAttempt: 'Action', logSafetyError: 'Safety Error', at: 'at',
+        // report detail line (scaffolding labels)
+        detailPpe: 'PPE', detailWorn: 'worn', detailRemoved: 'removed',
+        detailDelta: 'Delta', detailTotal: 'Total', detailIn: 'in',
+        detailTime: 'Time', detailScore: 'Score', detailCompleted: 'Completed',
+      },
+      pt: {
+        currentScore: 'Pontuação',
+        elapsed: 'Tempo',
+        violations: 'Violações',
+        ppeShort: 'EPI',
+        activeTasks: 'Tarefas Ativas',
+        activityLog: 'Registro de Atividades',
+        sessionReport: 'Relatório da Sessão',
+        hideCompleted: 'Ocultar concluídas',
+        violationsOnly: 'Só violações',
+        legendTitle: 'Legenda do Espaço',
+        legendHmd: 'HMD · olhar',
+        legendHands: 'Mãos',
+        legendPpeLoose: 'EPI solto',
+        legendPpeWorn: 'EPI equipado',
+        legendInteract: 'Objeto em interação',
+        posture: 'Postura',
+        postureStanding: 'EM PÉ',
+        postureLowering: 'ABAIXANDO',
+        postureCrouched: 'AGACHADO',
+        hand: 'MÃO',
+        modeSequential: 'SEQUENCIAL',
+        modeFreeOrder: 'ORDEM LIVRE',
+        group: 'GRUPO',
+        sessionRecorded: 'SESSÃO REGISTRADA',
+        viewport3dFailed: 'Não foi possível carregar a visualização 3D. O restante do painel continua funcionando.',
+        waitingSession: 'Aguardando início da sessão…',
+        noActivity: 'Nenhuma atividade ainda',
+        reportAfterSession: 'Relatório disponível após a sessão',
+        viewFullReport: 'Ver Relatório Completo',
+        downloadJson: 'Baixar JSON',
+        duration: 'Duração',
+        finalScore: 'Pontuação Final',
+        tasks: 'Tarefas',
+        events: 'Eventos',
+        totalDuration: 'Duração Total',
+        tasksCompleted: 'Tarefas Concluídas',
+        totalTasks: 'Total de Tarefas',
+        eventTimeline: 'Linha do Tempo',
+        sessionHistory: 'Histórico de Sessões',
+        noHistory: 'Nenhuma sessão salva ainda',
+        exportAll: 'Exportar tudo',
+        clearHistory: 'Limpar histórico',
+        confirmClearHistory: 'Limpar todas as sessões salvas?',
+        noSession: 'Sem Sessão',
+        session: 'Sessão',
+        participant: 'Participante',
+        disconnected: 'Desconectado',
+        connected: 'Conectado',
+        connecting: 'Conectando…',
+        pending: 'Pendente', active: 'Ativa', completed: 'Concluída', failed: 'Falhou',
+        // log (o glifo tipado vem da coluna-guia, não do texto)
+        logConnected: 'Conectado à sessão de treinamento',
+        logDisconnected: 'Conexão perdida. Reconectando…',
+        logSessionStarted: 'Sessão de treinamento iniciada',
+        logStarted: 'Iniciada', logCompleted: 'Concluída', logTimeout: 'Tempo esgotado',
+        logScorePlus: 'Pontos', logScoreMinus: 'Pontos', logTotal: 'Total',
+        logViolation: 'Violação de Segurança', logCritical: 'CRÍTICO',
+        logSessionComplete: 'Sessão Completa! Pontuação',
+        logGroupStarted: 'Grupo Iniciado', logGroupCompleted: 'Grupo Concluído',
+        logSessionReset: 'Sessão reiniciada', logReportAvailable: 'Relatório disponível',
+        logSessionPaused: 'Sessão pausada', logSessionResumed: 'Sessão retomada',
+        logSessionEnded: 'Sessão encerrada',
+        logPpeEquipped: 'EPI Equipado', logPpeRemoved: 'EPI Removido',
+        logActionAttempt: 'Ação', logSafetyError: 'Erro de Segurança', at: 'em',
+        // report detail line (scaffolding labels)
+        detailPpe: 'EPI', detailWorn: 'equipado', detailRemoved: 'removido',
+        detailDelta: 'Variação', detailTotal: 'Total', detailIn: 'em',
+        detailTime: 'Tempo', detailScore: 'Pontuação', detailCompleted: 'Concluídas',
+      }
+    };
+
+    let lang = localStorage.getItem('sp_lang') || 'pt';
+    export const t = k => (i18n[lang][k] ?? i18n['en'][k] ?? k);
+    export function getLang() { return lang; }
+    export function locale() { return lang === 'pt' ? 'pt-BR' : 'en-US'; }
+    export function toggleLang() {
+      lang = lang === 'pt' ? 'en' : 'pt';
+      localStorage.setItem('sp_lang', lang);
+      return lang;
+    }
+
+    export function applyTranslations() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.textContent = t(el.dataset.i18n);
+      });
+      // FAB shows the currently-active language (PT / EN)
+      document.getElementById('lang-flag').textContent = lang === 'pt' ? 'PT' : 'EN';
+      // keep the document language in sync for screen readers / hyphenation
+      document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+    }

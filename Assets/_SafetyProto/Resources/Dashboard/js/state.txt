@@ -1,0 +1,40 @@
+// GENERATED FILE — DO NOT EDIT. Source: Tools/DashboardSrc/js/state.js (menu: SafetyProto → Sync Dashboard Source)
+    /* ================================================================
+     * STATE
+     * ============================================================== */
+    /* Shared mutable session state. Fields that are REASSIGNED live inside the
+       `state` object (ES module bindings are read-only for importers); containers
+       that are only mutated (Map/Set/object) are exported directly. */
+    /**
+     * tasks: Map<taskId, { id, name, description, groupName, order,
+     *   executionMode, expectedAction, requiredPpe[], successPoints,
+     *   failurePenalty, ppePenalty, status }>
+     */
+    export const tasks      = new Map();
+    export const wornPpe = new Set();     // ppeType com isWearing=true
+
+    export const state = {
+      currentScore: 0,
+      sessionReport: null,
+      hideCompleted: false,
+      violationCount: 0,
+      currentParticipantId: '—',
+      currentSessionId: null,
+    };
+
+    /* ── Live session timer (driven by session lifecycle events) ── */
+    export const sessionTimer = {
+      _start: 0, _accum: 0, _running: false, _interval: null,
+      _fmt(s) { const m = Math.floor(s / 60), r = Math.floor(s % 60);
+                return `${m}:${String(r).padStart(2, '0')}`; },
+      _render() { const el = document.getElementById('clock-value');
+                  if (el) el.textContent = this._fmt(this.elapsed()); },
+      elapsed() { return this._accum + (this._running ? (Date.now() - this._start) / 1000 : 0); },
+      start() { this.reset(); this._start = Date.now(); this._running = true;
+                this._interval = setInterval(() => this._render(), 1000); this._render(); },
+      pause() { if (!this._running) return; this._accum = this.elapsed(); this._running = false; },
+      resume() { if (this._running) return; this._start = Date.now(); this._running = true; },
+      stop() { this.pause(); clearInterval(this._interval); this._interval = null; },
+      reset() { this.stop(); this._accum = 0; this._running = false;
+                const el = document.getElementById('clock-value'); if (el) el.textContent = '0:00'; },
+    };

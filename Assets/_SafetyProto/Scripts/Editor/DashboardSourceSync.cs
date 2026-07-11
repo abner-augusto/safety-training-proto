@@ -74,15 +74,52 @@ namespace SafetyProto.Editor
                 updated.Add(target);
             }
 
-            if (updated.Count > 0)
+            // Mirror Tools/DashboardSrc/js/*.js -> Resources/Dashboard/js/<name>.txt.
+            // Resources/Dashboard/js/ is 100% generated, so deletions are mirrored too:
+            // an orphaned .txt with no source .js counterpart is deleted (with its .meta).
+            var deleted = new List<string>();
+            var jsSourceDir = Path.Combine(sourceDir, "js");
+            if (Directory.Exists(jsSourceDir))
             {
+                var jsTargetDir = Path.Combine(projectRoot, TargetDir, "js");
+                Directory.CreateDirectory(jsTargetDir);
+
+                var sourceNames = new HashSet<string>();
+                foreach (var jsPath in Directory.GetFiles(jsSourceDir, "*.js"))
+                {
+                    var name = Path.GetFileNameWithoutExtension(jsPath);
+                    sourceNames.Add(name);
+
+                    var banner = $"// GENERATED FILE — DO NOT EDIT. Source: Tools/DashboardSrc/js/{name}.js (menu: SafetyProto → Sync Dashboard Source)";
+                    var content = banner + "\n" + File.ReadAllText(jsPath);
+                    var targetPath = Path.Combine(jsTargetDir, name + ".txt");
+                    if (File.Exists(targetPath) && File.ReadAllText(targetPath) == content)
+                        continue;
+
+                    File.WriteAllText(targetPath, content, new UTF8Encoding(false));
+                    updated.Add($"js/{name}.txt");
+                }
+
+                foreach (var txtPath in Directory.GetFiles(jsTargetDir, "*.txt"))
+                {
+                    var name = Path.GetFileNameWithoutExtension(txtPath);
+                    if (sourceNames.Contains(name))
+                        continue;
+
+                    AssetDatabase.DeleteAsset($"{TargetDir}/js/{name}.txt");
+                    deleted.Add($"js/{name}.txt");
+                }
+            }
+
+            if (updated.Count > 0 || deleted.Count > 0)
                 AssetDatabase.Refresh();
+
+            if (updated.Count > 0)
                 Debug.Log($"[DashboardSourceSync] Updated {updated.Count} file(s): {string.Join(", ", updated)}");
-            }
-            else if (verbose)
-            {
+            if (deleted.Count > 0)
+                Debug.Log($"[DashboardSourceSync] Deleted {deleted.Count} orphan file(s): {string.Join(", ", deleted)}");
+            if (updated.Count == 0 && deleted.Count == 0 && verbose)
                 Debug.Log("[DashboardSourceSync] All dashboard files already in sync (0 files updated).");
-            }
         }
 
         /// <summary>Sync before every player build so the APK never ships a stale dashboard.</summary>

@@ -1,0 +1,446 @@
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { t, getLang } from './i18n.js';
+
+    /* ================================================================
+     * EvaluatorViewport — cena Three.js do instrumento de campo.
+     * Cores vêm dos tokens CSS (setTheme). O avatar é um esqueleto
+     * DERIVADO do rastreamento (cabeça + mãos reais; ombros/coluna/
+     * quadril deduzidos; fio de prumo + disco no chão em vez de
+     * pernas inventadas). Render on demand: só desenha quando a pose,
+     * a câmera ou o tema mudam, ou enquanto há um anel de interação.
+     * ============================================================== */
+    export class EvaluatorViewport {
+      constructor(containerEl) {
+        this._container = containerEl;
+        this._dirty = true;
+
+        /* Scene (cores aplicadas em setTheme) */
+        this._scene = new THREE.Scene();
+
+        /* Camera — FOV de instrumento (55), não de FPS */
+        this._camera = new THREE.PerspectiveCamera(
+          55,
+          containerEl.clientWidth / containerEl.clientHeight,
+          0.1, 100
+        );
+        this._camera.position.set(0, 1.8, 3.2);
+
+        /* Renderer — pixel ratio limitado (telas 4K não custam 9×) */
+        this._renderer = new THREE.WebGLRenderer({ antialias: true });
+        this._renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this._renderer.setSize(containerEl.clientWidth, containerEl.clientHeight);
+        containerEl.appendChild(this._renderer.domElement);
+
+        /* Controls — damping para leitura suave; 'change' marca sujo */
+        this._controls = new OrbitControls(this._camera, this._renderer.domElement);
+        this._controls.target.set(0, 1.0, 0);
+        this._controls.enableDamping = true;
+        this._controls.dampingFactor = 0.08;
+        this._controls.addEventListener('change', () => { this._dirty = true; });
+        this._controls.update();
+
+        /* Lighting */
+        this._scene.add(new THREE.AmbientLight(0xffffff, 1.6));
+        const dir = new THREE.DirectionalLight(0xffffff, 1.2);
+        dir.position.set(2, 5, 2);
+        this._scene.add(dir);
+
+        /* Label overlay */
+        this._labelOverlay = document.createElement('div');
+        Object.assign(this._labelOverlay.style, {
+          position: 'absolute', top: '0', left: '0',
+          width: '100%', height: '100%', pointerEvents: 'none',
+        });
+        containerEl.appendChild(this._labelOverlay);
+
+        /* Object + label pools */
+        this._objects = { hmd: null, leftHand: null, rightHand: null, ppe: {} };
+        this._labels  = new Map();   // mesh → { el, yOffset }
+
+        /* Shared geometries */
+        this._geoHead = new THREE.BoxGeometry(0.2, 0.15, 0.25);
+        this._geoHand = new THREE.SphereGeometry(0.05, 16, 16);
+        this._geoPPE  = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+        this._geoRing = new THREE.RingGeometry(0.10, 0.125, 32);
+
+        /* Shared materials — cores atribuídas em setTheme */
+        this._matHead        = new THREE.MeshLambertMaterial();
+        this._matHand        = new THREE.MeshLambertMaterial();
+        this._matPPELoose    = new THREE.MeshLambertMaterial();   // pendente = âmbar
+        this._matPPEAttached = new THREE.MeshLambertMaterial();   // cumprido = neutro
+        this._matRing        = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide });
+
+        /* Esqueleto derivado: coluna, ombros, quadril, 2 braços (5 segmentos) */
+        this._skelPos = new Float32Array(5 * 2 * 3);
+        const skelGeo = new THREE.BufferGeometry();
+        skelGeo.setAttribute('position', new THREE.BufferAttribute(this._skelPos, 3));
+        this._matSkel = new THREE.LineBasicMaterial({ transparent: true, opacity: 0.85 });
+        this._skel = new THREE.LineSegments(skelGeo, this._matSkel);
+        this._skel.visible = false;
+        this._skel.frustumCulled = false;
+        this._scene.add(this._skel);
+
+        /* Fio de prumo (quadril → chão), tracejado — honesto: derivado */
+        this._plumbPos = new Float32Array(2 * 3);
+        const plumbGeo = new THREE.BufferGeometry();
+        plumbGeo.setAttribute('position', new THREE.BufferAttribute(this._plumbPos, 3));
+        this._matPlumb = new THREE.LineDashedMaterial({ dashSize: 0.05, gapSize: 0.06, transparent: true, opacity: 0.6 });
+        this._plumb = new THREE.Line(plumbGeo, this._matPlumb);
+        this._plumb.visible = false;
+        this._plumb.frustumCulled = false;
+        this._scene.add(this._plumb);
+
+        /* Leque do olhar (2 segmentos a partir do HMD) */
+        this._gazePos = new Float32Array(2 * 2 * 3);
+        const gazeGeo = new THREE.BufferGeometry();
+        gazeGeo.setAttribute('position', new THREE.BufferAttribute(this._gazePos, 3));
+        this._matGaze = new THREE.LineBasicMaterial({ transparent: true, opacity: 0.35 });
+        this._gaze = new THREE.LineSegments(gazeGeo, this._matGaze);
+        this._gaze.visible = false;
+        this._gaze.frustumCulled = false;
+        this._scene.add(this._gaze);
+
+        /* Disco de chão sob o participante */
+        this._matDisc = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.12, depthWrite: false });
+        this._disc = new THREE.Mesh(new THREE.CircleGeometry(0.3, 28), this._matDisc);
+        this._disc.rotation.x = -Math.PI / 2;
+        this._disc.position.y = 0.005;
+        this._disc.visible = false;
+        this._scene.add(this._disc);
+
+        /* Suavização da pose (dados chegam a 10 Hz) */
+        this._smooth = { head: null, yaw: 0 };
+
+        /* Instrumentos DOM */
+        this._calloutEl    = document.getElementById('vp-callout');
+        this._postureChip  = document.getElementById('posture-chip');
+        this._postureValue = document.getElementById('posture-value');
+
+        /* Anéis de interação ativos (ActionAttempt com posição) */
+        this._interactions = [];
+
+        /* Grid é recriado por setTheme (GridHelper fixa as cores) */
+        this._grid = null;
+        this.setTheme();
+
+        /* Resize listener */
+        this._onResize = () => this.resize();
+        window.addEventListener('resize', this._onResize);
+
+        /* Start loop */
+        this._animate();
+      }
+
+      /* ── Public API ───────────────────────────────────────────── */
+
+      /** Relê os tokens CSS ativos e aplica ao cenário (claro/escuro). */
+      setTheme() {
+        const css = getComputedStyle(document.documentElement);
+        const tok = name => new THREE.Color(css.getPropertyValue(name).trim() || '#ff00ff');
+        const bg  = tok('--bg');
+        const isLight = document.documentElement.dataset.theme === 'light';
+
+        this._scene.background = bg;
+        this._scene.fog = new THREE.Fog(bg, 8, 30);
+        this._matHead.color        = tok('--accent');
+        this._matHand.color        = tok('--text-muted');
+        this._matPPELoose.color    = tok('--orange');
+        this._matPPEAttached.color = tok('--ppe-worn');
+        this._matSkel.color        = tok('--text-muted');
+        this._matPlumb.color       = tok('--text-dim');
+        this._matGaze.color        = tok('--accent');
+        this._matDisc.color        = tok('--accent');
+        this._matRing.color        = tok('--accent');
+
+        if (this._grid) {
+          this._scene.remove(this._grid);
+          this._grid.geometry.dispose();
+          this._grid.material.dispose();
+        }
+        const gridColor = tok('--text-dim');
+        this._grid = new THREE.GridHelper(10, 10, gridColor, gridColor);
+        this._grid.material.transparent = true;
+        this._grid.material.opacity = isLight ? 0.35 : 0.25;
+        this._scene.add(this._grid);
+
+        this._dirty = true;
+      }
+
+      /** Call after the container element changes size (e.g. sidebar resize). */
+      resize() {
+        const w = this._container.clientWidth;
+        const h = this._container.clientHeight;
+        if (!w || !h) return;
+        this._camera.aspect = w / h;
+        this._camera.updateProjectionMatrix();
+        this._renderer.setSize(w, h);
+        this._dirty = true;
+      }
+
+      /** Frame de pose completo (10 Hz): HMD, mãos, EPIs e esqueleto derivado. */
+      updateFrame(p) {
+        if (p.hmd)       this._updateObject('hmd',       p.hmd,       'hmd');
+        if (p.leftHand)  this._updateObject('leftHand',  p.leftHand,  'hand');
+        if (p.rightHand) this._updateObject('rightHand', p.rightHand, 'hand');
+        if (Array.isArray(p.ppe)) {
+          p.ppe.forEach(item => this._updateObject(item.id, item.pose, 'ppe', item.attachedTo));
+        }
+        this._updateBody();
+        this._dirty = true;
+      }
+
+      /** ActionAttempt com posição: anel pulsante + balão nomeando a ação. */
+      showInteraction(actionId, px, py, pz) {
+        const pos = new THREE.Vector3(px, py, -pz);
+        const mesh = new THREE.Mesh(this._geoRing, this._matRing.clone());
+        mesh.position.copy(pos);
+        this._scene.add(mesh);
+        this._interactions.push({ mesh, label: String(actionId ?? ''), pos, t0: performance.now() });
+        while (this._interactions.length > 3) this._removeInteraction(this._interactions.shift());
+        this._dirty = true;
+      }
+
+      /** Remove EPIs, esqueleto e interações — chamado no SessionReset. */
+      clearSession() {
+        Object.values(this._objects.ppe).forEach(mesh => {
+          this._scene.remove(mesh);
+          const ld = this._labels.get(mesh);
+          if (ld) { ld.el.remove(); this._labels.delete(mesh); }
+        });
+        this._objects.ppe = {};
+        this._interactions.forEach(it => this._removeInteraction(it));
+        this._interactions = [];
+        this._skel.visible = this._plumb.visible = this._gaze.visible = this._disc.visible = false;
+        this._smooth.head = null;
+        if (this._postureChip) this._postureChip.style.display = 'none';
+        this._calloutEl?.classList.remove('on');
+        this._dirty = true;
+      }
+
+      /** Release GPU resources (call if viewport is ever torn down). */
+      dispose() {
+        window.removeEventListener('resize', this._onResize);
+        this.clearSession();
+        [this._geoHead, this._geoHand, this._geoPPE, this._geoRing].forEach(g => g.dispose());
+        [this._matHead, this._matHand, this._matPPELoose, this._matPPEAttached,
+         this._matSkel, this._matPlumb, this._matGaze, this._matDisc, this._matRing].forEach(m => m.dispose());
+        this._labels.forEach(ld => ld.el.remove());
+        this._labels.clear();
+        this._renderer.dispose();
+      }
+
+      /* ── Private helpers ──────────────────────────────────────── */
+
+      _updateObject(id, pose, type, attachedTo = '') {
+        let obj = type === 'ppe' ? this._objects.ppe[id] : this._objects[id];
+        if (!obj) obj = this._createObject(id, type);
+
+        obj.position.set(pose.px, pose.py, -pose.pz);
+        obj.quaternion.set(-pose.qx, pose.qy, pose.qz, -pose.qw);
+
+        if (type === 'ppe') {
+          /* semântica, não identidade: solto = obrigação pendente (âmbar);
+             vestido = obrigação cumprida (neutro, encolhido) */
+          if (attachedTo) { obj.material = this._matPPEAttached; obj.scale.setScalar(0.8); }
+          else            { obj.material = this._matPPELoose;    obj.scale.setScalar(1); }
+        }
+      }
+
+      /* Esqueleto derivado + prumo + olhar + disco + postura.
+         Nada aqui é animado — tudo é deduzido da pose rastreada,
+         então locomoção nunca produz uma "caminhada" quebrada. */
+      _updateBody() {
+        const hmd = this._objects.hmd;
+        if (!hmd) return;
+
+        if (!this._smooth.head) this._smooth.head = hmd.position.clone();
+        this._smooth.head.lerp(hmd.position, 0.35);
+        const H = this._smooth.head;
+
+        /* yaw do HMD amortecido orienta os ombros */
+        const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(hmd.quaternion);
+        const targetYaw = Math.atan2(fwd.x, fwd.z);
+        let dy = targetYaw - this._smooth.yaw;
+        while (dy >  Math.PI) dy -= 2 * Math.PI;
+        while (dy < -Math.PI) dy += 2 * Math.PI;
+        this._smooth.yaw += dy * 0.25;
+        const rx = Math.cos(this._smooth.yaw), rz = -Math.sin(this._smooth.yaw);
+
+        const headY = H.y;
+        const shY   = headY - 0.24;
+        const hipY  = Math.max(headY - 0.72, 0.25);
+        const SH = 0.19, HIP = 0.11;
+
+        const set = (i, ax, ay, az, bx, by, bz) => {
+          const o = i * 6;
+          this._skelPos[o]   = ax; this._skelPos[o+1] = ay; this._skelPos[o+2] = az;
+          this._skelPos[o+3] = bx; this._skelPos[o+4] = by; this._skelPos[o+5] = bz;
+        };
+        set(0, H.x, headY - 0.10, H.z, H.x, hipY, H.z);                              /* coluna  */
+        set(1, H.x - rx*SH, shY, H.z - rz*SH, H.x + rx*SH, shY, H.z + rz*SH);        /* ombros  */
+        set(2, H.x - rx*HIP, hipY, H.z - rz*HIP, H.x + rx*HIP, hipY, H.z + rz*HIP);  /* quadril */
+        const lh = this._objects.leftHand, rh = this._objects.rightHand;
+        set(3, H.x - rx*SH, shY, H.z - rz*SH,
+               lh ? lh.position.x : H.x - rx*SH, lh ? lh.position.y : shY, lh ? lh.position.z : H.z - rz*SH);
+        set(4, H.x + rx*SH, shY, H.z + rz*SH,
+               rh ? rh.position.x : H.x + rx*SH, rh ? rh.position.y : shY, rh ? rh.position.z : H.z + rz*SH);
+        this._skel.geometry.attributes.position.needsUpdate = true;
+        this._skel.visible = true;
+
+        this._plumbPos[0] = H.x; this._plumbPos[1] = hipY; this._plumbPos[2] = H.z;
+        this._plumbPos[3] = H.x; this._plumbPos[4] = 0.02; this._plumbPos[5] = H.z;
+        this._plumb.geometry.attributes.position.needsUpdate = true;
+        this._plumb.computeLineDistances();
+        this._plumb.visible = true;
+
+        /* leque do olhar */
+        const gLen = 1.1;
+        const up = new THREE.Vector3(0, 1, 0);
+        for (let s = 0; s < 2; s++) {
+          const dir = fwd.clone().applyAxisAngle(up, s === 0 ? -0.22 : 0.22);
+          const o = s * 6;
+          this._gazePos[o]   = H.x;                 this._gazePos[o+1] = headY;                 this._gazePos[o+2] = H.z;
+          this._gazePos[o+3] = H.x + dir.x * gLen;  this._gazePos[o+4] = headY + dir.y * gLen;  this._gazePos[o+5] = H.z + dir.z * gLen;
+        }
+        this._gaze.geometry.attributes.position.needsUpdate = true;
+        this._gaze.visible = true;
+
+        this._disc.position.set(H.x, 0.005, H.z);
+        this._disc.visible = true;
+
+        this._updatePosture(headY);
+      }
+
+      _updatePosture(headY) {
+        if (!this._postureChip) return;
+        this._postureChip.style.display = 'flex';
+        let key = 'postureStanding', low = false;
+        if (headY <= 1.15)      { key = 'postureCrouched'; low = true; }
+        else if (headY <= 1.42) { key = 'postureLowering'; low = true; }
+        this._postureValue.textContent = `${t(key)} · ${headY.toFixed(2)} m`;
+        this._postureValue.classList.toggle('low', low);
+      }
+
+      _removeInteraction(it) {
+        this._scene.remove(it.mesh);
+        it.mesh.material.dispose();
+      }
+
+      _updateInteractions() {
+        const now = performance.now();
+        const LIFE = 2600, FADE = 600;
+        for (let i = this._interactions.length - 1; i >= 0; i--) {
+          const it = this._interactions[i];
+          const age = now - it.t0;
+          if (age > LIFE) { this._removeInteraction(it); this._interactions.splice(i, 1); continue; }
+          it.mesh.scale.setScalar(1 + 0.15 * Math.sin(age / 1000 * 8));
+          it.mesh.lookAt(this._camera.position);
+          it.mesh.material.opacity = age > LIFE - FADE ? (LIFE - age) / FADE : 1;
+        }
+        /* o balão segue a interação mais recente */
+        const latest = this._interactions[this._interactions.length - 1];
+        if (latest && this._calloutEl) {
+          const v = latest.pos.clone().project(this._camera);
+          if (v.z <= 1) {
+            this._calloutEl.textContent = latest.label;
+            this._calloutEl.style.left = `${(v.x * 0.5 + 0.5) * this._container.clientWidth}px`;
+            this._calloutEl.style.top  = `${(v.y * -0.5 + 0.5) * this._container.clientHeight}px`;
+            this._calloutEl.classList.add('on');
+          }
+        } else if (this._calloutEl) {
+          this._calloutEl.classList.remove('on');
+        }
+      }
+
+      _createObject(id, type) {
+        let mesh;
+        if      (type === 'hmd')  mesh = new THREE.Mesh(this._geoHead, this._matHead);
+        else if (type === 'hand') mesh = new THREE.Mesh(this._geoHand, this._matHand);
+        else                      mesh = new THREE.Mesh(this._geoPPE, this._matPPELoose);
+
+        this._scene.add(mesh);
+        if (type === 'ppe') this._objects.ppe[id] = mesh;
+        else                this._objects[id] = mesh;
+
+        /* Create matching label (estilo via .vp-label — troca com o tema) */
+        let text = '', yOffset = 0.15;
+        if (type === 'hmd') { text = 'HMD'; yOffset = 0.28; }
+        else if (type === 'hand') {
+          const side = id === 'leftHand' ? (getLang() === 'pt' ? 'E' : 'L') : (getLang() === 'pt' ? 'D' : 'R');
+          text = `${t('hand')} ${side}`;
+          yOffset = 0.12;
+        }
+        else { text = id.toUpperCase(); yOffset = 0.14; }
+        this._labels.set(mesh, this._createLabel(text, yOffset));
+
+        return mesh;
+      }
+
+      _createLabel(text, yOffset) {
+        const el = document.createElement('div');
+        el.className = 'vp-label';
+        el.textContent = text;
+        this._labelOverlay.appendChild(el);
+        return { el, yOffset };
+      }
+
+      _projectLabel(ld, worldPos) {
+        const v = worldPos.clone().project(this._camera);
+        const x = (v.x * 0.5 + 0.5) * this._container.clientWidth;
+        const y = (v.y * -0.5 + 0.5) * this._container.clientHeight;
+        const visible = v.z <= 1;
+        ld.el.style.display = visible ? 'block' : 'none';
+        ld.el.style.left = `${x}px`;
+        ld.el.style.top  = `${y}px`;
+        return { x, y, visible };
+      }
+
+      _animate() {
+        requestAnimationFrame(() => this._animate());
+        if (document.hidden) return;                 /* aba oculta: nada a desenhar */
+        this._controls.update();                     /* damping dispara 'change' → _dirty */
+        const hasFx = this._interactions.length > 0;
+        if (hasFx) this._updateInteractions();
+        if (!this._dirty && !hasFx) return;          /* render on demand */
+        this._dirty = false;
+        this._updateLabels();
+        this._renderer.render(this._scene, this._camera);
+      }
+
+      _updateLabels() {
+        const visible = [];
+        this._labels.forEach((ld, obj) => {
+          if (!obj?.position) return;
+          const wp = obj.position.clone();
+          wp.y += ld.yOffset;
+          const sp = this._projectLabel(ld, wp);
+          if (sp.visible) visible.push({ el: ld.el, x: sp.x, y: sp.y });
+        });
+
+        /* Iterative screen-space push-apart (4 passes, 96×22 px label estimate) */
+        const LW = 96, LH = 22, PAD = 6;
+        for (let iter = 0; iter < 4; iter++) {
+          for (let i = 0; i < visible.length; i++) {
+            for (let j = i + 1; j < visible.length; j++) {
+              const a = visible[i], b = visible[j];
+              const ox = (LW + PAD) - Math.abs(b.x - a.x);
+              const oy = (LH + PAD) - Math.abs(b.y - a.y);
+              if (ox > 0 && oy > 0) {
+                if (ox < oy) {
+                  const push = ox / 2 * Math.sign(b.x - a.x || 1);
+                  a.x -= push; b.x += push;
+                } else {
+                  const push = oy / 2 * Math.sign(b.y - a.y || -1);
+                  a.y -= push; b.y += push;
+                }
+              }
+            }
+          }
+        }
+        visible.forEach(({ el, x, y }) => {
+          el.style.left = `${x}px`;
+          el.style.top  = `${y}px`;
+        });
+      }
+    }

@@ -1,0 +1,360 @@
+    import { t, getLang, locale } from './i18n.js';
+    import { MAX_LOG_ITEMS } from './constants.js';
+    import { tasks, wornPpe, state } from './state.js';
+
+    /* ================================================================
+     * UI HELPERS
+     * ============================================================== */
+    /** Escape text before interpolating it into innerHTML (session data is untrusted). */
+    export function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    export function setStatusUI(state) {
+      const dot   = document.getElementById('status-dot');
+      const label = document.getElementById('conn-status-label');
+      dot.className = 'status-dot' + (state === 'connected' ? ' connected' : state === 'connecting' ? ' connecting' : '');
+      label.textContent = t(state === 'connected' ? 'connected' : state === 'connecting' ? 'connecting' : 'disconnected');
+    }
+
+    export function setScoreUI(score) {
+      state.currentScore = score;
+      const el = document.getElementById('score-value');
+      el.textContent = score;
+      el.classList.remove('bump');
+      void el.offsetWidth; // reflow to retrigger animation
+      el.classList.add('bump');
+      setTimeout(() => el.classList.remove('bump'), 180);
+    }
+
+    // Neutral institutional placeholder mark for empty states (replaces emoji).
+    const EMPTY_ICON = '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6"/><circle cx="12" cy="16.5" r="0.6" fill="currentColor" stroke="none"/></svg>';
+
+    export function emptyState(_icon, text) {
+      return `<div class="empty-state"><div class="empty-state-icon">${EMPTY_ICON}</div><div>${text}</div></div>`;
+    }
+
+    /** Glifo tipado (coluna-guia) para um evento do relatório —
+        mesmo vocabulário do registro em tempo real, sem emoji. */
+    function eventGlyph(name) {
+      const n = (name ?? '').toLowerCase();
+      if (n.includes('critical'))         return '▲';
+      if (n.includes('violation'))        return '▲';
+      if (n.includes('safetyerror'))      return '✕';
+      if (n.includes('tasktimeout'))      return '✕';
+      if (n.includes('taskcompleted'))    return '✔';
+      if (n.includes('groupcompleted'))   return '✔';
+      if (n.includes('sessioncompleted')) return '⚑';
+      if (n.includes('taskstarted'))      return '▶';
+      if (n.includes('groupstarted'))     return '▶';
+      return '●';
+    }
+
+    /* ── Cluster: violações + EPI vestido/exigido ── */
+    export function renderCluster() {
+      const violEl = document.getElementById('viol-value');
+      if (violEl) violEl.textContent = state.violationCount;
+
+      const required = new Set();
+      tasks.forEach(tk => (tk.requiredPpe ?? []).forEach(p => required.add(String(p))));
+
+      const ppeEl = document.getElementById('ppe-value');
+      if (!ppeEl) return;
+      if (required.size > 0) {
+        let worn = 0;
+        required.forEach(p => { if (wornPpe.has(p)) worn++; });
+        ppeEl.textContent = `${worn}/${required.size}`;
+      } else {
+        ppeEl.textContent = wornPpe.size > 0 ? String(wornPpe.size) : '—';
+      }
+    }
+
+    /* Localized display label for a logged event name (JSON keeps English). */
+    function eventLabel(name) {
+      const labels = {
+        pt: {
+          SessionStarted: 'Sessão iniciada',
+          SessionPaused: 'Sessão pausada',
+          SessionResumed: 'Sessão retomada',
+          SessionEnded: 'Sessão encerrada',
+          SessionCompleted: 'Sessão concluída',
+          SessionReset: 'Sessão reiniciada',
+          ActionAttempt: 'Tentativa de ação',
+          PpeStateChanged: 'EPI alterado',
+          TaskStarted: 'Tarefa iniciada',
+          TaskCompleted: 'Tarefa concluída',
+          TaskTimeout: 'Tempo da tarefa esgotado',
+          ScoreChanged: 'Pontuação alterada',
+          GroupStarted: 'Grupo iniciado',
+          GroupCompleted: 'Grupo concluído',
+          SafetyViolation: 'Violação de segurança',
+          SafetyError: 'Erro de segurança',
+          CriticalSafetyFailure: 'Falha crítica de segurança',
+        },
+        en: {
+          SessionStarted: 'Session started',
+          SessionPaused: 'Session paused',
+          SessionResumed: 'Session resumed',
+          SessionEnded: 'Session ended',
+          SessionCompleted: 'Session completed',
+          SessionReset: 'Session reset',
+          ActionAttempt: 'Action attempt',
+          PpeStateChanged: 'PPE changed',
+          TaskStarted: 'Task started',
+          TaskCompleted: 'Task completed',
+          TaskTimeout: 'Task timeout',
+          ScoreChanged: 'Score changed',
+          GroupStarted: 'Group started',
+          GroupCompleted: 'Group completed',
+          SafetyViolation: 'Safety violation',
+          SafetyError: 'Safety error',
+          CriticalSafetyFailure: 'Critical safety failure',
+        },
+      };
+      const table = labels[getLang()] || labels.en;
+      return table[name] ?? name;
+    }
+
+    /* Localized detail line from structured entry.data (falls back to entry.details
+       for older saved reports that predate the structured schema). */
+    function formatDetails(entry) {
+      const d = entry.data;
+      if (!d) return entry.details || '';
+      switch (entry.eventName) {
+        case 'PpeStateChanged':
+          return `${t('detailPpe')}: ${d.ppeType} · ${d.wearing ? t('detailWorn') : t('detailRemoved')}`;
+        case 'ScoreChanged':
+          return `${t('detailDelta')}: ${d.delta >= 0 ? '+' : ''}${d.delta} · ${t('detailTotal')}: ${d.totalScore}`;
+        case 'SafetyViolation':
+          return `${d.violationCode}${d.message ? ` | ${d.message}` : ''}`;
+        case 'SafetyError':
+          return `${d.source}: ${d.message}${d.errorDetails ? ` (${d.errorDetails})` : ''}`;
+        case 'CriticalSafetyFailure':
+          return `${d.reason} · ${d.violationCount} ${t('detailIn')} ${d.windowSeconds}s`;
+        case 'SessionCompleted': {
+          const m = Math.floor((d.totalElapsedTime ?? 0) / 60);
+          const s = Math.floor((d.totalElapsedTime ?? 0) % 60);
+          return `${t('detailTime')}: ${m}:${String(s).padStart(2, '0')} · ${t('detailScore')}: ${d.totalScore} · ${t('detailCompleted')}: ${d.tasksCompleted}/${d.totalTasks}`;
+        }
+        default:
+          return entry.details || '';
+      }
+    }
+
+    export function resetTaskUI() {
+      document.getElementById('task-list').innerHTML = emptyState('', t('waitingSession'));
+    }
+
+    /* ── Task renderer — manifesto de procedimento: grupos com
+       cabeçalho (modo de execução + progresso) e linhas numeradas
+       num trilho de glifos. A tarefa ativa é a única expandida. ── */
+    const STATUS_GLYPH = { completed: '✔', active: '▶', pending: '·', failed: '✕' };
+
+    function modeLabel(mode) {
+      const m = String(mode ?? '').toLowerCase();
+      if (m.startsWith('seq'))  return t('modeSequential');
+      if (m.startsWith('free')) return t('modeFreeOrder');
+      return '';
+    }
+
+    export function renderTasks() {
+      const container = document.getElementById('task-list');
+      if (tasks.size === 0) { resetTaskUI(); renderCluster(); return; }
+
+      /* agrupa por groupName preservando a ordem das tarefas */
+      const groups = new Map();
+      [...tasks.values()]
+        .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
+        .forEach(tk => {
+          const g = tk.groupName || '—';
+          if (!groups.has(g)) groups.set(g, []);
+          groups.get(g).push(tk);
+        });
+
+      container.innerHTML = '';
+      let gi = 0;
+      groups.forEach((list, groupName) => {
+        gi++;
+        const done = list.filter(tk => tk.status === 'completed').length;
+        const mode = modeLabel(list.find(tk => tk.executionMode)?.executionMode);
+
+        const header = document.createElement('div');
+        header.className = 'mg-h';
+        header.innerHTML = `
+          <b>${t('group')} ${String(gi).padStart(2, '0')} · ${esc(groupName)}</b>
+          <span>${mode ? `<span class="mg-mode">${mode}</span> · ` : ''}<span class="mg-count">${done}/${list.length}</span></span>`;
+        container.appendChild(header);
+
+        list.forEach((task, idx) => {
+          if (state.hideCompleted && (task.status === 'completed' || task.status === 'failed')) return;
+
+          let pt = '';
+          if (task.status === 'active')      pt = t('active').toUpperCase();
+          else if (task.status === 'failed') pt = task.failurePenalty ? `−${task.failurePenalty}` : '✕';
+          else if (task.successPoints)       pt = `+${task.successPoints}`;
+
+          let expand = '';
+          if (task.status === 'active') {
+            const chips = [];
+            (task.requiredPpe ?? []).forEach(p => chips.push(`<span class="chip">${t('detailPpe')}: ${esc(p)}</span>`));
+            if (task.failurePenalty) chips.push(`<span class="chip pen">−${task.failurePenalty}</span>`);
+            if (task.ppePenalty)     chips.push(`<span class="chip pen">−${task.ppePenalty} ${t('detailPpe')}</span>`);
+            expand = `
+              <div class="tr-x">
+                ${task.description ? `<p>${esc(task.description)}</p>` : ''}
+                ${chips.length ? `<div class="chips">${chips.join('')}</div>` : ''}
+              </div>`;
+          }
+
+          const row = document.createElement('div');
+          row.className = `tr ${task.status}`;
+          row.innerHTML = `
+            <span class="g">${STATUS_GLYPH[task.status] ?? '·'}</span>
+            <span class="ix">${String(idx + 1).padStart(2, '0')}</span>
+            <span class="nm">${esc(task.name)}</span>
+            <span class="pt">${pt}</span>
+            ${expand}`;
+          container.appendChild(row);
+        });
+      });
+      renderCluster();
+    }
+
+    /* ── Log: hora · glifo tipado · mensagem ── */
+    const LOG_GLYPH = { success: '✔', violation: '▲', info: '●' };
+
+    export function addLog(message, type = 'info') {
+      const container = document.getElementById('log-container');
+      const empty = container.querySelector('.empty-state');
+      if (empty) container.innerHTML = '';
+
+      const item = document.createElement('div');
+      item.className = `log-item ${type}`;
+      const time = new Date().toLocaleTimeString(locale(), { hour12: false });
+      item.innerHTML = `<span class="log-time">${time}</span><span class="g">${LOG_GLYPH[type] ?? '●'}</span><span>${esc(message)}</span>`;
+      container.insertBefore(item, container.firstChild);
+
+      while (container.children.length > MAX_LOG_ITEMS) {
+        container.removeChild(container.lastChild);
+      }
+    }
+
+    /* ── Report Section — documento carimbado (régua dupla) ── */
+    export function renderReportSection(report) {
+      state.sessionReport = report;
+      const summary = report.summary ?? {};
+      const mins    = Math.floor((summary.totalElapsedTime ?? 0) / 60);
+      const secs    = Math.floor((summary.totalElapsedTime ?? 0) % 60);
+      const when    = new Date().toLocaleString(locale(),
+        { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+
+      document.getElementById('report-section').innerHTML = `
+        <div class="report-card"><div class="report-card-in">
+          <div class="report-head">
+            <b>${esc(state.currentParticipantId)}</b>
+            <span>${esc(when)}</span>
+          </div>
+          <div class="report-summary">
+            <div>
+              <div class="report-stat-value">${mins}:${String(secs).padStart(2,'0')}</div>
+              <div class="report-stat-label">${t('duration')}</div>
+            </div>
+            <div>
+              <div class="report-stat-value">${summary.totalScore ?? 0}</div>
+              <div class="report-stat-label">${t('finalScore')}</div>
+            </div>
+            <div>
+              <div class="report-stat-value">${summary.tasksCompleted ?? 0}/${summary.totalTasks ?? 0}</div>
+              <div class="report-stat-label">${t('tasks')}</div>
+            </div>
+          </div>
+          ${summary.completed ? `<div class="report-stamp">${t('sessionRecorded')}</div>` : ''}
+          <div class="report-actions">
+            <button class="report-btn primary" id="btn-view-report">${t('viewFullReport')}</button>
+            <button class="report-btn secondary" id="btn-dl-report">${t('downloadJson')}</button>
+          </div>
+        </div></div>
+      `;
+
+      document.getElementById('btn-view-report').onclick = () => openReportModal();
+      document.getElementById('btn-dl-report').onclick   = downloadReport;
+    }
+
+    export function openReportModal(report) {
+      // Defaults to the live report; history rows pass their own stored report.
+      report = (report && report.summary) ? report : state.sessionReport;
+      if (!report) return;
+      const summary = report.summary ?? {};
+      const entries = report.entries ?? [];
+      const mins = Math.floor((summary.totalElapsedTime ?? 0) / 60);
+      const secs = Math.floor((summary.totalElapsedTime ?? 0) % 60);
+
+      const timelineHtml = entries.map(entry => {
+        const time  = new Date(entry.timestamp).toLocaleTimeString(locale(), { hour12: false });
+        const en    = entry.eventName ?? '';
+        const glyph = eventGlyph(en);
+        const isViol = /violation|critical|safetyerror/i.test(en);
+        const detail = formatDetails(entry);
+        return `
+          <div class="timeline-item ${isViol ? 'violation' : ''}">
+            <div class="timeline-time">${time}</div>
+            <div class="g">${glyph}</div>
+            <div>
+              <div class="timeline-event">${esc(eventLabel(en))}</div>
+              ${detail ? `<div class="timeline-detail">${esc(detail)}</div>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+
+      document.getElementById('modal-body').innerHTML = `
+        <div class="session-summary-grid">
+          <div class="summary-card">
+            <div class="summary-card-value">${mins}:${String(secs).padStart(2,'0')}</div>
+            <div class="summary-card-label">${t('totalDuration')}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-value">${summary.totalScore ?? 0}</div>
+            <div class="summary-card-label">${t('finalScore')}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-value">${summary.tasksCompleted ?? 0}</div>
+            <div class="summary-card-label">${t('tasksCompleted')}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-value">${summary.totalTasks ?? 0}</div>
+            <div class="summary-card-label">${t('totalTasks')}</div>
+          </div>
+        </div>
+        <h3 style="margin-bottom:14px;color:var(--accent)">${t('eventTimeline')}</h3>
+        <div class="timeline">${timelineHtml}</div>
+      `;
+      document.getElementById('report-modal').classList.add('open');
+      _lastFocused = document.activeElement;
+      document.addEventListener('keydown', _onModalKey);
+      document.getElementById('btn-close-modal').focus();
+    }
+
+    /* ── Modal close + keyboard accessibility ── */
+    let _lastFocused = null;
+    export function closeReportModal() {
+      document.getElementById('report-modal').classList.remove('open');
+      document.removeEventListener('keydown', _onModalKey);
+      if (_lastFocused && typeof _lastFocused.focus === 'function') _lastFocused.focus();
+      _lastFocused = null;
+    }
+    function _onModalKey(e) {
+      if (e.key === 'Escape') closeReportModal();
+    }
+
+    export function downloadReport() {
+      if (!state.sessionReport) return;
+      const blob = new Blob([JSON.stringify(state.sessionReport, null, 2)], { type: 'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = Object.assign(document.createElement('a'), {
+        href: url,
+        download: `session_report_${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+      });
+      a.click();
+      URL.revokeObjectURL(url);
+    }
