@@ -281,10 +281,14 @@
         set(1, H.x - rx*SH, shY, H.z - rz*SH, H.x + rx*SH, shY, H.z + rz*SH);        /* ombros  */
         set(2, H.x - rx*HIP, hipY, H.z - rz*HIP, H.x + rx*HIP, hipY, H.z + rz*HIP);  /* quadril */
         const lh = this._objects.leftHand, rh = this._objects.rightHand;
-        set(3, H.x - rx*SH, shY, H.z - rz*SH,
-               lh ? lh.position.x : H.x - rx*SH, lh ? lh.position.y : shY, lh ? lh.position.z : H.z - rz*SH);
-        set(4, H.x + rx*SH, shY, H.z + rz*SH,
-               rh ? rh.position.x : H.x + rx*SH, rh ? rh.position.y : shY, rh ? rh.position.z : H.z + rz*SH);
+        /* Cada braço parte do ombro do MESMO lado da mão: o eixo dos ombros vem
+           do yaw do HMD, onde +（rx,rz) é o lado esquerdo da pessoa e −(rx,rz) o
+           direito; ligar a mão esquerda ao ombro −rx (ou vice-versa) cruzaria os
+           antebraços sobre o tronco. */
+        set(3, H.x + rx*SH, shY, H.z + rz*SH,
+               lh ? lh.position.x : H.x + rx*SH, lh ? lh.position.y : shY, lh ? lh.position.z : H.z + rz*SH);
+        set(4, H.x - rx*SH, shY, H.z - rz*SH,
+               rh ? rh.position.x : H.x - rx*SH, rh ? rh.position.y : shY, rh ? rh.position.z : H.z - rz*SH);
         this._skel.geometry.attributes.position.needsUpdate = true;
         this._skel.visible = true;
 
