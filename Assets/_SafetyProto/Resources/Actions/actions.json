@@ -54,13 +54,14 @@
     },
     {
       "actionId": "flag_safety_net",
-      "displayName": "Sinalizar Tela de Proteção",
-      "description": "Identificar e sinalizar a tela de proteção caída/solta na fachada.",
+      "displayName": "Reportar Irregularidade na Tela Fachadeira",
+      "description": "Identificar e reportar rasgos, partes soltas ou falhas de fixação na tela fachadeira.",
       "category": "Safety",
       "telemetryName": "sinalizar_tela_protecao",
       "tags": [],
       "regulatoryRefs": [
-        "NR-18 §18.12.15"
+        "NR-18 §18.12.15",
+        "NR-18 §18.12.15.1"
       ],
       "isSafetyCritical": true,
       "isHiddenInUI": false,

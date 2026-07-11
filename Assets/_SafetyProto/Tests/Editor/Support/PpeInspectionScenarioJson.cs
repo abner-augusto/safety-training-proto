@@ -22,35 +22,35 @@ namespace SafetyProto.Tests.Editor.Support
           ""name"": ""Equipar Botina de Segurança"",
           ""successPoints"": 100,
           ""requiredPPE"": [""Boots""],
-          ""hintText"": ""A botina deve ser fechada e com bico de proteção. Verifique o CA."",
+          ""hintText"": ""Escolha um calçado de segurança fechado, adequado aos riscos do canteiro e com CA válido."",
           ""taskDescription"": ""Selecione a botina de segurança correta e equipe nos pés.""
         },
         {
           ""name"": ""Equipar Luvas de Proteção"",
           ""successPoints"": 200,
           ""requiredPPE"": [""Boots"", ""GloveLeft"", ""GloveRight""],
-          ""hintText"": ""Use luvas de raspa de couro nas duas mãos — não luvas de látex."",
+          ""hintText"": ""Escolha luvas adequadas ao manuseio de estruturas metálicas e proteja as duas mãos."",
           ""taskDescription"": ""Selecione as luvas adequadas e equipe nas duas mãos.""
         },
         {
           ""name"": ""Equipar Óculos de Proteção"",
           ""successPoints"": 100,
           ""requiredPPE"": [""Boots"", ""GloveLeft"", ""GloveRight"", ""Goggles""],
-          ""hintText"": ""Os óculos de proteção protegem contra partículas e respingos."",
+          ""hintText"": ""Escolha uma proteção ocular adequada contra partículas e respingos."",
           ""taskDescription"": ""Selecione os óculos de proteção e equipe no rosto.""
         },
         {
           ""name"": ""Equipar Capacete com Jugular"",
           ""successPoints"": 150,
           ""requiredPPE"": [""Boots"", ""GloveLeft"", ""GloveRight"", ""Goggles"", ""Helmet""],
-          ""hintText"": ""O capacete DEVE ter jugular para trabalho em altura."",
+          ""hintText"": ""Escolha o capacete com jugular para mantê-lo preso à cabeça durante o trabalho em altura."",
           ""taskDescription"": ""Selecione o capacete CORRETO (com jugular) e equipe na cabeça.""
         },
         {
           ""name"": ""Equipar Cinto Paraquedista"",
           ""successPoints"": 200,
           ""requiredPPE"": [""Boots"", ""GloveLeft"", ""GloveRight"", ""Goggles"", ""Helmet"", ""Harness""],
-          ""hintText"": ""Use APENAS o cinto tipo paraquedista."",
+          ""hintText"": ""Para retenção de queda, escolha o cinturão de segurança tipo paraquedista; o cinto abdominal não é adequado a esse sistema."",
           ""taskDescription"": ""Selecione o cinto tipo paraquedista e vista corretamente.""
         }
       ]
@@ -68,7 +68,7 @@ namespace SafetyProto.Tests.Editor.Support
           ""failurePenalty"": 50,
           ""ppePenalty"": 50,
           ""requiredPPE"": [""Harness"", ""Helmet""],
-          ""hintText"": ""O talabarte deve estar conectado ao ponto de ancoragem certificado ANTES de qualquer atividade."",
+          ""hintText"": ""Conecte o talabarte ao ponto de ancoragem indicado antes de se expor ao risco e permaneça conectado durante a atividade."",
           ""ppeAdvice"": ""Você conectou o talabarte, mas estava sem algum EPI obrigatório. Verifique todos os equipamentos ANTES de subir."",
           ""failureAdvice"": ""Conectar o talabarte ao ponto de ancoragem certificado é a primeira ação ao chegar na plataforma. Trabalhar desconectado é a principal causa de quedas fatais."",
           ""taskDescription"": ""Conecte o talabarte do cinto ao ponto de ancoragem certificado na estrutura.""
@@ -80,7 +80,7 @@ namespace SafetyProto.Tests.Editor.Support
           ""failurePenalty"": 50,
           ""ppePenalty"": 50,
           ""requiredPPE"": [""Harness"", ""Helmet"", ""GloveLeft"", ""GloveRight""],
-          ""hintText"": ""O guarda-corpo deve ter 1,20m de altura com travessão intermediário e rodapé (NR-18 §18.15)."",
+          ""hintText"": ""Verifique todo o perímetro aberto: o guarda-corpo deve ter travessão superior a 1,20 m, intermediário a 0,70 m e rodapé (NR-18, itens 18.9.4.2 e 18.12.1 'd')."",
           ""ppeAdvice"": ""Instalar o guarda-corpo sem luvas de proteção e/ou capacete expõe suas mãos a cortes nas estruturas metálicas."",
           ""failureAdvice"": ""O guarda-corpo deve estar presente em todos os lados abertos da plataforma (NR-18 §18.15). Sua ausência expõe trabalhadores a queda direta."",
           ""taskDescription"": ""Instale a seção de guarda-corpo faltante no lado direito da plataforma.""
@@ -92,22 +92,23 @@ namespace SafetyProto.Tests.Editor.Support
           ""failurePenalty"": 50,
           ""ppePenalty"": 50,
           ""requiredPPE"": [""Harness"", ""Helmet"", ""GloveLeft"", ""GloveRight""],
-          ""hintText"": ""O rodapé de 20cm impede que ferramentas e materiais caiam sobre trabalhadores abaixo."",
+          ""hintText"": ""Verifique a base do guarda-corpo: o rodapé deve ter no mínimo 15 cm e impedir a queda de materiais (NR-18, item 18.9.4.2 'c')."",
           ""ppeAdvice"": ""Manipular peças metálicas sem luvas é uma violação de segurança."",
           ""failureAdvice"": ""O rodapé de 20cm impede que ferramentas e materiais caiam da plataforma sobre trabalhadores abaixo (NR-18 §18.15)."",
           ""taskDescription"": ""Instale o rodapé de 20cm na seção faltante da plataforma.""
         },
         {
-          ""name"": ""Sinalizar Tela de Proteção"",
+          ""id"": ""report_damaged_safety_mesh"",
+          ""name"": ""Reportar Irregularidade na Tela Fachadeira"",
           ""actionId"": ""flag_safety_net"",
           ""successPoints"": 100,
           ""failurePenalty"": 30,
           ""ppePenalty"": 30,
           ""requiredPPE"": [""Harness"", ""Helmet""],
-          ""hintText"": ""Interaja com a placa de alerta próxima à tela solta para registrar a irregularidade."",
-          ""ppeAdvice"": """",
-          ""failureAdvice"": ""A tela de proteção é obrigatória para prevenir queda de objetos. Sinalizar sua ausência é um procedimento crítico antes de iniciar qualquer atividade."",
-          ""taskDescription"": ""Identifique a tela de proteção caída e sinalize a irregularidade.""
+          ""hintText"": ""Verifique a continuidade da tela e seus pontos de fixação. Rasgos, partes soltas ou amarrações rompidas comprometem a proteção."",
+          ""ppeAdvice"": ""A inspeção deve ser realizada com os EPIs obrigatórios e com o talabarte conectado durante a exposição ao risco de queda."",
+          ""failureAdvice"": ""A tela estava rasgada e com um ponto de amarração rompido. Essa condição compromete a barreira contra a projeção e a queda de materiais e ferramentas. A irregularidade deve ser reportada antes da liberação da atividade (NR-18, itens 18.12.15 e 18.12.15.1)."",
+          ""taskDescription"": ""Inspecione a tela fachadeira e reporte a irregularidade encontrada.""
         }
       ]
     }
