@@ -1,0 +1,84 @@
+    import { RECONNECT_BASE_MS, RECONNECT_MAX_MS, RECONNECT_JITTER } from './constants.js';
+    import { t } from './i18n.js';
+    import { setStatusUI, addLog } from './ui.js';
+
+    /* ================================================================
+     * WsManager — exponential backoff, jitter, keepalive ping
+     * ============================================================== */
+    export class WsManager {
+      constructor(url, onMessage) {
+        this._url       = url;
+        this._onMessage = onMessage;
+        this._ws        = null;
+        this._retries   = 0;
+        this._retryTimer= null;
+        this._pingTimer = null;
+        this._intentional = false;
+      }
+
+      connect() {
+        this._intentional = false;
+        this._attempt();
+      }
+
+      _attempt() {
+        clearTimeout(this._retryTimer);
+        setStatusUI('connecting');
+
+        try {
+          this._ws = new WebSocket(this._url);
+        } catch {
+          this._scheduleRetry();
+          return;
+        }
+
+        this._ws.onopen = () => {
+          this._retries = 0;
+          setStatusUI('connected');
+          addLog(t('logConnected'), 'success');
+
+          // NOVO: Pedir sincronização de estado (evita amnésia após queda de conexão)
+          try {
+            this._ws.send(JSON.stringify({ eventType: "RequestSync" }));
+          } catch (e) {
+            console.error("Erro ao solicitar sync:", e);
+          }
+
+          // keepalive ping every 8 s
+          this._pingTimer = setInterval(() => {
+            if (this._ws?.readyState === WebSocket.OPEN) {
+              try { this._ws.send('ping'); } catch (_) {}
+            }
+          }, 8_000);
+        };
+
+        this._ws.onmessage = ev => {
+          try { this._onMessage(JSON.parse(ev.data)); }
+          catch { /* ignore malformed */ }
+        };
+
+        this._ws.onerror = () => { /* handled in onclose */ };
+
+        this._ws.onclose = () => {
+          clearInterval(this._pingTimer);
+          if (this._intentional) return;
+          setStatusUI('disconnected');
+          addLog(t('logDisconnected'), 'violation');
+          this._scheduleRetry();
+        };
+      }
+
+      _scheduleRetry() {
+        const base = Math.min(RECONNECT_BASE_MS * (2 ** this._retries), RECONNECT_MAX_MS);
+        const delay = base * (1 + (Math.random() * 2 - 1) * RECONNECT_JITTER);
+        this._retries++;
+        this._retryTimer = setTimeout(() => this._attempt(), delay);
+      }
+
+      destroy() {
+        this._intentional = true;
+        clearTimeout(this._retryTimer);
+        clearInterval(this._pingTimer);
+        this._ws?.close();
+      }
+    }
