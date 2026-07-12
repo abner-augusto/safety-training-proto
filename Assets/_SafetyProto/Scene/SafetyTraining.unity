@@ -40834,7 +40834,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: SafetyProto.Utils.Unity::SafetyProto.Utils.ScreenshotCapture
   width: 3840
   height: 2160
-  captureKey: 293
+  captureKey: 105
   outputFolder: Screenshots
   filePrefix: screenshot
 --- !u!20 &1915832834
