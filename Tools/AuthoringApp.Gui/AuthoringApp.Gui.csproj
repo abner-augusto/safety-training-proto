@@ -13,11 +13,23 @@
     <NoWarn>IDE1006</NoWarn>
   </PropertyGroup>
 
+  <!-- Single-file publish defaults. These only take effect on `dotnet publish`,
+       which must also be given a runtime identifier and the self-contained flag.
+       See README for the exact command. -->
+  <PropertyGroup>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>embedded</DebugType>
+    <!-- Keep referenced projects' .pdb files out of the publish folder. -->
+    <AllowedReferenceRelatedFileExtensions>none</AllowedReferenceRelatedFileExtensions>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.2.1" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.2.1" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.1" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.1" />
+    <PackageReference Include="Avalonia" Version="11.3.18" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.18" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.18" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.18" />
   </ItemGroup>
 
   <ItemGroup>
