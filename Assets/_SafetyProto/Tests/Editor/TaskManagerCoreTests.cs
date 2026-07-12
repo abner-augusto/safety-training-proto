@@ -3,6 +3,7 @@ using NUnit.Framework;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
+using SafetyProto.Domain.Scoring;
 using SafetyProto.Domain.Tasks;
 using SafetyProto.Tests.Editor.Support;
 
@@ -10,19 +11,19 @@ namespace SafetyProto.Tests.Editor
 {
     public class TaskManagerCoreTests
     {
-        private FakeEventBus _bus;
-        private FakeTaskBuilder _tasks;
-        private FakeScoreService _score;
-        private List<TaskGroupEventArgs> _groupEvents;
-        private List<TaskEventArgs> _taskEvents;
-        private List<SessionCompletedEventArgs> _sessionCompletions;
+        private FakeEventBus _bus = null!;
+        private FakeTaskBuilder _tasks = null!;
+        private ScoreService _score = null!;
+        private List<TaskGroupEventArgs> _groupEvents = null!;
+        private List<TaskEventArgs> _taskEvents = null!;
+        private List<SessionCompletedEventArgs> _sessionCompletions = null!;
 
         [SetUp]
         public void Setup()
         {
             _bus = new FakeEventBus();
             _tasks = new FakeTaskBuilder();
-            _score = new FakeScoreService();
+            _score = new ScoreService();
             _groupEvents = new List<TaskGroupEventArgs>();
             _taskEvents = new List<TaskEventArgs>();
             _sessionCompletions = new List<SessionCompletedEventArgs>();
@@ -44,7 +45,7 @@ namespace SafetyProto.Tests.Editor
 
             Assert.AreEqual(1, _groupEvents.Count);
             Assert.AreEqual(TaskGroupPhase.Started, _groupEvents[0].Phase);
-            Assert.AreEqual("g1", _groupEvents[0].Group.groupName);
+            Assert.AreEqual("g1", _groupEvents[0].Group!.groupName);
 
             Assert.AreEqual(1, _taskEvents.Count);
             Assert.AreEqual(TaskPhase.Started, _taskEvents[0].Phase);
@@ -153,23 +154,12 @@ namespace SafetyProto.Tests.Editor
 
             var found = core.FindPendingTaskByActionId("action_a");
             Assert.IsNotNull(found);
-            Assert.AreEqual("t1", found.taskName);
+            Assert.AreEqual("t1", found!.taskName);
 
             var notFound = core.FindPendingTaskByActionId("action_nonexistent");
             Assert.IsNull(notFound);
 
             core.Dispose();
-        }
-
-        private sealed class FakeScoreService : IScoreService
-        {
-            public int CurrentScore { get; private set; }
-            public void AddPoints(int amount, string reason = null, string taskId = null) => CurrentScore += amount;
-            public void SubtractPoints(int amount, string reason = null, string taskId = null) => CurrentScore -= amount;
-            public void Reset() => CurrentScore = 0;
-#pragma warning disable CS0067
-            public event System.Action<int, int, string, string> ScoreChanged;
-#pragma warning restore CS0067
         }
     }
 }

@@ -8,16 +8,16 @@ namespace SafetyProto.Tests.Editor
 {
     public class ScoreRuleEngineCoreTests
     {
-        private FakeEventBus _bus;
-        private FakeScoreService _score;
-        private FakeTaskBuilder _builder;
-        private ScoreRuleEngineCore _core;
+        private FakeEventBus _bus = null!;
+        private ScoreService _score = null!;
+        private FakeTaskBuilder _builder = null!;
+        private ScoreRuleEngineCore _core = null!;
 
         [SetUp]
         public void Setup()
         {
             _bus = new FakeEventBus();
-            _score = new FakeScoreService();
+            _score = new ScoreService();
             _builder = new FakeTaskBuilder();
         }
 
@@ -204,7 +204,7 @@ namespace SafetyProto.Tests.Editor
             _core = new ScoreRuleEngineCore(_bus, _score);
             _core.Subscribe();
 
-            _bus.Publish(new TaskEventArgs(null, null, TaskPhase.Completed));
+            _bus.Publish(new TaskEventArgs(null!, null, TaskPhase.Completed));
 
             Assert.AreEqual(0, _score.CurrentScore);
         }
@@ -215,7 +215,7 @@ namespace SafetyProto.Tests.Editor
             _core = new ScoreRuleEngineCore(_bus, _score);
             _core.Subscribe();
 
-            _bus.Publish(new TaskEventArgs(null, null, TaskPhase.Timeout));
+            _bus.Publish(new TaskEventArgs(null!, null, TaskPhase.Timeout));
 
             Assert.AreEqual(0, _score.CurrentScore);
         }
@@ -271,16 +271,6 @@ namespace SafetyProto.Tests.Editor
             _bus.Publish(new TaskEventArgs(t2, null, TaskPhase.Completed));
 
             Assert.AreEqual(120, _score.CurrentScore);
-        }
-
-        private sealed class FakeScoreService : IScoreService
-        {
-            public int CurrentScore { get; private set; }
-            public void AddPoints(int amount, string reason = null, string taskId = null) => CurrentScore += amount;
-            public void SubtractPoints(int amount, string reason = null, string taskId = null) => CurrentScore -= amount;
-#pragma warning disable CS0067
-            public event System.Action<int, int, string, string> ScoreChanged;
-#pragma warning restore CS0067
         }
     }
 }
