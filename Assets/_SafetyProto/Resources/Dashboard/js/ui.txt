@@ -36,8 +36,8 @@
       return `<div class="empty-state"><div class="empty-state-icon">${EMPTY_ICON}</div><div>${text}</div></div>`;
     }
 
-    /** Glifo tipado (coluna-guia) para um evento do relatório —
-        mesmo vocabulário do registro em tempo real, sem emoji. */
+    /** Typed glyph (gutter column) for a report event — same vocabulary
+        as the live log, no emoji. */
     function eventGlyph(name) {
       const n = (name ?? '').toLowerCase();
       if (n.includes('critical'))         return '▲';
@@ -52,7 +52,7 @@
       return '●';
     }
 
-    /* ── Cluster: violações + EPI vestido/exigido ── */
+    /* ── Cluster: violations + PPE worn/required ── */
     export function renderCluster() {
       const violEl = document.getElementById('viol-value');
       if (violEl) violEl.textContent = state.violationCount;

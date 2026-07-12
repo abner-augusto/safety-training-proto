@@ -52,7 +52,7 @@
         connecting: 'Connecting…',
         pending: 'Pending', active: 'Active', completed: 'Done', failed: 'Failed',
         hideCompleted: 'Hide completed',
-        // log (o glifo tipado vem da coluna-guia, não do texto)
+        // log (the typed glyph comes from the gutter column, not from the text)
         logConnected: 'Connected to training session',
         logDisconnected: 'Connection lost. Reconnecting…',
         logSessionStarted: 'Training session started',
@@ -121,7 +121,7 @@
         connected: 'Conectado',
         connecting: 'Conectando…',
         pending: 'Pendente', active: 'Ativa', completed: 'Concluída', failed: 'Falhou',
-        // log (o glifo tipado vem da coluna-guia, não do texto)
+        // log (the typed glyph comes from the gutter column, not from the text)
         logConnected: 'Conectado à sessão de treinamento',
         logDisconnected: 'Conexão perdida. Reconectando…',
         logSessionStarted: 'Sessão de treinamento iniciada',

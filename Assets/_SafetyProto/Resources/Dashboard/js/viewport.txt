@@ -3,18 +3,18 @@
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { t } from './i18n.js';
 
-    /* Reenquadramento automático */
-    const FRAME_EDGE = 0.92;   /* NDC: dispara pouco ANTES de encostar na borda */
-    const FRAME_DWELL_MS = 800;  /* tempo fora do quadro antes de mover a câmera */
-    const FRAME_GLIDE_MS = 600;  /* duração do deslize */
+    /* Automatic reframing */
+    const FRAME_EDGE = 0.92;   /* NDC: fires just BEFORE the participant clips the edge */
+    const FRAME_DWELL_MS = 800;  /* time off-frame before the camera moves */
+    const FRAME_GLIDE_MS = 600;  /* glide duration */
 
     /* ================================================================
-     * EvaluatorViewport — cena Three.js do instrumento de campo.
-     * Cores vêm dos tokens CSS (setTheme). O avatar é um esqueleto
-     * DERIVADO do rastreamento (cabeça + mãos reais; ombros/coluna/
-     * quadril deduzidos; fio de prumo + disco no chão em vez de
-     * pernas inventadas). Render on demand: só desenha quando a pose,
-     * a câmera ou o tema mudam, ou enquanto há um anel de interação.
+     * EvaluatorViewport — Three.js scene for the field instrument.
+     * Colours come from the CSS tokens (setTheme). The avatar is a skeleton
+     * DERIVED from tracking (real head + hands; shoulders/spine/hips are
+     * inferred; a plumb line + floor disc instead of invented legs).
+     * Render on demand: it only draws when the pose, the camera or the
+     * theme changes, or while an interaction ring is alive.
      * ============================================================== */
     export class EvaluatorViewport {
       constructor(containerEl) {
@@ -24,7 +24,7 @@
         /* Scene (cores aplicadas em setTheme) */
         this._scene = new THREE.Scene();
 
-        /* Camera — FOV de instrumento (55), não de FPS */
+        /* Camera — instrument FOV (55), not an FPS one */
         this._camera = new THREE.PerspectiveCamera(
           55,
           containerEl.clientWidth / containerEl.clientHeight,
@@ -32,7 +32,7 @@
         );
         this._camera.position.set(0, 1.8, 3.2);
 
-        /* Renderer — pixel ratio limitado (telas 4K não custam 9×) */
+        /* Renderer — capped pixel ratio (4K screens must not cost 9×) */
         this._renderer = new THREE.WebGLRenderer({ antialias: true });
         this._renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this._renderer.setSize(containerEl.clientWidth, containerEl.clientHeight);
@@ -70,14 +70,14 @@
         this._geoPPE  = new THREE.BoxGeometry(0.1, 0.1, 0.1);
         this._geoRing = new THREE.RingGeometry(0.10, 0.125, 32);
 
-        /* Shared materials — cores atribuídas em setTheme */
+        /* Shared materials — colours assigned in setTheme */
         this._matHead        = new THREE.MeshLambertMaterial();
         this._matHand        = new THREE.MeshLambertMaterial();
-        this._matPPELoose    = new THREE.MeshLambertMaterial();   // pendente = âmbar
-        this._matPPEAttached = new THREE.MeshLambertMaterial();   // cumprido = neutro
+        this._matPPELoose    = new THREE.MeshLambertMaterial();   // pending  = amber
+        this._matPPEAttached = new THREE.MeshLambertMaterial();   // fulfilled = neutral
         this._matRing        = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide });
 
-        /* Esqueleto derivado: coluna, ombros, quadril, 2 braços (5 segmentos) */
+        /* Derived skeleton: spine, shoulders, hips, 2 arms (5 segments) */
         this._skelPos = new Float32Array(5 * 2 * 3);
         const skelGeo = new THREE.BufferGeometry();
         skelGeo.setAttribute('position', new THREE.BufferAttribute(this._skelPos, 3));
@@ -87,7 +87,7 @@
         this._skel.frustumCulled = false;
         this._scene.add(this._skel);
 
-        /* Fio de prumo (quadril → chão), tracejado — honesto: derivado */
+        /* Plumb line (hips → floor), dashed — honest about being derived */
         this._plumbPos = new Float32Array(2 * 3);
         const plumbGeo = new THREE.BufferGeometry();
         plumbGeo.setAttribute('position', new THREE.BufferAttribute(this._plumbPos, 3));
@@ -97,7 +97,7 @@
         this._plumb.frustumCulled = false;
         this._scene.add(this._plumb);
 
-        /* Leque do olhar (2 segmentos a partir do HMD) */
+        /* Gaze fan (2 segments out of the HMD) */
         this._gazePos = new Float32Array(2 * 2 * 3);
         const gazeGeo = new THREE.BufferGeometry();
         gazeGeo.setAttribute('position', new THREE.BufferAttribute(this._gazePos, 3));
@@ -107,7 +107,7 @@
         this._gaze.frustumCulled = false;
         this._scene.add(this._gaze);
 
-        /* Disco de chão sob o participante */
+        /* Floor disc under the participant */
         this._matDisc = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.12, depthWrite: false });
         this._disc = new THREE.Mesh(new THREE.CircleGeometry(0.3, 28), this._matDisc);
         this._disc.rotation.x = -Math.PI / 2;
@@ -115,23 +115,23 @@
         this._disc.visible = false;
         this._scene.add(this._disc);
 
-        /* Suavização da pose (dados chegam a 10 Hz) */
+        /* Pose smoothing (data arrives at 10 Hz) */
         this._smooth = { head: null, yaw: 0 };
 
-        /* Reenquadramento automático: se o participante sai do campo de visão e
-           FICA fora por DWELL ms, a câmera desliza atrás dele. A carência evita
-           puxar a câmera de quem só encostou na borda e já voltou. */
+        /* Automatic reframing: if the participant leaves the field of view and
+           STAYS out for DWELL ms, the camera glides after them. The dwell keeps
+           someone who merely grazed the edge and came back from yanking it. */
         this._follow = { offSince: 0, anim: null };
 
-        /* Instrumentos DOM */
+        /* DOM instruments */
         this._calloutEl    = document.getElementById('vp-callout');
         this._postureChip  = document.getElementById('posture-chip');
         this._postureValue = document.getElementById('posture-value');
 
-        /* Anéis de interação ativos (ActionAttempt com posição) */
+        /* Live interaction rings (ActionAttempt carrying a position) */
         this._interactions = [];
 
-        /* Grid é recriado por setTheme (GridHelper fixa as cores) */
+        /* The grid is rebuilt by setTheme (GridHelper bakes its colours) */
         this._grid = null;
         this.setTheme();
 
@@ -145,7 +145,7 @@
 
       /* ── Public API ───────────────────────────────────────────── */
 
-      /** Relê os tokens CSS ativos e aplica ao cenário (claro/escuro). */
+      /** Re-reads the active CSS tokens and applies them to the scene (light/dark). */
       setTheme() {
         const css = getComputedStyle(document.documentElement);
         const tok = name => new THREE.Color(css.getPropertyValue(name).trim() || '#ff00ff');
@@ -189,7 +189,7 @@
         this._dirty = true;
       }
 
-      /** Frame de pose completo (10 Hz): HMD, mãos, EPIs e esqueleto derivado. */
+      /** Full pose frame (10 Hz): HMD, hands, PPE and the derived skeleton. */
       updateFrame(p) {
         if (p.hmd)       this._updateObject('hmd',       p.hmd,       'hmd');
         if (p.leftHand)  this._updateObject('leftHand',  p.leftHand,  'hand');
@@ -200,9 +200,9 @@
             present.add(String(item.id));
             this._updateObject(item.id, item.pose, 'ppe', item.attachedTo);
           });
-          /* EPI que saiu do frame saiu da cena (hideWhenEquipped some ao ser vestido):
-             sem esta poda a malha ficaria congelada para sempre no slot. Volta sozinha
-             se o item reaparecer — _updateObject recria o que não existe. */
+          /* PPE that left the frame left the scene (hideWhenEquipped vanishes on equip):
+             without this reaping the mesh would stay frozen at the slot forever. It comes
+             back on its own if the item reappears — _updateObject recreates what is missing. */
           Object.keys(this._objects.ppe).forEach(id => {
             if (!present.has(id)) this._removePpe(id);
           });
@@ -211,7 +211,7 @@
         this._dirty = true;
       }
 
-      /** ActionAttempt com posição: anel pulsante + balão nomeando a ação. */
+      /** ActionAttempt with a position: pulsing ring + callout naming the action. */
       showInteraction(actionId, px, py, pz) {
         const pos = new THREE.Vector3(px, py, -pz);
         const mesh = new THREE.Mesh(this._geoRing, this._matRing.clone());
@@ -222,7 +222,7 @@
         this._dirty = true;
       }
 
-      /** Remove EPIs, esqueleto e interações — chamado no SessionReset. */
+      /** Clears PPE, skeleton and interactions — called on SessionReset. */
       clearSession() {
         Object.keys(this._objects.ppe).forEach(id => this._removePpe(id));
         this._objects.ppe = {};
@@ -230,7 +230,7 @@
         this._interactions = [];
         this._skel.visible = this._plumb.visible = this._gaze.visible = this._disc.visible = false;
         this._smooth.head = null;
-        /* Um reset no meio do deslize não pode deixar a órbita travada. */
+        /* A reset mid-glide must not leave the orbit controls stranded. */
         this._follow.anim = null;
         this._follow.offSince = 0;
         this._controls.enabled = true;
@@ -257,25 +257,25 @@
         let obj = type === 'ppe' ? this._objects.ppe[id] : this._objects[id];
         if (!obj) obj = this._createObject(id, type);
 
-        /* Unity (canhoto) → Three (destro): espelhamos Z na posição, então a
-           rotação precisa da MESMA conjugação por diag(1,1,-1) — ou seja
-           (-qx,-qy, qz, qw). Espelhar outro eixo aqui inverteria pitch e roll
-           mantendo o yaw correto (o olhar apontava para cima ao olhar para baixo). */
+        /* Unity (left-handed) → Three (right-handed): we mirror Z on the position, so the
+           rotation needs the SAME conjugation by diag(1,1,-1) — that is (-qx,-qy, qz, qw).
+           Mirroring any other axis here inverts pitch and roll while leaving yaw correct
+           (the gaze pointed up whenever the participant looked down). */
         obj.position.set(pose.px, pose.py, -pose.pz);
         obj.quaternion.set(-pose.qx, -pose.qy, pose.qz, pose.qw);
 
         if (type === 'ppe') {
-          /* semântica, não identidade: solto = obrigação pendente (âmbar);
-             vestido = obrigação cumprida (neutro, encolhido) */
+          /* semantics, not identity: loose = pending obligation (amber);
+             worn = fulfilled obligation (neutral, shrunk) */
           if (attachedTo) { obj.material = this._matPPEAttached; obj.scale.setScalar(0.8); }
           else            { obj.material = this._matPPELoose;    obj.scale.setScalar(1); }
           obj.userData.worn = !!attachedTo;
         }
       }
 
-      /* Esqueleto derivado + prumo + olhar + disco + postura.
-         Nada aqui é animado — tudo é deduzido da pose rastreada,
-         então locomoção nunca produz uma "caminhada" quebrada. */
+      /* Derived skeleton + plumb line + gaze + disc + posture.
+         Nothing here is animated — it is all inferred from the tracked pose,
+         so locomotion never produces a broken "walk". */
       _updateBody() {
         const hmd = this._objects.hmd;
         if (!hmd) return;
@@ -284,7 +284,7 @@
         this._smooth.head.lerp(hmd.position, 0.35);
         const H = this._smooth.head;
 
-        /* yaw do HMD amortecido orienta os ombros */
+        /* the damped HMD yaw orients the shoulders */
         const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(hmd.quaternion);
         const targetYaw = Math.atan2(fwd.x, fwd.z);
         let dy = targetYaw - this._smooth.yaw;
@@ -303,14 +303,14 @@
           this._skelPos[o]   = ax; this._skelPos[o+1] = ay; this._skelPos[o+2] = az;
           this._skelPos[o+3] = bx; this._skelPos[o+4] = by; this._skelPos[o+5] = bz;
         };
-        set(0, H.x, headY - 0.10, H.z, H.x, hipY, H.z);                              /* coluna  */
-        set(1, H.x - rx*SH, shY, H.z - rz*SH, H.x + rx*SH, shY, H.z + rz*SH);        /* ombros  */
-        set(2, H.x - rx*HIP, hipY, H.z - rz*HIP, H.x + rx*HIP, hipY, H.z + rz*HIP);  /* quadril */
+        set(0, H.x, headY - 0.10, H.z, H.x, hipY, H.z);                              /* spine     */
+        set(1, H.x - rx*SH, shY, H.z - rz*SH, H.x + rx*SH, shY, H.z + rz*SH);        /* shoulders */
+        set(2, H.x - rx*HIP, hipY, H.z - rz*HIP, H.x + rx*HIP, hipY, H.z + rz*HIP);  /* hips      */
         const lh = this._objects.leftHand, rh = this._objects.rightHand;
-        /* Cada braço parte do ombro do MESMO lado da mão: o eixo dos ombros vem
-           do yaw do HMD, onde +（rx,rz) é o lado esquerdo da pessoa e −(rx,rz) o
-           direito; ligar a mão esquerda ao ombro −rx (ou vice-versa) cruzaria os
-           antebraços sobre o tronco. */
+        /* Each arm starts at the shoulder on the SAME side as the hand: the shoulder
+           axis comes from the HMD yaw, where +(rx,rz) is the person's left side and
+           −(rx,rz) their right; wiring the left hand to the −rx shoulder (or vice
+           versa) would cross the forearms over the torso. */
         set(3, H.x + rx*SH, shY, H.z + rz*SH,
                lh ? lh.position.x : H.x + rx*SH, lh ? lh.position.y : shY, lh ? lh.position.z : H.z + rz*SH);
         set(4, H.x - rx*SH, shY, H.z - rz*SH,
@@ -324,7 +324,7 @@
         this._plumb.computeLineDistances();
         this._plumb.visible = true;
 
-        /* leque do olhar */
+        /* gaze fan */
         const gLen = 1.1;
         const up = new THREE.Vector3(0, 1, 0);
         for (let s = 0; s < 2; s++) {
@@ -343,12 +343,12 @@
         this._trackFraming(H);
       }
 
-      /* Só conta o tempo fora do quadro; voltar a entrar zera a carência, de modo
-         que quem apenas raspa a borda nunca arrasta a câmera atrás de si. */
+      /* Only counts time spent off-frame; re-entering resets the dwell, so someone who
+         merely grazes the edge never drags the camera after them. */
       _trackFraming(H) {
-        if (this._follow.anim) return;                 /* já reenquadrando */
-        /* Frames de pose continuam chegando com a aba oculta, mas o rAF para: armar aqui
-           desligaria a órbita sem ninguém para religá-la. Rearma quando a aba voltar. */
+        if (this._follow.anim) return;                 /* already reframing */
+        /* Pose frames keep arriving while the tab is hidden, but rAF stops: arming here
+           would disable the orbit with nobody left to re-enable it. Re-arms on return. */
         if (document.hidden) { this._follow.offSince = 0; return; }
 
         const p = H.clone().project(this._camera);
@@ -363,8 +363,8 @@
         if (now - this._follow.offSince >= FRAME_DWELL_MS) this._startFollow(H);
       }
 
-      /* Alvo e câmera andam o MESMO delta: o ângulo de órbita e o zoom do avaliador
-         sobrevivem ao deslize — a vista escorrega de lado, não gira em torno da cena. */
+      /* Target and camera move by the SAME delta: the evaluator's orbit angle and zoom
+         survive the glide — the view slides sideways instead of swinging around the scene. */
       _startFollow(H) {
         const toTarget = new THREE.Vector3(H.x, Math.max(H.y - 0.4, 0.2), H.z);
         this._follow.anim = {
@@ -374,16 +374,16 @@
           fromCam: this._camera.position.clone(),
           delta: toTarget.sub(this._controls.target),
         };
-        this._controls.enabled = false;   /* input e damping não brigam com o deslize */
+        this._controls.enabled = false;   /* input and damping must not fight the glide */
       }
 
-      /** @returns {boolean} true enquanto um deslize estiver em curso. */
+      /** @returns {boolean} true while a glide is in progress. */
       _stepFollow() {
         const a = this._follow.anim;
         if (!a) return false;
 
-        /* Tempo medido pelos passos, não pelo relógio: se a aba for ocultada no meio do
-           deslize o rAF congela, e um dt cru faria a câmera saltar direto para o fim. */
+        /* Time measured in steps, not on the wall clock: if the tab is hidden mid-glide
+           rAF freezes, and a raw dt would snap the camera straight to the end. */
         const now = performance.now();
         a.elapsed += Math.min(now - a.last, 50);
         a.last = now;
@@ -412,8 +412,8 @@
         this._postureValue.classList.toggle('low', low);
       }
 
-      /* Geometria e material do EPI são compartilhados entre as malhas — tirar da cena
-         e soltar o rótulo, nunca dar dispose neles. */
+      /* PPE geometry and material are shared across the meshes — remove from the scene
+         and drop the label, never dispose of them. */
       _removePpe(id) {
         const mesh = this._objects.ppe[id];
         if (!mesh) return;
@@ -440,7 +440,7 @@
           it.mesh.lookAt(this._camera.position);
           it.mesh.material.opacity = age > LIFE - FADE ? (LIFE - age) / FADE : 1;
         }
-        /* o balão segue a interação mais recente */
+        /* the callout follows the most recent interaction */
         const latest = this._interactions[this._interactions.length - 1];
         if (latest && this._calloutEl) {
           const v = latest.pos.clone().project(this._camera);
@@ -465,8 +465,8 @@
         if (type === 'ppe') this._objects.ppe[id] = mesh;
         else                this._objects[id] = mesh;
 
-        /* Rótulo apenas para EPIs — cabeça e mãos já são legíveis pela
-           forma/legenda; o rótulo fica apagado até uma mão se aproximar */
+        /* Labels only for PPE — the head and hands are already legible from their
+           shape/legend; the label stays dark until a hand comes near */
         if (type === 'ppe') this._labels.set(mesh, this._createLabel(id.toUpperCase(), 0.14));
 
         return mesh;
@@ -493,9 +493,9 @@
 
       _animate() {
         requestAnimationFrame(() => this._animate());
-        if (document.hidden) return;                 /* aba oculta: nada a desenhar */
-        const following = this._stepFollow();        /* antes do update: reposiciona câmera+alvo */
-        this._controls.update();                     /* damping dispara 'change' → _dirty */
+        if (document.hidden) return;                 /* hidden tab: nothing to draw */
+        const following = this._stepFollow();        /* before update: repositions camera+target */
+        this._controls.update();                     /* damping fires 'change' → _dirty */
         const hasFx = this._interactions.length > 0;
         if (hasFx) this._updateInteractions();
         if (!this._dirty && !hasFx && !following) return;   /* render on demand */
@@ -505,9 +505,9 @@
       }
 
       _updateLabels() {
-        /* Um rótulo só "acende" quando é o EPI solto MAIS PRÓXIMO de uma mão
-           (dentro do alcance) — com objetos agrupados, acender todos num raio
-           poluiria a cena; EPIs vestidos ficam apagados mesmo com a mão perto */
+        /* A label only "lights up" for the loose PPE NEAREST to a hand (within range) —
+           with clustered objects, lighting every one inside a radius would clutter the
+           scene; worn PPE stays dark even with a hand right next to it */
         const NEAR = 0.35; /* m */
         const nearMeshes = new Set();
         for (const hand of [this._objects.leftHand, this._objects.rightHand]) {
