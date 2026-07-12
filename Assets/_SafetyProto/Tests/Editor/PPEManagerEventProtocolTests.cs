@@ -6,7 +6,7 @@ namespace SafetyProto.Tests.Editor
 {
     public class PPEProtocolParticipationTests
     {
-        private FakeEventBus _bus;
+        private FakeEventBus _bus = null!;
 
         [SetUp]
         public void Setup()

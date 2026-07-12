@@ -10,9 +10,9 @@ namespace SafetyProto.Tests.Editor
 {
     public class SafetyRuleEngineDiagnosticTests
     {
-        private FakeEventBus _bus;
-        private FakeTaskBuilder _tasks;
-        private List<SafetyViolationEventArgs> _violations;
+        private FakeEventBus _bus = null!;
+        private FakeTaskBuilder _tasks = null!;
+        private List<SafetyViolationEventArgs> _violations = null!;
 
         [SetUp]
         public void Setup()

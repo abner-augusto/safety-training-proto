@@ -34,7 +34,7 @@ namespace SafetyProto.Tests.Editor.Support
 
         public void Publish<T>(T payload)
         {
-            PublishedEvents.Add((typeof(T), payload));
+            PublishedEvents.Add((typeof(T), payload!));
 
             _queue.Enqueue(() =>
             {

@@ -17,6 +17,10 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
+    <!-- Matches SafetyProto.Shared. The fixtures are nullable-clean; keeping warnings fatal is
+         what stops a hand-written test double from silently drifting away from the interface it
+         implements (C# does not inherit interface parameter defaults, so such drift compiles). -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <ImplicitUsings>disable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <IsPackable>false</IsPackable>
