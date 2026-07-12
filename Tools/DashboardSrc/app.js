@@ -82,7 +82,7 @@
      * ============================================================== */
     const canvasContainer = document.getElementById('three-canvas');
 
-    /* Tema antes do viewport: o construtor lê os tokens ativos */
+    /* Theme before the viewport: its constructor reads the active tokens */
     applyTheme();
 
     /* Boot 3D viewport */

@@ -138,7 +138,7 @@
     on('ActionAttempt', p => {
       const pos = p.hasPosition ? ` ${t('at')} (${p.px?.toFixed(1)},${p.py?.toFixed(1)},${p.pz?.toFixed(1)})` : '';
       addLog(`${t('logActionAttempt')}: ${p.actionId} (${p.sourceId ?? ''})${pos}`);
-      /* instrumento de interação: anel + balão no ponto da ação */
+      /* interaction instrument: ring + callout at the point of the action */
       if (p.hasPosition) window.__spViewport?.showInteraction(p.actionId, p.px, p.py, p.pz);
     });
 

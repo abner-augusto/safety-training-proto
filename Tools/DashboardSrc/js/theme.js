@@ -1,6 +1,6 @@
     /* ================================================================
-     * THEME — escuro (uso vivo) ↔ claro (modo figura). Troca só de
-     * tokens; o viewport 3D relê os valores via setTheme().
+     * THEME — dark (live use) ↔ light (figure mode). It swaps tokens
+     * only; the 3D viewport re-reads the values via setTheme().
      * ============================================================== */
     let theme = localStorage.getItem('sp_theme') || 'dark';
 
