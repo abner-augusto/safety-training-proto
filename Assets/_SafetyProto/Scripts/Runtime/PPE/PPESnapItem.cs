@@ -1,6 +1,7 @@
 using Oculus.Interaction;
 using Oculus.Interaction.HandGrab;
 using SafetyProto.Core;
+using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Runtime.Feedback;
 using UnityEngine;
@@ -15,7 +16,7 @@ namespace SafetyProto.Runtime.PPE
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(PPEItem))]
-    public class PPESnapItem : MonoBehaviour
+    public class PPESnapItem : MonoBehaviour, IPoseAttachment
     {
         [Header("Snap")]
         [Tooltip("Fallback radius to search for a compatible slot on release (helps if trigger exit happens right as you let go).")]
@@ -47,6 +48,13 @@ namespace SafetyProto.Runtime.PPE
 
         // Public so PPESnapSlot can read it
         public PPEType PpeType => _ppeItem.ppeType;
+
+        /// <summary>
+        /// IPoseAttachment: name of the slot this item is snapped to, or empty when loose.
+        /// The dashboard reads it to tell a worn EPI from one still lying around — snapping
+        /// never re-parents the item, so parenting cannot answer this.
+        /// </summary>
+        public string AttachmentId => _isSnapped && _currentSlot != null ? _currentSlot.name : string.Empty;
 
 #if UNITY_EDITOR
         // Exposed for editor preview tooling (PPESnapSlot gizmo / inspector).

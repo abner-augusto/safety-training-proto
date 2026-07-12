@@ -1,4 +1,5 @@
 using System;
+using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using UnityEngine;
 
@@ -24,6 +25,7 @@ namespace SafetyProto.Core
 
         private string[] _cachedPpeIds;
         private string[] _cachedAttachments;
+        private IPoseAttachment[] _attachmentSources;
 
         private void Start()
         {
@@ -97,7 +99,7 @@ namespace SafetyProto.Core
                     continue;
 
                 var id = (_cachedPpeIds != null && _cachedPpeIds.Length > i) ? _cachedPpeIds[i] : $"ppe-{i}";
-                var attachment = (_cachedAttachments != null && _cachedAttachments.Length > i) ? _cachedAttachments[i] : string.Empty;
+                var attachment = GetAttachment(i);
 
                 if (t != null)
                 {
@@ -123,17 +125,33 @@ namespace SafetyProto.Core
             poseChannel.PpeObjects = poses;
         }
 
+        /// <summary>
+        /// Live attachment state, falling back to the parenting snapshot taken at Start.
+        /// An IPoseAttachment (e.g. PPESnapItem) knows whether it is snapped right now; the
+        /// parenting check only ever answers for PPE authored under the head/hand rigs, which
+        /// is why it must remain as the fallback rather than the source of truth.
+        /// </summary>
+        private string GetAttachment(int i)
+        {
+            if (_attachmentSources != null && _attachmentSources.Length > i && _attachmentSources[i] != null)
+                return _attachmentSources[i].AttachmentId ?? string.Empty;
+
+            return (_cachedAttachments != null && _cachedAttachments.Length > i) ? _cachedAttachments[i] : string.Empty;
+        }
+
         private void CachePpeMetadata()
         {
             if (ppeObjects == null || ppeObjects.Length == 0)
             {
                 _cachedAttachments = Array.Empty<string>();
                 _cachedPpeIds = Array.Empty<string>();
+                _attachmentSources = Array.Empty<IPoseAttachment>();
                 return;
             }
 
             _cachedAttachments = new string[ppeObjects.Length];
             _cachedPpeIds = new string[ppeObjects.Length];
+            _attachmentSources = new IPoseAttachment[ppeObjects.Length];
 
             bool hasIds = ppeIds != null && ppeIds.Length == ppeObjects.Length;
             for (int i = 0; i < ppeObjects.Length; i++)
@@ -147,6 +165,8 @@ namespace SafetyProto.Core
                     _cachedAttachments[i] = string.Empty;
                     continue;
                 }
+
+                _attachmentSources[i] = obj.GetComponentInChildren<IPoseAttachment>(includeInactive: true);
 
                 if (headTransform != null && obj.IsChildOf(headTransform)) _cachedAttachments[i] = "hmd";
                 else if (leftHandTransform != null && obj.IsChildOf(leftHandTransform)) _cachedAttachments[i] = "leftHand";
