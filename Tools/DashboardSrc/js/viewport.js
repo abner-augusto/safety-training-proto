@@ -236,8 +236,12 @@
         let obj = type === 'ppe' ? this._objects.ppe[id] : this._objects[id];
         if (!obj) obj = this._createObject(id, type);
 
+        /* Unity (canhoto) → Three (destro): espelhamos Z na posição, então a
+           rotação precisa da MESMA conjugação por diag(1,1,-1) — ou seja
+           (-qx,-qy, qz, qw). Espelhar outro eixo aqui inverteria pitch e roll
+           mantendo o yaw correto (o olhar apontava para cima ao olhar para baixo). */
         obj.position.set(pose.px, pose.py, -pose.pz);
-        obj.quaternion.set(-pose.qx, pose.qy, pose.qz, -pose.qw);
+        obj.quaternion.set(-pose.qx, -pose.qy, pose.qz, pose.qw);
 
         if (type === 'ppe') {
           /* semântica, não identidade: solto = obrigação pendente (âmbar);
