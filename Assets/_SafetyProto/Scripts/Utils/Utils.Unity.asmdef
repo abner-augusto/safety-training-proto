@@ -5,7 +5,8 @@
     "SafetyProto.EventBus.Core",
     "SafetyProto.Domain.Core",
     "Oculus.Interaction",
-    "Oculus.Interaction.OVR"
+    "Oculus.Interaction.OVR",
+    "Unity.InputSystem"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

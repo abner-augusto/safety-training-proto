@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace SafetyProto.Utils
 {
@@ -9,7 +10,7 @@ namespace SafetyProto.Utils
     {
         [SerializeField] private int width = 3840;
         [SerializeField] private int height = 2160;
-        [SerializeField] private KeyCode captureKey = KeyCode.F12;
+        [SerializeField] private Key captureKey = Key.F12;
         [SerializeField] private string outputFolder = "Screenshots";
         [SerializeField] private string filePrefix = "screenshot";
 
@@ -19,7 +20,14 @@ namespace SafetyProto.Utils
 
         private void Update()
         {
-            if (Input.GetKeyDown(captureKey))
+            // Input System, not the legacy Input class: the project runs with
+            // activeInputHandler = "Input System Package (New)", under which
+            // Input.GetKeyDown throws. Keyboard.current is null in a headset
+            // session with no keyboard attached, hence the guard.
+            var keyboard = Keyboard.current;
+            if (keyboard == null || captureKey == Key.None) return;
+
+            if (keyboard[captureKey].wasPressedThisFrame)
                 Capture();
         }
 
