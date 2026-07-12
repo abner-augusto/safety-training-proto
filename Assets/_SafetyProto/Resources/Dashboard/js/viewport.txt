@@ -185,7 +185,17 @@
         if (p.leftHand)  this._updateObject('leftHand',  p.leftHand,  'hand');
         if (p.rightHand) this._updateObject('rightHand', p.rightHand, 'hand');
         if (Array.isArray(p.ppe)) {
-          p.ppe.forEach(item => this._updateObject(item.id, item.pose, 'ppe', item.attachedTo));
+          const present = new Set();
+          p.ppe.forEach(item => {
+            present.add(String(item.id));
+            this._updateObject(item.id, item.pose, 'ppe', item.attachedTo);
+          });
+          /* EPI que saiu do frame saiu da cena (hideWhenEquipped some ao ser vestido):
+             sem esta poda a malha ficaria congelada para sempre no slot. Volta sozinha
+             se o item reaparecer — _updateObject recria o que não existe. */
+          Object.keys(this._objects.ppe).forEach(id => {
+            if (!present.has(id)) this._removePpe(id);
+          });
         }
         this._updateBody();
         this._dirty = true;
@@ -204,11 +214,7 @@
 
       /** Remove EPIs, esqueleto e interações — chamado no SessionReset. */
       clearSession() {
-        Object.values(this._objects.ppe).forEach(mesh => {
-          this._scene.remove(mesh);
-          const ld = this._labels.get(mesh);
-          if (ld) { ld.el.remove(); this._labels.delete(mesh); }
-        });
+        Object.keys(this._objects.ppe).forEach(id => this._removePpe(id));
         this._objects.ppe = {};
         this._interactions.forEach(it => this._removeInteraction(it));
         this._interactions = [];
@@ -330,6 +336,18 @@
         else if (headY <= 1.42) { key = 'postureLowering'; low = true; }
         this._postureValue.textContent = `${t(key)} · ${headY.toFixed(2)} m`;
         this._postureValue.classList.toggle('low', low);
+      }
+
+      /* Geometria e material do EPI são compartilhados entre as malhas — tirar da cena
+         e soltar o rótulo, nunca dar dispose neles. */
+      _removePpe(id) {
+        const mesh = this._objects.ppe[id];
+        if (!mesh) return;
+        this._scene.remove(mesh);
+        const ld = this._labels.get(mesh);
+        if (ld) { ld.el.remove(); this._labels.delete(mesh); }
+        delete this._objects.ppe[id];
+        this._dirty = true;
       }
 
       _removeInteraction(it) {
