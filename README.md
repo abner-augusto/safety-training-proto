@@ -157,6 +157,32 @@ links source files from `Assets/_SafetyProto/Scripts/` via `<Compile Include>`
 so the same `.cs` files participate in both the Unity compilation and the
 .NET assembly.
 
+### Authoring GUI (Avalonia)
+
+The desktop scenario editor is an Avalonia app (Avalonia 11.3, `net10.0`). It is
+not part of `SafetyProto.sln`, so build and run it by project path:
+
+```bash
+# From repo root — opens the authoring window
+dotnet run --project Tools/AuthoringApp.Gui
+```
+
+To produce a standalone executable that runs without a .NET install — handy for
+handing the editor to someone who is not set up for development:
+
+```bash
+dotnet publish Tools/AuthoringApp.Gui -c Release -r win-x64 --self-contained -o dist/AuthoringApp
+
+# Result: dist/AuthoringApp/SafetyProto.AuthoringApp.Gui.exe (single file, ~48 MB)
+```
+
+The runtime identifier is required. Swap `win-x64` for `linux-x64` or `osx-arm64`
+to target another platform. Single-file packing and compression are already set
+in the `.csproj`, so no extra `-p:` flags are needed. `dist/` is gitignored.
+
+The app references `SafetyProto.Shared`, so it validates scenarios with the same
+`ScenarioLoader`/`ScenarioValidator` the game and CLI harness use.
+
 ## Running tests
 
 ### NUnit tests (Edit Mode)
@@ -285,7 +311,7 @@ Tasks are JSON records and come in two kinds:
 
 Quick start:
 
-1. Use `Tools/AuthoringApp.Gui` or edit `Assets/_SafetyProto/Resources/Scenarios/default.json`.
+1. Open the authoring GUI with `dotnet run --project Tools/AuthoringApp.Gui`, or edit `Assets/_SafetyProto/Resources/Scenarios/default.json` by hand.
 2. For an action task, set `actionId` + scoring; for an equip-set task, leave `actionId` empty and set `requiredPPE`.
 3. Add the task to a scenario group and validate with the authoring app/CLI harness.
 4. Action tasks only: make sure the action exists in `Assets/_SafetyProto/Resources/Actions/actions.json` and scene emitters use the same string id.

@@ -8,6 +8,21 @@ Training content now lives in JSON, not ScriptableObjects. Runtime loads:
 
 Use `Tools/AuthoringApp.Gui` to create/edit scenarios. The GUI edits groups and tasks, chooses `actionId` from the capability catalog dropdown, validates via shared `ScenarioLoader`/`ScenarioValidator`, saves JSON, and deploys the override to the headset via `adb push`.
 
+Open it from the repo root:
+
+```bash
+dotnet run --project Tools/AuthoringApp.Gui
+```
+
+Or build a standalone executable, so the editor can be handed to someone without a .NET SDK:
+
+```bash
+dotnet publish Tools/AuthoringApp.Gui -c Release -r win-x64 --self-contained -o dist/AuthoringApp
+# → dist/AuthoringApp/SafetyProto.AuthoringApp.Gui.exe
+```
+
+The GUI is an Avalonia desktop app targeting `net10.0`. It is not included in `SafetyProto.sln`, so `dotnet build SafetyProto.sln` does not build it — always launch or publish it by project path.
+
 The GUI can assign existing `actionId`s to tasks. It does not create brand-new logical actions in `actions.json`; add new implemented actions to the action catalog/build first, then refresh the capability catalog.
 
 ## The Two Kinds Of Task
