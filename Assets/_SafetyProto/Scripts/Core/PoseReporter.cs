@@ -70,21 +70,38 @@ namespace SafetyProto.Core
                 return;
             }
 
-            var poses = poseChannel.PpeObjects;
-            if (poses == null || poses.Length != ppeObjects.Length)
-            {
-                poses = new PpeObjectPose[ppeObjects.Length];
-            }
-
+            // Um EPI com hideWhenEquipped sai da cena ao ser vestido (PPESnapSlot faz
+            // SetActive(false)), mas o Transform continua vivo — se ele seguisse no frame de
+            // pose, o painel desenharia uma caixa fantasma parada no slot. Objetos inativos
+            // ficam fora do frame; o painel continua sabendo que o EPI está vestido pelo
+            // evento PpeChanged, que é independente do stream de pose.
+            int activeCount = 0;
             for (int i = 0; i < ppeObjects.Length; i++)
             {
                 var t = ppeObjects[i];
+                if (t == null || t.gameObject.activeInHierarchy)
+                    activeCount++;
+            }
+
+            var poses = poseChannel.PpeObjects;
+            if (poses == null || poses.Length != activeCount)
+            {
+                poses = new PpeObjectPose[activeCount];
+            }
+
+            int w = 0;
+            for (int i = 0; i < ppeObjects.Length; i++)
+            {
+                var t = ppeObjects[i];
+                if (t != null && !t.gameObject.activeInHierarchy)
+                    continue;
+
                 var id = (_cachedPpeIds != null && _cachedPpeIds.Length > i) ? _cachedPpeIds[i] : $"ppe-{i}";
                 var attachment = (_cachedAttachments != null && _cachedAttachments.Length > i) ? _cachedAttachments[i] : string.Empty;
 
                 if (t != null)
                 {
-                    poses[i] = new PpeObjectPose
+                    poses[w++] = new PpeObjectPose
                     {
                         Id = id,
                         Position = useWorldSpace ? t.position : t.localPosition,
@@ -94,7 +111,7 @@ namespace SafetyProto.Core
                 }
                 else
                 {
-                    poses[i] = new PpeObjectPose
+                    poses[w++] = new PpeObjectPose
                     {
                         Id = id,
                         Rotation = Quaternion.identity,
