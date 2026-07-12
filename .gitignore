@@ -37,6 +37,13 @@ repomix-output.*
 scene_dump_*.md
 
 # ============================================================
+# LOCAL CAPTURES
+# ============================================================
+# Screenshots taken from the running apps (authoring GUI, dashboard) for
+# write-ups and slides. Kept local — regenerate rather than commit.
+/screenshots/
+
+# ============================================================
 # SENSITIVE / LARGE DATA
 # ============================================================
 /[Mm]emoryCaptures/
