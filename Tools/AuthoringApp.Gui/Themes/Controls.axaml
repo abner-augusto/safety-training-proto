@@ -1,0 +1,86 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!--
+    Chrome that the Fluent resource keys in Tokens.axaml can't reach: the window surface,
+    the type ramp, and the few controls whose stock themes hardcode their colours instead
+    of resolving a key (ListBoxItem, GridSplitter, TabControl).
+
+    Nothing here retemplates a control — these are property setters over Fluent's own
+    templates, so hover/focus/disabled behaviour stays stock.
+  -->
+
+  <!-- Window: the dashboard's page surface, and Inter as the UI face (registered by
+       Program.WithInterFont). Foreground inherits down to every TextBlock. -->
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{DynamicResource SpBg}"/>
+    <Setter Property="Foreground" Value="{DynamicResource SpText}"/>
+    <Setter Property="FontFamily" Value="avares://Avalonia.Fonts.Inter/Assets#Inter"/>
+    <Setter Property="FontSize" Value="13"/>
+  </Style>
+
+  <Style Selector="Button">
+    <Setter Property="CornerRadius" Value="{DynamicResource SpRadius}"/>
+  </Style>
+
+  <Style Selector="TextBox">
+    <Setter Property="CornerRadius" Value="{DynamicResource SpRadius}"/>
+  </Style>
+
+  <Style Selector="ComboBox">
+    <Setter Property="CornerRadius" Value="{DynamicResource SpRadius}"/>
+  </Style>
+
+  <!-- Panels: the raised card surface the dashboard uses for its instrument boxes. -->
+  <Style Selector="Border.panel">
+    <Setter Property="Background" Value="{DynamicResource SpSidebar}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SpBorder}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource SpRadius}"/>
+  </Style>
+
+  <!-- Field captions above each input. -->
+  <Style Selector="TextBlock.label">
+    <Setter Property="Foreground" Value="{DynamicResource SpTextDim}"/>
+    <Setter Property="FontSize" Value="12"/>
+  </Style>
+
+  <!-- Section headings ("Grupo", "Tarefa", "Ação"). -->
+  <Style Selector="TextBlock.heading">
+    <Setter Property="Foreground" Value="{DynamicResource SpText}"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="FontSize" Value="15"/>
+  </Style>
+
+  <!-- ListBoxItem resolves the UWP base brushes rather than per-control keys; those are
+       redefined in Tokens.axaml, but the corner radius and rest state are set here. -->
+  <Style Selector="ListBoxItem">
+    <Setter Property="Foreground" Value="{DynamicResource SpText}"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource SpRadius}"/>
+  </Style>
+  <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource SpHover}"/>
+  </Style>
+  <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource SpAccentWeak}"/>
+  </Style>
+
+  <Style Selector="TreeViewItem">
+    <Setter Property="CornerRadius" Value="{DynamicResource SpRadius}"/>
+  </Style>
+
+  <Style Selector="TabControl">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="Padding" Value="0,8,0,0"/>
+  </Style>
+
+  <Style Selector="TabItem">
+    <Setter Property="FontSize" Value="13"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="MinHeight" Value="36"/>
+    <Setter Property="Padding" Value="10,0"/>
+  </Style>
+
+  <Style Selector="GridSplitter">
+    <Setter Property="Background" Value="{DynamicResource SpBorder}"/>
+  </Style>
+</Styles>
