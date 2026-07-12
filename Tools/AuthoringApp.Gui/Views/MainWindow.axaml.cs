@@ -1,9 +1,12 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
+using Avalonia.Styling;
+using SafetyProto.AuthoringApp.Gui.Themes;
 using SafetyProto.AuthoringApp.Gui.ViewModels;
 
 namespace SafetyProto.AuthoringApp.Gui.Views;
@@ -13,11 +16,41 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        SyncThemeButton();
     }
 
     private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 
     private MainWindowViewModel? Vm => DataContext as MainWindowViewModel;
+
+    /// <summary>
+    /// Flips the app between the light and dark variants and remembers the choice.
+    /// The palette is bound with DynamicResource throughout, so the window repaints
+    /// in place — no restart, no reload of the open scenario.
+    /// </summary>
+    private void OnToggleTheme(object? sender, RoutedEventArgs e)
+    {
+        if (Application.Current is not { } app) return;
+
+        var next = app.ActualThemeVariant == ThemeVariant.Dark
+            ? ThemeVariant.Light
+            : ThemeVariant.Dark;
+
+        app.RequestedThemeVariant = next;
+        ThemePreference.Save(next);
+        SyncThemeButton();
+    }
+
+    /// <summary>Labels the toggle with the variant currently on screen.</summary>
+    private void SyncThemeButton()
+    {
+        var button = this.FindControl<Button>("ThemeButton");
+        if (button == null) return;
+
+        button.Content = Application.Current?.ActualThemeVariant == ThemeVariant.Dark
+            ? "Tema: escuro"
+            : "Tema: claro";
+    }
 
     private void OnNew(object? sender, RoutedEventArgs e) => Vm?.NewScenario();
 

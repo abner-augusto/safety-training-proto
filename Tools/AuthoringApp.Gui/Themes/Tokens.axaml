@@ -1,0 +1,224 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!--
+    Design tokens shared with the evaluator dashboard.
+
+    Values mirror the CSS custom properties in Tools/DashboardSrc/style.css one for one
+    (:root = Dark, html[data-theme="light"] = Light). Keep the two in sync: the dashboard
+    is the source of truth for the palette, this file is its Avalonia transcription.
+    CSS rgba() alphas are transcribed as #AARRGGBB.
+
+    Two groups live here:
+      Sp*           — our own tokens, consumed by Controls.axaml and MainWindow.axaml.
+      Fluent keys   — the stock keys Avalonia's FluentTheme resolves internally
+                      (ButtonBackground, TextControl*, TreeViewItem*, …). Redefining them
+                      repaints the built-in control themes without retemplating anything.
+  -->
+  <ResourceDictionary.ThemeDictionaries>
+
+    <!-- ══ Light ══════════════════════════════════════════════════ -->
+    <ResourceDictionary x:Key="Light">
+      <Color x:Key="SpBgColor">#E9EDF3</Color>
+      <Color x:Key="SpSidebarColor">#FFFFFF</Color>
+      <Color x:Key="SpRailColor">#DEE5EE</Color>
+      <Color x:Key="SpElevColor">#F2F5FA</Color>
+      <Color x:Key="SpSurfaceColor">#0817222E</Color>
+      <Color x:Key="SpHoverColor">#0F17222E</Color>
+      <Color x:Key="SpBorderColor">#2617222E</Color>
+      <Color x:Key="SpBorderStrongColor">#5717222E</Color>
+      <Color x:Key="SpTextColor">#17222E</Color>
+      <Color x:Key="SpTextMutedColor">#46566A</Color>
+      <Color x:Key="SpTextDimColor">#6B7A8D</Color>
+      <Color x:Key="SpAccentColor">#2264C4</Color>
+      <Color x:Key="SpAccentWeakColor">#172264C4</Color>
+      <Color x:Key="SpOnAccentColor">#FFFFFF</Color>
+      <Color x:Key="SpGreenColor">#1A7C4D</Color>
+      <Color x:Key="SpOrangeColor">#96660A</Color>
+      <Color x:Key="SpRedColor">#B8302F</Color>
+
+      <!-- Fluent derives its accent ramp from these; keep them on the dashboard accent. -->
+      <Color x:Key="SystemAccentColor">#2264C4</Color>
+      <Color x:Key="SystemAccentColorLight1">#3D7AD4</Color>
+      <Color x:Key="SystemAccentColorLight2">#5B92E0</Color>
+      <Color x:Key="SystemAccentColorLight3">#83AFEA</Color>
+      <Color x:Key="SystemAccentColorDark1">#1B54A8</Color>
+      <Color x:Key="SystemAccentColorDark2">#15448B</Color>
+      <Color x:Key="SystemAccentColorDark3">#0F336B</Color>
+    </ResourceDictionary>
+
+    <!-- ══ Dark ═══════════════════════════════════════════════════ -->
+    <ResourceDictionary x:Key="Dark">
+      <Color x:Key="SpBgColor">#0E1217</Color>
+      <Color x:Key="SpSidebarColor">#151B22</Color>
+      <Color x:Key="SpRailColor">#0A0D11</Color>
+      <Color x:Key="SpElevColor">#1B232C</Color>
+      <Color x:Key="SpSurfaceColor">#06FFFFFF</Color>
+      <Color x:Key="SpHoverColor">#0DFFFFFF</Color>
+      <Color x:Key="SpBorderColor">#2994A3B8</Color>
+      <Color x:Key="SpBorderStrongColor">#4D94A3B8</Color>
+      <Color x:Key="SpTextColor">#E8ECF2</Color>
+      <Color x:Key="SpTextMutedColor">#AEB8C6</Color>
+      <Color x:Key="SpTextDimColor">#7F8B9B</Color>
+      <Color x:Key="SpAccentColor">#4D8DF0</Color>
+      <Color x:Key="SpAccentWeakColor">#244D8DF0</Color>
+      <Color x:Key="SpOnAccentColor">#08121F</Color>
+      <Color x:Key="SpGreenColor">#2FA46A</Color>
+      <Color x:Key="SpOrangeColor">#D99B25</Color>
+      <Color x:Key="SpRedColor">#D84450</Color>
+
+      <Color x:Key="SystemAccentColor">#4D8DF0</Color>
+      <Color x:Key="SystemAccentColorLight1">#6BA0F3</Color>
+      <Color x:Key="SystemAccentColorLight2">#89B4F6</Color>
+      <Color x:Key="SystemAccentColorLight3">#A7C8F9</Color>
+      <Color x:Key="SystemAccentColorDark1">#3C77CF</Color>
+      <Color x:Key="SystemAccentColorDark2">#2E60AC</Color>
+      <Color x:Key="SystemAccentColorDark3">#214A88</Color>
+    </ResourceDictionary>
+
+  </ResourceDictionary.ThemeDictionaries>
+
+  <!--
+    Brushes and the Fluent key overrides. These sit outside ThemeDictionaries and point at
+    the Color keys above with DynamicResource, so a variant switch repaints them live —
+    StaticResource would bake in whichever variant happened to load first.
+  -->
+
+  <!-- ── Sp brushes ─────────────────────────────────────────────── -->
+  <SolidColorBrush x:Key="SpBg" Color="{DynamicResource SpBgColor}"/>
+  <SolidColorBrush x:Key="SpSidebar" Color="{DynamicResource SpSidebarColor}"/>
+  <SolidColorBrush x:Key="SpRail" Color="{DynamicResource SpRailColor}"/>
+  <SolidColorBrush x:Key="SpElev" Color="{DynamicResource SpElevColor}"/>
+  <SolidColorBrush x:Key="SpSurface" Color="{DynamicResource SpSurfaceColor}"/>
+  <SolidColorBrush x:Key="SpHover" Color="{DynamicResource SpHoverColor}"/>
+  <SolidColorBrush x:Key="SpBorder" Color="{DynamicResource SpBorderColor}"/>
+  <SolidColorBrush x:Key="SpBorderStrong" Color="{DynamicResource SpBorderStrongColor}"/>
+  <SolidColorBrush x:Key="SpText" Color="{DynamicResource SpTextColor}"/>
+  <SolidColorBrush x:Key="SpTextMuted" Color="{DynamicResource SpTextMutedColor}"/>
+  <SolidColorBrush x:Key="SpTextDim" Color="{DynamicResource SpTextDimColor}"/>
+  <SolidColorBrush x:Key="SpAccent" Color="{DynamicResource SpAccentColor}"/>
+  <SolidColorBrush x:Key="SpAccentWeak" Color="{DynamicResource SpAccentWeakColor}"/>
+  <SolidColorBrush x:Key="SpOnAccent" Color="{DynamicResource SpOnAccentColor}"/>
+  <SolidColorBrush x:Key="SpGreen" Color="{DynamicResource SpGreenColor}"/>
+  <SolidColorBrush x:Key="SpOrange" Color="{DynamicResource SpOrangeColor}"/>
+  <SolidColorBrush x:Key="SpRed" Color="{DynamicResource SpRedColor}"/>
+
+  <CornerRadius x:Key="SpRadius">6</CornerRadius>
+  <CornerRadius x:Key="SpRadiusLg">10</CornerRadius>
+
+  <!-- ── Button ─────────────────────────────────────────────────── -->
+  <SolidColorBrush x:Key="ButtonBackground" Color="{DynamicResource SpElevColor}"/>
+  <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="{DynamicResource SpHoverColor}"/>
+  <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="{DynamicResource SpAccentWeakColor}"/>
+  <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="{DynamicResource SpSurfaceColor}"/>
+  <SolidColorBrush x:Key="ButtonForeground" Color="{DynamicResource SpTextColor}"/>
+  <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="{DynamicResource SpTextColor}"/>
+  <SolidColorBrush x:Key="ButtonForegroundPressed" Color="{DynamicResource SpAccentColor}"/>
+  <SolidColorBrush x:Key="ButtonForegroundDisabled" Color="{DynamicResource SpTextDimColor}"/>
+  <SolidColorBrush x:Key="ButtonBorderBrush" Color="{DynamicResource SpBorderColor}"/>
+  <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="{DynamicResource SpBorderStrongColor}"/>
+  <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="{DynamicResource SpAccentColor}"/>
+  <SolidColorBrush x:Key="ButtonBorderBrushDisabled" Color="{DynamicResource SpBorderColor}"/>
+
+  <!-- ── TextBox ────────────────────────────────────────────────── -->
+  <SolidColorBrush x:Key="TextControlBackground" Color="{DynamicResource SpSidebarColor}"/>
+  <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="{DynamicResource SpSidebarColor}"/>
+  <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="{DynamicResource SpSidebarColor}"/>
+  <SolidColorBrush x:Key="TextControlBackgroundDisabled" Color="{DynamicResource SpSurfaceColor}"/>
+  <SolidColorBrush x:Key="TextControlBorderBrush" Color="{DynamicResource SpBorderColor}"/>
+  <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="{DynamicResource SpBorderStrongColor}"/>
+  <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="{DynamicResource SpAccentColor}"/>
+  <SolidColorBrush x:Key="TextControlBorderBrushDisabled" Color="{DynamicResource SpBorderColor}"/>
+  <SolidColorBrush x:Key="TextControlForeground" Color="{DynamicResource SpTextColor}"/>
+  <SolidColorBrush x:Key="TextControlForegroundPointerOver" Color="{DynamicResource SpTextColor}"/>
+  <SolidColorBrush x:Key="TextControlForegroundFocused" Color="{DynamicResource SpTextColor}"/>
+  <SolidColorBrush x:Key="TextControlForegroundDisabled" Color="{DynamicResource SpTextDimColor}"/>
+  <SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="{DynamicResource SpTextDimColor}"/>
+  <SolidColorBrush x:Key="TextControlPlaceholderForegroundPointerOver" Color="{DynamicResource SpTextDimColor}"/>
+  <SolidColorBrush x:Key="TextControlPlaceholderForegroundFocused" Color="{DynamicResource SpTextDimColor}"/>
+  <SolidColorBrush x:Key="TextControlPlaceholderForegroundDisabled" Color="{DynamicResource SpTextDimColor}"/>
+
+  <!-- ── ComboBox ───────────────────────────────────────────────── -->
+  <SolidColorBrush x:Key="ComboBoxBackground" Color="{DynamicResource SpSidebarColor}"/>
+  <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="{DynamicResource SpElevColor}"/>
+  <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="{DynamicResource SpAccentWeakColor}"/>
+  <SolidColorBrush x:Key="ComboBoxBackgroundDisabled" Color="{DynamicResource SpSurfaceColor}"/>
+  <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="{DynamicResource SpBorderColor}"/>
+  <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="{DynamicResource SpBorderStrongColor}"/>
+  <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="{DynamicResource SpAccentColor}"/>
+  <SolidColorBrush x:Key="ComboBoxBorderBrushDisabled" Color="{DynamicResource SpBorderColor}"/>
+  <SolidColorBrush x:Key="ComboBoxForeground" Color="{DynamicResource SpTextColor}"/>
+  <SolidColorBrush x:Key="ComboBoxForegroundFocused" Color="{DynamicResource SpTextColor}"/>
+  <SolidColorBrush x:Key="ComboBoxForegroundDisabled" Color="{DynamicResource SpTextDimColor}"/>
+  <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="{DynamicResource SpSidebarColor}"/>
+  <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="{DynamicResource SpBorderColor}"/>
+  <SolidColorBrush x:Key="ComboBoxDropDownGlyphForeground" Color="{DynamicResource SpTextDimColor}"/>
+  <SolidColorBrush x:Key="ComboBoxItemBackgroundPointerOver" Color="{DynamicResource SpHoverColor}"/>
+  <SolidColorBrush x:Key="ComboBoxItemBackgroundSelected" Color="{DynamicResource SpAccentWeakColor}"/>
+  <SolidColorBrush x:Key="ComboBoxItemBackgroundSelectedPointerOver" Color="{DynamicResource SpAccentWeakColor}"/>
+  <SolidColorBrush x:Key="ComboBoxItemForeground" Color="{DynamicResource SpTextColor}"/>
+  <SolidColorBrush x:Key="ComboBoxItemForegroundSelected" Color="{DynamicResource SpAccentColor}"/>
+
+  <!-- ── CheckBox ───────────────────────────────────────────────── -->
+  <SolidColorBrush x:Key="CheckBoxForegroundUnchecked" Color="{DynamicResource SpTextColor}"/>
+  <SolidColorBrush x:Key="CheckBoxForegroundChecked" Color="{DynamicResource SpTextColor}"/>
+  <SolidColorBrush x:Key="CheckBoxForegroundUncheckedPointerOver" Color="{DynamicResource SpTextColor}"/>
+  <SolidColorBrush x:Key="CheckBoxForegroundCheckedPointerOver" Color="{DynamicResource SpTextColor}"/>
+  <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillUnchecked" Color="Transparent"/>
+  <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillUncheckedPointerOver" Color="{DynamicResource SpHoverColor}"/>
+  <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillChecked" Color="{DynamicResource SpAccentColor}"/>
+  <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPointerOver" Color="{DynamicResource SpAccentColor}"/>
+  <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUnchecked" Color="{DynamicResource SpBorderStrongColor}"/>
+  <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUncheckedPointerOver" Color="{DynamicResource SpAccentColor}"/>
+  <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeChecked" Color="{DynamicResource SpAccentColor}"/>
+  <SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundChecked" Color="{DynamicResource SpOnAccentColor}"/>
+  <SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundCheckedPointerOver" Color="{DynamicResource SpOnAccentColor}"/>
+
+  <!-- ── TreeViewItem ───────────────────────────────────────────── -->
+  <SolidColorBrush x:Key="TreeViewItemBackground" Color="Transparent"/>
+  <SolidColorBrush x:Key="TreeViewItemBackgroundPointerOver" Color="{DynamicResource SpHoverColor}"/>
+  <SolidColorBrush x:Key="TreeViewItemBackgroundSelected" Color="{DynamicResource SpAccentWeakColor}"/>
+  <SolidColorBrush x:Key="TreeViewItemBackgroundSelectedPointerOver" Color="{DynamicResource SpAccentWeakColor}"/>
+  <SolidColorBrush x:Key="TreeViewItemForeground" Color="{DynamicResource SpTextColor}"/>
+  <SolidColorBrush x:Key="TreeViewItemForegroundPointerOver" Color="{DynamicResource SpTextColor}"/>
+  <SolidColorBrush x:Key="TreeViewItemForegroundSelected" Color="{DynamicResource SpAccentColor}"/>
+  <SolidColorBrush x:Key="TreeViewItemForegroundSelectedPointerOver" Color="{DynamicResource SpAccentColor}"/>
+
+  <!-- ── TabItem ────────────────────────────────────────────────── -->
+  <SolidColorBrush x:Key="TabItemHeaderBackgroundUnselected" Color="Transparent"/>
+  <SolidColorBrush x:Key="TabItemHeaderBackgroundUnselectedPointerOver" Color="{DynamicResource SpHoverColor}"/>
+  <SolidColorBrush x:Key="TabItemHeaderBackgroundSelected" Color="Transparent"/>
+  <SolidColorBrush x:Key="TabItemHeaderBackgroundSelectedPointerOver" Color="{DynamicResource SpHoverColor}"/>
+  <SolidColorBrush x:Key="TabItemHeaderForegroundUnselected" Color="{DynamicResource SpTextDimColor}"/>
+  <SolidColorBrush x:Key="TabItemHeaderForegroundUnselectedPointerOver" Color="{DynamicResource SpTextMutedColor}"/>
+  <SolidColorBrush x:Key="TabItemHeaderForegroundSelected" Color="{DynamicResource SpAccentColor}"/>
+  <SolidColorBrush x:Key="TabItemHeaderForegroundSelectedPointerOver" Color="{DynamicResource SpAccentColor}"/>
+  <SolidColorBrush x:Key="TabItemHeaderSelectedPipeFill" Color="{DynamicResource SpAccentColor}"/>
+
+  <!-- ── ScrollBar ──────────────────────────────────────────────── -->
+  <SolidColorBrush x:Key="ScrollBarBackground" Color="Transparent"/>
+  <SolidColorBrush x:Key="ScrollBarBackgroundPointerOver" Color="{DynamicResource SpSurfaceColor}"/>
+  <SolidColorBrush x:Key="ScrollBarForeground" Color="{DynamicResource SpBorderStrongColor}"/>
+  <SolidColorBrush x:Key="ScrollBarThumbFillPointerOver" Color="{DynamicResource SpAccentColor}"/>
+  <SolidColorBrush x:Key="ScrollBarThumbFillPressed" Color="{DynamicResource SpAccentColor}"/>
+  <SolidColorBrush x:Key="ScrollBarTrackFill" Color="Transparent"/>
+  <SolidColorBrush x:Key="ScrollBarTrackStroke" Color="Transparent"/>
+
+  <!--
+    UWP base layer. ListBoxItem and a few other stock themes resolve these rather than
+    per-control keys, so the list rows in the Ações tab only follow the palette if we
+    redefine them here.
+  -->
+  <SolidColorBrush x:Key="SystemControlHighlightListLowBrush" Color="{DynamicResource SpHoverColor}"/>
+  <SolidColorBrush x:Key="SystemControlHighlightListMediumBrush" Color="{DynamicResource SpAccentWeakColor}"/>
+  <SolidColorBrush x:Key="SystemControlHighlightListAccentLowBrush" Color="{DynamicResource SpAccentWeakColor}"/>
+  <SolidColorBrush x:Key="SystemControlHighlightListAccentMediumBrush" Color="{DynamicResource SpAccentWeakColor}"/>
+  <SolidColorBrush x:Key="SystemControlHighlightListAccentHighBrush" Color="{DynamicResource SpAccentWeakColor}"/>
+  <SolidColorBrush x:Key="SystemControlHighlightAltBaseHighBrush" Color="{DynamicResource SpTextColor}"/>
+  <SolidColorBrush x:Key="SystemControlForegroundBaseHighBrush" Color="{DynamicResource SpTextColor}"/>
+  <SolidColorBrush x:Key="SystemControlForegroundBaseMediumBrush" Color="{DynamicResource SpTextMutedColor}"/>
+  <SolidColorBrush x:Key="SystemControlBackgroundAltHighBrush" Color="{DynamicResource SpSidebarColor}"/>
+  <SolidColorBrush x:Key="SystemControlTransientBackgroundBrush" Color="{DynamicResource SpSidebarColor}"/>
+  <SolidColorBrush x:Key="SystemControlTransientBorderBrush" Color="{DynamicResource SpBorderColor}"/>
+  <SolidColorBrush x:Key="SystemRegionBrush" Color="{DynamicResource SpBgColor}"/>
+  <SolidColorBrush x:Key="SystemControlErrorTextForegroundBrush" Color="{DynamicResource SpRedColor}"/>
+</ResourceDictionary>
