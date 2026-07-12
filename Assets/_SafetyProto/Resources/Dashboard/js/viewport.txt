@@ -3,6 +3,11 @@
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { t } from './i18n.js';
 
+    /* Reenquadramento automático */
+    const FRAME_EDGE = 0.92;   /* NDC: dispara pouco ANTES de encostar na borda */
+    const FRAME_DWELL_MS = 800;  /* tempo fora do quadro antes de mover a câmera */
+    const FRAME_GLIDE_MS = 600;  /* duração do deslize */
+
     /* ================================================================
      * EvaluatorViewport — cena Three.js do instrumento de campo.
      * Cores vêm dos tokens CSS (setTheme). O avatar é um esqueleto
@@ -113,6 +118,11 @@
         /* Suavização da pose (dados chegam a 10 Hz) */
         this._smooth = { head: null, yaw: 0 };
 
+        /* Reenquadramento automático: se o participante sai do campo de visão e
+           FICA fora por DWELL ms, a câmera desliza atrás dele. A carência evita
+           puxar a câmera de quem só encostou na borda e já voltou. */
+        this._follow = { offSince: 0, anim: null };
+
         /* Instrumentos DOM */
         this._calloutEl    = document.getElementById('vp-callout');
         this._postureChip  = document.getElementById('posture-chip');
@@ -220,6 +230,10 @@
         this._interactions = [];
         this._skel.visible = this._plumb.visible = this._gaze.visible = this._disc.visible = false;
         this._smooth.head = null;
+        /* Um reset no meio do deslize não pode deixar a órbita travada. */
+        this._follow.anim = null;
+        this._follow.offSince = 0;
+        this._controls.enabled = true;
         if (this._postureChip) this._postureChip.style.display = 'none';
         this._calloutEl?.classList.remove('on');
         this._dirty = true;
@@ -326,6 +340,66 @@
         this._disc.visible = true;
 
         this._updatePosture(headY);
+        this._trackFraming(H);
+      }
+
+      /* Só conta o tempo fora do quadro; voltar a entrar zera a carência, de modo
+         que quem apenas raspa a borda nunca arrasta a câmera atrás de si. */
+      _trackFraming(H) {
+        if (this._follow.anim) return;                 /* já reenquadrando */
+        /* Frames de pose continuam chegando com a aba oculta, mas o rAF para: armar aqui
+           desligaria a órbita sem ninguém para religá-la. Rearma quando a aba voltar. */
+        if (document.hidden) { this._follow.offSince = 0; return; }
+
+        const p = H.clone().project(this._camera);
+        const off = p.z > 1 ||                          /* atrás da câmera */
+                    Math.abs(p.x) > FRAME_EDGE ||
+                    Math.abs(p.y) > FRAME_EDGE;
+
+        if (!off) { this._follow.offSince = 0; return; }
+
+        const now = performance.now();
+        if (!this._follow.offSince) { this._follow.offSince = now; return; }
+        if (now - this._follow.offSince >= FRAME_DWELL_MS) this._startFollow(H);
+      }
+
+      /* Alvo e câmera andam o MESMO delta: o ângulo de órbita e o zoom do avaliador
+         sobrevivem ao deslize — a vista escorrega de lado, não gira em torno da cena. */
+      _startFollow(H) {
+        const toTarget = new THREE.Vector3(H.x, Math.max(H.y - 0.4, 0.2), H.z);
+        this._follow.anim = {
+          elapsed: 0,
+          last: performance.now(),
+          fromTarget: this._controls.target.clone(),
+          fromCam: this._camera.position.clone(),
+          delta: toTarget.sub(this._controls.target),
+        };
+        this._controls.enabled = false;   /* input e damping não brigam com o deslize */
+      }
+
+      /** @returns {boolean} true enquanto um deslize estiver em curso. */
+      _stepFollow() {
+        const a = this._follow.anim;
+        if (!a) return false;
+
+        /* Tempo medido pelos passos, não pelo relógio: se a aba for ocultada no meio do
+           deslize o rAF congela, e um dt cru faria a câmera saltar direto para o fim. */
+        const now = performance.now();
+        a.elapsed += Math.min(now - a.last, 50);
+        a.last = now;
+
+        const k = Math.min(a.elapsed / FRAME_GLIDE_MS, 1);
+        const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;   /* easeInOutQuad */
+        this._controls.target.copy(a.fromTarget).addScaledVector(a.delta, e);
+        this._camera.position.copy(a.fromCam).addScaledVector(a.delta, e);
+        this._dirty = true;
+
+        if (k >= 1) {
+          this._follow.anim = null;
+          this._follow.offSince = 0;
+          this._controls.enabled = true;
+        }
+        return true;
       }
 
       _updatePosture(headY) {
@@ -420,10 +494,11 @@
       _animate() {
         requestAnimationFrame(() => this._animate());
         if (document.hidden) return;                 /* aba oculta: nada a desenhar */
+        const following = this._stepFollow();        /* antes do update: reposiciona câmera+alvo */
         this._controls.update();                     /* damping dispara 'change' → _dirty */
         const hasFx = this._interactions.length > 0;
         if (hasFx) this._updateInteractions();
-        if (!this._dirty && !hasFx) return;          /* render on demand */
+        if (!this._dirty && !hasFx && !following) return;   /* render on demand */
         this._dirty = false;
         this._updateLabels();
         this._renderer.render(this._scene, this._camera);
