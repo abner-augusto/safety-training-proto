@@ -73,7 +73,7 @@ namespace SafetyProto.Tests.Editor
                 ScoreEvents.RaiseScoreChanged(new ScoreChangedEventArgs(newScore, delta));
             };
 
-            scoreService.AddPoints(50, "Test points");
+            scoreService.AddPoints(50, "Test points", string.Empty);
             ProcessEvents();
 
             Assert.AreEqual(50, _score);

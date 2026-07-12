@@ -29,13 +29,13 @@ namespace SafetyProto.Domain.Scoring
 
         public ScoreService() { }
 
-        public void AddPoints(int amount, string reason, string taskId = "")
+        public void AddPoints(int amount, string reason, string taskId)
         {
             if (amount <= 0) throw new ArgumentException("Amount must be positive", nameof(amount));
             ChangeScore(+amount, reason, taskId);
         }
 
-        public void SubtractPoints(int amount, string reason, string taskId = "")
+        public void SubtractPoints(int amount, string reason, string taskId)
         {
             if (amount <= 0) throw new ArgumentException("Amount must be positive", nameof(amount));
             ChangeScore(-amount, reason, taskId);

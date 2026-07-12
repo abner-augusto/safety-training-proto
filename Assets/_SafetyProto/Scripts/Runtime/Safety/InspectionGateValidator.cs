@@ -152,7 +152,7 @@ namespace SafetyProto.Runtime.Safety
             _lastPendingTaskIds.Clear();
             _lastPendingTaskIds.AddRange(pendingTasks.Select(t => t.ExpectedActionId));
 
-            ScoreService.Instance.SubtractPoints(penaltyPerAttempt, "GATE_PENALTY");
+            ScoreService.Instance.SubtractPoints(penaltyPerAttempt, "GATE_PENALTY", string.Empty);
 
             StartCoroutine(ExecuteConsequencesSequence(pendingTasks, currentGroup));
         }
