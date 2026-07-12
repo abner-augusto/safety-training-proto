@@ -194,13 +194,16 @@
       <TabItem Header="Ações">
         <Grid ColumnDefinitions="2*,Auto,3*">
           <DockPanel Grid.Column="0">
-            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="0,0,8,8">
+            <!-- Wraps: these five buttons are wider than the 2* column, and a StackPanel
+                 would spill them over the detail pane instead of breaking the line. -->
+            <WrapPanel DockPanel.Dock="Top" Orientation="Horizontal"
+                       ItemSpacing="6" LineSpacing="6" Margin="0,0,8,8">
               <Button Content="Novo catálogo" Click="OnNewActionCatalog"/>
               <Button Content="+ Ação" Click="OnAddAction"/>
               <Button Content="Remover" Click="OnRemoveAction" IsEnabled="{Binding HasActionCatalog}"/>
               <Button Content="Validar" Click="OnValidateActionCatalog" IsEnabled="{Binding HasActionCatalog}"/>
               <Button Content="Salvar ações…" Click="OnSaveActionCatalog" IsEnabled="{Binding HasActionCatalog}"/>
-            </StackPanel>
+            </WrapPanel>
 
             <TextBlock DockPanel.Dock="Top" IsVisible="{Binding !HasActionCatalog}"
                        Text="Nenhum catálogo de ações aberto.&#x0a;Use Ações… ou Novo catálogo."
