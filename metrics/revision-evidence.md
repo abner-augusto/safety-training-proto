@@ -12,12 +12,9 @@
 > root (`safety-training-proto/`) and run under Git Bash on Windows unless noted. Where a number
 > depends on the working tree, the commit is stated.
 >
-> **Refreshed to `6e8de2d` (2026-07-03).** The test-suite and coverage figures (T2/T3) were re-run at
-> HEAD after eight commits landed past the original T7 snapshot (the `ppePenalty` end-to-end fix and
-> its two tests, a zero-point-task guard, EventBus-dispatch isolation, session-reset rewire). Headless
-> test count moved 44 → 46 and total 50 → 52 (both from the two new `ScoreRuleEngineCore` tests);
-> coverage moved by < 0.2 pp. The T4/T5/T6 graph, change-impact, and codebase figures were unaffected
-> (no module edges, tracked ranges, or indicator inputs changed) and are carried forward.
+> **Refreshed for release `v1.0.0` on 2026-07-12.** Tests, coverage, structural indicators,
+> scenario files, and type counts were recomputed after the canonical-scenario unification.
+> Historical change-impact figures remain tied to the explicit ranges stated in T5.
 
 ---
 
@@ -65,13 +62,13 @@ Oculus.Interaction.OVR; `UI.Unity` → Unity.TextMeshPro. `Domain.Core` sets `no
 
 | Module | Ce | Ca | I | Ifaces | Abstract | Types | A | D |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| `EventBus.Core`     | 0 | 6 | **0.00** | 10 | 0 | 51 | 0.20 | 0.80 |
+| `EventBus.Core`     | 0 | 6 | **0.00** | 11 | 0 | 51 | 0.22 | 0.78 |
 | `Domain.Core`       | 1 | 5 | **0.17** | 0  | 0 | 22 | 0.00 | 0.83 |
 | `Utils.Unity`       | 2 | 4 | 0.33 | 0  | 0 | 9  | 0.00 | 0.67 |
-| `Runtime.Unity`     | 3 | 3 | 0.50 | 0  | 0 | 51 | 0.00 | 0.50 |
-| `UI.Unity`          | 4 | 0 | **1.00** | 0  | 0 | 25 | 0.00 | 0.00 |
-| `Networking.Unity`  | 4 | 0 | **1.00** | 0  | 0 | 24 | 0.00 | 0.00 |
-| `Editor`            | 4 | 0 | **1.00** | 0  | 0 | 12 | 0.00 | 0.00 |
+| `Runtime.Unity`     | 3 | 3 | 0.50 | 0  | 0 | 47 | 0.00 | 0.50 |
+| `UI.Unity`          | 4 | 0 | **1.00** | 0  | 0 | 24 | 0.00 | 0.00 |
+| `Networking.Unity`  | 4 | 0 | **1.00** | 0  | 0 | 23 | 0.00 | 0.00 |
+| `Editor`            | 4 | 0 | **1.00** | 0  | 0 | 14 | 0.00 | 0.00 |
 
 ### .NET (headless Tools) graph
 
@@ -101,7 +98,7 @@ strict layered DAG. `Domain.Core.noEngineReferences = true` makes engine-indepen
 invariant, not a convention.
 
 The `A`/`D` column tells a subtler, honest story: abstraction is **concentrated** in `EventBus.Core`
-(the interface hub, A = 0.20) rather than spread across modules, so the stable core modules read as
+(the interface hub, A = 0.22) rather than spread across modules, so the stable core modules read as
 concrete-but-stable (high `D`), while the leaf Unity hosts are maximally-unstable-and-concrete and so
 land *on* the main sequence (`D = 0`). For a codebase this size this is expected and not a defect
 signal; see caveats.
@@ -193,14 +190,14 @@ JSON file edit — **0 C# files changed, 0 recompilation**.
 
 ```
 wc -l on scenario files:
-  Assets/_SafetyProto/Resources/Scenarios/default.json   157 lines
-  Tools/CliHarness/scenarios/ppe_inspection.json         117 lines
+  Assets/_SafetyProto/Resources/Scenarios/default.json   canonical full scenario
   Tools/CliHarness/scenarios/ppe_equip.json               51 lines
 ```
 
-A complete authored scenario is ~**120–160 lines of JSON**; authoring or swapping one recompiles
-nothing (contrast with the pre-migration ScriptableObject flow, which required Editor asset edits and
-domain reloads).
+Physical line count depends on host metadata, scripted-input fields, and formatting and is not used as
+an effort metric. Authoring or swapping a scenario requires **zero C# source changes and no C#
+compilation**. An external persistent-data override also avoids an application rebuild; changing an
+embedded `Resources` file still requires asset import and a new application build for deployment.
 
 ---
 
@@ -212,34 +209,32 @@ assemblies live under `Scripts/../Tests/` and are likewise excluded from "source
 
 | Indicator | Value | How computed (from repo root) |
 |---|---:|---|
-| Total source files | **126** | `find Assets/_SafetyProto/Scripts -name '*.cs' -not -path '*/Editor/*' \| wc -l` |
-| Total source LoC | **15,320** | `find … -not -path '*/Editor/*' -print0 \| xargs -0 cat \| wc -l` |
-| Engine-independent files | **42** | `grep -rLE 'UnityEngine' Scripts --include=*.cs \| grep -v /Editor/ \| wc -l` |
-| Engine-independent LoC | **2,871** | `cat` of that file list `\| wc -l` |
+| Total source files | **120** | `find Assets/_SafetyProto/Scripts -name '*.cs' -not -path '*/Editor/*' \| wc -l` |
+| Total source LoC | **15,170** | `find … -not -path '*/Editor/*' -print0 \| xargs -0 cat \| wc -l` |
+| Files without textual `UnityEngine` reference | **43** | `grep -rLE 'UnityEngine' Scripts --include=*.cs \| grep -v /Editor/ \| wc -l` |
+| LoC without textual `UnityEngine` reference | **3,305** | `cat` of that file list `\| wc -l` |
 | Domain Core files | **16** | `find Scripts/Domain -name '*.cs' \| wc -l` |
-| Domain Core LoC | **2,058** | `find Scripts/Domain -name '*.cs' -print0 \| xargs -0 cat \| wc -l` |
+| Domain Core LoC | **2,172** | `find Scripts/Domain -name '*.cs' -print0 \| xargs -0 cat \| wc -l` |
 | Files importing Meta XR SDK | **17** | `grep -rlE 'using Oculus\|using Meta\.\|OVR' Scripts --include=*.cs \| wc -l` |
 | Shared-library files (CLI-linked) | **31** | `grep -cE '<Compile Include=' Tools/SafetyProto.Shared/SafetyProto.Shared.csproj` |
-| Harness-specific LoC | **771** (8 files) | `cat Tools/CliHarness/*.cs \| wc -l` |
+| Harness-specific LoC | **804** (8 files) | `cat Tools/CliHarness/*.cs \| wc -l` |
 | Typed EventBus channels | **16** | `grep -cE 'public UnityEvent<' Scripts/Core/EventBus.cs` |
 | Event payload types | **13** | 12 structs in `EventPayloads.cs` + `ActionAttemptedEvent` (separate file) |
 
 Notes / relationships (all cross-validated):
 
-- **Engine-independent (42) vs shared-library (31).** The 31 files the CLI harness compiles
-  (`SafetyProto.Shared.csproj`) are a build-verified *subset* of the 42 files that contain no
-  UnityEngine reference. The extra 11 (2871 − 2657 ≈ 214 LoC) are engine-independent event facades
-  (`SessionEvents`, `TaskEvents`, …) not needed by the CLI. Both figures agree with the per-module
-  split: Core 20/31, Domain 15/16, Runtime 4/42, UI 1/24, Networking 1/5, Utils 1/8 engine-independent.
+- **Lexical no-`UnityEngine` set (43) vs shared-library (31).** The 31 linked files are
+  build-verified by `SafetyProto.Shared.csproj`. The broader 43-file count is only a textual negative
+  match and is reported as a lexical indicator, not as equivalent build evidence.
 - **Domain Core is fully engine-independent.** The one Domain file that textually matches "UnityEngine"
   (`SessionLoggerCore.cs`) does so only in a comment; it compiles in pure .NET via the shared project,
   and `Domain.Core.asmdef` sets `noEngineReferences:true`, so all 16 files are engine-independent by a
   build-enforced invariant.
 - **Meta XR SDK reach = 17 files**, all under `Runtime`/`Utils`/scene-facing code — none in `Domain`
   (consistent with T5's finding that the 85→201 upgrade touched zero `Domain`/`Networking` code).
-- **Typed channels: 16** strongly-typed `UnityEvent<T>` dispatch channels, paralleled by **15** static
-  `Action<T>` C# events (`grep -cE 'public static event Action<' EventBus.cs`) for non-Unity subscribers
-  — two typed façades over the same event set. **13 event payload types** flow across them.
+- **Typed channels: 16** strongly-typed `UnityEvent<T>` dispatch channels. Generic non-Unity
+  subscribers are stored in `EventBus._typedSubscribers` and registered through `Subscribe<T>`;
+  **13 event payload types** flow through the protocol.
 
 ---
 
@@ -269,14 +264,13 @@ dotnet test Tools/SafetyProto.Tests/SafetyProto.Tests.csproj
 dotnet test Tools/SafetyProto.Tests/SafetyProto.Tests.csproj \
   --collect:"XPlat Code Coverage" \
   --settings Tools/SafetyProto.Tests/coverlet.runsettings
-  → Line 70.7% (804/1138), Branch 58.3% (282/484)
+  → Line 70.3% (847/1204), Branch 57.3% (290/506)
 ```
 
-Per-class coverage of the core orchestration (cobertura, same run): `ScoreRuleEngineCore` 100% L /
-93.8% B · `SafetyRuleEngineCore` 86.4% / 75.5% · `ScenarioLoader` 82.6% / 81.3% · `SessionLoggerCore`
-89.8% / 60.7% · `TaskManagerCore` 77.2% / 63.0% · `ScoreService` 51.9% / 33.3%. The overall rate is
-pulled down by authoring-only code compiled into the shared library but not exercised by these tests
-(`ActionCatalog*`, `ActionDef`, `ScenarioValidator` = 0%).
+The aggregate figure includes authoring-oriented code compiled into the shared library as well as the
+core orchestration classes. The committed Cobertura output is the source of truth for class-level
+rates; class-level percentages are not reported in the manuscript because they change with the shared
+project's linked-source set.
 
 **Drivers vs stubs** (Reviewer E). In every integration case the **driver** is the scripted test body
 (via `SessionTestHarness.WearPpe/Attempt/ReplayScript`) — the in-process equivalent of the CLI
@@ -304,14 +298,14 @@ Re-verified at HEAD by running the CLI harness on each shipped scenario:
 
 ```
 dotnet run --project Tools/CliHarness -- Tools/CliHarness/scenarios/ppe_equip.json
-  → Session summary: 5/5 tasks, score 750, 1.28s
-dotnet run --project Tools/CliHarness -- Tools/CliHarness/scenarios/ppe_inspection.json
-  → Session summary: 9/9 tasks, score 1400, 2.10s
+  → Session summary: 5/5 tasks, score 750
+dotnet run --project Tools/CliHarness -- Assets/_SafetyProto/Resources/Scenarios/default.json
+  → Session summary: 9/9 tasks, score 1400
 ```
 
 **The `1300` vs `1400` gap is a host difference, not a theoretical-vs-real one.** The CLI harness
 reaches **1400** because `ScriptedActor` drives *all nine* inspection tasks, including
-"Sinalizar Tela de Proteção" (the `flag_safety_net` collective-protection check, 100 pts). The Unity
+"Reportar Irregularidade na Tela Fachadeira" (the `flag_safety_net` collective-protection check, 100 pts). The Unity
 prototype yields **1300** on-device because that ninth task is **not yet wired as an interactive task**
 — a real player never triggers it. Same task, same 100 pts; the difference is purely which host runs it.
 
@@ -335,10 +329,10 @@ artifact. (The writing track turns this into the paper's centralized evidence ta
 
 | Claim | Evidence |
 |---|---|
-| **Engine independence** (domain logic has no Unity dependency) | `Domain.Core.asmdef` `noEngineReferences:true` (build-enforced); 16 Domain files / 2,058 LoC compile in pure .NET via `SafetyProto.Shared`; module instability `Domain.Core` I=0.17, `EventBus.Core` I=0.00, .NET `SafetyProto.Shared` I=0.00 at the stable end (T4); the Meta XR 85→201 upgrade changed **0** Domain files (T5). |
+| **Engine independence** (domain logic has no Unity dependency) | `Domain.Core.asmdef` `noEngineReferences:true` (build-enforced); 16 Domain files / 2,172 LoC compile in pure .NET via `SafetyProto.Shared`; module instability `Domain.Core` I=0.17, `EventBus.Core` I=0.00, .NET `SafetyProto.Shared` I=0.00 at the stable end (T4); the Meta XR 85→201 upgrade changed **0** Domain files (T5). |
 | **SDK isolation** (engine/SDK churn doesn't reach domain/evaluation) | Meta XR 85→201 = commit `f2a68e4`, 8 files, config/scene only, **zero C#**, zero `Domain`/`Networking` (T5); the 17 Meta-XR-importing files are all in `Runtime`/`Utils`, none in `Domain` (T6). |
-| **Testability outside Unity** | 44 tests run via `dotnet test` with no Unity Editor (T3); the same test `.cs` compile under both Unity and .NET (linked-source); full-stack `SessionIntegrationTests` drive the real domain through a real in-process bus (T2); coverage 70.6% line / 58.1% branch on the engine-independent core (T3). |
-| **Zero-modification scenario authoring** | Runtime is 100% JSON (commit `82352a7`); a scenario is a ~120–160-line JSON file, **0 C# changed, 0 recompilation** (T5); loader validates bad input without throwing (integration case 7). |
+| **Testability outside Unity** | 46 tests run via `dotnet test` with no Unity Editor (T3); the same test `.cs` compile under both Unity and .NET (linked-source); full-stack `SessionIntegrationTests` drive the real domain through a real in-process bus (T2); coverage 70.3% line / 57.3% branch on `SafetyProto.Shared` (T3). |
+| **Zero-modification scenario authoring** | Runtime is 100% JSON (commit `82352a7`); scenario edits require **0 C# changes and no C# compilation**; external overrides require no application rebuild (T5); loader validates bad input without throwing (integration case 7). |
 | **Event-driven decoupling** | 16 typed EventBus channels + 13 payload types (T6); adding `SessionLogger` touched only `Core`+`Utils`, no gameplay producers, purely by subscribing (T5); strict layered DAG, no cycles (T4). |
 | **Correct safety/scoring semantics** | Group-timeout terminality (T1 + case 6); PPE-missing penalty applied end-to-end (scoring fix + case 2); Sequential/FreeOrder/group-gating behavior (integration cases 3–5). |
 
@@ -360,5 +354,5 @@ artifact. (The writing track turns this into the paper's centralized evidence ta
   is reproducible.
 - **Unity Editor test execution was not automated** in this pass (the Unity Test Runner via MCP did
   not surface async results reliably); the reproducible runner of record is headless `dotnet test`.
-- Coverage `lines-valid=1138` counts only the instrumented `SafetyProto.Shared` production lines, not
+- Coverage `lines-valid=1204` counts only the instrumented `SafetyProto.Shared` production lines, not
   the linked test code (excluded via `coverlet.runsettings`).

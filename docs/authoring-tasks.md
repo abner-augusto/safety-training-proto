@@ -110,4 +110,4 @@ The `.NET` CLI harness drives the same engine from JSON scenarios:
 dotnet run --project Tools/CliHarness -- Tools/CliHarness/scenarios/ppe_equip.json
 ```
 
-`Tools/CliHarness/scenarios/ppe_equip.json` shows an equip-set group. `ppe_inspection.json` combines equip-set and action tasks.
+`Tools/CliHarness/scenarios/ppe_equip.json` shows a focused equip-set group. The canonical `Assets/_SafetyProto/Resources/Scenarios/default.json` combines equip-set and action tasks and includes the scripted playthrough used by the CLI harness.

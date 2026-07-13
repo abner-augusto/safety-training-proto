@@ -94,7 +94,7 @@ safety-training-proto/
 │   │   │   └── Popup/
 │   │   ├── Utils/             # SessionLogger, MonoBehaviourExtensions, helpers
 │   │   └── Editor/            # ComponentFinder, SceneDumper, CapabilityCatalogExporter
-│   ├── Scenes/
+│   ├── Scene/
 │   │   └── SafetyTraining.unity
 │   ├── Prefabs/
 │   ├── Resources/             # EventBus.asset, Scenarios/default.json, Actions/actions.json
@@ -148,14 +148,15 @@ editor, or build an APK via `File → Build Settings`.
 # From repo root
 dotnet build SafetyProto.sln
 
-# Run the CLI harness against the complete nine-task scenario
-dotnet run --project Tools/CliHarness -- Tools/CliHarness/scenarios/ppe_inspection.json
+# Run the CLI harness against the same canonical scenario loaded by Unity
+dotnet run --project Tools/CliHarness -- Assets/_SafetyProto/Resources/Scenarios/default.json
 
 # Output: transcript to stdout + session_log_*.json in harness-output/
 ```
 
-Target framework: `net10.0`. No external package dependencies — Shared uses
-only the .NET 10 BCL; CLI harness uses `System.Text.Json`. `SafetyProto.Shared`
+Target framework: `net10.0`. `SafetyProto.Shared` depends on
+`Newtonsoft.Json` 13.0.3; the CLI harness otherwise uses the .NET BCL, including
+`System.Text.Json`. `SafetyProto.Shared`
 links source files from `Assets/_SafetyProto/Scripts/` via `<Compile Include>`
 so the same `.cs` files participate in both the Unity compilation and the
 .NET assembly.
@@ -184,9 +185,33 @@ to target another platform. Single-file packing and compression are already set
 in the `.csproj`, so no extra `-p:` flags are needed. `dist/` is gitignored.
 
 The app references `SafetyProto.Shared`, so it validates scenarios with the same
-`ScenarioLoader`/`ScenarioValidator` the game and CLI harness use.
+`ScenarioLoader`/`ScenarioValidator` the game and CLI harness use. The canonical
+`default.json` includes an optional scripted playthrough consumed by the CLI and
+ignored by Unity.
 
 ## Running tests
+
+### Reproduce manuscript evidence
+
+Run the complete headless evidence workflow with one command.
+
+Windows (PowerShell 7):
+
+```bash
+pwsh ./scripts/reproduce-manuscript-evidence.ps1
+```
+
+macOS or Linux:
+
+```bash
+./scripts/reproduce-manuscript-evidence.sh
+```
+
+Both scripts run all 46 headless tests, isolate the eight integration tests,
+collect coverage, execute both CLI scenarios, validate the reported results,
+and write logs plus a summary to `artifacts/reproduction/`. The Bash runner uses
+a timestamped subdirectory for each execution. The six Unity-only test methods
+still require the Unity Test Runner.
 
 ### NUnit tests
 
@@ -194,6 +219,15 @@ Run the engine-independent suite without Unity:
 
 ```bash
 dotnet test Tools/SafetyProto.Tests/SafetyProto.Tests.csproj
+
+# Run only the eight domain-stack integration tests
+dotnet test Tools/SafetyProto.Tests/SafetyProto.Tests.csproj \
+  --filter FullyQualifiedName~SessionIntegrationTests
+
+# Produce Cobertura line and branch coverage for SafetyProto.Shared
+dotnet test Tools/SafetyProto.Tests/SafetyProto.Tests.csproj \
+  --collect:"XPlat Code Coverage" \
+  --settings Tools/SafetyProto.Tests/coverlet.runsettings
 ```
 
 This command runs 46 tests. To run all 52 test methods, including the six
@@ -213,6 +247,17 @@ Test suites:
 - `SessionIntegrationTests` (8) — full domain-stack scenarios using scripted drivers and stubs.
 
 Total: 52 test methods; 46 run headlessly and six require Unity.
+
+### EventBus benchmark
+
+Run the benchmark used for the dispatch characterisation:
+
+```bash
+dotnet run --project Tools/EventBusBench
+```
+
+Results depend on the host CPU and runtime. The reported evidence run is retained
+in `docs/bench-results.md`.
 
 ### Manual verification on device
 

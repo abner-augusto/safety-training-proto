@@ -1,5 +1,7 @@
 #nullable enable
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using SafetyProto.Core;
@@ -39,16 +41,15 @@ namespace SafetyProto.Tests.Editor
         }
 
         // ── Case 1: Happy-path parity ────────────────────────────────────────────────────────
-        // Loads the REAL PPEInspection scenario from JSON (Tools/CliHarness/scenarios/
-        // ppe_inspection.json, embedded via PpeInspectionScenarioJson) and replays its own
-        // scripted playthrough. This codifies the previously-manual "does the domain stack match
+        // Loads the canonical Unity/CLI scenario JSON and replays its scripted playthrough.
+        // This codifies the previously-manual "does the domain stack match
         // the CLI harness run?" parity check as an automated assertion: identical scenario +
         // identical script ⇒ 9/9 tasks, score 1400, and the exact lifecycle milestone order.
         [Test]
         public void HappyPath_FullPpeInspectionScenario_MatchesCliParity()
         {
-            var load = ScenarioLoader.Parse(PpeInspectionScenarioJson.Value);
-            Assert.IsTrue(load.Success, "PPEInspection scenario should load cleanly. " + load.ErrorSummary);
+            var load = ScenarioLoader.Parse(ReadCanonicalScenario());
+            Assert.IsTrue(load.Success, "Canonical scenario should load cleanly. " + load.ErrorSummary);
             var scenario = load.Scenario!;
 
             using var h = new SessionTestHarness((IReadOnlyList<ITaskGroup>)scenario.Groups,
@@ -84,6 +85,25 @@ namespace SafetyProto.Tests.Editor
 
             // No safety violations in a clean run.
             h.Bus.AssertPublishCount<SafetyViolationEventArgs>(0);
+        }
+
+        private static string ReadCanonicalScenario()
+        {
+            const string relativePath = "Assets/_SafetyProto/Resources/Scenarios/default.json";
+            var directory = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
+
+            while (directory != null)
+            {
+                var candidate = Path.Combine(directory.FullName, relativePath);
+                if (File.Exists(candidate))
+                    return File.ReadAllText(candidate);
+
+                directory = directory.Parent;
+            }
+
+            throw new FileNotFoundException(
+                $"Canonical scenario not found from '{TestContext.CurrentContext.TestDirectory}'.",
+                relativePath);
         }
 
         // ── Case 2: PPE violation ────────────────────────────────────────────────────────────

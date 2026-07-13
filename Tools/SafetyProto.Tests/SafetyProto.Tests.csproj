@@ -49,8 +49,6 @@
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\Support\EventBusAssertions.cs"      Link="Support\EventBusAssertions.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\Support\SessionTestHarness.cs"      Link="Support\SessionTestHarness.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\Support\EventTimeline.cs"           Link="Support\EventTimeline.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\Support\PpeInspectionScenarioJson.cs" Link="Support\PpeInspectionScenarioJson.cs" />
-
     <!-- Engine-independent fixtures. -->
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\SessionIntegrationTests.cs"         Link="SessionIntegrationTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\ScoreRuleEngineCoreTests.cs"        Link="ScoreRuleEngineCoreTests.cs" />

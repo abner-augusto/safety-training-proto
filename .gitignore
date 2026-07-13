@@ -198,3 +198,4 @@ dist/
 # Headless test coverage output
 Tools/SafetyProto.Tests/TestResults/
 /ProfilerCaptures
+/artifacts/
