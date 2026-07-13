@@ -1,10 +1,14 @@
 # CliHarness Sample Output
 
+> **Historical trace.** This file predates the current facade-mesh reporting task and is not the
+> evidence source for the revised manuscript. Regenerate the current 9/9-task, 1,400-point trace from
+> the canonical Unity/CLI scenario with `dotnet run --project Tools/CliHarness -- Assets/_SafetyProto/Resources/Scenarios/default.json`.
+
 **Date:** 2026-05-16
 **Runtime:** .NET 10, Release configuration
 **Command:** `dotnet run --project Tools/CliHarness --configuration Release -- <scenario.json>`
 
-## Scenario 1: PPE Inspection (`ppe_inspection.json`)
+## Scenario 1: PPE Inspection (historical pre-unification file)
 
 Two task groups: PPE selection (sequential) followed by scaffold inspection (free-order).
 All 9 tasks completed successfully.
