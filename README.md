@@ -2,7 +2,7 @@
 
 Modular VR training system for construction workers on Meta Quest 3, targeting
 compliance with Brazilian occupational safety standards NR-1, NR-18, and NR-35.
-Built in Unity 6 with Meta XR SDK, URP, and an event-driven architecture that
+Built in Unity 6 with Meta XR SDK, the Built-in Render Pipeline, and an event-driven architecture that
 lets the same business logic execute inside the Unity runtime and inside a
 standalone .NET 10 CLI harness.
 
@@ -98,13 +98,16 @@ safety-training-proto/
 │   │   └── SafetyTraining.unity
 │   ├── Prefabs/
 │   ├── Resources/             # EventBus.asset, Scenarios/default.json, Actions/actions.json
-│   └── Tests/Editor/          # NUnit edit-mode tests (28 tests)
+│   └── Tests/Editor/          # NUnit edit-mode tests (52 test methods)
 │
 ├── Tools/
 │   ├── SafetyProto.Shared/    # .NET 10 library, links Core/ + Domain/ source files
-│   ├── DashboardSrc/      # Evaluator dashboard source (index.html/style.css/app.js)
-│   └── CliHarness/            # .NET 10 console app consuming Shared.dll
-│       └── scenarios/         # JSON scenario files
+│   ├── SafetyProto.Tests/     # Headless NUnit suite and coverage configuration
+│   ├── CliHarness/            # .NET 10 console app consuming Shared.dll
+│   │   └── scenarios/         # JSON scenario files
+│   ├── EventBusBench/         # EventBus dispatch benchmark
+│   ├── AuthoringApp.Gui/      # Avalonia scenario and action editor
+│   └── DashboardSrc/          # Evaluator dashboard source
 │
 └── SafetyProto.sln            # Solution for Shared + CliHarness
 ```
@@ -135,7 +138,7 @@ the same conceptual event, avoiding `Delegate.Combine` collisions. See
 
 ### Unity side
 
-Open the project in Unity 6 with Meta XR SDK v85 installed. Target platform:
+Open the project in Unity 6000.3.14f1 with Meta XR SDK v201.0.0 installed. Target platform:
 Android (Meta Quest 3). Press Play in the `SafetyTraining` scene to run in the
 editor, or build an APK via `File → Build Settings`.
 
@@ -145,8 +148,8 @@ editor, or build an APK via `File → Build Settings`.
 # From repo root
 dotnet build SafetyProto.sln
 
-# Run the CLI harness against a scenario
-dotnet run --project Tools/CliHarness -- Tools/CliHarness/scenarios/ppe_check.json
+# Run the CLI harness against the complete nine-task scenario
+dotnet run --project Tools/CliHarness -- Tools/CliHarness/scenarios/ppe_inspection.json
 
 # Output: transcript to stdout + session_log_*.json in harness-output/
 ```
@@ -185,21 +188,31 @@ The app references `SafetyProto.Shared`, so it validates scenarios with the same
 
 ## Running tests
 
-### NUnit tests (Edit Mode)
+### NUnit tests
 
-Inside Unity: `Window → General → Test Runner → EditMode → Run All`.
+Run the engine-independent suite without Unity:
+
+```bash
+dotnet test Tools/SafetyProto.Tests/SafetyProto.Tests.csproj
+```
+
+This command runs 46 tests. To run all 52 test methods, including the six
+Unity-dependent tests, use `Window → General → Test Runner → EditMode → Run All`
+inside Unity.
 
 Test suites:
 
-- `PPEProtocolParticipationTests` (5) — PPE event delivery through `FakeEventBus`.
+- `PPEManagerEventProtocolTests` (5) — PPE event delivery through `FakeEventBus`.
 - `SafetyPatternTests` (3) — sliding-window violation detector (pure C#).
-- `SafetyRuleEngineCoreTests` (7) — rule engine under controlled scenarios.
+- `SafetyRuleEngineCoreTests` (8) — rule engine under controlled scenarios.
 - `SafetyRuleEngineDiagnosticTests` (4) — regression tests for the Delegate.Combine
   handler-collision bug fixed in the Phase-discriminator refactor.
 - `SafetyTrainingTests` (3) — integration-style smoke tests.
 - `TaskManagerCoreTests` (6) — session orchestration.
+- `ScoreRuleEngineCoreTests` (15) — scoring rules and PPE-penalty regressions.
+- `SessionIntegrationTests` (8) — full domain-stack scenarios using scripted drivers and stubs.
 
-Total: 28 tests, all green on the current main.
+Total: 52 test methods; 46 run headlessly and six require Unity.
 
 ### Manual verification on device
 
@@ -320,37 +333,23 @@ See **[docs/authoring-tasks.md](docs/authoring-tasks.md)** for the full guide �
 field reference, equip-set/order-guard details, PPE slot wiring, and worked
 examples.
 
-## Current status and limitations
+## Current status
 
 ### Implemented
 
 - Event-driven architecture with shared business logic.
-- 28 automated NUnit tests covering core rule evaluation and session
-  orchestration.
+- 52 automated NUnit test methods covering core rule evaluation, scoring,
+  session orchestration, and domain-stack integration; 46 run without Unity.
 - CLI harness with producer/observer/state-stub extensibility roles.
 - Session log format compatible between Unity and CLI harness outputs.
-- Quest APK build validated end-to-end for the PPE Check + Press Button scenario.
-
-### Known limitations
-
-- **Action identity for actors and sessions**: the `playerId` is currently
-  hardcoded to `"Player1"` on the Unity side, and `scenarioId` comes from the
-  active scene name. A `ISessionIdentityProvider` abstraction is planned to
-  allow participant codes and scenario metadata via a first-run UI popup.
-  Harness side already consumes these from the scenario JSON.
-- **Bootstrapping window**: events raised in the brief period before
-  `TrainingSessionManager.Start()` (i.e., between `TaskManager.Start()` and
-  `TrainingSessionManager.Start()`) are stamped with empty session/player/
-  scenario IDs. Visible in the first ~5 entries of Unity session logs.
-- **Delegate.Combine collisions on typed subscriptions**: resolved by the
-  Phase discriminator on lifecycle payloads, but anyone adding new subscribers
-  that register multiple handlers under the same `typeof(T)` key must use the
-  same discriminator pattern.
+- Quest APK build validated with the construction-safety scenario on Meta Quest 3.
+- Desktop authoring application for JSON scenarios and action catalogs.
+- Evaluator dashboard for live session, task, score, and pose monitoring.
 
 ## Version and environment
 
-- Unity 6 (6000.x)
-- Meta XR SDK v85
-- URP
+- Unity 6 (6000.3.14f1)
+- Meta XR SDK v201.0.0
+- Built-in Render Pipeline
 - .NET 10 SDK for Shared library and CLI harness
 - Target device: Meta Quest 3
