@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
+using SafetyProto.Domain.Scoring;
+using SafetyProto.Runtime.Task;
 using SafetyProto.Utils;
 using UnityEngine;
 using SafetyProto.Core.Logging;
@@ -16,6 +18,10 @@ namespace SafetyProto.Runtime.PPE
 
         private readonly Dictionary<PPEType, GameObject> _wornPPE = new Dictionary<PPEType, GameObject>();
         private Transform _playerTransform;
+
+        // Unique distractor items already charged this session (penalty is once per
+        // item; every attempt is still logged for the researcher).
+        private readonly HashSet<string> _chargedDistractors = new HashSet<string>();
 
         private void Start()
         {
@@ -114,9 +120,36 @@ namespace SafetyProto.Runtime.PPE
             return allValid;
         }
 
+        /// <summary>
+        /// Called by PPESnapSlot when a distractor item tries to snap. Always logs a
+        /// WRONG_PPE_SELECTED violation (selection among decoys is a primary retention
+        /// measure); charges the minor-tier base penalty only on the first attempt of
+        /// each unique item, so fumbling the same decoy repeatedly cannot spiral.
+        /// </summary>
+        public void ReportDistractorAttempt(PPEType ppeType, string itemName)
+        {
+            SafetyEvents.RaiseSafetyViolation(new SafetyViolationEventArgs
+            {
+                ViolationCode = "WRONG_PPE_SELECTED",
+                Message = $"Selecionou equipamento inadequado: {itemName} ({ppeType})",
+                TaskId = string.Empty,
+                GroupId = string.Empty,
+                TaskName = itemName,
+                GroupName = string.Empty
+            });
+
+            if (!_chargedDistractors.Add(itemName)) return;
+
+            var scoring = TaskManager.Instance != null ? TaskManager.Instance.Scoring : ScoringConfig.Default;
+            int charge = scoring.BasePenaltyFor(TaskSeverity.Minor);
+            if (charge > 0)
+                ScoreService.Instance.SubtractPoints(charge, "WRONG_PPE_SELECTED", string.Empty);
+        }
+
         public void ResetSession()
         {
             _wornPPE.Clear();
+            _chargedDistractors.Clear();
         }
     }
 }

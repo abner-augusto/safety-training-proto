@@ -152,12 +152,16 @@ namespace SafetyProto.Runtime.Task
         /// </summary>
         private void OnGroupTimerTimeout() => _core?.HandleGroupTimeout();
 
+        /// <summary>Scoring economy of the loaded scenario (defaults when no scenario).</summary>
+        public ScoringConfig Scoring { get; private set; } = ScoringConfig.Default;
+
         /// <summary>Resolves runtime groups from the unified scenario JSON.</summary>
         private IReadOnlyList<ITaskGroup> LoadRuntimeGroups()
         {
             var scenario = ScenarioSource.Load(scenarioResourceName);
             if (scenario != null)
             {
+                Scoring = scenario.Scoring ?? ScoringConfig.Default;
                 return (IReadOnlyList<ITaskGroup>)scenario.Groups;
             }
 

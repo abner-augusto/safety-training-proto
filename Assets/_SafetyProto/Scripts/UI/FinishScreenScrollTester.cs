@@ -75,7 +75,7 @@ namespace SafetyProto.UI
                     var runtimeTask = new RuntimeSafetyTask(fake) { State = TaskStates[i % TaskStates.Length] };
                     var rowUI = go.GetComponent<TaskReportRowUI>();
                     if (rowUI != null)
-                        rowUI.Setup(i + 1, runtimeTask, fake.successPoints);
+                        rowUI.Setup(i + 1, runtimeTask, 100, 100);
                 });
                 result += $"TASK[{Measure(taskListParent)}] ";
             }
@@ -183,9 +183,7 @@ namespace SafetyProto.UI
             public string id => taskName;
             public string taskName { get; }
             public string taskDescription => string.Empty;
-            public int successPoints => 100;
-            public int failurePenalty => 50;
-            public int ppePenalty => 30;
+            public TaskSeverity severity => TaskSeverity.Moderate;
             public IReadOnlyList<PPEType> requiredPPE => NoPPE;
             public string hintText => string.Empty;
             public string failureAdvice => string.Empty;

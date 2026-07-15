@@ -22,9 +22,7 @@ public sealed class TaskViewModel : ViewModelBase
     private string _taskName;
     private string _taskDescription;
     private string _actionId;
-    private int _successPoints;
-    private int _failurePenalty;
-    private int _ppePenalty;
+    private string _severity;
     private string _hintText;
     private string _failureAdvice;
     private string _ppeAdvice;
@@ -38,9 +36,7 @@ public sealed class TaskViewModel : ViewModelBase
         _taskName = def.taskName;
         _taskDescription = def.taskDescription;
         _actionId = def.ActionId ?? string.Empty;
-        _successPoints = def.successPoints;
-        _failurePenalty = def.failurePenalty;
-        _ppePenalty = def.ppePenalty;
+        _severity = def.SeverityName ?? "moderate";
         _hintText = def.hintText;
         _failureAdvice = def.failureAdvice;
         _ppeAdvice = def.ppeAdvice;
@@ -83,9 +79,8 @@ public sealed class TaskViewModel : ViewModelBase
         }
     }
 
-    public int SuccessPoints { get => _successPoints; set => SetField(ref _successPoints, value); }
-    public int FailurePenalty { get => _failurePenalty; set => SetField(ref _failurePenalty, value); }
-    public int PpePenalty { get => _ppePenalty; set => SetField(ref _ppePenalty, value); }
+    public static IReadOnlyList<string> SeverityOptions { get; } = new[] { "critical", "moderate", "minor" };
+    public string Severity { get => _severity; set => SetField(ref _severity, value); }
     public string HintText { get => _hintText; set => SetField(ref _hintText, value); }
     public string FailureAdvice { get => _failureAdvice; set => SetField(ref _failureAdvice, value); }
     public string PpeAdvice { get => _ppeAdvice; set => SetField(ref _ppeAdvice, value); }
@@ -107,9 +102,7 @@ public sealed class TaskViewModel : ViewModelBase
         taskName = _taskName,
         taskDescription = _taskDescription,
         ActionId = _actionId,
-        successPoints = _successPoints,
-        failurePenalty = _failurePenalty,
-        ppePenalty = _ppePenalty,
+        SeverityName = _severity,
         hintText = _hintText,
         failureAdvice = _failureAdvice,
         ppeAdvice = _ppeAdvice,

@@ -27,7 +27,8 @@ namespace SafetyProto.Runtime.Task
             _core = new ScoreRuleEngineCore(
                 bus: EventBus.Instance,
                 scoreService: _scoreService,
-                logger: new SafetyLogAdapter());
+                logger: new SafetyLogAdapter(),
+                config: TaskManager.Instance != null ? TaskManager.Instance.Scoring : ScoringConfig.Default);
 
             _core.Subscribe();
             _scoreService.ScoreChanged += HandleScoreChanged;

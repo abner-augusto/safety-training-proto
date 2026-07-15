@@ -18,17 +18,19 @@ namespace SafetyProto.UI
         private static readonly Color ColorFailure  = new Color(0.906f, 0.298f, 0.235f); // #E74C3C
         private static readonly Color ColorNotTried = new Color(0.365f, 0.427f, 0.494f); // #5D6D7E
 
-        public void Setup(int order, RuntimeSafetyTask runtimeTask, int maxPoints)
+        public void Setup(int order, RuntimeSafetyTask runtimeTask, int fullPoints, int earnedPoints)
         {
             taskLabel.text = $"Task {order}: {runtimeTask.taskName}";
 
             Color barColor = GetBarColor(runtimeTask.State);
-            float fill = CalculateFill(runtimeTask, maxPoints);
+            float fill = fullPoints > 0 ? Mathf.Clamp01(earnedPoints / (float)fullPoints) : 0f;
 
             progressBarFill.fillAmount = fill;
             progressBarFill.color = barColor;
 
-            pointsText.text = FormatPoints(runtimeTask);
+            pointsText.text = earnedPoints > 0 ? $"+{earnedPoints} pts"
+                            : earnedPoints < 0 ? $"{earnedPoints} pts"
+                            : "0 pts";
             pointsText.color = barColor;
         }
 
@@ -40,33 +42,6 @@ namespace SafetyProto.UI
                 TaskState.CompletedSuccessButUnsafe => ColorUnsafe,
                 TaskState.CompletedFailure        => ColorFailure,
                 _                                 => ColorNotTried
-            };
-        }
-
-        private static float CalculateFill(RuntimeSafetyTask task, int maxPoints)
-        {
-            if (maxPoints <= 0) return 0f;
-
-            return task.State switch
-            {
-                TaskState.CompletedSuccess => 1f,
-                TaskState.CompletedSuccessButUnsafe =>
-                    Mathf.Clamp01((float)(task.TaskData.successPoints - task.TaskData.ppePenalty) / maxPoints),
-                _ => 0f
-            };
-        }
-
-        private static string FormatPoints(RuntimeSafetyTask task)
-        {
-            return task.State switch
-            {
-                TaskState.CompletedSuccess =>
-                    $"+{task.TaskData.successPoints} pts",
-                TaskState.CompletedSuccessButUnsafe =>
-                    $"+{Mathf.Max(0, task.TaskData.successPoints - task.TaskData.ppePenalty)} pts",
-                TaskState.CompletedFailure =>
-                    task.TaskData.failurePenalty > 0 ? $"-{task.TaskData.failurePenalty} pts" : "0 pts",
-                _ => "0 pts"
             };
         }
     }

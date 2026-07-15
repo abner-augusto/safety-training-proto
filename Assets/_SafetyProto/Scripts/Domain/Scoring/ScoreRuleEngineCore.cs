@@ -11,6 +11,7 @@ namespace SafetyProto.Domain.Scoring
         private readonly IEventBus _bus;
         private readonly IScoreService _scoreService;
         private readonly IHarnessLogger? _logger;
+        private readonly ScoringConfig _config;
 
         private readonly Action<TaskEventArgs> _onTaskLifecycle;
 
@@ -20,11 +21,13 @@ namespace SafetyProto.Domain.Scoring
         public ScoreRuleEngineCore(
             IEventBus bus,
             IScoreService scoreService,
-            IHarnessLogger? logger = null)
+            IHarnessLogger? logger = null,
+            ScoringConfig? config = null)
         {
             _bus = bus ?? throw new ArgumentNullException(nameof(bus));
             _scoreService = scoreService ?? throw new ArgumentNullException(nameof(scoreService));
             _logger = logger;
+            _config = config ?? ScoringConfig.Default;
 
             _onTaskLifecycle = HandleTaskLifecycle;
         }
@@ -67,26 +70,30 @@ namespace SafetyProto.Domain.Scoring
 
             if (state == TaskState.CompletedFailure) return;
 
-            if (args.Task.successPoints > 0)
-            {
-                _scoreService.AddPoints(args.Task.successPoints, $"Task '{args.Task.taskName}' completed", args.Task.id);
-            }
+            // Severity-driven earning: a safe completion earns the tier's full points;
+            // an unsafe completion earns points × unsafeFactor (critical = 0). No
+            // separate penalty subtraction — the reduced earning IS the penalty, so an
+            // unsafe completion can never net more than the tier's factor allows.
+            int earned = state == TaskState.CompletedSuccessButUnsafe
+                ? _config.UnsafeEarnFor(args.Task.severity)
+                : _config.PointsFor(args.Task.severity);
 
-            if (state == TaskState.CompletedSuccessButUnsafe)
+            string reason = state == TaskState.CompletedSuccessButUnsafe
+                ? $"Task '{args.Task.taskName}' completed without required PPE"
+                : $"Task '{args.Task.taskName}' completed";
+
+            if (earned > 0)
             {
-                int penalty = args.Task.ppePenalty;
-                if (penalty > 0)
-                {
-                    _scoreService.SubtractPoints(penalty, $"Safety Violation: Missing PPE during '{args.Task.taskName}'", args.Task.id);
-                }
+                _scoreService.AddPoints(earned, reason, args.Task.id);
             }
         }
 
         internal void ApplyTaskTimeoutScoring(TaskEventArgs args)
         {
             if (args.Task == null) return;
-            if (args.Task.failurePenalty > 0)
-                _scoreService.SubtractPoints(args.Task.failurePenalty, $"Task '{args.Task.taskName}' timed out", args.Task.id);
+            int penalty = _config.BasePenaltyFor(args.Task.severity);
+            if (penalty > 0)
+                _scoreService.SubtractPoints(penalty, $"Task '{args.Task.taskName}' timed out", args.Task.id);
         }
 
         public void Dispose()

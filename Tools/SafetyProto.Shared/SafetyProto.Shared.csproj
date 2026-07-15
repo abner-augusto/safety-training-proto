@@ -30,6 +30,7 @@
     <!-- Enums (Part 1) -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\PPEType.cs"                    Link="Core\PPEType.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\TaskState.cs"                  Link="Core\TaskState.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\TaskSeverity.cs"               Link="Core\TaskSeverity.cs" />
 
     <!-- Payloads (Part 3) -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\EventPayloads.cs"              Link="Core\EventPayloads.cs" />
@@ -48,6 +49,7 @@
     <!-- Part 7 additions -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Tasks\TaskManagerCore.cs"        Link="Domain\Tasks\TaskManagerCore.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scoring\ScoreRuleEngineCore.cs"  Link="Domain\Scoring\ScoreRuleEngineCore.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scoring\ScoringConfig.cs"        Link="Domain\Scoring\ScoringConfig.cs" />
 
     <!-- Data refactor: unified scenario model + loader + capability catalog -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scenarios\ScriptStepDef.cs"      Link="Domain\Scenarios\ScriptStepDef.cs" />

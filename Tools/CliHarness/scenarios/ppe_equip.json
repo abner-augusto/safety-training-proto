@@ -9,31 +9,31 @@
       "tasks": [
         {
           "name": "Equipar Botina de Seguranca",
-          "successPoints": 100,
+          "severity": "minor",
           "requiredPPE": ["Boots"],
           "hintText": "Escolha um calçado de segurança fechado, adequado aos riscos do canteiro e com CA válido."
         },
         {
           "name": "Equipar Luvas de Protecao",
-          "successPoints": 200,
+          "severity": "minor",
           "requiredPPE": ["Boots", "GloveLeft", "GloveRight"],
           "hintText": "Escolha luvas adequadas ao manuseio de estruturas metálicas e proteja as duas mãos."
         },
         {
           "name": "Equipar Oculos de Protecao",
-          "successPoints": 100,
+          "severity": "minor",
           "requiredPPE": ["Boots", "GloveLeft", "GloveRight", "Goggles"],
           "hintText": "Escolha uma proteção ocular adequada contra partículas e respingos."
         },
         {
           "name": "Equipar Capacete com Jugular",
-          "successPoints": 150,
+          "severity": "moderate",
           "requiredPPE": ["Boots", "GloveLeft", "GloveRight", "Goggles", "Helmet"],
           "hintText": "Escolha o capacete com jugular para mantê-lo preso à cabeça durante o trabalho em altura."
         },
         {
           "name": "Equipar Cinto Paraquedista",
-          "successPoints": 200,
+          "severity": "critical",
           "requiredPPE": ["Boots", "GloveLeft", "GloveRight", "Goggles", "Helmet", "Harness"],
           "hintText": "Para retenção de queda, escolha o cinturão de segurança tipo paraquedista; o cinto abdominal não é adequado a esse sistema."
         }

@@ -34,14 +34,13 @@ namespace SafetyProto.Domain.Scenarios
         [JsonProperty("actionId")]
         public string ActionId { get; set; } = string.Empty;
 
-        [JsonProperty("successPoints")]
-        public int successPoints { get; set; } = 100;
+        /// <summary>Raw severity name as authored in JSON ("critical" | "moderate" | "minor").
+        /// Bound to the enum by <see cref="Bind"/>. Defaults to moderate.</summary>
+        [JsonProperty("severity")]
+        public string SeverityName { get; set; } = "moderate";
 
-        [JsonProperty("failurePenalty")]
-        public int failurePenalty { get; set; }
-
-        [JsonProperty("ppePenalty")]
-        public int ppePenalty { get; set; } = 20;
+        [JsonIgnore]
+        public TaskSeverity severity { get; private set; } = TaskSeverity.Moderate;
 
         /// <summary>Raw PPE names as authored in JSON (e.g. "Boots"). Bound to enums by the loader.</summary>
         [JsonProperty("requiredPPE")]
@@ -72,6 +71,17 @@ namespace SafetyProto.Domain.Scenarios
         /// </summary>
         internal void Bind(string groupName, List<string> errors)
         {
+            if (System.Enum.TryParse<TaskSeverity>(SeverityName, ignoreCase: true, out var sev))
+            {
+                severity = sev;
+            }
+            else
+            {
+                errors.Add(
+                    $"Severidade desconhecida '{SeverityName}' na tarefa '{taskName}' (grupo '{groupName}'). " +
+                    "Valores válidos: critical, moderate, minor");
+            }
+
             _requiredPpe.Clear();
             foreach (var name in RequiredPpeNames)
             {

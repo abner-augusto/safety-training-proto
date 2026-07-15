@@ -142,20 +142,12 @@
                             HorizontalAlignment="Left" MinWidth="260"/>
                 </StackPanel>
 
-                <Grid ColumnDefinitions="*,*,*" Margin="0,0,0,0">
-                  <StackPanel Grid.Column="0" Spacing="2" Margin="0,0,6,0">
-                    <TextBlock Text="Pontos" Classes="label"/>
-                    <TextBox Text="{Binding SuccessPoints}"/>
-                  </StackPanel>
-                  <StackPanel Grid.Column="1" Spacing="2" Margin="0,0,6,0">
-                    <TextBlock Text="Penalidade (falha)" Classes="label"/>
-                    <TextBox Text="{Binding FailurePenalty}"/>
-                  </StackPanel>
-                  <StackPanel Grid.Column="2" Spacing="2">
-                    <TextBlock Text="Penalidade (EPI)" Classes="label"/>
-                    <TextBox Text="{Binding PpePenalty}"/>
-                  </StackPanel>
-                </Grid>
+                <StackPanel Spacing="2">
+                  <TextBlock Text="Severidade (classe de risco)" Classes="label"/>
+                  <ComboBox ItemsSource="{Binding SeverityOptions}"
+                            SelectedItem="{Binding Severity}"
+                            HorizontalAlignment="Left" MinWidth="180"/>
+                </StackPanel>
 
                 <StackPanel Spacing="2">
                   <TextBlock Text="EPIs requeridos" Classes="label"/>

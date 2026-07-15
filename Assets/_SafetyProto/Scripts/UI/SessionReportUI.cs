@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using SafetyProto.Core;
+using SafetyProto.Domain.Scoring;
 using SafetyProto.Runtime.Safety;
 using SafetyProto.Runtime.Task;
 using SafetyProto.Utils;
@@ -48,6 +49,11 @@ namespace SafetyProto.UI
 
         private static SessionCompletedEventArgs? _cachedArgs;
 
+        /// <summary>True when the last populated report's medal was pulled down from gold by a
+        /// critical-tier violation. Read by <see cref="BuildImprovements"/> to add the explanatory
+        /// message; set once per <see cref="PopulateReport"/> call.</summary>
+        private bool _medalCappedByCritical;
+
         // ──────────────────────────────────────────────────────────
 
         private void OnEnable()
@@ -88,8 +94,11 @@ namespace SafetyProto.UI
                 taskManager != null ? taskManager.GetSessionTasks() : new List<RuntimeSafetyTask>();
 
             int maxPossibleScore = ComputeMaxScore(tasks);
+            bool criticalViolation = HasCriticalViolation(tasks);
+            float pct = maxPossibleScore > 0 ? Mathf.Max(0, args.totalScore) / (float)maxPossibleScore : 0f;
+            _medalCappedByCritical = criticalViolation && pct >= 0.95f;
 
-            SetupHeader(args, maxPossibleScore);
+            SetupHeader(args, maxPossibleScore, criticalViolation);
             BuildTaskBreakdown(tasks);
             BuildImprovements(tasks);
             PlayAudio(args.totalScore, maxPossibleScore);
@@ -97,13 +106,13 @@ namespace SafetyProto.UI
 
         // ── Header ────────────────────────────────────────────────
 
-        private void SetupHeader(SessionCompletedEventArgs args, int maxPossibleScore)
+        private void SetupHeader(SessionCompletedEventArgs args, int maxPossibleScore, bool criticalViolation)
         {
             if (titleText != null)
                 titleText.text = "TREINAMENTO CONCLUÍDO";
 
             if (scoreText != null)
-                scoreText.text = $"{args.totalScore} / {maxPossibleScore} pts";
+                scoreText.text = $"{Mathf.Max(0, args.totalScore)} / {maxPossibleScore} pts";
 
             if (timeText != null)
             {
@@ -112,26 +121,44 @@ namespace SafetyProto.UI
                 timeText.text = $"Tempo: {minutes:00}:{seconds:00}";
             }
 
-            SetMedal(args.totalScore, maxPossibleScore);
+            SetMedal(args.totalScore, maxPossibleScore, criticalViolation);
         }
 
-        private void SetMedal(int score, int max)
+        private void SetMedal(int score, int max, bool criticalViolation)
         {
             if (medalIcon == null) return;
 
-            float pct = max > 0 ? (float)score / max : 0f;
+            float pct = max > 0 ? Mathf.Max(0, score) / (float)max : 0f;
 
-            if (pct >= 0.50f)
+            // Bronze anchors to the conventional NR-training minimum (70% de
+            // aproveitamento). A critical-tier violation caps the medal at silver:
+            // a session where the participant worked unanchored cannot be gold,
+            // whatever the points say (eliminatory-fault model).
+            Color? medal = pct >= 0.95f ? goldColor
+                         : pct >= 0.85f ? silverColor
+                         : pct >= 0.70f ? bronzeColor
+                         : (Color?)null;
+
+            if (criticalViolation && medal.HasValue && medal.Value == goldColor)
+                medal = silverColor;
+
+            medalIcon.enabled = medal.HasValue;
+            if (medal.HasValue) medalIcon.color = medal.Value;
+        }
+
+        // A critical task that did not end in a clean CompletedSuccess is a critical
+        // violation for medal purposes (unsafe completion, timeout, or — after plan
+        // 018 — omission). Gate charges on critical tasks are covered by the same
+        // test: a charged task was pending, so it is not CompletedSuccess.
+        private bool HasCriticalViolation(IReadOnlyList<RuntimeSafetyTask> tasks)
+        {
+            foreach (var t in tasks)
             {
-                medalIcon.color = pct >= 0.90f ? goldColor
-                                : pct >= 0.70f ? silverColor
-                                : bronzeColor;
-                medalIcon.enabled = true;
+                if (t.TaskData == null || t.TaskData.severity != TaskSeverity.Critical) continue;
+                if (t.State != TaskState.CompletedSuccess) return true;
+                if (t.HasMissedPPEOnce) return true;
             }
-            else
-            {
-                medalIcon.enabled = false;
-            }
+            return false;
         }
 
         // ── Task Breakdown ────────────────────────────────────────
@@ -144,12 +171,22 @@ namespace SafetyProto.UI
             foreach (Transform child in taskListParent)
                 Destroy(child.gameObject);
 
+            var scoring = taskManager != null ? taskManager.Scoring : ScoringConfig.Default;
             for (int i = 0; i < tasks.Count; i++)
             {
+                var t = tasks[i];
+                var sev = t.TaskData?.severity ?? TaskSeverity.Moderate;
+                int full = scoring.PointsFor(sev);
+                int earned = t.State switch
+                {
+                    TaskState.CompletedSuccess => full,
+                    TaskState.CompletedSuccessButUnsafe => scoring.UnsafeEarnFor(sev),
+                    TaskState.CompletedFailure => -scoring.BasePenaltyFor(sev),
+                    _ => 0
+                };
                 var row = Instantiate(taskRowPrefab, taskListParent);
                 var rowUI = row.GetComponent<TaskReportRowUI>();
-                if (rowUI != null)
-                    rowUI.Setup(i + 1, tasks[i], tasks[i].TaskData != null ? tasks[i].TaskData.successPoints : 100);
+                if (rowUI != null) rowUI.Setup(i + 1, t, full, earned);
             }
         }
 
@@ -163,6 +200,9 @@ namespace SafetyProto.UI
                 Destroy(child.gameObject);
 
             var messages = GenerateImprovementMessages(tasks);
+
+            if (_medalCappedByCritical)
+                messages.Add("🚫 Medalha limitada: houve violação crítica de segurança durante a sessão.");
 
             // Gate validator failures
             if (gateValidator != null && gateValidator.FailedAttemptCount > 0)
@@ -245,11 +285,12 @@ namespace SafetyProto.UI
 
         // ── Helpers ───────────────────────────────────────────────
 
-        private static int ComputeMaxScore(IReadOnlyList<RuntimeSafetyTask> tasks)
+        private int ComputeMaxScore(IReadOnlyList<RuntimeSafetyTask> tasks)
         {
+            var scoring = taskManager != null ? taskManager.Scoring : ScoringConfig.Default;
             int total = 0;
             foreach (var t in tasks)
-                if (t.TaskData != null) total += t.TaskData.successPoints;
+                if (t.TaskData != null) total += scoring.PointsFor(t.TaskData.severity);
             return total;
         }
 

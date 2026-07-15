@@ -72,7 +72,8 @@ public static class Program
         var scoreRuleEngine = new ScoreRuleEngineCore(
             bus: bus,
             scoreService: scoreService,
-            logger: logger);
+            logger: logger,
+            config: scenario.Scoring);
         scoreRuleEngine.Subscribe();
 
         scoreService.ScoreChanged += (newScore, delta, reason, taskId) =>

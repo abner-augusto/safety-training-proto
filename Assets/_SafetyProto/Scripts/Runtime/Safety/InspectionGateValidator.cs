@@ -54,7 +54,6 @@ namespace SafetyProto.Runtime.Safety
         private IPopupFeedback _popupFeedback;
 
         [Header("Gate Configuration")]
-        [SerializeField] private int penaltyPerAttempt = 100;
         [Tooltip("Label for the manual-dismiss button on the success / warning popups.")]
         [SerializeField] private string continueButtonLabel = "Continuar";
 
@@ -89,6 +88,15 @@ namespace SafetyProto.Runtime.Safety
         private bool _isProcessing;
         private readonly List<string> _lastPendingTaskIds = new List<string>();
 
+        // Tasks already charged at a failed gate press this session. The charge
+        // attaches to the task, not the press: pressing again with the same pending
+        // set costs nothing more (but is still logged), so a disoriented participant
+        // is not taxed repeatedly for one mistake.
+        private readonly HashSet<string> _chargedTaskIds = new HashSet<string>();
+
+        private ScoringConfig GateScoring =>
+            taskManager != null ? taskManager.Scoring : ScoringConfig.Default;
+
         // ──────────────────────────────────────────────────────────
 
         private void Start()
@@ -102,6 +110,7 @@ namespace SafetyProto.Runtime.Safety
             _popupFeedback = popupFeedbackProvider as IPopupFeedback;
 
             FailedAttemptCount = 0;
+            _chargedTaskIds.Clear();
             HideConsequenceFeedback();
         }
 
@@ -152,9 +161,36 @@ namespace SafetyProto.Runtime.Safety
             _lastPendingTaskIds.Clear();
             _lastPendingTaskIds.AddRange(pendingTasks.Select(t => t.ExpectedActionId));
 
-            ScoreService.Instance.SubtractPoints(penaltyPerAttempt, "GATE_PENALTY", string.Empty);
+            foreach (var task in pendingTasks)
+            {
+                if (task.TaskData == null || !_chargedTaskIds.Add(task.id)) continue;
+                int charge = GateScoring.GateChargeFor(task.TaskData.severity);
+                if (charge > 0)
+                    ScoreService.Instance.SubtractPoints(charge, "GATE_PENALTY", task.id);
+            }
 
-            StartCoroutine(ExecuteConsequencesSequence(pendingTasks, currentGroup));
+            if (FailedAttemptCount == 1)
+            {
+                StartCoroutine(ExecuteConsequencesSequence(pendingTasks, currentGroup));
+            }
+            else
+            {
+                // Repeat press: violations still logged, no animation replay.
+                foreach (var task in pendingTasks)
+                {
+                    SafetyEvents.RaiseSafetyViolation(new SafetyViolationEventArgs
+                    {
+                        ViolationCode = "GATE_FAILED",
+                        Message = $"Tentou iniciar sem corrigir: {task.taskName}",
+                        TaskId = task.id,
+                        GroupId = currentGroup.id,
+                        TaskName = task.taskName,
+                        GroupName = currentGroup.groupName
+                    });
+                }
+                _isProcessing = true;
+                ShowPendingWarningAndContinue(pendingTasks);
+            }
         }
 
         // ── Passed ────────────────────────────────────────────────

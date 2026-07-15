@@ -180,6 +180,7 @@ namespace SafetyProto.Runtime.PPE
             {
                 onDistractorSnapAttempted?.Invoke(item.PpeType);
                 SafetyLog.Info($"PPESnapSlot [{name}]: distrator '{item.name}' ({item.PpeType}) rejeitado.", this);
+                _ppeManager?.ReportDistractorAttempt(item.PpeType, item.name);
                 return false;
             }
 

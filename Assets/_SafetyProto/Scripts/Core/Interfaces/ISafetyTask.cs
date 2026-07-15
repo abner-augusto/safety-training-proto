@@ -19,9 +19,9 @@ namespace SafetyProto.Core.Interfaces
 
         string taskName { get; }
         string taskDescription { get; }
-        int successPoints { get; }
-        int failurePenalty { get; }
-        int ppePenalty { get; }
+
+        /// <summary>Risk class driving all point/penalty math via the scenario's ScoringConfig.</summary>
+        TaskSeverity severity { get; }
         IReadOnlyList<PPEType> requiredPPE { get; }
         string hintText { get; }
         string failureAdvice { get; }

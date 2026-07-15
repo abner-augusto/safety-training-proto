@@ -17,6 +17,10 @@ namespace SafetyProto.Domain.Scenarios
         [JsonProperty("participantId")]
         public string ParticipantId { get; set; } = "P000";
 
+        /// <summary>Instructor-editable scoring economy. Optional; defaults apply when absent.</summary>
+        [JsonProperty("scoring")]
+        public Scoring.ScoringConfig Scoring { get; set; } = new();
+
         [JsonProperty("groups")]
         public List<TaskGroupDef> Groups { get; set; } = new();
 

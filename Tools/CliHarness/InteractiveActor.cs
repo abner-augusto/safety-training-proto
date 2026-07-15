@@ -54,11 +54,7 @@ public sealed class InteractiveActor
             Console.WriteLine($"│  {task.taskDescription}");
 
         Console.WriteLine($"│  Action ID  : {task.ResolveExpectedActionId()}");
-        Console.WriteLine($"│  Points     : +{task.successPoints}");
-        if (task.failurePenalty > 0)
-            Console.WriteLine($"│  Fail Penalty: -{task.failurePenalty}");
-        if (task.ppePenalty > 0)
-            Console.WriteLine($"│  PPE Penalty : -{task.ppePenalty}");
+        Console.WriteLine($"│  Severity   : {task.severity}");
         if (!string.IsNullOrWhiteSpace(task.hintText))
             Console.WriteLine($"│  Hint       : {task.hintText}");
 

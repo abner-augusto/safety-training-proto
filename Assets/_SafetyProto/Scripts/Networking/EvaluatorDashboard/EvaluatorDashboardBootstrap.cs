@@ -9,6 +9,7 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Scoring;
 using SafetyProto.Utils;
 using UnityEngine;
 using System.IO;
@@ -488,6 +489,10 @@ namespace SafetyProto.Networking.Dashboard
             var name = task != null ? task.taskName : string.Empty;
             var id = task != null ? task.taskName : string.Empty; // Usar taskName como ID para consistência
             var meta = BuildTaskMetadata(task);
+            var scoring = SafetyProto.Runtime.Task.TaskManager.Instance != null
+                ? SafetyProto.Runtime.Task.TaskManager.Instance.Scoring
+                : ScoringConfig.Default;
+            var severity = task?.severity ?? TaskSeverity.Moderate;
             return new TaskDto
             {
                 sessionId = args.SessionId,
@@ -500,9 +505,11 @@ namespace SafetyProto.Networking.Dashboard
                 executionMode = meta.executionMode,
                 expectedAction = meta.expectedAction,
                 requiredPpe = meta.requiredPpe,
-                successPoints = meta.successPoints,
-                failurePenalty = meta.failurePenalty,
-                ppePenalty = meta.ppePenalty,
+                successPoints = scoring.PointsFor(severity),
+                failurePenalty = scoring.BasePenaltyFor(severity),
+                // "Points lost to an unsafe completion" — the gap between the tier's full points
+                // and what an unsafe (missing-PPE) completion actually earns.
+                ppePenalty = scoring.PointsFor(severity) - scoring.UnsafeEarnFor(severity),
                 status = status,
                 timestampMs = ResolveTimestamp(args.TimestampMs)
             };
@@ -566,6 +573,10 @@ namespace SafetyProto.Networking.Dashboard
                 ? task.requiredPPE.Select(p => p.ToString()).ToArray()
                 : System.Array.Empty<string>();
 
+            var scoring = SafetyProto.Runtime.Task.TaskManager.Instance != null
+                ? SafetyProto.Runtime.Task.TaskManager.Instance.Scoring
+                : ScoringConfig.Default;
+
             return new TaskMetadata
             {
                 groupName = groupName,
@@ -575,9 +586,9 @@ namespace SafetyProto.Networking.Dashboard
                 hint = task.hintText ?? string.Empty,
                 expectedAction = includeDetails ? task.ResolveExpectedActionId() : string.Empty,
                 requiredPpe = required,
-                successPoints = task.successPoints,
-                failurePenalty = task.failurePenalty,
-                ppePenalty = task.ppePenalty
+                successPoints = scoring.PointsFor(task.severity),
+                failurePenalty = scoring.BasePenaltyFor(task.severity),
+                ppePenalty = scoring.PointsFor(task.severity) - scoring.UnsafeEarnFor(task.severity)
             };
         }
 
@@ -838,6 +849,8 @@ namespace SafetyProto.Networking.Dashboard
             public string[] requiredPpe;
             public int successPoints;
             public int failurePenalty;
+            // Points lost to an unsafe (missing-PPE) completion, derived from the scenario's
+            // ScoringConfig — no longer an authored per-task field.
             public int ppePenalty;
             public string status;
             public long timestampMs;

@@ -31,9 +31,7 @@ namespace SafetyProto.Tests.Editor.Support
             public string id => taskName;
             public string taskName { get; set; } = string.Empty;
             public string taskDescription { get; set; } = string.Empty;
-            public int successPoints { get; set; } = 100;
-            public int failurePenalty { get; set; } = 10;
-            public int ppePenalty { get; set; } = 20;
+            public TaskSeverity severity { get; set; } = TaskSeverity.Moderate;
             public List<PPEType> requiredPPE { get; set; } = new List<PPEType>();
             public string hintText { get; set; } = string.Empty;
             public string failureAdvice { get; set; } = string.Empty;

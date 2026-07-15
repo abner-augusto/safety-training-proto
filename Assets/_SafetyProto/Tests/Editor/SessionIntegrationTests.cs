@@ -57,9 +57,10 @@ namespace SafetyProto.Tests.Editor
             h.StartSession();
             h.ReplayScript(scenario.Script);
 
-            // Final score parity with the CLI harness run (sum of all successPoints; no penalties
-            // because every task is completed with full PPE compliance).
-            Assert.AreEqual(1400, h.Score.CurrentScore, "Final score should match the CLI parity run.");
+            // Final score parity with the CLI harness run (sum of the severity-tier points of all
+            // 9 default.json tasks: 3 critical x 200 + 3 moderate x 150 + 3 minor x 100 = 1350;
+            // no penalties because every task is completed with full PPE compliance).
+            Assert.AreEqual(1350, h.Score.CurrentScore, "Final score should match the CLI parity run.");
 
             var summary = h.TaskManager.LastSessionSummary;
             Assert.IsTrue(summary.HasValue, "Session should have completed and produced a summary.");
@@ -108,8 +109,8 @@ namespace SafetyProto.Tests.Editor
 
         // ── Case 2: PPE violation ────────────────────────────────────────────────────────────
         // Action performed while a required PPE is missing. Asserts the SafetyViolation fires, the
-        // task is recorded as CompletedSuccessButUnsafe, AND the ppePenalty is subtracted from the
-        // score end-to-end (successPoints - ppePenalty).
+        // task is recorded as CompletedSuccessButUnsafe, AND the severity-driven unsafe earning
+        // (critical tier earns 0% of its points) applies end-to-end.
         //
         // This case originally surfaced a real integration bug (now fixed): SafetyRuleEngineCore
         // publishes the completion with RuntimeTask=null, signalling non-compliance via
@@ -121,8 +122,7 @@ namespace SafetyProto.Tests.Editor
         public void PpeViolation_ActionWithoutRequiredPpe_RaisesViolationAppliesPenalty()
         {
             var task = _tasks.Task("Conectar Talabarte", "connect_harness", PPEType.Harness, PPEType.Helmet);
-            task.successPoints = 200;
-            task.ppePenalty = 50;
+            task.severity = TaskSeverity.Critical;
             var group = _tasks.Group("Inspeção", TaskExecutionModeShared.FreeOrder, task);
 
             using var h = new SessionTestHarness(new List<ITaskGroup> { group });
@@ -138,9 +138,10 @@ namespace SafetyProto.Tests.Editor
             // Task still completes, but flagged unsafe by TaskManagerCore.
             Assert.AreEqual(TaskState.CompletedSuccessButUnsafe, h.SessionTasks[0].State);
 
-            // End-to-end score reflects the penalty: successPoints (200) - ppePenalty (50) = 150.
-            Assert.AreEqual(150, h.Score.CurrentScore,
-                "ppePenalty must be applied end-to-end for a non-compliant completion.");
+            // End-to-end score reflects the critical-tier unsafe factor (0%): unsafe critical
+            // completions earn nothing under the default config.
+            Assert.AreEqual(0, h.Score.CurrentScore,
+                "Unsafe critical completion must earn nothing end-to-end.");
         }
 
         // ── Case 3: Sequential ordering ──────────────────────────────────────────────────────
