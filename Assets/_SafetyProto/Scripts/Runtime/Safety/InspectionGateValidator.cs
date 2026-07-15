@@ -86,10 +86,34 @@ namespace SafetyProto.Runtime.Safety
         /// <summary>ActionIds that were pending on the last failed attempt.</summary>
         public IReadOnlyList<string> LastPendingTaskIds => _lastPendingTaskIds.AsReadOnly();
 
+        /// <summary>Used only by the Editor-only simulator to dismiss confirmation UI.</summary>
+        public void SetSimulationAutoConfirm(bool enabled)
+        {
+            _simulationAutoConfirm = enabled;
+            if (enabled) _simulationCancellationRequested = false;
+        }
+
+        /// <summary>Stops only an inspection sequence explicitly started for the simulator.</summary>
+        public void CancelSimulationProcessing()
+        {
+            if (!_simulationAutoConfirm) return;
+
+            _simulationCancellationRequested = true;
+            StopAllCoroutines();
+            HideConsequenceFeedback();
+            _isProcessing = false;
+            _evaluationFinalized = false;
+            _simulationAutoConfirm = false;
+        }
+
+        public bool IsSimulationProcessing => _isProcessing;
+
         // ── Private ───────────────────────────────────────────────
 
         private bool _isProcessing;
         private bool _evaluationFinalized;
+        private bool _simulationAutoConfirm;
+        private bool _simulationCancellationRequested;
         private readonly List<string> _lastPendingTaskIds = new List<string>();
 
         // Tasks already charged at a failed gate press this session. The charge
@@ -159,7 +183,11 @@ namespace SafetyProto.Runtime.Safety
             {
                 _isProcessing = true;
 
-                if (_popupFeedback != null)
+                if (_simulationAutoConfirm)
+                {
+                    BeginEvaluationFinish(pendingTasks);
+                }
+                else if (_popupFeedback != null)
                 {
                     _popupFeedback.ShowConfirmation(
                         "Iniciar Atividade",
@@ -241,7 +269,9 @@ namespace SafetyProto.Runtime.Safety
                 _isProcessing = false;
             }
 
-            if (_popupFeedback != null)
+            if (_simulationAutoConfirm)
+                Finish();
+            else if (_popupFeedback != null)
                 _popupFeedback.ShowInteractive(currentGroup.groupName,
                     "Inspeção concluída com sucesso!", continueButtonLabel, Finish);
             else
@@ -360,7 +390,9 @@ namespace SafetyProto.Runtime.Safety
                 _isProcessing = false;
             }
 
-            if (_popupFeedback != null)
+            if (_simulationAutoConfirm)
+                Continue();
+            else if (_popupFeedback != null)
                 _popupFeedback.ShowInteractive("Tarefas Pendentes", body, continueButtonLabel, Continue);
             else
                 Continue();
@@ -377,6 +409,7 @@ namespace SafetyProto.Runtime.Safety
         /// </summary>
         private void BeginEvaluationFinish(List<RuntimeSafetyTask> pendingTasks)
         {
+            if (_simulationCancellationRequested) return;
             HideGateButtons();
 
             if (pendingTasks.Count == 0)
@@ -419,6 +452,7 @@ namespace SafetyProto.Runtime.Safety
 
             foreach (var (_, mapping) in pendingMappings)
             {
+                if (_simulationCancellationRequested) yield break;
                 ConsequenceEvents.RaiseConsequenceStarted(new ConsequenceStartedEventArgs
                 {
                     ConsequenceType = mapping.consequenceType,
@@ -467,6 +501,7 @@ namespace SafetyProto.Runtime.Safety
 
         private void FinalizeEvaluation()
         {
+            if (_simulationCancellationRequested) return;
             var omitted = taskManager.MarkPendingTasksOmitted();
 
             if (verboseLogging)

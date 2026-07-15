@@ -5,7 +5,8 @@
     "SafetyProto.EventBus.Core",
     "SafetyProto.Utils.Unity",
     "SafetyProto.Runtime.Unity",
-    "SafetyProto.Domain.Core"
+    "SafetyProto.Domain.Core",
+    "SafetyProto.UI.Unity"
   ],
   "includePlatforms": [
     "Editor"

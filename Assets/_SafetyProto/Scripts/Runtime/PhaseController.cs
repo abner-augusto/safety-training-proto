@@ -59,6 +59,30 @@ namespace SafetyProto.Runtime
         [SerializeField] private float groundWaitTimeout = 3f;
 
         private bool _transitionExecuted;
+        private bool _simulationAutoConfirm;
+        private bool _transitionInProgress;
+        private bool _simulationTransitionCompleted;
+        private Behaviour _transitionLocomotor;
+        private bool _transitionLocomotorWasEnabled;
+
+        public bool IsSimulationTransitionProcessing => _transitionInProgress;
+        public bool SimulationTransitionCompleted => _simulationTransitionCompleted;
+
+        /// <summary>Lets the Editor-only simulator dismiss the phase confirmation popup.</summary>
+        public void SetSimulationAutoConfirm(bool enabled) => _simulationAutoConfirm = enabled;
+
+        public void CancelSimulationTransition()
+        {
+            if (!_transitionInProgress) return;
+            StopAllCoroutines();
+            if (_transitionLocomotor != null)
+                _transitionLocomotor.enabled = _transitionLocomotorWasEnabled;
+            if (transitionPanel != null) transitionPanel.SetActive(false);
+            DashboardGate.PoseBroadcastSuspended = false;
+            _transitionLocomotor = null;
+            _transitionInProgress = false;
+            _simulationTransitionCompleted = false;
+        }
 
         private void Start()
         {
@@ -99,6 +123,10 @@ namespace SafetyProto.Runtime
 
             // Safety: never leave the pose stream suspended if we're torn down mid-transition.
             DashboardGate.PoseBroadcastSuspended = false;
+            if (_transitionLocomotor != null)
+                _transitionLocomotor.enabled = _transitionLocomotorWasEnabled;
+            _transitionInProgress = false;
+            _simulationAutoConfirm = false;
         }
 
         private void OnGroupCompleted(TaskGroupEventArgs args)
@@ -109,8 +137,13 @@ namespace SafetyProto.Runtime
                 return;
 
             _transitionExecuted = true;
+            _simulationTransitionCompleted = false;
 
-            if (_popupFeedback != null)
+            if (_simulationAutoConfirm)
+            {
+                StartCoroutine(ExecutePhaseTransition());
+            }
+            else if (_popupFeedback != null)
             {
                 _popupFeedback.ShowInteractive(confirmTitle, confirmBody, confirmButtonLabel,
                     () =>
@@ -128,6 +161,7 @@ namespace SafetyProto.Runtime
 
         private IEnumerator ExecutePhaseTransition()
         {
+            _transitionInProgress = true;
             var ovr = OVRScreenFade.instance;
 
             if (ovr != null)
@@ -146,7 +180,8 @@ namespace SafetyProto.Runtime
             // Suspend player gravity for the teleport: disabling the locomotor stops it from calling
             // CharacterController.Move, so a frame hitch (e.g. a dashboard send) can't drop the player
             // through scaffold colliders that haven't registered yet.
-            bool locomotorWasEnabled = playerLocomotor != null && playerLocomotor.enabled;
+            _transitionLocomotor = playerLocomotor;
+            _transitionLocomotorWasEnabled = playerLocomotor != null && playerLocomotor.enabled;
             if (playerLocomotor != null) playerLocomotor.enabled = false;
 
             // Suspend the dashboard pose stream for the transition: its ~10 Hz main-thread sends are
@@ -189,7 +224,8 @@ namespace SafetyProto.Runtime
                 SafetyLog.Warning($"[PhaseController] Chão do andaime não confirmado em {groundWaitTimeout}s — religando locomotor mesmo assim.", this);
 
             // Re-enable gravity/locomotion only now that the player has solid ground beneath them.
-            if (playerLocomotor != null) playerLocomotor.enabled = locomotorWasEnabled;
+            if (playerLocomotor != null) playerLocomotor.enabled = _transitionLocomotorWasEnabled;
+            _transitionLocomotor = null;
 
             // Resume the dashboard pose stream now the latency-sensitive window is over.
             DashboardGate.PoseBroadcastSuspended = false;
@@ -205,6 +241,8 @@ namespace SafetyProto.Runtime
             }
 
             SafetyLog.Info("[PhaseController] Transição concluída. ZonaAndaime ativa.", this);
+            _transitionInProgress = false;
+            _simulationTransitionCompleted = true;
         }
 
         // Probes straight down from the spawn for any non-player collider — confirms the scaffold deck

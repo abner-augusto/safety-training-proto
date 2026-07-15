@@ -5,6 +5,7 @@ using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Domain.Scoring;
+using SafetyProto.Domain.Scenarios;
 using SafetyProto.Domain.Tasks;
 using SafetyProto.Runtime.Actions;
 using SafetyProto.Utils;
@@ -34,6 +35,8 @@ namespace SafetyProto.Runtime.Task
         /// <summary>The groups actually driving this session, loaded from JSON.</summary>
         private IReadOnlyList<ITaskGroup> _runtimeGroups = new List<ITaskGroup>();
         public IReadOnlyList<ITaskGroup> RuntimeGroups => _runtimeGroups;
+        public string ScenarioResourceName => scenarioResourceName;
+        public ScenarioDef? LoadedScenario { get; private set; }
 
         public int CurrentTaskIndex => _core?.CurrentTaskIndex ?? -1;
         public RuntimeSafetyTask? CurrentRuntimeTask => _core?.CurrentRuntimeTask;
@@ -161,6 +164,7 @@ namespace SafetyProto.Runtime.Task
             var scenario = ScenarioSource.Load(scenarioResourceName);
             if (scenario != null)
             {
+                LoadedScenario = scenario;
                 Scoring = scenario.Scoring ?? ScoringConfig.Default;
                 return (IReadOnlyList<ITaskGroup>)scenario.Groups;
             }

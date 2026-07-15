@@ -20,6 +20,8 @@ namespace SafetyProto.Runtime.Session
         private bool _sessionStarted;
         private bool _sessionEnded;
 
+        public bool IsSessionStarted => _sessionStarted;
+
         private void Start()
         {
             if (!this.IsEventBusReady())

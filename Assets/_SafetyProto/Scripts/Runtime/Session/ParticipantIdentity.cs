@@ -59,6 +59,19 @@ namespace SafetyProto.Runtime.Session
             return id;
         }
 
+        /// <summary>
+        /// Assigns a synthetic identity without touching the private real-name map.
+        /// The SIM- prefix is the MVP contract for excluding simulator data from participant data.
+        /// </summary>
+        public static string SetSimulatedParticipant()
+        {
+            string id = "SIM-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpperInvariant();
+            CurrentId = id;
+            CurrentName = "SIMULADOR";
+            SafetyLog.Info($"[ParticipantIdentity] Sessão simulada identificada como {id} (sem mapa privado).");
+            return id;
+        }
+
         private static string GenerateUniqueId(Map map)
         {
             for (int attempt = 0; attempt < 1000; attempt++)

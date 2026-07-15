@@ -76,6 +76,22 @@ namespace SafetyProto.Runtime.Task
             return null;
         }
 
+        /// <summary>Loads an existing scenario JSON file without copying it into Resources.</summary>
+        public static ScenarioDef? LoadFile(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+            {
+                SafetyLog.Warning($"[ScenarioSource] Arquivo externo não encontrado: {path}");
+                return null;
+            }
+
+            var result = ScenarioLoader.Parse(SafeReadAllText(path));
+            if (result.Success && result.Scenario != null) return result.Scenario;
+
+            SafetyLog.Error($"[ScenarioSource] Cenário externo inválido: {result.ErrorSummary}");
+            return null;
+        }
+
         private static string SafeReadAllText(string path)
         {
             try
