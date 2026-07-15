@@ -36514,6 +36514,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1644188873}
   - component: {fileID: 1644188874}
+  - component: {fileID: 1644188875}
   m_Layer: 0
   m_Name: NameEntryController
   m_TagString: Untagged
@@ -36555,6 +36556,7 @@ MonoBehaviour:
     anonimizados."
   confirmLabel: Confirmar
   onboarding: {fileID: 1708245727}
+  modeSelection: {fileID: 1644188875}
   sessionManager: {fileID: 5093628265187112637}
   startDelayFrames: 10
   autoStartOnEnable: 1
@@ -36562,6 +36564,23 @@ MonoBehaviour:
   onNameEntryFinished:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1644188875
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1644188872}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a1e5c9d2b4f4d0e9a1c2b3d4e5f6078, type: 3}
+  m_Name: SessionModeSelection
+  m_EditorClassIdentifier: SafetyProto.UI.Unity::SafetyProto.UI.SessionModeSelectionController
+  popupService: {fileID: 5455797637335201551}
+  title: "Modo da sess\xE3o"
+  body: "Guiado: o painel lista cada tarefa e a atividade s\xF3 finaliza completa.\nAvalia\xE7\xE3o: apenas o objetivo geral \xE9 exibido e \xE9 poss\xEDvel finalizar com omiss\xF5es."
+  guidedLabel: Guiado
+  evaluationLabel: "Avalia\xE7\xE3o"
 --- !u!1 &1645086474
 GameObject:
   m_ObjectHideFlags: 0

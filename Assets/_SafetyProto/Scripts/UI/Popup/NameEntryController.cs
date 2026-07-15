@@ -1,4 +1,5 @@
 using System.Collections;
+using SafetyProto.Core;
 using SafetyProto.Core.Logging;
 using SafetyProto.Runtime.Session;
 using TMPro;
@@ -28,6 +29,8 @@ namespace SafetyProto.UI
         [Header("Flow")]
         [Tooltip("Onboarding started after the name is submitted or skipped.")]
         [SerializeField] private OnboardingController onboarding;
+        [Tooltip("Optional mode picker shown after the name resolves and before the session starts. When absent the session runs Guiado.")]
+        [SerializeField] private SessionModeSelectionController modeSelection;
         [Tooltip("Session manager whose BeginSession() is called once the participant id is set.")]
         [SerializeField] private TrainingSessionManager sessionManager;
         [Tooltip("Frames to wait before opening, letting OVR settle (mirrors OnboardingController).")]
@@ -163,6 +166,19 @@ namespace SafetyProto.UI
 
             popupService?.Hide();
 
+            if (modeSelection != null)
+            {
+                modeSelection.Begin(StartSessionAndOnboarding);
+            }
+            else
+            {
+                SessionModeState.Current = SessionMode.Guided;
+                StartSessionAndOnboarding();
+            }
+        }
+
+        private void StartSessionAndOnboarding()
+        {
             if (sessionManager != null) sessionManager.BeginSession();
             else SafetyLog.Warning("[NameEntryController] sessionManager não atribuído — sessão não iniciada.", this);
 

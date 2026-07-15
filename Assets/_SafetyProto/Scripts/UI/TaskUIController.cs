@@ -24,6 +24,10 @@ namespace SafetyProto.UI
         [Header("Rodapé")]
         [SerializeField] private TMP_Text remainingTasksText;
 
+        [Header("Modo Avaliação")]
+        [Tooltip("Text shown INSTEAD of the task list in Avaliação: the group's objective sentence from the scenario JSON.")]
+        [SerializeField] private TMP_Text objectiveText;
+
         private ITaskGroup _activeGroup;
         private List<ISafetyTask> _groupTasks       = new();
         private List<ISafetyTask> _pendingTasks     = new();
@@ -70,6 +74,16 @@ namespace SafetyProto.UI
         {
             if (args.Group is not { } group) return;
 
+            bool evaluation = SessionModeState.Current == SessionMode.Evaluation;
+            if (objectiveText != null)
+            {
+                objectiveText.gameObject.SetActive(evaluation);
+                if (evaluation)
+                    objectiveText.text = string.IsNullOrWhiteSpace(group.objective)
+                        ? group.groupName
+                        : group.objective;
+            }
+
             // Cancel pending removals
             foreach (var kvp in _removalCoroutines)
                 if (kvp.Value != null) StopCoroutine(kvp.Value);
@@ -89,6 +103,14 @@ namespace SafetyProto.UI
             _groupTasks   = new List<ISafetyTask>(group.tasks);
             _pendingTasks = new List<ISafetyTask>(_groupTasks);
             _completedVisibleCount = 0;
+
+            if (evaluation)
+            {
+                // Evaluation: no task list, no remaining counter, only the group objective.
+                _pendingTasks.Clear();
+                if (remainingTasksText != null) remainingTasksText.text = string.Empty;
+                return;
+            }
 
             FillWindow();
             UpdateRemainingText();

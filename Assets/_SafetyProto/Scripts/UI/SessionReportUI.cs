@@ -147,9 +147,9 @@ namespace SafetyProto.UI
         }
 
         // A critical task that did not end in a clean CompletedSuccess is a critical
-        // violation for medal purposes (unsafe completion, timeout, or — after plan
-        // 018 — omission). Gate charges on critical tasks are covered by the same
-        // test: a charged task was pending, so it is not CompletedSuccess.
+        // violation for medal purposes (unsafe completion, timeout, or omission).
+        // Gate charges on critical tasks are covered by the same test: a charged
+        // task was pending, so it is not CompletedSuccess.
         private bool HasCriticalViolation(IReadOnlyList<RuntimeSafetyTask> tasks)
         {
             foreach (var t in tasks)
@@ -182,6 +182,7 @@ namespace SafetyProto.UI
                     TaskState.CompletedSuccess => full,
                     TaskState.CompletedSuccessButUnsafe => scoring.UnsafeEarnFor(sev),
                     TaskState.CompletedFailure => -scoring.BasePenaltyFor(sev),
+                    TaskState.Omitted => 0,
                     _ => 0
                 };
                 var row = Instantiate(taskRowPrefab, taskListParent);
@@ -251,6 +252,14 @@ namespace SafetyProto.UI
                         ? t.TaskData.ppeAdvice
                         : "Sempre verifique seus equipamentos antes de agir.";
                     messages.Add($"⚠️ {name}: Concluída sem EPIs completos. {advice}");
+                }
+                else if (t.State == TaskState.Omitted)
+                {
+                    string advice = !string.IsNullOrEmpty(t.TaskData.omissionAdvice)
+                        ? t.TaskData.omissionAdvice
+                        : t.TaskData.hintText;
+                    string suffix = string.IsNullOrEmpty(advice) ? string.Empty : $" {advice}";
+                    messages.Add($"⬜ {name}: Tarefa não realizada.{suffix}");
                 }
                 else if (t.State == TaskState.NotStarted || t.State == TaskState.InProgress)
                 {

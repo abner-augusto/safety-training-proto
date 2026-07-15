@@ -17,6 +17,7 @@ namespace SafetyProto.UI
         private static readonly Color ColorUnsafe   = new Color(0.953f, 0.612f, 0.071f); // #F39C12
         private static readonly Color ColorFailure  = new Color(0.906f, 0.298f, 0.235f); // #E74C3C
         private static readonly Color ColorNotTried = new Color(0.365f, 0.427f, 0.494f); // #5D6D7E
+        private static readonly Color ColorOmitted  = new Color(0.55f, 0.35f, 0.65f); // #8C59A6
 
         public void Setup(int order, RuntimeSafetyTask runtimeTask, int fullPoints, int earnedPoints)
         {
@@ -28,7 +29,8 @@ namespace SafetyProto.UI
             progressBarFill.fillAmount = fill;
             progressBarFill.color = barColor;
 
-            pointsText.text = earnedPoints > 0 ? $"+{earnedPoints} pts"
+            pointsText.text = runtimeTask.State == TaskState.Omitted ? "Omitida — 0 pts"
+                            : earnedPoints > 0 ? $"+{earnedPoints} pts"
                             : earnedPoints < 0 ? $"{earnedPoints} pts"
                             : "0 pts";
             pointsText.color = barColor;
@@ -41,6 +43,7 @@ namespace SafetyProto.UI
                 TaskState.CompletedSuccess        => ColorSuccess,
                 TaskState.CompletedSuccessButUnsafe => ColorUnsafe,
                 TaskState.CompletedFailure        => ColorFailure,
+                TaskState.Omitted                 => ColorOmitted,
                 _                                 => ColorNotTried
             };
         }
