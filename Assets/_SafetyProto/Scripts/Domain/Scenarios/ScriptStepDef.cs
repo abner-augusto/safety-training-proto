@@ -22,6 +22,10 @@ namespace SafetyProto.Domain.Scenarios
         [JsonProperty("actionId")]
         public string? ActionId { get; set; }
 
+        /// <summary>Optional Unity gate target; empty preserves CLI behavior.</summary>
+        [JsonProperty("gateTarget")]
+        public string? GateTarget { get; set; }
+
         [JsonProperty("delayMs")]
         public int DelayMs { get; set; } = 100;
     }

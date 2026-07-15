@@ -5,8 +5,8 @@
 
     This project compiles the SAME NUnit .cs test files that the Unity Editor Test Runner
     compiles (linked from Assets/_SafetyProto/Tests/Editor), against the shared domain
-    assembly (SafetyProto.Shared), so the engine-independent tests run with `dotnet test`
-    WITHOUT the Unity Editor. It mirrors the SafetyProto.Shared.csproj linked-source pattern:
+    assembly (SafetyProto.Shared), so the engine-independent tests run with
+    dotnet test WITHOUT the Unity Editor. It mirrors the SafetyProto.Shared.csproj linked-source pattern:
     one source of truth, two hosts (Unity + .NET).
 
     Scope: only test files that reference zero UnityEngine / SafetyProto.Runtime.* types are
@@ -56,9 +56,11 @@
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\TaskManagerCoreTests.cs"            Link="TaskManagerCoreTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\SafetyRuleEngineDiagnosticTests.cs" Link="SafetyRuleEngineDiagnosticTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\PPEManagerEventProtocolTests.cs"    Link="PPEManagerEventProtocolTests.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\ScriptStepDefTests.cs"              Link="ScriptStepDefTests.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\ScenarioCompatibilityTests.cs"      Link="ScenarioCompatibilityTests.cs" />
     <!-- Excluded (Unity-coupled): SafetyTrainingTests uses the Unity EventBus singleton + static
          event facades (SessionEvents/TaskEvents/...), which live in the Unity assemblies, not
-         SafetyProto.Shared. SafetyPatternTests uses Runtime.Analytics. Both stay Unity-only. -->
+         SafetyProto.Shared. SafetyPatternTests uses Runtime.Analytics. Both stay Unity-only and are intentionally excluded. -->
   </ItemGroup>
 
 </Project>
