@@ -21,10 +21,25 @@
     on('SessionStarted', p => {
       state.currentSessionId = p.sessionId ?? null;
       state.currentParticipantId = p.participantId ?? '—';
+      state.currentMode = p.mode ?? null;
       document.getElementById('session-id-label').textContent =
         `${t('session')}: ${p.sessionId?.substring(0, 8) ?? '?'}`;
       document.getElementById('participant-label').textContent =
         `${t('participant')}: ${state.currentParticipantId}`;
+      const badge = document.getElementById('mode-badge');
+      if (badge) {
+        badge.hidden = !state.currentMode;
+        if (state.currentMode) {
+          const evaluation = state.currentMode === 'avaliacao';
+          badge.textContent = evaluation ? t('modeEvaluation') : t('modeGuided');
+          badge.dataset.i18n = evaluation ? 'modeEvaluation' : 'modeGuided';
+          badge.classList.toggle('mode-avaliacao', evaluation);
+        } else {
+          badge.textContent = '—';
+          badge.removeAttribute('data-i18n');
+          badge.classList.remove('mode-avaliacao');
+        }
+      }
       sessionTimer.start();
       state.violationCount = 0;
       wornPpe.clear();
@@ -78,6 +93,7 @@
       tasks.clear();
       state.sessionReport = null;
       state.currentScore  = 0;
+      state.currentMode = null;
       sessionTimer.reset();
       setScoreUI(0);
       resetTaskUI();
@@ -88,6 +104,13 @@
       document.getElementById('report-section').innerHTML = emptyState('', t('reportAfterSession'));
       document.getElementById('session-id-label').textContent = t('noSession');
       document.getElementById('participant-label').textContent = `${t('participant')}: —`;
+      const badge = document.getElementById('mode-badge');
+      if (badge) {
+        badge.hidden = true;
+        badge.textContent = '—';
+        badge.removeAttribute('data-i18n');
+        badge.classList.remove('mode-avaliacao');
+      }
       addLog(t('logSessionReset'));
     });
 

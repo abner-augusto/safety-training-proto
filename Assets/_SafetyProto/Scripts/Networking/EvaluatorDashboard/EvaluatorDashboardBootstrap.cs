@@ -270,6 +270,7 @@ namespace SafetyProto.Networking.Dashboard
             {
                 sessionId = sessionId,
                 participantId = string.IsNullOrEmpty(EventContext.CurrentPlayerId) ? "—" : EventContext.CurrentPlayerId,
+                mode = SessionModeState.CurrentName,
                 timestampMs = ResolveTimestamp(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
             };
             _wsServer.SendToClient(client, "SessionStarted", sessionDto);
@@ -304,7 +305,8 @@ namespace SafetyProto.Networking.Dashboard
         {
             var dto = new SessionDto(args.SessionId, ResolveTimestamp(args.TimestampMs))
             {
-                participantId = string.IsNullOrEmpty(args.PlayerId) ? "—" : args.PlayerId
+                participantId = string.IsNullOrEmpty(args.PlayerId) ? "—" : args.PlayerId,
+                mode = SessionModeState.CurrentName
             };
             Broadcast("SessionStarted", dto);
 
@@ -803,12 +805,14 @@ namespace SafetyProto.Networking.Dashboard
         {
             public string sessionId;
             public string participantId;
+            public string mode;
             public long timestampMs;
 
             public SessionDto(string sessionId, long timestamp)
             {
                 this.sessionId = sessionId;
                 participantId = null;
+                mode = null;
                 timestampMs = timestamp;
             }
         }

@@ -19,6 +19,7 @@
       violationCount: 0,
       currentParticipantId: '—',
       currentSessionId: null,
+      currentMode: null,
     };
 
     /* ── Live session timer (driven by session lifecycle events) ── */

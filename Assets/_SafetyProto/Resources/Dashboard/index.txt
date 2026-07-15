@@ -74,6 +74,7 @@
           SafetyProto
         </div>
         <div class="s-header-meta">
+          <span id="mode-badge" hidden>—</span>
           <span id="participant-label">—</span>
           <span id="session-id-label">—</span>
           <span id="conn-status-label">Desconectado</span>
