@@ -52463,7 +52463,14 @@ MonoBehaviour:
   delayBetweenConsequences: 2.5
   delayAfterAllConsequences: 1.5
   fallForceMultiplier: 5
-  consequenceMappings: []
+  consequenceMappings:
+  - taskActionId: connect_lanyard
+    displayName: Lanyard não conectado
+    consequenceType: 1
+    consequenceTarget: {fileID: 0}
+    blackoutOnly: 1
+    feedbackMessage: A atividade começou sem conectar o lanyard ao ponto de ancoragem.
+    consequenceSound: {fileID: 0}
   audioSource: {fileID: 0}
   warningSound: {fileID: 8300000, guid: 3b25a2e8b139ca140ada64a19a18e163, type: 3}
   successSound: {fileID: 8300000, guid: 6f95755d99749b64db8a196c796d83de, type: 3}

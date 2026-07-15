@@ -26,6 +26,9 @@ namespace SafetyProto.Runtime.Safety
         [Tooltip("GameObject that plays the consequence animation. Can be null for camera-based effects.")]
         public GameObject consequenceTarget;
 
+        [Tooltip("When true, PlayerFallSimulation uses the blackout-only fade path and skips the controlled fall rig.")]
+        public bool blackoutOnly;
+
         [TextArea(2, 4)]
         public string feedbackMessage;
 
@@ -86,6 +89,7 @@ namespace SafetyProto.Runtime.Safety
         // ── Private ───────────────────────────────────────────────
 
         private bool _isProcessing;
+        private bool _evaluationFinalized;
         private readonly List<string> _lastPendingTaskIds = new List<string>();
 
         // Tasks already charged at a failed gate press this session. The charge
@@ -108,10 +112,13 @@ namespace SafetyProto.Runtime.Safety
                 SafetyLog.Error("[InspectionGateValidator] TaskManager not found.", this);
 
             _popupFeedback = popupFeedbackProvider as IPopupFeedback;
+            _evaluationFinalized = false;
 
             FailedAttemptCount = 0;
             _chargedTaskIds.Clear();
             HideConsequenceFeedback();
+
+            EventBus.Instance?.onSessionCompleted.AddListener(OnSessionCompletedEvent);
         }
 
         /// <summary>
@@ -147,6 +154,28 @@ namespace SafetyProto.Runtime.Safety
                 .Where(t => currentGroup.tasks.Any(x => ReferenceEquals(x, t.TaskData)))
                 .Where(t => t.State == TaskState.NotStarted || t.State == TaskState.InProgress)
                 .ToList();
+
+            if (SessionModeState.Current == SessionMode.Evaluation)
+            {
+                _isProcessing = true;
+
+                if (_popupFeedback != null)
+                {
+                    _popupFeedback.ShowConfirmation(
+                        "Iniciar Atividade",
+                        "Deseja iniciar a atividade?",
+                        "Iniciar",
+                        "Voltar",
+                        onConfirm: () => BeginEvaluationFinish(pendingTasks),
+                        onCancel: () => { _isProcessing = false; });
+                }
+                else
+                {
+                    BeginEvaluationFinish(pendingTasks);
+                }
+
+                return;
+            }
 
             if (pendingTasks.Count == 0)
             {
@@ -280,8 +309,10 @@ namespace SafetyProto.Runtime.Safety
                         break;
 
                     case ConsequenceType.PlayerFallSimulation:
-                        // A3: route through the controlled fall (skips when correctly anchored).
-                        if (fallController != null)
+                        // A3: blackout-only mock uses the fade-only path; otherwise keep the controlled fall.
+                        if (mapping.blackoutOnly)
+                            yield return ExecutePlayerFallSimulation(mapping);
+                        else if (fallController != null)
                             yield return fallController.TriggerControlledFall();
                         else
                             yield return ExecutePlayerFallSimulation(mapping);
@@ -333,6 +364,116 @@ namespace SafetyProto.Runtime.Safety
                 _popupFeedback.ShowInteractive("Tarefas Pendentes", body, continueButtonLabel, Continue);
             else
                 Continue();
+        }
+
+        // ── Evaluation finish ────────────────────────────────────
+
+        /// <summary>
+        /// Evaluation-mode gate confirm: play consequences only for omitted tasks
+        /// that have a mapped consequence, then close all open tasks as Omitted.
+        /// MarkPendingTasksOmitted completes the group, so TaskManagerCore.EndSession
+        /// publishes the single SessionCompleted/SessionEnded pair; this path must
+        /// not raise its own.
+        /// </summary>
+        private void BeginEvaluationFinish(List<RuntimeSafetyTask> pendingTasks)
+        {
+            HideGateButtons();
+
+            if (pendingTasks.Count == 0)
+            {
+                PlaySound(successSound);
+                FinalizeEvaluation();
+                return;
+            }
+
+            var mappedPending = pendingTasks
+                .Where(t => consequenceMappings != null && consequenceMappings.Any(m =>
+                    string.Equals(m.taskActionId, t.ExpectedActionId, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+
+            if (mappedPending.Count > 0)
+                StartCoroutine(ExecuteEvaluationConsequences(mappedPending));
+            else
+                FinalizeEvaluation();
+        }
+
+        private IEnumerator ExecuteEvaluationConsequences(
+            List<RuntimeSafetyTask> mappedPending)
+        {
+            var pendingMappings = new List<(RuntimeSafetyTask task, ConsequenceMapping mapping)>();
+            foreach (var task in mappedPending)
+            {
+                var mapping = consequenceMappings
+                    .FirstOrDefault(m => string.Equals(m.taskActionId, task.ExpectedActionId,
+                        StringComparison.OrdinalIgnoreCase));
+                if (mapping != null)
+                    pendingMappings.Add((task, mapping));
+            }
+
+            pendingMappings.Sort((a, b) =>
+            {
+                if (a.mapping.consequenceType == ConsequenceType.PlayerFallSimulation) return 1;
+                if (b.mapping.consequenceType == ConsequenceType.PlayerFallSimulation) return -1;
+                return 0;
+            });
+
+            foreach (var (_, mapping) in pendingMappings)
+            {
+                ConsequenceEvents.RaiseConsequenceStarted(new ConsequenceStartedEventArgs
+                {
+                    ConsequenceType = mapping.consequenceType,
+                    TargetObject = mapping.consequenceTarget,
+                    MappingId = mapping.taskActionId
+                });
+
+                switch (mapping.consequenceType)
+                {
+                    case ConsequenceType.ObjectFall:
+                        yield return ExecuteObjectFall(mapping);
+                        break;
+
+                    case ConsequenceType.PlayerFallSimulation:
+                        if (mapping.blackoutOnly)
+                            yield return ExecutePlayerFallSimulation(mapping);
+                        else if (fallController != null)
+                            yield return fallController.TriggerControlledFall();
+                        else
+                            yield return ExecutePlayerFallSimulation(mapping);
+                        SafetyEvents.RaiseCriticalSafetyFailure(new CriticalSafetyFailureEventArgs
+                        {
+                            Reason = $"Trabalhou desconectado: {mapping.displayName}",
+                            ViolationCount = 1,
+                            WindowSeconds = 0f
+                        });
+                        break;
+
+                    case ConsequenceType.VisualAlert:
+                        yield return ExecuteVisualAlert(mapping);
+                        break;
+                }
+
+                PlaySound(mapping.consequenceSound != null ? mapping.consequenceSound : warningSound);
+                ShowConsequenceFeedback(mapping.displayName, mapping.feedbackMessage);
+                ConsequenceEvents.RaiseConsequenceEnded();
+
+                yield return new WaitForSeconds(delayBetweenConsequences);
+            }
+
+            yield return new WaitForSeconds(delayAfterAllConsequences);
+            HideConsequenceFeedback();
+
+            FinalizeEvaluation();
+        }
+
+        private void FinalizeEvaluation()
+        {
+            var omitted = taskManager.MarkPendingTasksOmitted();
+
+            if (verboseLogging)
+                SafetyLog.Info($"[InspectionGateValidator] Sessão finalizada em modo Avaliação ({omitted.Count} tarefa(s) omitida(s)).", this);
+
+            _evaluationFinalized = true;
+            _isProcessing = false;
         }
 
         // ── Session end ───────────────────────────────────────────
@@ -458,7 +599,20 @@ namespace SafetyProto.Runtime.Safety
 
         private void OnDestroy()
         {
+            if (EventBus.Instance != null)
+                EventBus.Instance.onSessionCompleted.RemoveListener(OnSessionCompletedEvent);
+
             StopAllCoroutines();
+        }
+
+        private void OnSessionCompletedEvent(SessionCompletedEventArgs _)
+        {
+            if (!_evaluationFinalized) return;
+            _evaluationFinalized = false;
+
+            if (sessionEndPanels != null)
+                foreach (var panel in sessionEndPanels)
+                    if (panel != null) panel.SetActive(true);
         }
     }
 }
