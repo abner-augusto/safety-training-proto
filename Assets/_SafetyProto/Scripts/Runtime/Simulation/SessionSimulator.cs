@@ -281,6 +281,10 @@ namespace SafetyProto.Runtime.Simulation
             SessionModeState.Current = mode;
             _result.participantId = ParticipantIdentity.SetSimulatedParticipant();
             _inspectionGate?.SetSimulationAutoConfirm(true);
+            // Arm the phase auto-confirm up front, not at the gate step. When every PPE is equipped the
+            // ppe_selection group self-completes on the last equip — before the scripted gate step runs —
+            // and PhaseController.OnGroupCompleted would otherwise show the confirmation popup and stall.
+            _phaseController?.SetSimulationAutoConfirm(true);
             _sessionManager.BeginSession();
             _prepared = true;
 
@@ -353,13 +357,29 @@ namespace SafetyProto.Runtime.Simulation
                     Fail("Gate da fase 1 não encontrado na cena ativa.");
                     yield break;
                 }
-                var before = _taskManager?.GetCurrentGroup();
                 _phaseController?.SetSimulationAutoConfirm(true);
+                // Advance() forces the group closed only while PPE tasks are still pending; when every PPE
+                // was already equipped the group has self-completed and this is a no-op — the transition is
+                // already running from the auto-confirm armed at prepare time.
                 _phaseGate.Advance();
-                yield return WaitUntil(() => !ReferenceEquals(before, _taskManager?.GetCurrentGroup()) &&
-                    _phaseController != null && _phaseController.SimulationTransitionCompleted,
-                    $"Espera da transição de fase excedeu {operationTimeoutSeconds:F0} s: o andaime não ficou pronto.",
-                    operationTimeoutSeconds);
+
+                if (_phaseController != null)
+                {
+                    // The teleport sets SimulationTransitionCompleted at its end and never clears it again
+                    // this session, so it is a stable terminal signal whether the group completed via the
+                    // gate press or on its own when the last PPE was equipped.
+                    yield return WaitUntil(() => _phaseController.SimulationTransitionCompleted,
+                        $"Espera da transição de fase excedeu {operationTimeoutSeconds:F0} s: o andaime não ficou pronto.",
+                        operationTimeoutSeconds);
+                }
+                else
+                {
+                    // No PhaseController to track — fall back to observing the group advance.
+                    var before = _taskManager?.GetCurrentGroup();
+                    yield return WaitUntil(() => !ReferenceEquals(before, _taskManager?.GetCurrentGroup()),
+                        $"Espera da transição de fase excedeu {operationTimeoutSeconds:F0} s: o grupo não avançou.",
+                        operationTimeoutSeconds);
+                }
             }
             else if (target == "inspection" || target == "final" || target == "inspecao")
             {
