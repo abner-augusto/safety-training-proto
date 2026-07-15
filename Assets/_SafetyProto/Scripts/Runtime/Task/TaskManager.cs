@@ -212,5 +212,11 @@ namespace SafetyProto.Runtime.Task
 
         public IReadOnlyList<RuntimeSafetyTask> MarkPendingTasksOmitted() =>
             _core?.MarkPendingTasksOmitted() ?? new List<RuntimeSafetyTask>();
+
+        public IReadOnlyList<string> GetCompletionOrderDeviations() =>
+            _core?.GetCompletionOrderDeviations() ?? new List<string>();
+
+        public void RegisterOrderViolation(string description) =>
+            _core?.RegisterOrderViolation(description);
     }
 }

@@ -256,6 +256,46 @@ namespace SafetyProto.Domain.Tasks
             return omitted;
         }
 
+        /// <summary>
+        /// Names of tasks in the CURRENT group whose completion order deviated from
+        /// the authored task order. Compares CompletionTime timestamps of tasks that
+        /// reached a completed state (success or unsafe) against the sequence in
+        /// which the group declares them: a task completed EARLIER than a task that
+        /// precedes it in the JSON is a deviation. Never-completed tasks are ignored
+        /// (omissions are reported separately). Empty list = order respected.
+        /// </summary>
+        public IReadOnlyList<string> GetCompletionOrderDeviations()
+        {
+            var deviations = new List<string>();
+            var currentGroup = GetCurrentGroup();
+            if (currentGroup == null) return deviations;
+
+            float lastTime = float.MinValue;
+            for (int i = 0; i < currentGroup.tasks.Count; i++)
+            {
+                RuntimeSafetyTask? runtime = null;
+                for (int j = 0; j < _sessionTasks.Count; j++)
+                {
+                    if (ReferenceEquals(_sessionTasks[j].TaskData, currentGroup.tasks[i]))
+                    {
+                        runtime = _sessionTasks[j];
+                        break;
+                    }
+                }
+
+                if (runtime == null) continue;
+                var s = runtime.State;
+                if (s != TaskState.CompletedSuccess && s != TaskState.CompletedSuccessButUnsafe) continue;
+
+                if (runtime.CompletionTime < lastTime)
+                {
+                    deviations.Add(runtime.taskName);
+                }
+                lastTime = runtime.CompletionTime;
+            }
+            return deviations;
+        }
+
         private void InitializeRuntimeTasks()
         {
             _sessionTasks.Clear();

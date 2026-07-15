@@ -32,6 +32,15 @@ namespace SafetyProto.Runtime
         [Header("UI de Contexto")]
         [SerializeField] private GameObject transitionPanel;
 
+        [Header("Confirmação")]
+        [Tooltip("Popup provider (PopupService) implementing IPopupFeedback. When set, the teleport waits for a confirmation button instead of firing on group completion. QA: the sudden auto-teleport disoriented participants.")]
+        [SerializeField] private MonoBehaviour popupFeedbackProvider;
+        [SerializeField] private string confirmTitle = "Fase concluída";
+        [SerializeField, TextArea(2, 3)] private string confirmBody = "Você será levado ao andaime para a próxima etapa.";
+        [SerializeField] private string confirmButtonLabel = "Ir para o andaime";
+
+        private SafetyProto.Core.Interfaces.IPopupFeedback _popupFeedback;
+
         [Header("Trigger")]
         [Tooltip("Nome do grupo-gatilho (id). Comparado contra o TaskGroupDef vindo do JSON.")]
         [SerializeField] private string triggerGroupName = string.Empty;
@@ -68,6 +77,8 @@ namespace SafetyProto.Runtime
             if (playerHead == null && playerRig != null)
                 playerHead = PlayerRecenter.ResolveHead(playerRig);
 
+            _popupFeedback = popupFeedbackProvider as SafetyProto.Core.Interfaces.IPopupFeedback;
+
             EventBus.Instance.onGroupCompleted.AddListener(OnGroupCompleted);
         }
 
@@ -98,7 +109,21 @@ namespace SafetyProto.Runtime
                 return;
 
             _transitionExecuted = true;
-            StartCoroutine(ExecutePhaseTransition());
+
+            if (_popupFeedback != null)
+            {
+                _popupFeedback.ShowInteractive(confirmTitle, confirmBody, confirmButtonLabel,
+                    () =>
+                    {
+                        _popupFeedback.Hide();
+                        StartCoroutine(ExecutePhaseTransition());
+                    });
+            }
+            else
+            {
+                // No popup provider wired — legacy immediate transition.
+                StartCoroutine(ExecutePhaseTransition());
+            }
         }
 
         private IEnumerator ExecutePhaseTransition()
