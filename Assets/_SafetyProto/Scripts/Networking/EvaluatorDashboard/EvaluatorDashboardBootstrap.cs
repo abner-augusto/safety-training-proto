@@ -342,7 +342,7 @@ namespace SafetyProto.Networking.Dashboard
                 orderViolationCount = args.orderViolationCount
             };
             Broadcast("SessionCompleted", dto);
-            QueueSessionLogBroadcast();
+            QueueSessionLogBroadcast(args.SessionId, args.PlayerId);
         }
 
         private void OnGroupStarted(TaskGroupEventArgs args)
@@ -688,7 +688,7 @@ namespace SafetyProto.Networking.Dashboard
             _wsServer.Broadcast(eventType, payload);
         }
 
-        private void QueueSessionLogBroadcast()
+        private void QueueSessionLogBroadcast(string sessionId, string playerId)
         {
             if (!isActiveAndEnabled)
                 return;
@@ -698,10 +698,10 @@ namespace SafetyProto.Networking.Dashboard
                 StopCoroutine(_pendingLogBroadcast);
             }
 
-            _pendingLogBroadcast = StartCoroutine(BroadcastLogDelayed());
+            _pendingLogBroadcast = StartCoroutine(BroadcastLogDelayed(sessionId, playerId));
         }
 
-        private IEnumerator BroadcastLogDelayed()
+        private IEnumerator BroadcastLogDelayed(string sessionId, string playerId)
         {
             if (sessionLogBroadcastDelay > 0f)
             {
@@ -720,10 +720,14 @@ namespace SafetyProto.Networking.Dashboard
             // File IO and JsonUtility.ToJson over a plain struct are thread-safe.
             string persistentDataPath = Application.persistentDataPath;
             _pendingLogBroadcast = null;
-            _ = System.Threading.Tasks.Task.Run(() => TryBroadcastLatestSessionLog(persistentDataPath));
+            string logDirectory = playerId != null && playerId.StartsWith("SIM-", StringComparison.OrdinalIgnoreCase)
+                ? Path.Combine(persistentDataPath, "simulations")
+                : persistentDataPath;
+            _ = System.Threading.Tasks.Task.Run(() =>
+                TryBroadcastLatestSessionLog(logDirectory, sessionId, playerId));
         }
 
-        private void TryBroadcastLatestSessionLog(string dir)
+        private void TryBroadcastLatestSessionLog(string dir, string sessionId, string playerId)
         {
             try
             {
@@ -736,8 +740,14 @@ namespace SafetyProto.Networking.Dashboard
 
                 string latestFile = null;
                 DateTime latestTime = DateTime.MinValue;
+                string sessionSuffix = string.IsNullOrEmpty(sessionId)
+                    ? null
+                    : "_" + sessionId.Substring(0, Math.Min(8, sessionId.Length)) + ".json";
                 foreach (var f in files)
                 {
+                    if (sessionSuffix != null &&
+                        !f.EndsWith(sessionSuffix, StringComparison.OrdinalIgnoreCase))
+                        continue;
                     var t = File.GetLastWriteTimeUtc(f);
                     if (t > latestTime)
                     {
@@ -752,6 +762,8 @@ namespace SafetyProto.Networking.Dashboard
                 var content = File.ReadAllText(latestFile);
                 var payload = new SessionLogFileDto
                 {
+                    sessionId = sessionId,
+                    participantId = playerId,
                     fileName = Path.GetFileName(latestFile),
                     path = latestFile,
                     content = content
@@ -956,6 +968,8 @@ namespace SafetyProto.Networking.Dashboard
         [Serializable]
         private struct SessionLogFileDto
         {
+            public string sessionId;
+            public string participantId;
             public string fileName;
             public string path;
             public string content;

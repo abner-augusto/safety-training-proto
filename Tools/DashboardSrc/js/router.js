@@ -183,7 +183,7 @@
       try {
         const report = JSON.parse(p.content);
         renderReportSection(report);
-        saveSessionToHistory(report);
+        saveSessionToHistory(report, p.sessionId, p.participantId);
         addLog(t('logReportAvailable'), 'success');
       } catch (e) {
         console.error('Failed to parse session log:', e);

@@ -121,6 +121,7 @@ namespace SafetyProto.Domain.Sessions
         /// catalog). When null the raw action id is logged as the detail, preserving old behavior.
         /// </summary>
         private readonly Func<string, string>? _actionNameResolver;
+        private readonly Func<string>? _outputDirectoryResolver;
 
         private readonly Action<SessionStartedEventArgs>          _onSessionStarted;
         private readonly Action<SessionPausedEventArgs>           _onSessionPaused;
@@ -148,13 +149,14 @@ namespace SafetyProto.Domain.Sessions
         private string _sessionId = string.Empty;
         private string _mode = string.Empty;
 
-        public SessionLoggerCore(IEventBus eventBus, string outputDirectory, Func<SessionLog, string> serialize, IHarnessLogger? logger = null, Func<string, string>? actionNameResolver = null)
+        public SessionLoggerCore(IEventBus eventBus, string outputDirectory, Func<SessionLog, string> serialize, IHarnessLogger? logger = null, Func<string, string>? actionNameResolver = null, Func<string>? outputDirectoryResolver = null)
         {
             _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
             _outputDirectory = outputDirectory ?? throw new ArgumentNullException(nameof(outputDirectory));
             _serialize = serialize ?? throw new ArgumentNullException(nameof(serialize));
             _logger = logger;
             _actionNameResolver = actionNameResolver;
+            _outputDirectoryResolver = outputDirectoryResolver;
 
             _onSessionStarted        = args =>
             {
@@ -341,9 +343,10 @@ namespace SafetyProto.Domain.Sessions
         {
             try
             {
-                if (!Directory.Exists(_outputDirectory))
+                string outputDirectory = _outputDirectoryResolver?.Invoke() ?? _outputDirectory;
+                if (!Directory.Exists(outputDirectory))
                 {
-                    Directory.CreateDirectory(_outputDirectory);
+                    Directory.CreateDirectory(outputDirectory);
                 }
 
                 // Name the file after the SESSION START (not the wall-clock time of this write), so
@@ -358,7 +361,7 @@ namespace SafetyProto.Domain.Sessions
                     ? string.Empty
                     : "_" + _sessionId.Substring(0, Math.Min(8, _sessionId.Length));
                 var fileName = $"session_log_{timestamp}{idSuffix}.json";
-                var path = Path.Combine(_outputDirectory, fileName);
+                var path = Path.Combine(outputDirectory, fileName);
 
                 // Synthesize an accurate summary from the events logged so far when the session
                 // ended without a SessionCompleted event (reset / abandoned). Guarantees the file

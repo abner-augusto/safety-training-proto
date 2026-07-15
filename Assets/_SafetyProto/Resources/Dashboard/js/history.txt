@@ -35,11 +35,13 @@
     }
 
     /** Capture the just-finished session report into history (newest first). */
-    export function saveSessionToHistory(report) {
+    export function saveSessionToHistory(report, sessionId, participantId) {
       if (!report) return;
+      const reportParticipantId = participantId ?? state.currentParticipantId;
+      if ((reportParticipantId ?? '').toUpperCase().startsWith('SIM-')) return;
       sessionHistory.unshift({
-        sessionId:     state.currentSessionId,
-        participantId: state.currentParticipantId,
+        sessionId:     sessionId ?? state.currentSessionId,
+        participantId: reportParticipantId,
         savedAt:       Date.now(),
         report,
       });

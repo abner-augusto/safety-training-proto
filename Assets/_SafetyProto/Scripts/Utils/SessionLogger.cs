@@ -1,6 +1,8 @@
 using System;
+using System.IO;
 using UnityEngine;
 using SafetyProto.Core;
+using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Domain.Actions;
@@ -24,7 +26,10 @@ namespace SafetyProto.Utils
                 Application.persistentDataPath,
                 SessionLoggerCore.SerializeIndentedOmittingDefaults,
                 new SafetyLogAdapter(),
-                BuildActionNameResolver());
+                BuildActionNameResolver(),
+                () => (EventContext.CurrentPlayerId ?? string.Empty).StartsWith("SIM-", StringComparison.OrdinalIgnoreCase)
+                    ? Path.Combine(Application.persistentDataPath, "simulations")
+                    : Application.persistentDataPath);
             _core.Subscribe();
         }
 
