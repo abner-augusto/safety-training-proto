@@ -35,6 +35,15 @@ namespace SafetyProto.Domain.Tasks
         private bool _subscribed;
         private bool _disposed;
 
+        /// <summary>Evaluation mode overrides every group to free-order semantics;
+        /// Guided respects the authored mode. All mode branches in this engine must
+        /// go through here — reading group.executionMode directly reintroduces
+        /// sequential enforcement in Evaluation.</summary>
+        private static TaskExecutionModeShared EffectiveMode(ITaskGroup group) =>
+            SessionModeState.Current == SessionMode.Evaluation
+                ? TaskExecutionModeShared.FreeOrder
+                : group.executionMode;
+
         public int CurrentTaskIndex => _currentTaskIndex;
         public RuntimeSafetyTask? CurrentRuntimeTask => _currentTask;
         public SessionCompletedEventArgs? LastSessionSummary => _lastSessionSummary;
@@ -196,6 +205,57 @@ namespace SafetyProto.Domain.Tasks
             }
         }
 
+        /// <summary>
+        /// Evaluation-mode primitive used by both phase gates: closes every pending
+        /// task in the CURRENT group as <see cref="TaskState.Omitted"/>, raising one
+        /// TASK_OMITTED safety violation per task (0 points — omissions earn nothing
+        /// and charge nothing; the foregone points are the cost), then replays the
+        /// normal completion orchestration so GroupCompleted / next group / EndSession
+        /// fire exactly as a natural completion would. No-op when no group is active.
+        /// Returns the omitted tasks (callers drive consequences/UI from them).
+        /// </summary>
+        public IReadOnlyList<RuntimeSafetyTask> MarkPendingTasksOmitted()
+        {
+            var omitted = new List<RuntimeSafetyTask>();
+            var currentGroup = GetCurrentGroup();
+            if (currentGroup == null) return omitted;
+
+            for (int i = 0; i < _sessionTasks.Count; i++)
+            {
+                var t = _sessionTasks[i];
+                if (!ContainsByReference(currentGroup.tasks, t.TaskData)) continue;
+
+                if (t.State == TaskState.NotStarted || t.State == TaskState.InProgress)
+                {
+                    t.State = TaskState.Omitted;
+                    t.CompletionTime = _timer?.ElapsedSeconds ?? 0f;
+                    omitted.Add(t);
+
+                    _bus.Publish(new SafetyViolationEventArgs
+                    {
+                        ViolationCode = "TASK_OMITTED",
+                        Message = $"Tarefa omitida pelo participante: {t.taskName}",
+                        TaskId = t.id,
+                        GroupId = currentGroup.id,
+                        TaskName = t.taskName,
+                        GroupName = currentGroup.groupName
+                    });
+                }
+            }
+
+            _currentTask = null;
+            _currentTaskIndex = -1;
+
+            CheckGroupCompletion();
+
+            if (GetCurrentGroup() != null)
+            {
+                _ = WaitAndStartNextTaskAsync(_delayBetweenTasks);
+            }
+
+            return omitted;
+        }
+
         private void InitializeRuntimeTasks()
         {
             _sessionTasks.Clear();
@@ -300,7 +360,8 @@ namespace SafetyProto.Domain.Tasks
                 var s = t.State;
                 if (s != TaskState.CompletedSuccess &&
                     s != TaskState.CompletedFailure &&
-                    s != TaskState.CompletedSuccessButUnsafe)
+                    s != TaskState.CompletedSuccessButUnsafe &&
+                    s != TaskState.Omitted)
                 {
                     allDone = false;
                     break;
@@ -394,7 +455,7 @@ namespace SafetyProto.Domain.Tasks
             var currentGroup = GetCurrentGroup();
             if (currentGroup == null) return null;
 
-            if (currentGroup.executionMode == TaskExecutionModeShared.Sequential)
+            if (EffectiveMode(currentGroup) == TaskExecutionModeShared.Sequential)
             {
                 return MatchesAction(_currentTask, normalized) ? _currentTask : null;
             }
@@ -420,7 +481,7 @@ namespace SafetyProto.Domain.Tasks
         public bool IsPpeAheadOfCurrentStep(PPEType type)
         {
             var group = GetCurrentGroup();
-            if (group == null || group.executionMode != TaskExecutionModeShared.Sequential) return false;
+            if (group == null || EffectiveMode(group) != TaskExecutionModeShared.Sequential) return false;
             if (_currentTask == null) return false;
 
             var tasks = group.tasks;

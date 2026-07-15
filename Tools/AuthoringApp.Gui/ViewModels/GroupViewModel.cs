@@ -18,6 +18,7 @@ public sealed class GroupViewModel : ViewModelBase
     private string _executionMode;
     private float _timeLimit;
     private string _requiredGroupsCsv;
+    private string _objective;
 
     public GroupViewModel(TaskGroupDef def, ScenarioEditorViewModel editor)
     {
@@ -27,6 +28,7 @@ public sealed class GroupViewModel : ViewModelBase
         _executionMode = def.ExecutionModeName;
         _timeLimit = def.timeLimit;
         _requiredGroupsCsv = string.Join(", ", def.RequiredGroupNames);
+        _objective = def.objective;
 
         Tasks = new ObservableCollection<TaskViewModel>(
             def.TaskDefs.Select(t => new TaskViewModel(t, this, editor)));
@@ -59,6 +61,9 @@ public sealed class GroupViewModel : ViewModelBase
     /// <summary>Comma-separated group names this group depends on (resolved by the loader).</summary>
     public string RequiredGroupsCsv { get => _requiredGroupsCsv; set => SetField(ref _requiredGroupsCsv, value); }
 
+    /// <summary>General objective sentence shown INSTEAD of the task list in Evaluation mode.</summary>
+    public string Objective { get => _objective; set => SetField(ref _objective, value); }
+
     /// <summary>Label shown in the tree.</summary>
     public string DisplayName
     {
@@ -82,6 +87,7 @@ public sealed class GroupViewModel : ViewModelBase
         groupName = _groupName,
         ExecutionModeName = _executionMode,
         timeLimit = _timeLimit,
+        objective = _objective,
         TaskDefs = Tasks.Select(t => t.ToDef()).ToList(),
         RequiredGroupNames = _requiredGroupsCsv
             .Split(',')

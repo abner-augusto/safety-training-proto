@@ -94,6 +94,9 @@ namespace SafetyProto.Domain.Sessions
             /// is 0/unknown), so a reset session no longer masquerades as an all-zero completion.
             /// </summary>
             public bool completed;
+            /// <summary>"guiado" | "avaliacao" — captured at SessionStarted so collected
+            /// data can be split by mode. Empty on logs written before this field existed.</summary>
+            public string mode = string.Empty;
             public float totalElapsedTime;
             public int totalScore;
             public int tasksCompleted;
@@ -143,6 +146,7 @@ namespace SafetyProto.Domain.Sessions
         private int _tasksCompletedCount;
         private int _totalTasks;
         private string _sessionId = string.Empty;
+        private string _mode = string.Empty;
 
         public SessionLoggerCore(IEventBus eventBus, string outputDirectory, Func<SessionLog, string> serialize, IHarnessLogger? logger = null, Func<string, string>? actionNameResolver = null)
         {
@@ -157,6 +161,7 @@ namespace SafetyProto.Domain.Sessions
                 ResetTallies(args.TimestampMs);
                 _totalTasks = args.TotalTasks;
                 _sessionId = args.SessionId ?? string.Empty;
+                _mode = SessionModeState.CurrentName;
                 LogEvent("SessionStarted", string.Empty, _sessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
             };
             _onSessionPaused         = args => LogEvent("SessionPaused",     string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
@@ -267,6 +272,7 @@ namespace SafetyProto.Domain.Sessions
             _log.summary = new SessionSummary
             {
                 completed = true,
+                mode = _mode,
                 totalElapsedTime = args.totalElapsedTime,
                 totalScore = args.totalScore,
                 tasksCompleted = args.tasksCompleted,
@@ -303,11 +309,13 @@ namespace SafetyProto.Domain.Sessions
             _tasksCompletedCount = 0;
             _totalTasks = 0;
             _sessionId = string.Empty;
+            _mode = string.Empty;
         }
 
         private SessionSummary BuildFallbackSummary() => new SessionSummary
         {
             completed = false,
+            mode = _mode,
             totalScore = _lastTotalScore,
             tasksCompleted = _tasksCompletedCount,
             totalTasks = _totalTasks, // from SessionStarted; 0 only if that event never carried it

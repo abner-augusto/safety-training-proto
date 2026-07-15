@@ -29,6 +29,9 @@ namespace SafetyProto.Domain.Scenarios
         [JsonProperty("timeLimit")]
         public float timeLimit { get; set; }
 
+        [JsonProperty("objective")]
+        public string objective { get; set; } = string.Empty;
+
         [JsonProperty("tasks")]
         public List<SafetyTaskDef> TaskDefs { get; set; } = new();
 

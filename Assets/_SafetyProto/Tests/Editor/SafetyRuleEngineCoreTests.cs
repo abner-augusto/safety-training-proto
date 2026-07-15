@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
@@ -41,6 +42,50 @@ namespace SafetyProto.Tests.Editor
         public void TearDown()
         {
             _engine.Dispose();
+        }
+
+        [TearDown]
+        public void ResetSessionMode() => SessionModeState.Reset();
+
+        // ── Evaluation-mode free-order override ──────────────────────────────────
+
+        [Test]
+        public void EvaluationMode_SequentialGroup_CompletesEquipTasksInAnyOrder()
+        {
+            SessionModeState.Current = SessionMode.Evaluation;
+
+            var boots = _tasks.Task("Botas", "", PPEType.Boots);
+            var gloves = _tasks.Task("Luvas", "", PPEType.GloveLeft, PPEType.GloveRight);
+            var group = _tasks.Group("EPIs", TaskExecutionModeShared.Sequential, boots, gloves);
+
+            _bus.Publish(new TaskGroupEventArgs(group, TaskGroupPhase.Started));
+
+            // Reverse order: gloves first, then boots — both must complete.
+            _bus.Publish(new PPEStateChangedEventArgs(PPEType.GloveLeft, true));
+            _bus.Publish(new PPEStateChangedEventArgs(PPEType.GloveRight, true));
+            _bus.Publish(new PPEStateChangedEventArgs(PPEType.Boots, true));
+
+            var completions = _taskCompletions.Select(e => e.Task.taskName).ToList();
+            CollectionAssert.AreEquivalent(new[] { "Luvas", "Botas" }, completions);
+        }
+
+        [Test]
+        public void GuidedMode_SequentialGroup_StillWaitsForActiveTask()
+        {
+            // Guard: the EffectiveMode change must not alter Guided semantics.
+            // (Same arrange as above but mode stays Guided and only the group's
+            // first task may complete before a TaskStarted advances the cursor.)
+            var boots = _tasks.Task("Botas", "", PPEType.Boots);
+            var gloves = _tasks.Task("Luvas", "", PPEType.GloveLeft, PPEType.GloveRight);
+            var group = _tasks.Group("EPIs", TaskExecutionModeShared.Sequential, boots, gloves);
+
+            _bus.Publish(new TaskGroupEventArgs(group, TaskGroupPhase.Started));
+            _bus.Publish(new TaskEventArgs(boots, null, TaskPhase.Started));
+
+            _bus.Publish(new PPEStateChangedEventArgs(PPEType.GloveLeft, true));
+            _bus.Publish(new PPEStateChangedEventArgs(PPEType.GloveRight, true));
+
+            Assert.IsEmpty(_taskCompletions, "gloves must not complete while boots is the active sequential task");
         }
 
         [Test]

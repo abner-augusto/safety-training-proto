@@ -29,6 +29,15 @@ namespace SafetyProto.Domain.Safety
         private bool _subscribed;
         private bool _disposed;
 
+        /// <summary>Evaluation mode overrides every group to free-order semantics;
+        /// Guided respects the authored mode. All mode branches in this engine must
+        /// go through here — reading group.executionMode directly reintroduces
+        /// sequential enforcement in Evaluation.</summary>
+        private static TaskExecutionModeShared EffectiveMode(ITaskGroup group) =>
+            SessionModeState.Current == SessionMode.Evaluation
+                ? TaskExecutionModeShared.FreeOrder
+                : group.executionMode;
+
         public SafetyRuleEngineCore(
             IEventBus bus,
             ITimerSource? timer = null,
@@ -93,7 +102,7 @@ namespace SafetyProto.Domain.Safety
             _activeSequentialTask = null;
             _activeFreeOrderTasks.Clear();
 
-            if (_activeGroup != null && _activeGroup.executionMode == TaskExecutionModeShared.FreeOrder)
+            if (_activeGroup != null && EffectiveMode(_activeGroup) == TaskExecutionModeShared.FreeOrder)
             {
                 _activeFreeOrderTasks.AddRange(_activeGroup.tasks);
 
@@ -115,7 +124,7 @@ namespace SafetyProto.Domain.Safety
         {
             if (_activeGroup == null || args.Task == null) return;
 
-            if (_activeGroup.executionMode == TaskExecutionModeShared.Sequential)
+            if (EffectiveMode(_activeGroup) == TaskExecutionModeShared.Sequential)
             {
                 _activeSequentialTask = args.Task;
 
@@ -141,7 +150,7 @@ namespace SafetyProto.Domain.Safety
             // even inside a Sequential group (e.g. left/right gloves as one "wear gloves" task).
             if (!args.IsWearing || _activeGroup == null) return;
 
-            if (_activeGroup.executionMode == TaskExecutionModeShared.Sequential)
+            if (EffectiveMode(_activeGroup) == TaskExecutionModeShared.Sequential)
             {
                 TryCompleteEquipTask(_activeSequentialTask);
             }
@@ -199,7 +208,7 @@ namespace SafetyProto.Domain.Safety
 
             ISafetyTask? targetTask = null;
 
-            if (_activeGroup.executionMode == TaskExecutionModeShared.Sequential)
+            if (EffectiveMode(_activeGroup) == TaskExecutionModeShared.Sequential)
             {
                 if (_activeSequentialTask == null)
                 {
@@ -277,7 +286,7 @@ namespace SafetyProto.Domain.Safety
                 _logger?.Info($"SafetyRuleEngineCore: Task '{task.taskName}' completed. PPE compliant={compliant}");
             }
 
-            if (currentGroup.executionMode == TaskExecutionModeShared.FreeOrder)
+            if (EffectiveMode(currentGroup) == TaskExecutionModeShared.FreeOrder)
             {
                 _activeFreeOrderTasks.Remove(task);
             }

@@ -31,6 +31,7 @@
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\PPEType.cs"                    Link="Core\PPEType.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\TaskState.cs"                  Link="Core\TaskState.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\TaskSeverity.cs"               Link="Core\TaskSeverity.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\SessionMode.cs"                Link="Core\SessionMode.cs" />
 
     <!-- Payloads (Part 3) -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\EventPayloads.cs"              Link="Core\EventPayloads.cs" />

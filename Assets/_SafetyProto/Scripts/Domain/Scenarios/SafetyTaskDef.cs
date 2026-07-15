@@ -55,6 +55,9 @@ namespace SafetyProto.Domain.Scenarios
         [JsonProperty("ppeAdvice")]
         public string ppeAdvice { get; set; } = string.Empty;
 
+        [JsonProperty("omissionAdvice")]
+        public string omissionAdvice { get; set; } = string.Empty;
+
         [JsonIgnore]
         private readonly List<PPEType> _requiredPpe = new();
 

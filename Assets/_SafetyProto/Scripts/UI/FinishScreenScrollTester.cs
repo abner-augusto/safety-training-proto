@@ -188,6 +188,7 @@ namespace SafetyProto.UI
             public string hintText => string.Empty;
             public string failureAdvice => string.Empty;
             public string ppeAdvice => string.Empty;
+            public string omissionAdvice => string.Empty;
             public string ResolveExpectedActionId() => string.Empty;
         }
     }

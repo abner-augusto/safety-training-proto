@@ -15,6 +15,10 @@ namespace SafetyProto.Core
         /// <summary>The task was failed (e.g., by timeout).</summary>
         CompletedFailure,
         /// <summary>The task was completed, but without the correct PPE.</summary>
-        CompletedSuccessButUnsafe
+        CompletedSuccessButUnsafe,
+        /// <summary>The task was never attempted and the session moved past it
+        /// (Evaluation mode: the participant advanced/finished with this task open).
+        /// Terminal, earns nothing; distinct from CompletedFailure (timeout).</summary>
+        Omitted
     }
 }

@@ -26,6 +26,7 @@ public sealed class TaskViewModel : ViewModelBase
     private string _hintText;
     private string _failureAdvice;
     private string _ppeAdvice;
+    private string _omissionAdvice;
 
     public TaskViewModel(SafetyTaskDef def, GroupViewModel group, ScenarioEditorViewModel editor)
     {
@@ -40,6 +41,7 @@ public sealed class TaskViewModel : ViewModelBase
         _hintText = def.hintText;
         _failureAdvice = def.failureAdvice;
         _ppeAdvice = def.ppeAdvice;
+        _omissionAdvice = def.omissionAdvice;
 
         var selected = new HashSet<string>(def.RequiredPpeNames, System.StringComparer.OrdinalIgnoreCase);
         PpeOptions = new ObservableCollection<PpeToggleViewModel>(
@@ -84,6 +86,7 @@ public sealed class TaskViewModel : ViewModelBase
     public string HintText { get => _hintText; set => SetField(ref _hintText, value); }
     public string FailureAdvice { get => _failureAdvice; set => SetField(ref _failureAdvice, value); }
     public string PpeAdvice { get => _ppeAdvice; set => SetField(ref _ppeAdvice, value); }
+    public string OmissionAdvice { get => _omissionAdvice; set => SetField(ref _omissionAdvice, value); }
 
     /// <summary>Label shown in the tree.</summary>
     public string DisplayName
@@ -106,6 +109,7 @@ public sealed class TaskViewModel : ViewModelBase
         hintText = _hintText,
         failureAdvice = _failureAdvice,
         ppeAdvice = _ppeAdvice,
+        omissionAdvice = _omissionAdvice,
         RequiredPpeNames = PpeOptions.Where(p => p.IsSelected).Select(p => p.Name).ToList(),
     };
 }

@@ -36,6 +36,7 @@ namespace SafetyProto.Tests.Editor.Support
             public string hintText { get; set; } = string.Empty;
             public string failureAdvice { get; set; } = string.Empty;
             public string ppeAdvice { get; set; } = string.Empty;
+            public string omissionAdvice { get; set; } = string.Empty;
 
             public string ExpectedActionId { get; set; } = string.Empty;
 
@@ -49,6 +50,7 @@ namespace SafetyProto.Tests.Editor.Support
             public string groupName { get; set; } = string.Empty;
             public TaskExecutionModeShared executionMode { get; set; } = TaskExecutionModeShared.Sequential;
             public float timeLimit { get; set; } = 0f;
+            public string objective { get; set; } = string.Empty;
             public List<ISafetyTask> tasks { get; set; } = new List<ISafetyTask>();
             public List<ITaskGroup> requiredGroups { get; set; } = new List<ITaskGroup>();
 

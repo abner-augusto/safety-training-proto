@@ -27,6 +27,10 @@ namespace SafetyProto.Core.Interfaces
         string failureAdvice { get; }
         string ppeAdvice { get; }
 
+        /// <summary>Finish-screen advice for an OMITTED task: what skipping it means
+        /// in the real world, with the NR citation. Falls back to hintText when empty.</summary>
+        string omissionAdvice { get; }
+
         /// <summary>
         /// Returns the canonical action id this task expects. Mirrors
         /// <c>SafetyTask.ResolveExpectedActionId()</c>.

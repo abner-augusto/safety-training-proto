@@ -21,7 +21,7 @@ public static class Program
     {
         if (args.Length < 1)
         {
-            Console.Error.WriteLine("Usage: CliHarness <scenario.json> [output-dir] [--interactive]");
+            Console.Error.WriteLine("Usage: CliHarness <scenario.json> [output-dir] [--interactive] [--mode=guiado|avaliacao]");
             return 1;
         }
 
@@ -30,6 +30,11 @@ public static class Program
         var outputDir = positionalArgs.Length > 0 ? positionalArgs[0] : "harness-output";
         bool interactive = args.Any(a =>
             string.Equals(a, "--interactive", StringComparison.OrdinalIgnoreCase));
+
+        var modeArg = args.FirstOrDefault(a => a.StartsWith("--mode=", StringComparison.OrdinalIgnoreCase));
+        SessionModeState.Current = modeArg != null && modeArg.EndsWith("avaliacao", StringComparison.OrdinalIgnoreCase)
+            ? SessionMode.Evaluation
+            : SessionMode.Guided;
 
         if (!File.Exists(scenarioPath))
         {
@@ -120,7 +125,7 @@ public static class Program
         }
         else
         {
-            var actor = new ScriptedActor(bus, scenario.Script ?? new List<ScriptStepDef>());
+            var actor = new ScriptedActor(bus, scenario.Script ?? new List<ScriptStepDef>(), taskManager);
             await actor.PlayAsync();
         }
 
@@ -157,6 +162,7 @@ public static class Program
         taskManager.Dispose();
         ruleEngine.Dispose();
         EventContext.Clear();
+        SessionModeState.Reset();
 
         return 0;
     }

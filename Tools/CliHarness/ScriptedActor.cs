@@ -11,11 +11,14 @@ public sealed class ScriptedActor
 {
     private readonly IEventBus _bus;
     private readonly IReadOnlyList<ScriptStepDef> _steps;
+    private readonly SafetyProto.Domain.Tasks.TaskManagerCore _taskManager;
 
-    public ScriptedActor(IEventBus bus, IReadOnlyList<ScriptStepDef> steps)
+    public ScriptedActor(IEventBus bus, IReadOnlyList<ScriptStepDef> steps,
+        SafetyProto.Domain.Tasks.TaskManagerCore taskManager)
     {
         _bus = bus;
         _steps = steps;
+        _taskManager = taskManager;
     }
 
     public async Task PlayAsync()
@@ -42,6 +45,15 @@ public sealed class ScriptedActor
 
                 case "action":
                     _bus.Publish(new ActionAttemptedEvent(step.ActionId ?? string.Empty));
+                    break;
+
+                case "gate":
+                    // Simulates the participant pressing a phase gate in Evaluation mode:
+                    // every pending task in the current group closes as Omitted and the
+                    // session advances (next group or SessionCompleted). In Guided mode the
+                    // real gates block instead — scripted Guided runs should not use this.
+                    var omitted = _taskManager.MarkPendingTasksOmitted();
+                    System.Console.WriteLine($"[ScriptedActor] gate: {omitted.Count} task(s) omitted.");
                     break;
 
                 default:

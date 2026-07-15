@@ -209,5 +209,8 @@ namespace SafetyProto.Runtime.Task
             _core?.IsPpeAheadOfCurrentStep(type) ?? false;
 
         public void ResetSession() => _core?.ResetSession();
+
+        public IReadOnlyList<RuntimeSafetyTask> MarkPendingTasksOmitted() =>
+            _core?.MarkPendingTasksOmitted() ?? new List<RuntimeSafetyTask>();
     }
 }

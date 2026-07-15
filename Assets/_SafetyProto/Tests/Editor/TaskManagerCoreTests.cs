@@ -17,6 +17,8 @@ namespace SafetyProto.Tests.Editor
         private List<TaskGroupEventArgs> _groupEvents = null!;
         private List<TaskEventArgs> _taskEvents = null!;
         private List<SessionCompletedEventArgs> _sessionCompletions = null!;
+        private List<SafetyViolationEventArgs> _violations = null!;
+        private List<SessionEndedEventArgs> _sessionEnded = null!;
 
         [SetUp]
         public void Setup()
@@ -27,10 +29,14 @@ namespace SafetyProto.Tests.Editor
             _groupEvents = new List<TaskGroupEventArgs>();
             _taskEvents = new List<TaskEventArgs>();
             _sessionCompletions = new List<SessionCompletedEventArgs>();
+            _violations = new List<SafetyViolationEventArgs>();
+            _sessionEnded = new List<SessionEndedEventArgs>();
 
             _bus.Subscribe<TaskGroupEventArgs>(args => _groupEvents.Add(args));
             _bus.Subscribe<TaskEventArgs>(args => _taskEvents.Add(args));
             _bus.Subscribe<SessionCompletedEventArgs>(args => _sessionCompletions.Add(args));
+            _bus.Subscribe<SafetyViolationEventArgs>(args => _violations.Add(args));
+            _bus.Subscribe<SessionEndedEventArgs>(args => _sessionEnded.Add(args));
         }
 
         [Test]
@@ -158,6 +164,81 @@ namespace SafetyProto.Tests.Editor
 
             var notFound = core.FindPendingTaskByActionId("action_nonexistent");
             Assert.IsNull(notFound);
+
+            core.Dispose();
+        }
+
+        // ── MarkPendingTasksOmitted ────────────────────────────────────────────────
+
+        [Test]
+        public void MarkPendingTasksOmitted_ClosesPendingAsOmitted_AndCompletesGroup()
+        {
+            var t1 = _tasks.Task("t1", "action_a");
+            var t2 = _tasks.Task("t2", "action_b");
+            var group = _tasks.Group("g1", TaskExecutionModeShared.FreeOrder, t1, t2);
+
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
+            core.Subscribe();
+            core.StartSession();
+
+            _bus.Publish(new TaskEventArgs(t1, new RuntimeSafetyTask(t1) { State = TaskState.CompletedSuccess }, TaskPhase.Completed));
+
+            var omitted = core.MarkPendingTasksOmitted();
+
+            Assert.AreEqual(1, omitted.Count);
+            Assert.AreEqual(TaskState.Omitted, omitted[0].State);
+            Assert.AreEqual("t2", omitted[0].taskName);
+
+            var completed = _groupEvents.FindAll(e => e.Phase == TaskGroupPhase.Completed);
+            Assert.AreEqual(1, completed.Count);
+
+            var taskOmittedViolations = _violations.FindAll(v => v.ViolationCode == "TASK_OMITTED");
+            Assert.AreEqual(1, taskOmittedViolations.Count);
+            Assert.AreEqual(t2.id, taskOmittedViolations[0].TaskId);
+
+            core.Dispose();
+        }
+
+        [Test]
+        public void MarkPendingTasksOmitted_LastGroup_EndsSession()
+        {
+            var t1 = _tasks.Task("t1", "action_a");
+            var t2 = _tasks.Task("t2", "action_b");
+            var group = _tasks.Group("g1", TaskExecutionModeShared.FreeOrder, t1, t2);
+
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
+            core.Subscribe();
+            core.StartSession();
+
+            var omitted = core.MarkPendingTasksOmitted();
+
+            Assert.AreEqual(2, omitted.Count);
+            Assert.AreEqual(1, _sessionCompletions.Count);
+            Assert.AreEqual(0, _sessionCompletions[0].tasksCompleted);
+            Assert.AreEqual(2, _sessionCompletions[0].totalTasks);
+            Assert.AreEqual(1, _sessionEnded.Count);
+            Assert.IsTrue(core.LastSessionSummary.HasValue);
+
+            core.Dispose();
+        }
+
+        [Test]
+        public void MarkPendingTasksOmitted_NoActiveGroup_IsNoOp()
+        {
+            var t1 = _tasks.Task("t1", "action_a");
+            var group = _tasks.Group("g1", TaskExecutionModeShared.Sequential, t1);
+
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
+            core.Subscribe();
+            // StartSession() intentionally not called — no active group yet.
+
+            var omitted = core.MarkPendingTasksOmitted();
+
+            Assert.IsEmpty(omitted);
+            Assert.IsEmpty(_groupEvents);
+            Assert.IsEmpty(_taskEvents);
+            Assert.IsEmpty(_violations);
+            Assert.IsEmpty(_sessionCompletions);
 
             core.Dispose();
         }

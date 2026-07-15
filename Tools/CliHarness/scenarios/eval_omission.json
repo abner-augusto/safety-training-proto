@@ -167,16 +167,16 @@
     }
   ],
   "script": [
-    { "kind": "ppe", "ppeType": "Boots",      "isWearing": true, "delayMs": 200 },
-    { "kind": "ppe", "ppeType": "GloveRight", "isWearing": true, "delayMs": 200 },
-    { "kind": "ppe", "ppeType": "GloveLeft",  "isWearing": true, "delayMs": 200 },
-    { "kind": "ppe", "ppeType": "Goggles",    "isWearing": true, "delayMs": 200 },
-    { "kind": "ppe", "ppeType": "Helmet",     "isWearing": true, "delayMs": 200 },
-    { "kind": "ppe", "ppeType": "Harness",    "isWearing": true, "delayMs": 200 },
+    { "kind": "ppe", "ppeType": "GloveRight", "isWearing": true, "delayMs": 50 },
+    { "kind": "ppe", "ppeType": "GloveLeft",  "isWearing": true, "delayMs": 50 },
+    { "kind": "ppe", "ppeType": "Goggles",    "isWearing": true, "delayMs": 50 },
+    { "kind": "ppe", "ppeType": "Helmet",     "isWearing": true, "delayMs": 50 },
+    { "kind": "ppe", "ppeType": "Harness",    "isWearing": true, "delayMs": 50 },
+    { "kind": "gate", "delayMs": 100 },
 
-    { "kind": "action", "actionId": "connect_harness",   "delayMs": 200 },
-    { "kind": "action", "actionId": "install_guardrail", "delayMs": 200 },
-    { "kind": "action", "actionId": "install_toeboard",  "delayMs": 200 },
-    { "kind": "action", "actionId": "flag_safety_net",   "delayMs": 200 }
+    { "kind": "action", "actionId": "connect_harness",   "delayMs": 50 },
+    { "kind": "action", "actionId": "install_guardrail", "delayMs": 50 },
+    { "kind": "action", "actionId": "install_toeboard",  "delayMs": 50 },
+    { "kind": "gate", "delayMs": 100 }
   ]
 }

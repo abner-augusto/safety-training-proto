@@ -105,6 +105,10 @@
                   <TextBox Text="{Binding GroupName}"/>
                 </StackPanel>
                 <StackPanel Spacing="2">
+                  <TextBlock Text="Objetivo geral (modo Avaliação)" Classes="label"/>
+                  <TextBox Text="{Binding Objective}" AcceptsReturn="True" MinHeight="48" TextWrapping="Wrap"/>
+                </StackPanel>
+                <StackPanel Spacing="2">
                   <TextBlock Text="Modo de execução" Classes="label"/>
                   <ComboBox ItemsSource="{Binding ExecutionModes}" SelectedItem="{Binding ExecutionMode}"
                             HorizontalAlignment="Left" MinWidth="200"/>
@@ -165,6 +169,10 @@
                 <StackPanel Spacing="2">
                   <TextBlock Text="Dica (hint)" Classes="label"/>
                   <TextBox Text="{Binding HintText}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
+                </StackPanel>
+                <StackPanel Spacing="2">
+                  <TextBlock Text="Conselho de omissão (modo Avaliação)" Classes="label"/>
+                  <TextBox Text="{Binding OmissionAdvice}" AcceptsReturn="True" MinHeight="48" TextWrapping="Wrap"/>
                 </StackPanel>
                 <StackPanel Spacing="2">
                   <TextBlock Text="Conselho em caso de falha" Classes="label"/>

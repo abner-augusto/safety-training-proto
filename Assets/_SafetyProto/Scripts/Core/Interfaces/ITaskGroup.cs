@@ -26,6 +26,10 @@ namespace SafetyProto.Core.Interfaces
         string groupName { get; }
         TaskExecutionModeShared executionMode { get; }
         float timeLimit { get; }
+
+        /// <summary>General objective sentence shown INSTEAD of the task list in
+        /// Evaluation mode (e.g. "Prepare-se com os EPIs necessários"). Optional.</summary>
+        string objective { get; }
         IReadOnlyList<ISafetyTask> tasks { get; }
         IReadOnlyList<ITaskGroup> requiredGroups { get; }
     }
