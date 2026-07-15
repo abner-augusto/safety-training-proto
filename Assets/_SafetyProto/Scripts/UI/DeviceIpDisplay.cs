@@ -14,7 +14,7 @@ namespace SafetyProto.UI
         [SerializeField] private TextMeshProUGUI targetLabel;
 
         [Tooltip("Optional prefix to display before the IP address.")]
-        [SerializeField] private string prefix = "Device IP: ";
+        [SerializeField] private string prefix = "IP do dispositivo: ";
 
         private static string _cachedIp;
 
@@ -91,7 +91,7 @@ namespace SafetyProto.UI
                 // ignored – leave as fallback below
             }
 
-            return "Unavailable";
+            return "Indisponível";
         }
     }
 }

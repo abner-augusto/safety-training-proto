@@ -71,9 +71,9 @@ namespace SafetyProto.Runtime.Analytics
                 {
                     ViolationCount = _detector.CurrentCount,
                     WindowSeconds = windowSeconds,
-                    Reason = $"{_detector.CurrentCount} violations within {windowSeconds} seconds"
+                    Reason = $"{_detector.CurrentCount} violações em um intervalo de {windowSeconds} segundos"
                 };
-                SafetyLog.Warning($"SafetyAnalyzer: Critical safety failure detected ({payload.Reason}).", this);
+                SafetyLog.Warning($"SafetyAnalyzer: falha crítica de segurança detectada ({payload.Reason}).", this);
                 SafetyEvents.RaiseCriticalSafetyFailure(payload);
             }
             else if (!thresholdReached && _thresholdRaised && _detector.CurrentCount < violationThreshold)

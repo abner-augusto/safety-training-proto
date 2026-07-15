@@ -21,7 +21,7 @@ namespace SafetyProto.UI
 
         public void Setup(int order, RuntimeSafetyTask runtimeTask, int fullPoints, int earnedPoints)
         {
-            taskLabel.text = $"Task {order}: {runtimeTask.taskName}";
+            taskLabel.text = $"Tarefa {order}: {runtimeTask.taskName}";
 
             Color barColor = GetBarColor(runtimeTask.State);
             float fill = fullPoints > 0 ? Mathf.Clamp01(earnedPoints / (float)fullPoints) : 0f;

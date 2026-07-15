@@ -92,101 +92,140 @@ namespace SafetyProto.UI
 
             if (logText == null)
             {
-                SafetyLog.Error("LogHUD: logText is null! Please assign it in the inspector.", this);
+                SafetyLog.Error("LogHUD: logText não foi atribuído no Inspector.", this);
                 enabled = false;
                 return false;
             }
 
-            logText.text = "LogHUD Active";
+            logText.text = "Registro de atividades ativo";
             return true;
         }
 
-        private void OnSessionStarted(SessionStartedEventArgs args) => AppendLog("[Session] Started");
+        private void OnSessionStarted(SessionStartedEventArgs args) => AppendLog("[Sessão] Iniciada");
 
-        private void OnSessionPaused(SessionPausedEventArgs args) => AppendLog("[Session] Paused");
+        private void OnSessionPaused(SessionPausedEventArgs args) => AppendLog("[Sessão] Pausada");
 
-        private void OnSessionResumed(SessionResumedEventArgs args) => AppendLog("[Session] Resumed");
+        private void OnSessionResumed(SessionResumedEventArgs args) => AppendLog("[Sessão] Retomada");
 
-        private void OnSessionEnded(SessionEndedEventArgs args) => AppendLog("[Session] Ended");
+        private void OnSessionEnded(SessionEndedEventArgs args) => AppendLog("[Sessão] Encerrada");
 
         private void OnSessionCompleted(SessionCompletedEventArgs args)
         {
             int minutes = Mathf.FloorToInt(args.totalElapsedTime / 60f);
             int seconds = Mathf.FloorToInt(args.totalElapsedTime % 60f);
             string formattedTime = $"{minutes:00}:{seconds:00}";
-            AppendLog($"[Session] Completed | Time={formattedTime} | Score={args.totalScore} | Tasks={args.tasksCompleted}/{args.totalTasks} | OrderViol={args.orderViolationCount}");
+            AppendLog($"[Sessão] Concluída | Tempo={formattedTime} | Pontuação={args.totalScore} | Tarefas={args.tasksCompleted}/{args.totalTasks} | Violações de ordem={args.orderViolationCount}");
         }
 
         private void OnGroupStarted(TaskGroupEventArgs args)
         {
-            string groupName = args.Group != null ? args.Group.groupName : "<Unnamed Group>";
-            AppendLog($"[Group] Started '{groupName}'");
+            string groupName = args.Group != null ? args.Group.groupName : "<Grupo sem nome>";
+            AppendLog($"[Grupo] Iniciado '{groupName}'");
         }
 
         private void OnGroupCompleted(TaskGroupEventArgs args)
         {
-            string groupName = args.Group != null ? args.Group.groupName : "<Unnamed Group>";
-            AppendLog($"[Group] Completed '{groupName}'");
+            string groupName = args.Group != null ? args.Group.groupName : "<Grupo sem nome>";
+            AppendLog($"[Grupo] Concluído '{groupName}'");
         }
 
         private void OnTaskStarted(TaskEventArgs args)
         {
-            string taskName = args.Task != null ? args.Task.taskName : "<Unnamed Task>";
-            AppendLog($"[Task] Started '{taskName}'");
+            string taskName = args.Task != null ? args.Task.taskName : "<Tarefa sem nome>";
+            AppendLog($"[Tarefa] Iniciada '{taskName}'");
         }
 
         private void OnTaskCompleted(TaskEventArgs args)
         {
-            string taskName = args.Task != null ? args.Task.taskName : "<Unnamed Task>";
-            AppendLog($"[Task] Completed '{taskName}'");
+            string taskName = args.Task != null ? args.Task.taskName : "<Tarefa sem nome>";
+            AppendLog($"[Tarefa] Concluída '{taskName}'");
         }
 
         private void OnTaskTimeout(TaskEventArgs args)
         {
-            string taskName = args.Task != null ? args.Task.taskName : "<Unnamed Task>";
-            AppendLog($"[Task] TIMEOUT '{taskName}'");
+            string taskName = args.Task != null ? args.Task.taskName : "<Tarefa sem nome>";
+            AppendLog($"[Tarefa] TEMPO ESGOTADO '{taskName}'");
         }
 
         private void OnScoreChanged(ScoreChangedEventArgs args)
         {
             string sign = args.Delta >= 0 ? "+" : string.Empty;
-            AppendLog($"[Score] {sign}{args.Delta} (Total={args.TotalScore})");
+            AppendLog($"[Pontuação] {sign}{args.Delta} (Total={args.TotalScore})");
         }
 
         private void OnPpeStateChanged(PPEStateChangedEventArgs args)
         {
-            AppendLog($"[PPE] {args.PpeType}: {(args.IsWearing ? "WORN" : "REMOVED")}");
+            AppendLog($"[EPI] {GetPpeLabel(args.PpeType)}: {(args.IsWearing ? "EQUIPADO" : "REMOVIDO")}");
         }
 
         private void OnActionAttempt(ActionAttemptedEvent args)
         {
             var positionText = args.Position.HasValue
                 ? $"({args.Position.Value.X:F2}, {args.Position.Value.Y:F2}, {args.Position.Value.Z:F2})"
-                : "<no position>";
-            AppendLog($"[Action] {args.ActionId} @ {positionText}");
+                : "<sem posição>";
+            AppendLog($"[Ação] {GetActionLabel(args.ActionId)} em {positionText}");
         }
 
         private void OnSafetyViolation(SafetyViolationEventArgs args)
         {
-            string code = string.IsNullOrEmpty(args.ViolationCode) ? "UNKNOWN" : args.ViolationCode;
-            string message = string.IsNullOrEmpty(args.Message) ? "No details" : args.Message;
+            string code = GetViolationLabel(args.ViolationCode);
+            string message = string.IsNullOrEmpty(args.Message) ? "Sem detalhes" : args.Message;
             string task = string.IsNullOrEmpty(args.TaskName) ? "-" : args.TaskName;
             string group = string.IsNullOrEmpty(args.GroupName) ? "-" : args.GroupName;
-            AppendLog($"[Safety] VIOLATION {code} | {message} (Task={task}, Group={group})");
+            AppendLog($"[Segurança] VIOLAÇÃO: {code} | {message} (Tarefa={task}, Grupo={group})");
         }
 
         private void OnCriticalSafetyFailure(CriticalSafetyFailureEventArgs args)
         {
-            string reason = string.IsNullOrEmpty(args.Reason) ? "Unknown reason" : args.Reason;
-            AppendLog($"[Safety] CRITICAL FAILURE | {reason} [{args.ViolationCount} in {args.WindowSeconds}s]");
+            string reason = string.IsNullOrEmpty(args.Reason) ? "Motivo desconhecido" : args.Reason;
+            AppendLog($"[Segurança] FALHA CRÍTICA | {reason} [{args.ViolationCount} em {args.WindowSeconds}s]");
         }
 
         private void OnSafetyError(SafetyErrorEventArgs args)
         {
-            string source = string.IsNullOrEmpty(args.Source) ? "Unknown source" : args.Source;
-            string message = string.IsNullOrEmpty(args.Message) ? "No message" : args.Message;
-            string details = string.IsNullOrEmpty(args.Details) ? "-" : args.Details;
-            AppendLog($"[Safety] ERROR {source}: {message} ({details})");
+            string source = string.IsNullOrEmpty(args.Source) ? "Origem desconhecida" : args.Source;
+            AppendLog($"[Segurança] ERRO INTERNO DO SISTEMA | Origem={source}");
+        }
+
+        private static string GetPpeLabel(PPEType ppeType)
+        {
+            return ppeType switch
+            {
+                PPEType.Helmet => "Capacete",
+                PPEType.Goggles => "Óculos de proteção",
+                PPEType.Harness => "Cinto paraquedista",
+                PPEType.Vest => "Colete de segurança",
+                PPEType.Boots => "Botina de segurança",
+                PPEType.GloveLeft => "Luva esquerda",
+                PPEType.GloveRight => "Luva direita",
+                _ => "EPI não identificado"
+            };
+        }
+
+        private static string GetActionLabel(string actionId)
+        {
+            return actionId switch
+            {
+                "connect_harness" => "Conectar talabarte",
+                "install_guardrail" => "Instalar guarda-corpo",
+                "install_toeboard" => "Instalar rodapé",
+                "flag_safety_net" => "Reportar irregularidade na tela fachadeira",
+                _ => $"Ação não catalogada ({actionId})"
+            };
+        }
+
+        private static string GetViolationLabel(string code)
+        {
+            return code switch
+            {
+                "ACTION_ID_MISSING" => "Ação não identificada",
+                "NO_ACTIVE_GROUP" => "Nenhum grupo de tarefas ativo",
+                "WRONG_ACTION" => "Ação incorreta",
+                "PPE_MISSING" => "EPI obrigatório ausente",
+                "TASK_OMITTED" => "Tarefa omitida",
+                "GATE_FAILED" => "Inspeção não aprovada",
+                _ => $"Violação não identificada ({code})"
+            };
         }
 
         private void AppendLog(string message)

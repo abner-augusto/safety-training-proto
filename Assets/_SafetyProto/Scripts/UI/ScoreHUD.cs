@@ -34,7 +34,7 @@ namespace SafetyProto.UI
 
         private void UpdateScoreDisplay(int score)
         {
-            if (_scoreText != null) _scoreText.text = $"Score: {Mathf.Max(0, score)}";
+            if (_scoreText != null) _scoreText.text = $"Pontuação: {Mathf.Max(0, score)}";
         }
     }
 }

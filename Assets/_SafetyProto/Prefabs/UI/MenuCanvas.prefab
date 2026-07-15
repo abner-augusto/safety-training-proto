@@ -1176,7 +1176,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5268064750557026401, guid: 33069c731aab6074288e1f1b7bd3e555, type: 3}
       propertyPath: m_text
-      value: Close Menu
+      value: Fechar menu
       objectReference: {fileID: 0}
     - target: {fileID: 6091015198941105600, guid: 33069c731aab6074288e1f1b7bd3e555, type: 3}
       propertyPath: m_Name
@@ -1282,7 +1282,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5268064750557026401, guid: 33069c731aab6074288e1f1b7bd3e555, type: 3}
       propertyPath: m_text
-      value: Close App
+      value: Fechar aplicativo
       objectReference: {fileID: 0}
     - target: {fileID: 6091015198941105600, guid: 33069c731aab6074288e1f1b7bd3e555, type: 3}
       propertyPath: m_Name
@@ -1496,7 +1496,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5268064750557026401, guid: 33069c731aab6074288e1f1b7bd3e555, type: 3}
       propertyPath: m_text
-      value: RestartScene
+      value: Reiniciar treinamento
       objectReference: {fileID: 0}
     - target: {fileID: 6091015198941105600, guid: 33069c731aab6074288e1f1b7bd3e555, type: 3}
       propertyPath: m_Name

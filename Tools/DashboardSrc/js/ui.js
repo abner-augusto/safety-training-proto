@@ -1,4 +1,4 @@
-    import { t, getLang, locale } from './i18n.js';
+    import { t, getLang, locale, ppeLabel, violationLabel, violationMessage } from './i18n.js';
     import { MAX_LOG_ITEMS } from './constants.js';
     import { tasks, wornPpe, state } from './state.js';
 
@@ -113,32 +113,68 @@
         },
       };
       const table = labels[getLang()] || labels.en;
-      return table[name] ?? name;
+      return table[name] ?? `${t('unknownEvent')} (${name || '—'})`;
+    }
+
+    function formatLegacyDetails(entry) {
+      const details = entry.details || '';
+      switch (entry.eventName) {
+        case 'SessionReset':
+          return t('manualReset');
+        case 'PpeStateChanged': {
+          const match = details.match(/(?:PPE|EPI)=([^,]+),\s*(?:Wearing|Equipado)=(True|False|Sim|Não)/i);
+          if (!match) return '';
+          const wearing = /^(True|Sim)$/i.test(match[2]);
+          return `${t('detailPpe')}: ${ppeLabel(match[1])} · ${wearing ? t('detailWorn') : t('detailRemoved')}`;
+        }
+        case 'ScoreChanged': {
+          const match = details.match(/(?:Delta|Variação)=(-?\d+),\s*Total=(-?\d+)/i);
+          return match ? `${t('detailDelta')}: ${Number(match[1]) >= 0 ? '+' : ''}${match[1]} · ${t('detailTotal')}: ${match[2]}` : '';
+        }
+        case 'SafetyViolation': {
+          const code = details.split('|')[0].trim();
+          return violationLabel(code);
+        }
+        case 'SafetyError': {
+          const source = details.split(':')[0].trim();
+          return `${t('internalError')}${source ? ` · ${t('origin')}: ${source}` : ''}`;
+        }
+        case 'CriticalSafetyFailure': {
+          const match = details.match(/\[(\d+)\s+(?:in|em)\s+([\d.,]+)s\]/i);
+          return match ? `${match[1]} ${t('violations').toLowerCase()} ${t('detailIn')} ${match[2]}s` : t('logCritical');
+        }
+        case 'SessionCompleted':
+          return '';
+        default:
+          return '';
+      }
     }
 
     /* Localized detail line from structured entry.data (falls back to entry.details
        for older saved reports that predate the structured schema). */
     function formatDetails(entry) {
       const d = entry.data;
-      if (!d) return entry.details || '';
+      if (!d) return formatLegacyDetails(entry);
       switch (entry.eventName) {
         case 'PpeStateChanged':
-          return `${t('detailPpe')}: ${d.ppeType} · ${d.wearing ? t('detailWorn') : t('detailRemoved')}`;
+          return `${t('detailPpe')}: ${ppeLabel(d.ppeType)} · ${d.wearing ? t('detailWorn') : t('detailRemoved')}`;
         case 'ScoreChanged':
           return `${t('detailDelta')}: ${d.delta >= 0 ? '+' : ''}${d.delta} · ${t('detailTotal')}: ${d.totalScore}`;
         case 'SafetyViolation':
-          return `${d.violationCode}${d.message ? ` | ${d.message}` : ''}`;
+          return `${violationLabel(d.violationCode)}${d.message ? ` · ${violationMessage(d.violationCode, d.message)}` : ''}`;
         case 'SafetyError':
-          return `${d.source}: ${d.message}${d.errorDetails ? ` (${d.errorDetails})` : ''}`;
+          return `${t('internalError')}${d.source ? ` · ${t('origin')}: ${d.source}` : ''}`;
         case 'CriticalSafetyFailure':
-          return `${d.reason} · ${d.violationCount} ${t('detailIn')} ${d.windowSeconds}s`;
+          return `${d.violationCount} ${t('violations').toLowerCase()} ${t('detailIn')} ${d.windowSeconds}s`;
+        case 'SessionReset':
+          return t('manualReset');
         case 'SessionCompleted': {
           const m = Math.floor((d.totalElapsedTime ?? 0) / 60);
           const s = Math.floor((d.totalElapsedTime ?? 0) % 60);
           return `${t('detailTime')}: ${m}:${String(s).padStart(2, '0')} · ${t('detailScore')}: ${d.totalScore} · ${t('detailCompleted')}: ${d.tasksCompleted}/${d.totalTasks}`;
         }
         default:
-          return entry.details || '';
+          return '';
       }
     }
 
@@ -197,7 +233,7 @@
           let expand = '';
           if (task.status === 'active') {
             const chips = [];
-            (task.requiredPpe ?? []).forEach(p => chips.push(`<span class="chip">${t('detailPpe')}: ${esc(p)}</span>`));
+            (task.requiredPpe ?? []).forEach(p => chips.push(`<span class="chip">${t('detailPpe')}: ${esc(ppeLabel(p))}</span>`));
             if (task.failurePenalty) chips.push(`<span class="chip pen">−${task.failurePenalty}</span>`);
             if (task.ppePenalty)     chips.push(`<span class="chip pen">−${task.ppePenalty} ${t('detailPpe')}</span>`);
             expand = `
@@ -353,7 +389,7 @@
       const url  = URL.createObjectURL(blob);
       const a    = Object.assign(document.createElement('a'), {
         href: url,
-        download: `session_report_${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+        download: `${getLang() === 'pt' ? 'relatorio_sessao' : 'session_report'}_${new Date().toISOString().replace(/[:.]/g, '-')}.json`
       });
       a.click();
       URL.revokeObjectURL(url);

@@ -175,7 +175,7 @@ namespace SafetyProto.Domain.Sessions
                 LogEvent("ActionAttempt", details, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                     new LogData { actionId = actionId });
             };
-            _onPpeStateChanged       = args => LogEvent("PpeStateChanged",   $"PPE={args.PpeType}, Wearing={args.IsWearing}", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+            _onPpeStateChanged       = args => LogEvent("PpeStateChanged",   $"EPI={GetPpeLabel(args.PpeType)}, Equipado={(args.IsWearing ? "Sim" : "Não")}", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                 new LogData { ppeType = args.PpeType.ToString(), wearing = args.IsWearing });
             _onTaskLifecycle = args =>
             {
@@ -194,7 +194,7 @@ namespace SafetyProto.Domain.Sessions
             _onScoreChanged = args =>
             {
                 _lastTotalScore = args.TotalScore;
-                LogEvent("ScoreChanged", $"Delta={args.Delta}, Total={args.TotalScore}",
+                LogEvent("ScoreChanged", $"Variação={args.Delta}, Total={args.TotalScore}",
                     args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                     new LogData { delta = args.Delta, totalScore = args.TotalScore, taskId = args.TaskId, reason = args.Reason });
             };
@@ -210,11 +210,11 @@ namespace SafetyProto.Domain.Sessions
                     args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                     new LogData { groupId = args.Group?.id ?? string.Empty });
             };
-            _onSafetyViolation       = args => LogEvent("SafetyViolation",   $"{args.ViolationCode} | {args.Message} (Task={args.TaskName}, Group={args.GroupName})", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+            _onSafetyViolation       = args => LogEvent("SafetyViolation",   $"{args.ViolationCode} | {args.Message} (Tarefa={args.TaskName}, Grupo={args.GroupName})", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                 new LogData { violationCode = args.ViolationCode, message = args.Message, taskId = args.TaskId, groupId = args.GroupId });
             _onSafetyError           = args => LogEvent("SafetyError",       $"{args.Source}: {args.Message} ({args.Details})", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                 new LogData { source = args.Source, message = args.Message, errorDetails = args.Details });
-            _onCriticalSafetyFailure = args => LogEvent("CriticalSafetyFailure", $"{args.Reason} [{args.ViolationCount} in {args.WindowSeconds}s]", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+            _onCriticalSafetyFailure = args => LogEvent("CriticalSafetyFailure", $"{args.Reason} [{args.ViolationCount} em {args.WindowSeconds}s]", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                 new LogData { reason = args.Reason, violationCount = args.ViolationCount, windowSeconds = args.WindowSeconds });
         }
 
@@ -257,7 +257,7 @@ namespace SafetyProto.Domain.Sessions
         private void OnSessionCompleted(SessionCompletedEventArgs args)
         {
             var details = string.Format(CultureInfo.InvariantCulture,
-                "Time={0}, Score={1}, Completed={2}/{3}",
+                "Tempo={0}, Pontuação={1}, Concluídas={2}/{3}",
                 args.totalElapsedTime, args.totalScore, args.tasksCompleted, args.totalTasks);
             LogEvent("SessionCompleted", details,
                 args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
@@ -299,6 +299,21 @@ namespace SafetyProto.Domain.Sessions
                 scenarioId = scenarioId ?? string.Empty,
                 timestampMs = actualTimestamp
             });
+        }
+
+        private static string GetPpeLabel(PPEType ppeType)
+        {
+            return ppeType switch
+            {
+                PPEType.Helmet => "Capacete",
+                PPEType.Goggles => "Óculos de proteção",
+                PPEType.Harness => "Cinto paraquedista",
+                PPEType.Vest => "Colete de segurança",
+                PPEType.Boots => "Botina de segurança",
+                PPEType.GloveLeft => "Luva esquerda",
+                PPEType.GloveRight => "Luva direita",
+                _ => "EPI não identificado"
+            };
         }
 
         private void ResetTallies(long timestampMs)
@@ -353,12 +368,12 @@ namespace SafetyProto.Domain.Sessions
                 var json = _serialize(_log);
                 await File.WriteAllTextAsync(path, json);
 
-                _logger?.Info($"[SessionLogger] Log written to: {path}");
+                _logger?.Info($"[SessionLogger] Log gravado em: {path}");
                 return path;
             }
             catch (Exception ex)
             {
-                _logger?.Error($"[SessionLogger] Failed to write log: {ex.Message}");
+                _logger?.Error($"[SessionLogger] Falha ao gravar o log: {ex.Message}");
                 return null;
             }
         }
@@ -367,7 +382,7 @@ namespace SafetyProto.Domain.Sessions
         {
             LogEvent(
                 "SessionReset",
-                "User manually triggered session reset",
+                "A sessão foi reiniciada manualmente.",
                 EventContext.CurrentSessionId ?? string.Empty,
                 EventContext.CurrentPlayerId  ?? string.Empty,
                 EventContext.CurrentScenarioId ?? string.Empty,

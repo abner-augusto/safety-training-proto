@@ -72,6 +72,8 @@
         detailPpe: 'PPE', detailWorn: 'worn', detailRemoved: 'removed',
         detailDelta: 'Delta', detailTotal: 'Total', detailIn: 'in',
         detailTime: 'Time', detailScore: 'Score', detailCompleted: 'Completed',
+        unknownAction: 'Uncatalogued action', unknownEvent: 'Unrecognized event',
+        internalError: 'Internal system error', manualReset: 'The session was restarted manually.', origin: 'Source',
       },
       pt: {
         currentScore: 'Pontuação',
@@ -143,13 +145,81 @@
         detailPpe: 'EPI', detailWorn: 'equipado', detailRemoved: 'removido',
         detailDelta: 'Variação', detailTotal: 'Total', detailIn: 'em',
         detailTime: 'Tempo', detailScore: 'Pontuação', detailCompleted: 'Concluídas',
+        unknownAction: 'Ação não catalogada', unknownEvent: 'Evento não reconhecido',
+        internalError: 'Erro interno do sistema', manualReset: 'A sessão foi reiniciada manualmente.', origin: 'Origem',
       }
     };
 
-    let lang = localStorage.getItem('sp_lang') || 'pt';
-    export const t = k => (i18n[lang][k] ?? i18n['en'][k] ?? k);
+    const labels = {
+      ppe: {
+        en: {
+          None: 'None', Helmet: 'Helmet', Goggles: 'Safety glasses', Harness: 'Safety harness',
+          Vest: 'Safety vest', Boots: 'Safety boots', GloveLeft: 'Left glove', GloveRight: 'Right glove',
+        },
+        pt: {
+          None: 'Nenhum', Helmet: 'Capacete', Goggles: 'Óculos de proteção', Harness: 'Cinto paraquedista',
+          Vest: 'Colete de segurança', Boots: 'Botina de segurança', GloveLeft: 'Luva esquerda', GloveRight: 'Luva direita',
+        },
+      },
+      action: {
+        en: {
+          connect_harness: 'Connect lanyard', install_guardrail: 'Install guardrail',
+          install_toeboard: 'Install toe board', flag_safety_net: 'Report safety-net issue',
+        },
+        pt: {
+          connect_harness: 'Conectar talabarte', install_guardrail: 'Instalar guarda-corpo',
+          install_toeboard: 'Instalar rodapé', flag_safety_net: 'Reportar irregularidade na tela fachadeira',
+        },
+      },
+      violation: {
+        en: {
+          ACTION_ID_MISSING: 'Unidentified action', NO_ACTIVE_GROUP: 'No active task group',
+          WRONG_ACTION: 'Incorrect action', PPE_MISSING: 'Required PPE missing',
+          TASK_OMITTED: 'Task omitted', GATE_FAILED: 'Inspection not approved',
+          WRONG_PPE_SELECTED: 'Incorrect equipment selected', INSPECTION_INCOMPLETE: 'Inspection incomplete',
+          ORDER_VIOLATION: 'Recommended order not followed',
+        },
+        pt: {
+          ACTION_ID_MISSING: 'Ação não identificada', NO_ACTIVE_GROUP: 'Nenhum grupo de tarefas ativo',
+          WRONG_ACTION: 'Ação incorreta', PPE_MISSING: 'EPI obrigatório ausente',
+          TASK_OMITTED: 'Tarefa omitida', GATE_FAILED: 'Inspeção não aprovada',
+          WRONG_PPE_SELECTED: 'Equipamento inadequado selecionado', INSPECTION_INCOMPLETE: 'Inspeção incompleta',
+          ORDER_VIOLATION: 'Ordem recomendada não seguida',
+        },
+      },
+    };
+
+    let lang = localStorage.getItem('sp_lang') === 'en' ? 'en' : 'pt';
+    export const t = k => (i18n[lang][k] ?? i18n.pt[k] ?? k);
     export function getLang() { return lang; }
     export function locale() { return lang === 'pt' ? 'pt-BR' : 'en-US'; }
+    export function ppeLabel(value) { return labels.ppe[lang][value] ?? labels.ppe.pt[value] ?? t('ppeShort'); }
+    export function actionLabel(value) {
+      return labels.action[lang][value] ?? labels.action.pt[value] ?? `${t('unknownAction')} (${value || '—'})`;
+    }
+    export function violationLabel(value) {
+      return labels.violation[lang][value] ?? labels.violation.pt[value] ?? `${t('logViolation')} (${value || '—'})`;
+    }
+    export function violationMessage(code, message) {
+      if (!message) return '';
+      if (lang !== 'pt') return message;
+      if (code === 'ACTION_ID_MISSING' && /^Received action/i.test(message)) return 'Tentativa de ação recebida sem identificação válida.';
+      if (code === 'NO_ACTIVE_GROUP' && /^Action attempted/i.test(message)) return 'Ação realizada sem um grupo de tarefas ativo.';
+      if (code === 'WRONG_ACTION' && /^(Expected|Action )/i.test(message)) return 'A ação realizada não corresponde à etapa atual.';
+      if (code === 'PPE_MISSING' && /^Required PPE/i.test(message)) return 'Faltam EPIs obrigatórios para a tarefa.';
+      const portugueseMessages = {
+        ACTION_ID_MISSING: /^Tentativa de ação /,
+        NO_ACTIVE_GROUP: /^Ação realizada /,
+        WRONG_ACTION: /^A (?:tarefa esperada|ação realizada) /,
+        PPE_MISSING: /^Faltam EPIs /,
+        TASK_OMITTED: /^Tarefa omitida /,
+        GATE_FAILED: /^Tentou iniciar /,
+        WRONG_PPE_SELECTED: /^Selecionou equipamento /,
+        INSPECTION_INCOMPLETE: /^Tentou iniciar /,
+        ORDER_VIOLATION: /^EPIs equipados /,
+      };
+      return portugueseMessages[code]?.test(message) ? message : '';
+    }
     export function toggleLang() {
       lang = lang === 'pt' ? 'en' : 'pt';
       localStorage.setItem('sp_lang', lang);

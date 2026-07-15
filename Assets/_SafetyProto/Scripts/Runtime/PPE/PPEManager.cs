@@ -131,7 +131,7 @@ namespace SafetyProto.Runtime.PPE
             SafetyEvents.RaiseSafetyViolation(new SafetyViolationEventArgs
             {
                 ViolationCode = "WRONG_PPE_SELECTED",
-                Message = $"Selecionou equipamento inadequado: {itemName} ({ppeType})",
+                Message = $"Selecionou equipamento inadequado: {GetPpeLabel(ppeType)}",
                 TaskId = string.Empty,
                 GroupId = string.Empty,
                 TaskName = itemName,
@@ -144,6 +144,21 @@ namespace SafetyProto.Runtime.PPE
             int charge = scoring.BasePenaltyFor(TaskSeverity.Minor);
             if (charge > 0)
                 ScoreService.Instance.SubtractPoints(charge, "WRONG_PPE_SELECTED", string.Empty);
+        }
+
+        private static string GetPpeLabel(PPEType ppeType)
+        {
+            return ppeType switch
+            {
+                PPEType.Helmet => "Capacete",
+                PPEType.Goggles => "Óculos de proteção",
+                PPEType.Harness => "Cinto paraquedista",
+                PPEType.Vest => "Colete de segurança",
+                PPEType.Boots => "Botina de segurança",
+                PPEType.GloveLeft => "Luva esquerda",
+                PPEType.GloveRight => "Luva direita",
+                _ => "EPI não identificado"
+            };
         }
 
         public void ResetSession()

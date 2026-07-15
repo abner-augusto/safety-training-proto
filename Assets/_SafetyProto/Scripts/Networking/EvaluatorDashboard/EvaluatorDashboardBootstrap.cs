@@ -760,14 +760,14 @@ namespace SafetyProto.Networking.Dashboard
             }
             catch (Exception ex)
             {
-                SafetyLog.Warning($"Failed to broadcast session log file: {ex.Message}", this);
+                SafetyLog.Warning($"Falha ao transmitir o arquivo de log da sessão: {ex.Message}", this);
             }
         }
 
         private async Awaitable LogStartupInfoAsync()
         {
             string ip = await System.Threading.Tasks.Task.Run(TryGetLocalIPv4);
-            SafetyLog.Info($"Evaluator Dashboard servers started. HTTP=http://{ip}:{httpPort} WS=ws://{ip}:{wsPort}/eval", this);
+            SafetyLog.Info($"Servidores do Painel do Avaliador iniciados. HTTP=http://{ip}:{httpPort} WS=ws://{ip}:{wsPort}/eval", this);
         }
 
         private string TryGetLocalIPv4()

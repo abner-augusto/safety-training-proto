@@ -194,7 +194,7 @@ namespace SafetyProto.Domain.Safety
             var actionId = args.ActionId;
             if (string.IsNullOrWhiteSpace(actionId))
             {
-                RaiseViolation("ACTION_ID_MISSING", "Received action attempt without a valid ActionId.", null, null);
+                RaiseViolation("ACTION_ID_MISSING", "Tentativa de ação recebida sem identificação válida.", null, null);
                 return;
             }
 
@@ -202,7 +202,7 @@ namespace SafetyProto.Domain.Safety
 
             if (_activeGroup == null)
             {
-                RaiseViolation("NO_ACTIVE_GROUP", "Action attempted with no active task group.", null, null);
+                RaiseViolation("NO_ACTIVE_GROUP", "Ação realizada sem um grupo de tarefas ativo.", null, null);
                 return;
             }
 
@@ -223,7 +223,7 @@ namespace SafetyProto.Domain.Safety
                 {
                     RaiseViolation(
                         "WRONG_ACTION",
-                        $"Expected {_activeSequentialTask.ResolveExpectedActionId()} but received {actionId}.",
+                        $"A tarefa esperada era '{_activeSequentialTask.taskName}', mas outra ação foi realizada.",
                         _activeSequentialTask,
                         _activeGroup);
                     return;
@@ -247,7 +247,7 @@ namespace SafetyProto.Domain.Safety
 
                     RaiseViolation(
                         "WRONG_ACTION",
-                        $"Action {actionId} does not match any pending task in '{_activeGroup.groupName}'.",
+                        $"A ação realizada não corresponde a nenhuma tarefa pendente do grupo '{_activeGroup.groupName}'.",
                         null,
                         _activeGroup);
                     return;
@@ -276,7 +276,7 @@ namespace SafetyProto.Domain.Safety
             {
                 RaiseViolation(
                     "PPE_MISSING",
-                    $"Required PPE missing for task '{task.taskName}'.",
+                    $"Faltam EPIs obrigatórios para a tarefa '{task.taskName}'.",
                     task,
                     currentGroup);
             }

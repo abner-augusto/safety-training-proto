@@ -5602,7 +5602,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Debug Log here
+  m_text: Registro de atividades
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -52484,11 +52484,11 @@ MonoBehaviour:
   fallForceMultiplier: 5
   consequenceMappings:
   - taskActionId: connect_harness
-    displayName: Lanyard não conectado
+    displayName: Talabarte não conectado
     consequenceType: 1
     consequenceTarget: {fileID: 0}
     blackoutOnly: 1
-    feedbackMessage: A atividade começou sem conectar o lanyard ao ponto de ancoragem.
+    feedbackMessage: A atividade começou sem que o talabarte estivesse conectado ao ponto de ancoragem.
     consequenceSound: {fileID: 0}
   audioSource: {fileID: 0}
   warningSound: {fileID: 8300000, guid: 3b25a2e8b139ca140ada64a19a18e163, type: 3}

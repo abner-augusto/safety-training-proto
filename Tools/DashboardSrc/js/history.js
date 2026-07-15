@@ -1,4 +1,4 @@
-    import { t, locale } from './i18n.js';
+    import { t, locale, getLang } from './i18n.js';
     import { state } from './state.js';
     import { esc, emptyState, openReportModal } from './ui.js';
 
@@ -106,7 +106,7 @@
       const url  = URL.createObjectURL(blob);
       const a    = Object.assign(document.createElement('a'), {
         href: url,
-        download: `session_history_${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+        download: `${getLang() === 'pt' ? 'historico_sessoes' : 'session_history'}_${new Date().toISOString().replace(/[:.]/g, '-')}.json`
       });
       a.click();
       URL.revokeObjectURL(url);

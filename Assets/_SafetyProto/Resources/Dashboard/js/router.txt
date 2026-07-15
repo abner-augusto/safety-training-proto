@@ -1,5 +1,5 @@
 // GENERATED FILE — DO NOT EDIT. Source: Tools/DashboardSrc/js/router.js (menu: SafetyProto → Sync Dashboard Source)
-    import { t } from './i18n.js';
+    import { t, actionLabel, ppeLabel, violationLabel, violationMessage } from './i18n.js';
     import { tasks, wornPpe, state, sessionTimer } from './state.js';
     import { addLog, setScoreUI, renderCluster, renderTasks, resetTaskUI, emptyState, renderReportSection } from './ui.js';
     import { saveSessionToHistory } from './history.js';
@@ -153,22 +153,30 @@
 
     /* ── PPE ── */
     on('PpeChanged', p => {
-      if (p.isWearing) { wornPpe.add(String(p.ppeType)); addLog(`${t('logPpeEquipped')}: ${p.ppeType}`, 'success'); }
-      else             { wornPpe.delete(String(p.ppeType)); addLog(`${t('logPpeRemoved')}: ${p.ppeType}`, 'violation'); }
+      const label = ppeLabel(p.ppeType);
+      if (p.isWearing) { wornPpe.add(String(p.ppeType)); addLog(`${t('logPpeEquipped')}: ${label}`, 'success'); }
+      else             { wornPpe.delete(String(p.ppeType)); addLog(`${t('logPpeRemoved')}: ${label}`, 'violation'); }
       renderCluster();
     });
 
     /* ── Safety ── */
     on('ActionAttempt', p => {
       const pos = p.hasPosition ? ` ${t('at')} (${p.px?.toFixed(1)},${p.py?.toFixed(1)},${p.pz?.toFixed(1)})` : '';
-      addLog(`${t('logActionAttempt')}: ${p.actionId} (${p.sourceId ?? ''})${pos}`);
+      const label = actionLabel(p.actionId);
+      const source = p.sourceId ? ` · ${t('origin')}: ${p.sourceId}` : '';
+      addLog(`${t('logActionAttempt')}: ${label}${source}${pos}`);
       /* interaction instrument: ring + callout at the point of the action */
-      if (p.hasPosition) window.__spViewport?.showInteraction(p.actionId, p.px, p.py, p.pz);
+      if (p.hasPosition) window.__spViewport?.showInteraction(label, p.px, p.py, p.pz);
     });
 
-    on('SafetyViolation',      p => { state.violationCount++; renderCluster(); addLog(`${t('logViolation')}: ${p.message}`, 'violation'); });
-    on('CriticalSafetyFailure',p => { state.violationCount++; renderCluster(); addLog(`${t('logCritical')}: ${p.reason}`, 'violation'); });
-    on('SafetyError',          p => addLog(`${t('logSafetyError')}: [${p.source}] ${p.message}`, 'violation'));
+    on('SafetyViolation',      p => {
+      state.violationCount++;
+      renderCluster();
+      const detail = violationMessage(p.violationCode, p.message);
+      addLog(`${t('logViolation')}: ${violationLabel(p.violationCode)}${detail ? ` · ${detail}` : ''}`, 'violation');
+    });
+    on('CriticalSafetyFailure',p => { state.violationCount++; renderCluster(); addLog(`${t('logCritical')}: ${p.violationCount} ${t('violations').toLowerCase()} ${t('detailIn')} ${p.windowSeconds}s`, 'violation'); });
+    on('SafetyError',          p => addLog(`${t('logSafetyError')}: ${t('internalError')}${p.source ? ` · ${t('origin')}: ${p.source}` : ''}`, 'violation'));
 
     /* ── Session Log File ── */
     on('SessionLogFile', p => {
