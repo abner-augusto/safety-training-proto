@@ -52483,7 +52483,7 @@ MonoBehaviour:
   delayAfterAllConsequences: 1.5
   fallForceMultiplier: 5
   consequenceMappings:
-  - taskActionId: connect_lanyard
+  - taskActionId: connect_harness
     displayName: Lanyard não conectado
     consequenceType: 1
     consequenceTarget: {fileID: 0}
