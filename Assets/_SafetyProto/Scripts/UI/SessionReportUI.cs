@@ -203,14 +203,14 @@ namespace SafetyProto.UI
             var messages = GenerateImprovementMessages(tasks);
 
             if (_medalCappedByCritical)
-                messages.Add("🚫 Medalha limitada: houve violação crítica de segurança durante a sessão.");
+                messages.Add("Medalha limitada: houve violação crítica de segurança durante a sessão.");
 
             // Gate validator failures
             if (gateValidator != null && gateValidator.FailedAttemptCount > 0)
             {
                 int n = gateValidator.FailedAttemptCount;
                 messages.Add(
-                    $"🚫 Você tentou iniciar a atividade {n} vez(es) sem completar a inspeção. " +
+                    $"Você tentou iniciar a atividade {n} vez(es) sem completar a inspeção. " +
                     "Na obra real, isso equivale a começar o trabalho com condições inseguras.");
             }
 
@@ -244,14 +244,14 @@ namespace SafetyProto.UI
                     string advice = !string.IsNullOrEmpty(t.TaskData.failureAdvice)
                         ? t.TaskData.failureAdvice
                         : $"Pratique identificar esta irregularidade mais rapidamente.";
-                    messages.Add($"⏱ {name}: Tempo esgotado. {advice}");
+                    messages.Add($"{name}: Tempo esgotado. {advice}");
                 }
                 else if (t.State == TaskState.CompletedSuccessButUnsafe)
                 {
                     string advice = !string.IsNullOrEmpty(t.TaskData.ppeAdvice)
                         ? t.TaskData.ppeAdvice
                         : "Sempre verifique seus equipamentos antes de agir.";
-                    messages.Add($"⚠️ {name}: Concluída sem EPIs completos. {advice}");
+                    messages.Add($"{name}: Concluída sem EPIs completos. {advice}");
                 }
                 else if (t.State == TaskState.Omitted)
                 {
@@ -259,18 +259,18 @@ namespace SafetyProto.UI
                         ? t.TaskData.omissionAdvice
                         : t.TaskData.hintText;
                     string suffix = string.IsNullOrEmpty(advice) ? string.Empty : $" {advice}";
-                    messages.Add($"⬜ {name}: Tarefa não realizada.{suffix}");
+                    messages.Add($"{name}: Tarefa não realizada.{suffix}");
                 }
                 else if (t.State == TaskState.NotStarted || t.State == TaskState.InProgress)
                 {
-                    messages.Add($"⬜ {name}: Tarefa não concluída.");
+                    messages.Add($"{name}: Tarefa não concluída.");
                 }
 
                 if (t.HasFailedOnce && t.State == TaskState.CompletedSuccess)
                 {
                     string hint = !string.IsNullOrEmpty(t.TaskData.hintText) ? t.TaskData.hintText : "";
                     string hintSuffix = !string.IsNullOrEmpty(hint) ? $" Revise: {hint}" : "";
-                    messages.Add($"🔁 {name}: Necessitou mais de uma tentativa.{hintSuffix}");
+                    messages.Add($"{name}: Necessitou mais de uma tentativa.{hintSuffix}");
                 }
 
                 if (t.HasMissedPPEOnce && t.State == TaskState.CompletedSuccess)
@@ -278,7 +278,7 @@ namespace SafetyProto.UI
                     string ppeMsg = !string.IsNullOrEmpty(t.TaskData.ppeAdvice)
                         ? t.TaskData.ppeAdvice
                         : "EPI ausente detectado durante a execução.";
-                    messages.Add($"🧤 {name}: {ppeMsg}");
+                    messages.Add($"{name}: {ppeMsg}");
                 }
             }
 
