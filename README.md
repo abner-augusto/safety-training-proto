@@ -61,6 +61,10 @@ and communication happens exclusively through a typed event protocol. External
 participants — scripted actors, AI observers, remote peers — can join the
 protocol without coupling to the engine.
 
+> **For the full design rationale — layering, the event bus mechanism, the
+> session lifecycle, the guided/evaluation session modes, and the invariants a
+> contributor must preserve — see [ARCHITECTURE.md](ARCHITECTURE.md).**
+
 ## Repository layout
 
 ```
