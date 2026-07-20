@@ -1,2 +1,64 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Normalize line endings: LF in the repo AND in the working tree on every
+# platform. This makes .gitattributes authoritative over each machine's
+# core.autocrlf, which is what silences the "LF will be replaced by CRLF"
+# warnings on Windows checkouts.
+* text=auto eol=lf
+
+# ------------------------------------------------------------------
+# Unity serialized assets — text (YAML), force LF, smart-merge scenes
+# ------------------------------------------------------------------
+*.cs        text diff=csharp
+*.shader    text
+*.cginc     text
+*.hlsl      text
+*.uxml      text
+*.uss       text
+
+*.unity     text merge=unityyamlmerge eol=lf
+*.prefab    text merge=unityyamlmerge eol=lf
+*.asset     text merge=unityyamlmerge eol=lf
+*.mat       text merge=unityyamlmerge eol=lf
+*.anim      text merge=unityyamlmerge eol=lf
+*.controller text merge=unityyamlmerge eol=lf
+*.meta      text merge=unityyamlmerge eol=lf
+*.physicMaterial text merge=unityyamlmerge eol=lf
+
+# ------------------------------------------------------------------
+# Binary assets — never touched by line-ending conversion or diff
+# ------------------------------------------------------------------
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.tga   binary
+*.tif   binary
+*.psd   binary
+*.exr   binary
+*.hdr   binary
+
+*.fbx   binary
+*.blend binary
+
+# .obj is ASCII text — keep it LF-normalized, don't diff the vertex soup
+*.obj   text eol=lf -diff
+
+*.wav   binary
+*.mp3   binary
+*.ogg   binary
+*.aif   binary
+*.aiff  binary
+
+*.mp4   binary
+*.mov   binary
+
+*.ttf   binary
+*.otf   binary
+
+*.dll   binary
+*.pdb   binary
+*.so    binary
+*.a     binary
+*.aar   binary
+*.apk   binary
+*.aab   binary
+*.unitypackage binary
