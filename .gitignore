@@ -7,6 +7,7 @@
 # ============================================================
 CLAUDE.md
 AGENTS.md
+.mcp.json
 .*/*
 .vsconfig
 before-structure.txt
@@ -199,3 +200,7 @@ dist/
 Tools/SafetyProto.Tests/TestResults/
 /ProfilerCaptures
 /artifacts/
+
+# Knowledge-graph tool output (graphify) — local navigation aid, not a
+# repository artifact. Regenerate with `graphify` rather than committing.
+/graphify-out/
