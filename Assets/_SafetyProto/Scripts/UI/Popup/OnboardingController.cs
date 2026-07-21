@@ -118,6 +118,7 @@ namespace SafetyProto.UI
             if (_currentIndex == 0)
             {
                 data.showSkipButton = true;
+                data.skipButtonLabel = "Pular";
                 data.onSkipPressed = new UnityEvent();
                 data.onSkipPressed.AddListener(SkipAll);
             }

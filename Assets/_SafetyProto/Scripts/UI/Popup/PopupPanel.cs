@@ -126,8 +126,10 @@ namespace SafetyProto.UI
             if (skipButtonRoot != null)
                 skipButtonRoot.SetActive(data.showSkipButton);
 
-            if (skipButtonLabel != null && !string.IsNullOrEmpty(data.skipButtonLabel))
-                skipButtonLabel.text = data.skipButtonLabel;
+            if (skipButtonLabel != null)
+                skipButtonLabel.text = string.IsNullOrEmpty(data.skipButtonLabel)
+                    ? "Pular"
+                    : data.skipButtonLabel;
 
             if (inputFieldRoot != null)
                 inputFieldRoot.SetActive(data.showInputField);

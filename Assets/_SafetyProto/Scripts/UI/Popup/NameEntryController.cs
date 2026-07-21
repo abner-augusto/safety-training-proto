@@ -92,6 +92,7 @@ namespace SafetyProto.UI
                 showInputField = true,
                 requireInputForAction = true,
                 showSkipButton = true,
+                skipButtonLabel = "Pular",
                 onSkipPressed = new UnityEvent()
             };
             data.onActionPressed.AddListener(Confirm);
