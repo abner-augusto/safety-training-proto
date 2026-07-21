@@ -1,6 +1,8 @@
 using System.Collections;
 using SafetyProto.Core;
 using SafetyProto.Core.Logging;
+using SafetyProto.Runtime.Interaction;
+using TMPro;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -39,6 +41,10 @@ namespace SafetyProto.Runtime
         [SerializeField, TextArea(2, 3)] private string confirmBody = "Você será levado ao andaime para a próxima etapa.";
         [SerializeField] private string confirmButtonLabel = "Ir para o andaime";
 
+        [Tooltip("Dedicated guided-mode DualModeButton. Kept separate from the evaluation omission gate.")]
+        [SerializeField] private DualModeButton guidedAdvanceButton;
+        [SerializeField] private string guidedAdvanceButtonLabel = "Seguir para o andaime";
+
         private SafetyProto.Core.Interfaces.IPopupFeedback _popupFeedback;
 
         [Header("Trigger")]
@@ -62,6 +68,7 @@ namespace SafetyProto.Runtime
         private bool _simulationAutoConfirm;
         private bool _transitionInProgress;
         private bool _simulationTransitionCompleted;
+        private bool _guidedAdvanceVisible;
         private Behaviour _transitionLocomotor;
         private bool _transitionLocomotorWasEnabled;
 
@@ -78,6 +85,8 @@ namespace SafetyProto.Runtime
             if (_transitionLocomotor != null)
                 _transitionLocomotor.enabled = _transitionLocomotorWasEnabled;
             if (transitionPanel != null) transitionPanel.SetActive(false);
+            if (guidedAdvanceButton != null) guidedAdvanceButton.gameObject.SetActive(false);
+            _guidedAdvanceVisible = false;
             DashboardGate.PoseBroadcastSuspended = false;
             _transitionLocomotor = null;
             _transitionInProgress = false;
@@ -103,6 +112,14 @@ namespace SafetyProto.Runtime
 
             _popupFeedback = popupFeedbackProvider as SafetyProto.Core.Interfaces.IPopupFeedback;
 
+            if (guidedAdvanceButton != null)
+            {
+                foreach (var label in guidedAdvanceButton.GetComponentsInChildren<TMP_Text>(true))
+                    label.text = guidedAdvanceButtonLabel;
+                guidedAdvanceButton.gameObject.SetActive(false);
+                guidedAdvanceButton.Clicked += OnGuidedAdvanceClicked;
+            }
+
             EventBus.Instance.onGroupCompleted.AddListener(OnGroupCompleted);
         }
 
@@ -121,12 +138,24 @@ namespace SafetyProto.Runtime
             if (EventBus.Instance != null)
                 EventBus.Instance.onGroupCompleted.RemoveListener(OnGroupCompleted);
 
+            if (guidedAdvanceButton != null)
+                guidedAdvanceButton.Clicked -= OnGuidedAdvanceClicked;
+
             // Safety: never leave the pose stream suspended if we're torn down mid-transition.
             DashboardGate.PoseBroadcastSuspended = false;
             if (_transitionLocomotor != null)
                 _transitionLocomotor.enabled = _transitionLocomotorWasEnabled;
             _transitionInProgress = false;
             _simulationAutoConfirm = false;
+        }
+
+        private void OnGuidedAdvanceClicked()
+        {
+            if (!_guidedAdvanceVisible || _transitionInProgress) return;
+
+            _guidedAdvanceVisible = false;
+            guidedAdvanceButton.gameObject.SetActive(false);
+            StartCoroutine(ExecutePhaseTransition());
         }
 
         private void OnGroupCompleted(TaskGroupEventArgs args)
@@ -142,6 +171,11 @@ namespace SafetyProto.Runtime
             if (_simulationAutoConfirm)
             {
                 StartCoroutine(ExecutePhaseTransition());
+            }
+            else if (SessionModeState.Current == SessionMode.Guided && guidedAdvanceButton != null)
+            {
+                _guidedAdvanceVisible = true;
+                guidedAdvanceButton.gameObject.SetActive(true);
             }
             else if (_popupFeedback != null)
             {

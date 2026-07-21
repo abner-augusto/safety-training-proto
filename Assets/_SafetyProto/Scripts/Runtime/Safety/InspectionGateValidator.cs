@@ -99,6 +99,7 @@ namespace SafetyProto.Runtime.Safety
             if (!_simulationAutoConfirm) return;
 
             _simulationCancellationRequested = true;
+            RestorePlayerFallFadeAfterCancellation();
             StopAllCoroutines();
             HideConsequenceFeedback();
             _isProcessing = false;
@@ -114,6 +115,8 @@ namespace SafetyProto.Runtime.Safety
         private bool _evaluationFinalized;
         private bool _simulationAutoConfirm;
         private bool _simulationCancellationRequested;
+        private float _playerFallPreviousFadeTime;
+        private bool _playerFallFadeActive;
         private readonly List<string> _lastPendingTaskIds = new List<string>();
 
         // Tasks already charged at a failed gate press this session. The charge
@@ -332,6 +335,7 @@ namespace SafetyProto.Runtime.Safety
                     MappingId = mapping.taskActionId
                 });
 
+                bool feedbackHandledByConsequence = false;
                 switch (mapping.consequenceType)
                 {
                     case ConsequenceType.ObjectFall:
@@ -341,11 +345,17 @@ namespace SafetyProto.Runtime.Safety
                     case ConsequenceType.PlayerFallSimulation:
                         // A3: blackout-only mock uses the fade-only path; otherwise keep the controlled fall.
                         if (mapping.blackoutOnly)
+                        {
                             yield return ExecutePlayerFallSimulation(mapping);
+                            feedbackHandledByConsequence = true;
+                        }
                         else if (fallController != null)
                             yield return fallController.TriggerControlledFall();
                         else
+                        {
                             yield return ExecutePlayerFallSimulation(mapping);
+                            feedbackHandledByConsequence = true;
+                        }
                         SafetyEvents.RaiseCriticalSafetyFailure(new CriticalSafetyFailureEventArgs
                         {
                             Reason = $"Trabalhou desconectado: {mapping.displayName}",
@@ -360,7 +370,8 @@ namespace SafetyProto.Runtime.Safety
                 }
 
                 PlaySound(mapping.consequenceSound != null ? mapping.consequenceSound : warningSound);
-                ShowConsequenceFeedback(mapping.displayName, mapping.feedbackMessage);
+                if (!feedbackHandledByConsequence)
+                    ShowConsequenceFeedback(mapping.displayName, mapping.feedbackMessage);
                 ConsequenceEvents.RaiseConsequenceEnded();
 
                 yield return new WaitForSeconds(delayBetweenConsequences);
@@ -460,6 +471,7 @@ namespace SafetyProto.Runtime.Safety
                     MappingId = mapping.taskActionId
                 });
 
+                bool feedbackHandledByConsequence = false;
                 switch (mapping.consequenceType)
                 {
                     case ConsequenceType.ObjectFall:
@@ -468,11 +480,17 @@ namespace SafetyProto.Runtime.Safety
 
                     case ConsequenceType.PlayerFallSimulation:
                         if (mapping.blackoutOnly)
+                        {
                             yield return ExecutePlayerFallSimulation(mapping);
+                            feedbackHandledByConsequence = true;
+                        }
                         else if (fallController != null)
                             yield return fallController.TriggerControlledFall();
                         else
+                        {
                             yield return ExecutePlayerFallSimulation(mapping);
+                            feedbackHandledByConsequence = true;
+                        }
                         SafetyEvents.RaiseCriticalSafetyFailure(new CriticalSafetyFailureEventArgs
                         {
                             Reason = $"Trabalhou desconectado: {mapping.displayName}",
@@ -487,7 +505,8 @@ namespace SafetyProto.Runtime.Safety
                 }
 
                 PlaySound(mapping.consequenceSound != null ? mapping.consequenceSound : warningSound);
-                ShowConsequenceFeedback(mapping.displayName, mapping.feedbackMessage);
+                if (!feedbackHandledByConsequence)
+                    ShowConsequenceFeedback(mapping.displayName, mapping.feedbackMessage);
                 ConsequenceEvents.RaiseConsequenceEnded();
 
                 yield return new WaitForSeconds(delayBetweenConsequences);
@@ -557,36 +576,88 @@ namespace SafetyProto.Runtime.Safety
             yield return new WaitForSeconds(1.5f);
         }
 
-        private static readonly WaitForSeconds _waitFadeOut   = new(0.8f);
-        private static readonly WaitForSeconds _waitHoldBlack = new(1.0f);
-        private static readonly WaitForSeconds _waitFadeIn    = new(0.5f);
-        private static readonly WaitForSeconds _waitFallTotal = new(2.6f);
-
         private IEnumerator ExecutePlayerFallSimulation(ConsequenceMapping mapping)
         {
-            // 1. Fade out — duration is set via OVRScreenFade.fadeTime property
+            // Keep the world black while the consequence explanation is visible. The popup is an
+            // overlay, so the participant can read it without seeing the simulated fall setup.
+            bool continued = _simulationAutoConfirm || _simulationCancellationRequested;
+
             if (OVRScreenFade.instance != null)
             {
-                float prevFadeTime = OVRScreenFade.instance.fadeTime;
+                _playerFallPreviousFadeTime = OVRScreenFade.instance.fadeTime;
+                _playerFallFadeActive = true;
                 OVRScreenFade.instance.fadeTime = 0.8f;
                 OVRScreenFade.instance.FadeOut();
-                yield return _waitFadeOut;
+                yield return new WaitForSeconds(0.8f);
 
-                // 2. Hold black
-                yield return _waitHoldBlack;
+                if (!continued && _popupFeedback != null)
+                {
+                    string message = string.IsNullOrWhiteSpace(mapping.feedbackMessage)
+                        ? "Você caiu porque iniciou a atividade sem conectar o talabarte ao ponto de ancoragem."
+                        : mapping.feedbackMessage;
+                    _popupFeedback.ShowInteractive(mapping.displayName, message, continueButtonLabel, () =>
+                    {
+                        _popupFeedback.Hide();
+                        continued = true;
+                    });
+                }
+                else if (!continued)
+                {
+                    SafetyLog.Warning("[InspectionGateValidator] Popup de queda indisponível; mantendo blackout por um intervalo seguro e retomando o fluxo.", this);
+                    yield return new WaitForSeconds(1f);
+                    continued = true;
+                }
 
-                // 3. Fade back in
+                while (!continued && !_simulationCancellationRequested)
+                    yield return null;
+
+                _popupFeedback?.Hide();
+
+                if (_simulationCancellationRequested)
+                {
+                    RestorePlayerFallFadeAfterCancellation();
+                    yield break;
+                }
+
                 OVRScreenFade.instance.fadeTime = 0.5f;
                 OVRScreenFade.instance.FadeIn();
-                yield return _waitFadeIn;
+                yield return new WaitForSeconds(0.5f);
 
-                OVRScreenFade.instance.fadeTime = prevFadeTime;
+                OVRScreenFade.instance.fadeTime = _playerFallPreviousFadeTime;
+                _playerFallFadeActive = false;
             }
             else
             {
-                // Fallback if OVRScreenFade is not present
-                yield return _waitFallTotal;
+                if (!continued && _popupFeedback != null)
+                {
+                    string message = string.IsNullOrWhiteSpace(mapping.feedbackMessage)
+                        ? "Você caiu porque iniciou a atividade sem conectar o talabarte ao ponto de ancoragem."
+                        : mapping.feedbackMessage;
+                    _popupFeedback.ShowInteractive(mapping.displayName, message, continueButtonLabel, () =>
+                    {
+                        _popupFeedback.Hide();
+                        continued = true;
+                    });
+                }
+                else if (!continued)
+                {
+                    SafetyLog.Warning("[InspectionGateValidator] Popup de queda indisponível e OVRScreenFade ausente; retomando o fluxo sem bloquear a sessão.", this);
+                    continued = true;
+                }
+
+                while (!continued && !_simulationCancellationRequested)
+                    yield return null;
             }
+        }
+
+        private void RestorePlayerFallFadeAfterCancellation()
+        {
+            if (!_playerFallFadeActive || OVRScreenFade.instance == null) return;
+
+            OVRScreenFade.instance.fadeTime = 0.5f;
+            OVRScreenFade.instance.FadeIn();
+            OVRScreenFade.instance.fadeTime = _playerFallPreviousFadeTime;
+            _playerFallFadeActive = false;
         }
 
         private IEnumerator ExecuteVisualAlert(ConsequenceMapping mapping)
