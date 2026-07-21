@@ -53,6 +53,8 @@
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scoring\ScoringConfig.cs"        Link="Domain\Scoring\ScoringConfig.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Dashboard\DashboardDtos.cs"       Link="Domain\Dashboard\DashboardDtos.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Dashboard\DashboardDtoMapper.cs"  Link="Domain\Dashboard\DashboardDtoMapper.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Dashboard\IDashboardHost.cs"       Link="Domain\Dashboard\IDashboardHost.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Dashboard\DashboardEventRelay.cs"  Link="Domain\Dashboard\DashboardEventRelay.cs" />
 
     <!-- Data refactor: unified scenario model + loader + capability catalog -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scenarios\ScriptStepDef.cs"      Link="Domain\Scenarios\ScriptStepDef.cs" />

@@ -23,7 +23,7 @@ namespace SafetyProto.Networking.Dashboard
     /// Bootstraps the on-device evaluator dashboard servers (HTTP + WebSocket) and event streaming.
     /// Drop this into a boot scene to expose training telemetry over LAN.
     /// </summary>
-    public class EvaluatorDashboardBootstrap : MonoBehaviour
+    public class EvaluatorDashboardBootstrap : MonoBehaviour, IDashboardHost
     {
         [Header("Networking")]
         public int httpPort = 8080;
@@ -46,6 +46,7 @@ namespace SafetyProto.Networking.Dashboard
 
         private MiniHttpServer _httpServer;
         private EvaluatorWebSocketServer _wsServer;
+        private DashboardEventRelay _relay;
         private Coroutine _pendingLogBroadcast;
         private Coroutine _poseSendCoroutine;
         private readonly List<ITaskGroup> _knownGroups = new List<ITaskGroup>();
@@ -73,7 +74,12 @@ namespace SafetyProto.Networking.Dashboard
                 _poseSendCoroutine = StartCoroutine(poseSender.SendLoop());
             }
             _ = LogStartupInfoAsync();
-            SubscribeEvents(); // after servers are ready
+            var eventBus = EventBus.Instance;
+            if (eventBus != null)
+            {
+                _relay = new DashboardEventRelay(eventBus, this);
+                _relay.Subscribe();
+            }
         }
 
         private void Update()
@@ -98,7 +104,7 @@ namespace SafetyProto.Networking.Dashboard
 
         private void OnDestroy()
         {
-            UnsubscribeEvents();
+            _relay?.Unsubscribe();
             if (_poseSendCoroutine != null)
             {
                 StopCoroutine(_poseSendCoroutine);
@@ -169,62 +175,6 @@ namespace SafetyProto.Networking.Dashboard
 
             _httpServer = new MiniHttpServer(indexBytes, appBytes, styleBytes, extraRoutes);
             _httpServer.Start(httpPort);
-        }
-
-        private void SubscribeEvents()
-        {
-            if (EventBus.Instance != null)
-            {
-                EventBus.Instance.onSessionStarted.AddListener(OnSessionStarted);
-                EventBus.Instance.onSessionPaused.AddListener(OnSessionPaused);
-                EventBus.Instance.onSessionResumed.AddListener(OnSessionResumed);
-                EventBus.Instance.onSessionEnded.AddListener(OnSessionEnded);
-
-                EventBus.Instance.onActionAttempt.AddListener(OnActionAttempt);
-                EventBus.Instance.onPpeStateChanged.AddListener(OnPpeStateChanged);
-
-                EventBus.Instance.onTaskStarted.AddListener(OnTaskStarted);
-                EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
-                EventBus.Instance.onTaskTimeout.AddListener(OnTaskTimeout);
-
-                EventBus.Instance.onScoreChanged.AddListener(OnScoreChanged);
-
-                EventBus.Instance.onGroupStarted.AddListener(OnGroupStarted);
-                EventBus.Instance.onGroupCompleted.AddListener(OnGroupCompleted);
-
-                EventBus.Instance.onSafetyViolation.AddListener(OnSafetyViolation);
-                EventBus.Instance.onCriticalSafetyFailure.AddListener(OnCriticalSafetyFailure);
-                EventBus.Instance.onSafetyError.AddListener(OnSafetyError);
-                EventBus.Instance.onSessionCompleted.AddListener(OnSessionCompleted);
-            }
-        }
-
-        private void UnsubscribeEvents()
-        {
-            if (EventBus.Instance != null)
-            {
-                EventBus.Instance.onSessionStarted.RemoveListener(OnSessionStarted);
-                EventBus.Instance.onSessionPaused.RemoveListener(OnSessionPaused);
-                EventBus.Instance.onSessionResumed.RemoveListener(OnSessionResumed);
-                EventBus.Instance.onSessionEnded.RemoveListener(OnSessionEnded);
-
-                EventBus.Instance.onActionAttempt.RemoveListener(OnActionAttempt);
-                EventBus.Instance.onPpeStateChanged.RemoveListener(OnPpeStateChanged);
-
-                EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStarted);
-                EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
-                EventBus.Instance.onTaskTimeout.RemoveListener(OnTaskTimeout);
-
-                EventBus.Instance.onScoreChanged.RemoveListener(OnScoreChanged);
-
-                EventBus.Instance.onGroupStarted.RemoveListener(OnGroupStarted);
-                EventBus.Instance.onGroupCompleted.RemoveListener(OnGroupCompleted);
-
-                EventBus.Instance.onSafetyViolation.RemoveListener(OnSafetyViolation);
-                EventBus.Instance.onCriticalSafetyFailure.RemoveListener(OnCriticalSafetyFailure);
-                EventBus.Instance.onSafetyError.RemoveListener(OnSafetyError);
-                EventBus.Instance.onSessionCompleted.RemoveListener(OnSessionCompleted);
-            }
         }
 
         private void OnClientMessageReceived(EvaluatorWebSocketServer.ClientConnection client, string json)
@@ -300,194 +250,18 @@ namespace SafetyProto.Networking.Dashboard
             public string eventType;
         }
 
-        #region Event Handlers
-
-        private void OnSessionStarted(SessionStartedEventArgs args)
+        // --- IDashboardHost ---
+        bool IDashboardHost.VerboseEvents => verboseEvents;
+        ScoringConfig IDashboardHost.Scoring => ResolveScoring();
+        IReadOnlyList<ITaskGroup> IDashboardHost.KnownGroups => _knownGroups;
+        void IDashboardHost.RegisterKnownGroup(ITaskGroup group)
         {
-            var dto = new SessionDto(args.SessionId, ResolveTimestamp(args.TimestampMs))
-            {
-                participantId = string.IsNullOrEmpty(args.PlayerId) ? "—" : args.PlayerId,
-                mode = SessionModeState.CurrentName
-            };
-            Broadcast("SessionStarted", dto);
-
-            var manifest = BuildSessionManifest(args.SessionId);
-            Broadcast("SessionManifest", manifest);
+            if (group != null && !_knownGroups.Contains(group)) _knownGroups.Add(group);
         }
-
-        private void OnSessionPaused(SessionPausedEventArgs args)
-        {
-            Broadcast("SessionPaused", new SessionDto(args.SessionId, ResolveTimestamp(args.TimestampMs)));
-        }
-
-        private void OnSessionResumed(SessionResumedEventArgs args)
-        {
-            Broadcast("SessionResumed", new SessionDto(args.SessionId, ResolveTimestamp(args.TimestampMs)));
-        }
-
-        private void OnSessionEnded(SessionEndedEventArgs args)
-        {
-            Broadcast("SessionEnded", new SessionDto(args.SessionId, ResolveTimestamp(args.TimestampMs)));
-        }
-
-        private void OnSessionCompleted(SessionCompletedEventArgs args)
-        {
-            var dto = new SessionCompletedDto
-            {
-                sessionId = args.SessionId,
-                timestampMs = ResolveTimestamp(args.TimestampMs),
-                totalElapsedTime = args.totalElapsedTime,
-                totalScore = args.totalScore,
-                tasksCompleted = args.tasksCompleted,
-                totalTasks = args.totalTasks,
-                orderViolationCount = args.orderViolationCount
-            };
-            Broadcast("SessionCompleted", dto);
-            QueueSessionLogBroadcast(args.SessionId, args.PlayerId);
-        }
-
-        private void OnGroupStarted(TaskGroupEventArgs args)
-        {
-            var group = args.Group;
-            var dto = new GroupDto
-            {
-                sessionId = args.SessionId,
-                groupId = group != null ? group.groupName : string.Empty,
-                groupName = group != null ? group.groupName : string.Empty,
-                timestampMs = ResolveTimestamp(args.TimestampMs)
-            };
-            if (group != null && !_knownGroups.Contains(group))
-                _knownGroups.Add(group);
-
-            Broadcast("GroupStarted", dto);
-            Broadcast("SessionManifest", BuildSessionManifest(args.SessionId));
-        }
-
-        private void OnGroupCompleted(TaskGroupEventArgs args)
-        {
-            var group = args.Group;
-            var dto = new GroupDto
-            {
-                sessionId = args.SessionId,
-                groupId = group != null ? group.groupName : string.Empty,
-                groupName = group != null ? group.groupName : string.Empty,
-                timestampMs = ResolveTimestamp(args.TimestampMs)
-            };
-            Broadcast("GroupCompleted", dto);
-            Broadcast("SessionManifest", BuildSessionManifest(args.SessionId));
-        }
-
-        private void OnTaskStarted(TaskEventArgs args)
-        {
-            args.TimestampMs = ResolveTimestamp(args.TimestampMs);
-            Broadcast("TaskStarted", DashboardDtoMapper.BuildTaskDto(args, "active", _knownGroups, ResolveScoring()));
-        }
-
-        private void OnTaskCompleted(TaskEventArgs args)
-        {
-            args.TimestampMs = ResolveTimestamp(args.TimestampMs);
-            Broadcast("TaskCompleted", DashboardDtoMapper.BuildTaskDto(args, "completed", _knownGroups, ResolveScoring()));
-        }
-
-        private void OnTaskTimeout(TaskEventArgs args)
-        {
-            args.TimestampMs = ResolveTimestamp(args.TimestampMs);
-            Broadcast("TaskTimeout", DashboardDtoMapper.BuildTaskDto(args, "failed", _knownGroups, ResolveScoring()));
-        }
-
-        private void OnScoreChanged(ScoreChangedEventArgs args)
-        {
-            var dto = new ScoreDto
-            {
-                sessionId = args.SessionId,
-                totalScore = args.TotalScore,
-                delta = args.Delta,
-                timestampMs = ResolveTimestamp(args.TimestampMs)
-            };
-            Broadcast("ScoreChanged", dto);
-        }
-
-        private void OnPpeStateChanged(PPEStateChangedEventArgs args)
-        {
-            var dto = new PpeDto
-            {
-                sessionId = args.SessionId,
-                ppeType = args.PpeType.ToString(),
-                isWearing = args.IsWearing,
-                timestampMs = ResolveTimestamp(args.TimestampMs)
-            };
-            if (verboseEvents)
-            {
-                Broadcast("PpeChanged", dto);
-            }
-        }
-
-        private void OnActionAttempt(ActionAttemptedEvent args)
-        {
-            if (!verboseEvents)
-                return;
-            var position = args.Position.HasValue
-                ? new Vector3(args.Position.Value.X, args.Position.Value.Y, args.Position.Value.Z)
-                : Vector3.zero;
-
-            var dto = new ActionAttemptDto
-            {
-                sessionId = args.SessionId,
-                actionId = args.ActionId,
-                sourceId = args.SourceId,
-                context = args.Context,
-                interactorId = args.InteractorId,
-                px = position.x,
-                py = position.y,
-                pz = position.z,
-                hasPosition = args.Position.HasValue,
-                time = args.TimestampMs / 1000f,
-                timestampMs = ResolveTimestamp(args.TimestampMs)
-            };
-            Broadcast("ActionAttempt", dto);
-        }
-
-        private void OnSafetyViolation(SafetyViolationEventArgs args)
-        {
-            var dto = new SafetyViolationDto
-            {
-                sessionId = args.SessionId,
-                violationCode = args.ViolationCode,
-                message = args.Message,
-                taskId = args.TaskId,
-                groupId = args.GroupId,
-                timestampMs = ResolveTimestamp(args.TimestampMs)
-            };
-            Broadcast("SafetyViolation", dto);
-        }
-
-        private void OnCriticalSafetyFailure(CriticalSafetyFailureEventArgs args)
-        {
-            var dto = new CriticalFailureDto
-            {
-                sessionId = args.SessionId,
-                reason = args.Reason,
-                violationCount = args.ViolationCount,
-                windowSeconds = args.WindowSeconds,
-                timestampMs = ResolveTimestamp(args.TimestampMs)
-            };
-            Broadcast("CriticalSafetyFailure", dto);
-        }
-
-        private void OnSafetyError(SafetyErrorEventArgs args)
-        {
-            var dto = new SafetyErrorDto
-            {
-                sessionId = args.SessionId,
-                source = args.Source,
-                message = args.Message,
-                details = args.Details,
-                timestampMs = ResolveTimestamp(args.TimestampMs)
-            };
-            Broadcast("SafetyError", dto);
-        }
-
-        #endregion
+        long IDashboardHost.ResolveTimestamp(long timestampMs) => ResolveTimestamp(timestampMs);
+        SessionManifestDto IDashboardHost.BuildSessionManifest(string sessionId) => BuildSessionManifest(sessionId);
+        void IDashboardHost.QueueSessionLogBroadcast(string sessionId, string playerId) => QueueSessionLogBroadcast(sessionId, playerId);
+        void IDashboardHost.Broadcast<T>(string eventType, T payload) => Broadcast(eventType, payload);
 
         private void RegisterKnownGroupsFromTaskManager(SafetyProto.Runtime.Task.TaskManager taskManager)
         {

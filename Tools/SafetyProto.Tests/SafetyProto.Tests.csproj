@@ -49,6 +49,7 @@
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\Support\EventBusAssertions.cs"      Link="Support\EventBusAssertions.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\Support\SessionTestHarness.cs"      Link="Support\SessionTestHarness.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\Support\EventTimeline.cs"           Link="Support\EventTimeline.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\Support\FakeDashboardHost.cs"        Link="Support\FakeDashboardHost.cs" />
     <!-- Engine-independent fixtures. -->
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\SessionIntegrationTests.cs"         Link="SessionIntegrationTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\ScoreRuleEngineCoreTests.cs"        Link="ScoreRuleEngineCoreTests.cs" />
@@ -59,6 +60,7 @@
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\ScriptStepDefTests.cs"              Link="ScriptStepDefTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\ScenarioCompatibilityTests.cs"      Link="ScenarioCompatibilityTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\DashboardDtoMapperTests.cs"         Link="DashboardDtoMapperTests.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\DashboardEventRelayTests.cs"         Link="DashboardEventRelayTests.cs" />
     <!-- Excluded (Unity-coupled): SafetyTrainingTests uses the Unity EventBus singleton + static
          event facades (SessionEvents/TaskEvents/...), which live in the Unity assemblies, not
          SafetyProto.Shared. SafetyPatternTests uses Runtime.Analytics. Both stay Unity-only and are intentionally excluded. -->
