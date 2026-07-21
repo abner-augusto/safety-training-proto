@@ -9,6 +9,7 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Dashboard;
 using SafetyProto.Domain.Scoring;
 using SafetyProto.Utils;
 using UnityEngine;
@@ -378,17 +379,20 @@ namespace SafetyProto.Networking.Dashboard
 
         private void OnTaskStarted(TaskEventArgs args)
         {
-            Broadcast("TaskStarted", BuildTaskDto(args, "active"));
+            args.TimestampMs = ResolveTimestamp(args.TimestampMs);
+            Broadcast("TaskStarted", DashboardDtoMapper.BuildTaskDto(args, "active", _knownGroups, ResolveScoring()));
         }
 
         private void OnTaskCompleted(TaskEventArgs args)
         {
-            Broadcast("TaskCompleted", BuildTaskDto(args, "completed"));
+            args.TimestampMs = ResolveTimestamp(args.TimestampMs);
+            Broadcast("TaskCompleted", DashboardDtoMapper.BuildTaskDto(args, "completed", _knownGroups, ResolveScoring()));
         }
 
         private void OnTaskTimeout(TaskEventArgs args)
         {
-            Broadcast("TaskTimeout", BuildTaskDto(args, "failed"));
+            args.TimestampMs = ResolveTimestamp(args.TimestampMs);
+            Broadcast("TaskTimeout", DashboardDtoMapper.BuildTaskDto(args, "failed", _knownGroups, ResolveScoring()));
         }
 
         private void OnScoreChanged(ScoreChangedEventArgs args)
@@ -485,115 +489,6 @@ namespace SafetyProto.Networking.Dashboard
 
         #endregion
 
-        private TaskDto BuildTaskDto(TaskEventArgs args, string status)
-        {
-            var task = args.Task;
-            var name = task != null ? task.taskName : string.Empty;
-            var id = task != null ? task.taskName : string.Empty; // Usar taskName como ID para consistência
-            var meta = BuildTaskMetadata(task);
-            var scoring = SafetyProto.Runtime.Task.TaskManager.Instance != null
-                ? SafetyProto.Runtime.Task.TaskManager.Instance.Scoring
-                : ScoringConfig.Default;
-            var severity = task?.severity ?? TaskSeverity.Moderate;
-            return new TaskDto
-            {
-                sessionId = args.SessionId,
-                taskId = id,
-                taskName = name,
-                taskDescription = meta.description,
-                hint = meta.hint,
-                groupName = meta.groupName,
-                order = meta.order,
-                executionMode = meta.executionMode,
-                expectedAction = meta.expectedAction,
-                requiredPpe = meta.requiredPpe,
-                successPoints = scoring.PointsFor(severity),
-                failurePenalty = scoring.BasePenaltyFor(severity),
-                // "Points lost to an unsafe completion" — the gap between the tier's full points
-                // and what an unsafe (missing-PPE) completion actually earns.
-                ppePenalty = scoring.PointsFor(severity) - scoring.UnsafeEarnFor(severity),
-                status = status,
-                timestampMs = ResolveTimestamp(args.TimestampMs)
-            };
-        }
-
-        private static string ResolveTaskStatus(SafetyProto.Core.TaskState state)
-        {
-            switch (state)
-            {
-                case SafetyProto.Core.TaskState.InProgress:
-                    return "active";
-                case SafetyProto.Core.TaskState.CompletedSuccess:
-                case SafetyProto.Core.TaskState.CompletedSuccessButUnsafe:
-                    return "completed";
-                case SafetyProto.Core.TaskState.CompletedFailure:
-                    return "failed";
-                default:
-                    return "pending";
-            }
-        }
-
-        private TaskMetadata BuildTaskMetadata(ISafetyTask task, bool includeDetails = true)
-        {
-            if (task == null || _knownGroups.Count == 0)
-            {
-                return TaskMetadata.Empty;
-            }
-
-            string groupName = string.Empty;
-            string executionMode = string.Empty;
-            int order = -1;
-            int runningOrder = 1;
-
-            foreach (var group in _knownGroups)
-            {
-                if (group == null || group.tasks == null)
-                    continue;
-
-                foreach (var candidate in group.tasks)
-                {
-                    if (candidate == null)
-                    {
-                        runningOrder++;
-                        continue;
-                    }
-
-                    if (candidate == task)
-                    {
-                        groupName = group.groupName;
-                        executionMode = group.executionMode.ToString();
-                        order = runningOrder;
-                        goto Found;
-                    }
-
-                    runningOrder++;
-                }
-            }
-
-        Found:
-            var required = includeDetails && task.requiredPPE != null
-                ? task.requiredPPE.Select(p => p.ToString()).ToArray()
-                : System.Array.Empty<string>();
-
-            var scoring = SafetyProto.Runtime.Task.TaskManager.Instance != null
-                ? SafetyProto.Runtime.Task.TaskManager.Instance.Scoring
-                : ScoringConfig.Default;
-
-            return new TaskMetadata
-            {
-                groupName = groupName,
-                executionMode = executionMode,
-                order = order,
-                description = task.taskDescription ?? string.Empty,
-                hint = task.hintText ?? string.Empty,
-                expectedAction = includeDetails ? task.ResolveExpectedActionId() : string.Empty,
-                requiredPpe = required,
-                successPoints = scoring.PointsFor(task.severity),
-                failurePenalty = scoring.BasePenaltyFor(task.severity),
-                ppePenalty = scoring.PointsFor(task.severity) - scoring.UnsafeEarnFor(task.severity)
-            };
-        }
-
         private void RegisterKnownGroupsFromTaskManager(SafetyProto.Runtime.Task.TaskManager taskManager)
         {
             if (taskManager == null || taskManager.RuntimeGroups == null)
@@ -608,6 +503,7 @@ namespace SafetyProto.Networking.Dashboard
 
         private SessionManifestDto BuildSessionManifest(string sessionId)
         {
+            var scoring = ResolveScoring();
             var taskManager = FindFirstObjectByType<SafetyProto.Runtime.Task.TaskManager>();
             if (taskManager != null)
             {
@@ -621,15 +517,9 @@ namespace SafetyProto.Networking.Dashboard
                     if (task == null)
                         continue;
 
-                    var meta = BuildTaskMetadata(task, includeDetails: false);
-                    liveDtos.Add(new TaskManifestItemDto
-                    {
-                        taskName = task.taskName,
-                        groupName = meta.groupName,
-                        description = meta.description,
-                        order = meta.order,
-                        status = ResolveTaskStatus(runtimeTask.State)
-                    });
+                    liveDtos.Add(DashboardDtoMapper.BuildManifestItem(
+                        task, _knownGroups, scoring,
+                        DashboardDtoMapper.ResolveTaskStatus(runtimeTask.State)));
                 }
 
                 return new SessionManifestDto
@@ -647,15 +537,7 @@ namespace SafetyProto.Networking.Dashboard
                 foreach (var task in group.tasks)
                 {
                     if (task == null) continue;
-                    var meta = BuildTaskMetadata(task, includeDetails: false);
-                    dtos.Add(new TaskManifestItemDto
-                    {
-                        taskName = task.taskName,
-                        groupName = meta.groupName,
-                        description = meta.description,
-                        order = meta.order,
-                        status = "pending"
-                    });
+                    dtos.Add(DashboardDtoMapper.BuildManifestItem(task, _knownGroups, scoring, "pending"));
                 }
             }
 
@@ -669,6 +551,13 @@ namespace SafetyProto.Networking.Dashboard
         private long ResolveTimestamp(long timestampMs)
         {
             return timestampMs != 0 ? timestampMs : DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        }
+
+        private static ScoringConfig ResolveScoring()
+        {
+            return SafetyProto.Runtime.Task.TaskManager.Instance != null
+                ? SafetyProto.Runtime.Task.TaskManager.Instance.Scoring
+                : ScoringConfig.Default;
         }
 
         public void ResetSession()
@@ -810,194 +699,5 @@ namespace SafetyProto.Networking.Dashboard
             return "0.0.0.0";
         }
 
-        #region DTOs
-
-        [Serializable]
-        private struct SessionDto
-        {
-            public string sessionId;
-            public string participantId;
-            public string mode;
-            public long timestampMs;
-
-            public SessionDto(string sessionId, long timestamp)
-            {
-                this.sessionId = sessionId;
-                participantId = null;
-                mode = null;
-                timestampMs = timestamp;
-            }
-        }
-
-        [Serializable]
-        private struct SessionCompletedDto
-        {
-            public string sessionId;
-            public long timestampMs;
-            public float totalElapsedTime;
-            public int totalScore;
-            public int tasksCompleted;
-            public int totalTasks;
-            public int orderViolationCount;
-        }
-
-        [Serializable]
-        private struct GroupDto
-        {
-            public string sessionId;
-            public string groupId;
-            public string groupName;
-            public long timestampMs;
-        }
-
-        [Serializable]
-        private struct TaskDto
-        {
-            public string sessionId;
-            public string taskId;
-            public string taskName;
-            public string taskDescription;
-            public string hint;
-            public string groupName;
-            public int order;
-            public string executionMode;
-            public string expectedAction;
-            public string[] requiredPpe;
-            public int successPoints;
-            public int failurePenalty;
-            // Points lost to an unsafe (missing-PPE) completion, derived from the scenario's
-            // ScoringConfig — no longer an authored per-task field.
-            public int ppePenalty;
-            public string status;
-            public long timestampMs;
-        }
-
-        private struct TaskMetadata
-        {
-            public string groupName;
-            public string executionMode;
-            public int order;
-            public string description;
-            public string hint;
-            public string expectedAction;
-            public string[] requiredPpe;
-            public int successPoints;
-            public int failurePenalty;
-            public int ppePenalty;
-
-            public static TaskMetadata Empty => new TaskMetadata
-            {
-                groupName = string.Empty,
-                executionMode = string.Empty,
-                order = -1,
-                description = string.Empty,
-                hint = string.Empty,
-                expectedAction = string.Empty,
-                requiredPpe = System.Array.Empty<string>(),
-                successPoints = 0,
-                failurePenalty = 0,
-                ppePenalty = 0
-            };
-        }
-
-        [Serializable]
-        private struct ScoreDto
-        {
-            public string sessionId;
-            public int totalScore;
-            public int delta;
-            public long timestampMs;
-        }
-
-        [Serializable]
-        private struct PpeDto
-        {
-            public string sessionId;
-            public string ppeType;
-            public bool isWearing;
-            public long timestampMs;
-        }
-
-        [Serializable]
-        private struct ActionAttemptDto
-        {
-            public string sessionId;
-            public string actionId;
-            public string sourceId;
-            public string context;
-            public int interactorId;
-            public float px;
-            public float py;
-            public float pz;
-            public bool hasPosition;
-            public float time;
-            public long timestampMs;
-        }
-
-        [Serializable]
-        private struct SafetyViolationDto
-        {
-            public string sessionId;
-            public string violationCode;
-            public string message;
-            public string taskId;
-            public string groupId;
-            public long timestampMs;
-        }
-
-        [Serializable]
-        private struct CriticalFailureDto
-        {
-            public string sessionId;
-            public string reason;
-            public int violationCount;
-            public float windowSeconds;
-            public long timestampMs;
-        }
-
-        [Serializable]
-        private struct SafetyErrorDto
-        {
-            public string sessionId;
-            public string source;
-            public string message;
-            public string details;
-            public long timestampMs;
-        }
-
-        [Serializable]
-        private struct SessionLogFileDto
-        {
-            public string sessionId;
-            public string participantId;
-            public string fileName;
-            public string path;
-            public string content;
-        }
-
-        [Serializable]
-        private struct SessionManifestDto
-        {
-            public string sessionId;
-            public TaskManifestItemDto[] tasks;
-        }
-
-        [Serializable]
-        private struct TaskManifestItemDto
-        {
-            public string taskName;
-            public string groupName;
-            public string description;
-            public int order;
-            public string status;
-        }
-
-        [Serializable]
-        private struct SessionResetDto
-        {
-            public long timestampMs;
-        }
-
-        #endregion
     }
 }
