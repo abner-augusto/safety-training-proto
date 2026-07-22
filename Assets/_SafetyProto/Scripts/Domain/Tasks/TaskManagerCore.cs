@@ -256,6 +256,67 @@ namespace SafetyProto.Domain.Tasks
             return omitted;
         }
 
+        public IReadOnlyList<RuntimeSafetyTask> MarkPendingTasksFailed()
+        {
+            var failed = new List<RuntimeSafetyTask>();
+            var currentGroup = GetCurrentGroup();
+            if (currentGroup == null) return failed;
+
+            for (int i = 0; i < _sessionTasks.Count; i++)
+            {
+                var t = _sessionTasks[i];
+                if (!ContainsByReference(currentGroup.tasks, t.TaskData)) continue;
+
+                if (t.State == TaskState.NotStarted || t.State == TaskState.InProgress)
+                {
+                    t.State = TaskState.CompletedFailure;
+                    t.CompletionTime = _timer?.ElapsedSeconds ?? 0f;
+                    failed.Add(t);
+
+                    _bus.Publish(new SafetyViolationEventArgs
+                    {
+                        ViolationCode = "TASK_FAILED",
+                        Message = $"Tarefa não concluída: {t.taskName}",
+                        TaskId = t.id,
+                        GroupId = currentGroup.id,
+                        TaskName = t.taskName,
+                        GroupName = currentGroup.groupName
+                    });
+                }
+            }
+
+            _currentTask = null;
+            _currentTaskIndex = -1;
+
+            CheckGroupCompletion();
+
+            if (GetCurrentGroup() != null)
+            {
+                _ = WaitAndStartNextTaskAsync(_delayBetweenTasks);
+            }
+
+            return failed;
+        }
+
+        /// <summary>
+        /// Forces the current group to complete without changing individual task states.
+        /// Tasks retain their current state (e.g. NotStarted). Used when the participant
+        /// skips the group via the Phase 1 advance button.
+        /// </summary>
+        public void ForceCompleteCurrentGroup()
+        {
+            var currentGroup = GetCurrentGroup();
+            if (currentGroup == null || _completedGroups.Contains(currentGroup)) return;
+
+            _completedGroups.Add(currentGroup);
+            _bus.Publish(new TaskGroupEventArgs(currentGroup, TaskGroupPhase.Completed));
+
+            if (GetCurrentGroup() != null)
+            {
+                _ = WaitAndStartNextTaskAsync(_delayBetweenTasks);
+            }
+        }
+
         /// <summary>
         /// Names of tasks in the CURRENT group whose completion order deviated from
         /// the authored task order. Compares CompletionTime timestamps of tasks that
@@ -400,8 +461,7 @@ namespace SafetyProto.Domain.Tasks
                 var s = t.State;
                 if (s != TaskState.CompletedSuccess &&
                     s != TaskState.CompletedFailure &&
-                    s != TaskState.CompletedSuccessButUnsafe &&
-                    s != TaskState.Omitted)
+                    s != TaskState.CompletedSuccessButUnsafe)
                 {
                     allDone = false;
                     break;

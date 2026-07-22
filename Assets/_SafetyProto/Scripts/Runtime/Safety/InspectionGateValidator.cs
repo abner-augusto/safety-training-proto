@@ -216,7 +216,7 @@ namespace SafetyProto.Runtime.Safety
                 return;
             }
 
-            // Failed attempt
+            // Failed attempt — skip consequences in Guided mode
             FailedAttemptCount++;
             _lastPendingTaskIds.Clear();
             _lastPendingTaskIds.AddRange(pendingTasks.Select(t => t.ExpectedActionId));
@@ -227,6 +227,13 @@ namespace SafetyProto.Runtime.Safety
                 int charge = GateScoring.GateChargeFor(task.TaskData.severity);
                 if (charge > 0)
                     ScoreService.Instance.SubtractPoints(charge, "GATE_PENALTY", task.id);
+            }
+
+            if (SessionModeState.Current == SessionMode.Guided)
+            {
+                _isProcessing = true;
+                ShowPendingWarningAndContinue(pendingTasks);
+                return;
             }
 
             if (FailedAttemptCount == 1)
@@ -521,10 +528,10 @@ namespace SafetyProto.Runtime.Safety
         private void FinalizeEvaluation()
         {
             if (_simulationCancellationRequested) return;
-            var omitted = taskManager.MarkPendingTasksOmitted();
+            var failed = taskManager.MarkPendingTasksFailed();
 
             if (verboseLogging)
-                SafetyLog.Info($"[InspectionGateValidator] Sessão finalizada em modo Avaliação ({omitted.Count} tarefa(s) omitida(s)).", this);
+                SafetyLog.Info($"[InspectionGateValidator] Sessão finalizada em modo Avaliação ({failed.Count} tarefa(s) como falha).", this);
 
             _evaluationFinalized = true;
             _isProcessing = false;

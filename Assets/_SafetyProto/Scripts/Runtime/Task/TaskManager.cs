@@ -214,8 +214,11 @@ namespace SafetyProto.Runtime.Task
 
         public void ResetSession() => _core?.ResetSession();
 
-        public IReadOnlyList<RuntimeSafetyTask> MarkPendingTasksOmitted() =>
-            _core?.MarkPendingTasksOmitted() ?? new List<RuntimeSafetyTask>();
+        public IReadOnlyList<RuntimeSafetyTask> MarkPendingTasksFailed() =>
+            _core?.MarkPendingTasksFailed() ?? new List<RuntimeSafetyTask>();
+
+        public void ForceCompleteCurrentGroup() =>
+            _core?.ForceCompleteCurrentGroup();
 
         public IReadOnlyList<string> GetCompletionOrderDeviations() =>
             _core?.GetCompletionOrderDeviations() ?? new List<string>();
