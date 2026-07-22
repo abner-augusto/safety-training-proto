@@ -1,9 +1,11 @@
-using System.Collections;
+﻿using System.Collections;
 using SafetyProto.Core;
+using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
-using SafetyProto.Runtime.Interaction;
-using TMPro;
+using SafetyProto.Domain.Scoring;
+using SafetyProto.Runtime.Task;
 using UnityEngine;
+using UnityEngine.Events;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -35,15 +37,19 @@ namespace SafetyProto.Runtime
         [SerializeField] private GameObject transitionPanel;
 
         [Header("Confirmação")]
-        [Tooltip("Popup provider (PopupService) implementing IPopupFeedback. When set, the teleport waits for a confirmation button instead of firing on group completion. QA: the sudden auto-teleport disoriented participants.")]
+        [Tooltip("Popup provider (PopupService) implementing IPopupFeedback. When set, the teleport waits for a confirmation button instead of firing on group completion.")]
         [SerializeField] private MonoBehaviour popupFeedbackProvider;
         [SerializeField] private string confirmTitle = "Fase concluída";
         [SerializeField, TextArea(2, 3)] private string confirmBody = "Você será levado ao andaime para a próxima etapa.";
         [SerializeField] private string confirmButtonLabel = "Ir para o andaime";
 
-        [Tooltip("Dedicated guided-mode DualModeButton. Kept separate from the evaluation omission gate.")]
-        [SerializeField] private DualModeButton guidedAdvanceButton;
-        [SerializeField] private string guidedAdvanceButtonLabel = "Seguir para o andaime";
+        [Header("Botão de Avanço")]
+        [Tooltip("Botão visível apenas no modo Avaliação. No modo Guiado é oculto; o popup de confirmação aparece automaticamente quando o grupo completa.")]
+        [SerializeField] private GameObject[] advanceButtonObjects;
+        [Tooltip("TaskManager da cena. Auto-resolvido se vazio.")]
+        [SerializeField] private TaskManager taskManager;
+        [Tooltip("Grupo alvo (id). Comparado contra TaskGroupDef.id do JSON.")]
+        [SerializeField] private string targetGroupId = "ppe_selection";
 
         private SafetyProto.Core.Interfaces.IPopupFeedback _popupFeedback;
 
@@ -68,14 +74,15 @@ namespace SafetyProto.Runtime
         private bool _simulationAutoConfirm;
         private bool _transitionInProgress;
         private bool _simulationTransitionCompleted;
-        private bool _guidedAdvanceVisible;
+        private bool _advanceConsumed;
         private Behaviour _transitionLocomotor;
         private bool _transitionLocomotorWasEnabled;
+
+        private UnityAction<SessionStartedEventArgs>? _onSessionStarted;
 
         public bool IsSimulationTransitionProcessing => _transitionInProgress;
         public bool SimulationTransitionCompleted => _simulationTransitionCompleted;
 
-        /// <summary>Lets the Editor-only simulator dismiss the phase confirmation popup.</summary>
         public void SetSimulationAutoConfirm(bool enabled) => _simulationAutoConfirm = enabled;
 
         public void CancelSimulationTransition()
@@ -85,8 +92,7 @@ namespace SafetyProto.Runtime
             if (_transitionLocomotor != null)
                 _transitionLocomotor.enabled = _transitionLocomotorWasEnabled;
             if (transitionPanel != null) transitionPanel.SetActive(false);
-            if (guidedAdvanceButton != null) guidedAdvanceButton.gameObject.SetActive(false);
-            _guidedAdvanceVisible = false;
+            SetButtonsActive(false);
             DashboardGate.PoseBroadcastSuspended = false;
             _transitionLocomotor = null;
             _transitionInProgress = false;
@@ -104,6 +110,9 @@ namespace SafetyProto.Runtime
 
             ValidateReferences();
 
+            if (taskManager == null)
+                taskManager = TaskManager.Instance != null ? TaskManager.Instance : FindFirstObjectByType<TaskManager>();
+
             if (playerLocomotor == null && playerRig != null)
                 playerLocomotor = ResolveLocomotor(playerRig);
 
@@ -112,19 +121,13 @@ namespace SafetyProto.Runtime
 
             _popupFeedback = popupFeedbackProvider as SafetyProto.Core.Interfaces.IPopupFeedback;
 
-            if (guidedAdvanceButton != null)
-            {
-                foreach (var label in guidedAdvanceButton.GetComponentsInChildren<TMP_Text>(true))
-                    label.text = guidedAdvanceButtonLabel;
-                guidedAdvanceButton.gameObject.SetActive(false);
-                guidedAdvanceButton.Clicked += OnGuidedAdvanceClicked;
-            }
+            SetButtonsActive(false);
 
+            _onSessionStarted = OnSessionStarted;
+            EventBus.Instance.onSessionStarted.AddListener(_onSessionStarted);
             EventBus.Instance.onGroupCompleted.AddListener(OnGroupCompleted);
         }
 
-        // The Meta FirstPersonLocomotor ships as a precompiled type; resolve it by name so this
-        // controller stays decoupled from the exact SDK type while still being able to toggle gravity.
         private static Behaviour ResolveLocomotor(Transform root)
         {
             foreach (var b in root.GetComponentsInChildren<Behaviour>(true))
@@ -136,12 +139,12 @@ namespace SafetyProto.Runtime
         private void OnDestroy()
         {
             if (EventBus.Instance != null)
+            {
                 EventBus.Instance.onGroupCompleted.RemoveListener(OnGroupCompleted);
+                if (_onSessionStarted != null)
+                    EventBus.Instance.onSessionStarted.RemoveListener(_onSessionStarted);
+            }
 
-            if (guidedAdvanceButton != null)
-                guidedAdvanceButton.Clicked -= OnGuidedAdvanceClicked;
-
-            // Safety: never leave the pose stream suspended if we're torn down mid-transition.
             DashboardGate.PoseBroadcastSuspended = false;
             if (_transitionLocomotor != null)
                 _transitionLocomotor.enabled = _transitionLocomotorWasEnabled;
@@ -149,13 +152,86 @@ namespace SafetyProto.Runtime
             _simulationAutoConfirm = false;
         }
 
-        private void OnGuidedAdvanceClicked()
+        private void OnSessionStarted(SessionStartedEventArgs _)
         {
-            if (!_guidedAdvanceVisible || _transitionInProgress) return;
+            _advanceConsumed = false;
+            _transitionExecuted = false;
+            SetButtonsActive(SessionModeState.Current == SessionMode.Evaluation);
+        }
 
-            _guidedAdvanceVisible = false;
-            guidedAdvanceButton.gameObject.SetActive(false);
-            StartCoroutine(ExecutePhaseTransition());
+        /// <summary>Wire to the advance button OnClick. Evaluation mode only: applies order penalties, marks pending tasks omitted, shows popup, then teleports.</summary>
+        public void OnAdvanceClicked()
+        {
+            if (_advanceConsumed) { SafetyLog.Warning("[PhaseController] OnAdvanceClicked ignorado — já consumido.", this); return; }
+            if (SessionModeState.Current != SessionMode.Evaluation && !_simulationAutoConfirm)
+            {
+                SafetyLog.Warning($"[PhaseController] OnAdvanceClicked ignorado — modo atual é {SessionModeState.Current}, esperado Evaluation.", this);
+                return;
+            }
+            if (taskManager == null)
+            {
+                SafetyLog.Error("[PhaseController] TaskManager não encontrado.", this);
+                return;
+            }
+
+            var currentGroup = taskManager.GetCurrentGroup();
+            if (currentGroup == null || !string.Equals(currentGroup.id, targetGroupId, System.StringComparison.Ordinal))
+            {
+                var actualId = currentGroup?.id ?? "(null)";
+                SafetyLog.Info($"[PhaseController] Avanço ignorado — grupo atual é '{actualId}', esperado '{targetGroupId}'.", this);
+                return;
+            }
+
+            _advanceConsumed = true;
+            SetButtonsActive(false);
+
+            ApplyOrderPenaltyIfDeviated(currentGroup.id, currentGroup.groupName);
+            taskManager.ForceCompleteCurrentGroup();
+            SafetyLog.Info("[PhaseController] Grupo de EPIs fechado.", this);
+
+            if (_simulationAutoConfirm)
+            {
+                StartCoroutine(ExecutePhaseTransition());
+                return;
+            }
+
+            if (_popupFeedback != null)
+            {
+                _popupFeedback.ShowInteractive(confirmTitle, confirmBody, confirmButtonLabel,
+                    () =>
+                    {
+                        _popupFeedback.Hide();
+                        StartCoroutine(ExecutePhaseTransition());
+                    });
+            }
+            else
+            {
+                StartCoroutine(ExecutePhaseTransition());
+            }
+        }
+
+        private void ApplyOrderPenaltyIfDeviated(string groupId, string groupName)
+        {
+            var deviations = taskManager.GetCompletionOrderDeviations();
+            if (deviations.Count == 0) return;
+
+            string list = string.Join(", ", deviations);
+
+            taskManager.RegisterOrderViolation($"EPIs fora da ordem recomendada: {list}");
+            SafetyEvents.RaiseSafetyViolation(new SafetyViolationEventArgs
+            {
+                ViolationCode = "ORDER_VIOLATION",
+                Message = $"EPIs equipados fora da ordem recomendada: {list}",
+                TaskId = string.Empty,
+                GroupId = groupId,
+                TaskName = string.Empty,
+                GroupName = groupName
+            });
+
+            var scoring = taskManager.Scoring ?? ScoringConfig.Default;
+            int charge = scoring.BasePenaltyFor(TaskSeverity.Minor);
+            if (charge > 0)
+                ScoreService.Instance.SubtractPoints(charge, "ORDER_VIOLATION", string.Empty);
         }
 
         private void OnGroupCompleted(TaskGroupEventArgs args)
@@ -172,25 +248,30 @@ namespace SafetyProto.Runtime
             {
                 StartCoroutine(ExecutePhaseTransition());
             }
-            else if (SessionModeState.Current == SessionMode.Guided && guidedAdvanceButton != null)
+            else if (SessionModeState.Current == SessionMode.Guided)
             {
-                _guidedAdvanceVisible = true;
-                guidedAdvanceButton.gameObject.SetActive(true);
+                if (_popupFeedback != null)
+                {
+                    _popupFeedback.ShowInteractive(confirmTitle, confirmBody, confirmButtonLabel,
+                        () =>
+                        {
+                            _popupFeedback.Hide();
+                            StartCoroutine(ExecutePhaseTransition());
+                        });
+                }
+                else
+                {
+                    StartCoroutine(ExecutePhaseTransition());
+                }
             }
-            else if (_popupFeedback != null)
-            {
-                _popupFeedback.ShowInteractive(confirmTitle, confirmBody, confirmButtonLabel,
-                    () =>
-                    {
-                        _popupFeedback.Hide();
-                        StartCoroutine(ExecutePhaseTransition());
-                    });
-            }
-            else
-            {
-                // No popup provider wired — legacy immediate transition.
-                StartCoroutine(ExecutePhaseTransition());
-            }
+            // Evaluation mode: do nothing — player presses the advance button when ready.
+        }
+
+        private void SetButtonsActive(bool active)
+        {
+            if (advanceButtonObjects == null) return;
+            foreach (var go in advanceButtonObjects)
+                if (go != null) go.SetActive(active);
         }
 
         private IEnumerator ExecutePhaseTransition()
@@ -205,35 +286,25 @@ namespace SafetyProto.Runtime
                 yield return new WaitForSeconds(fadeOutDuration);
             }
 
-            // Activate the destination geometry BEFORE moving so its colliders already exist by teleport time.
             foreach (var obj in objectsToHide)
                 if (obj != null) obj.SetActive(false);
             foreach (var obj in objectsToShow)
                 if (obj != null) obj.SetActive(true);
 
-            // Suspend player gravity for the teleport: disabling the locomotor stops it from calling
-            // CharacterController.Move, so a frame hitch (e.g. a dashboard send) can't drop the player
-            // through scaffold colliders that haven't registered yet.
             _transitionLocomotor = playerLocomotor;
             _transitionLocomotorWasEnabled = playerLocomotor != null && playerLocomotor.enabled;
             if (playerLocomotor != null) playerLocomotor.enabled = false;
 
-            // Suspend the dashboard pose stream for the transition: its ~10 Hz main-thread sends are
-            // a prime source of the frame hitch behind this bug. Discrete events keep flowing.
             DashboardGate.PoseBroadcastSuspended = true;
 
             if (playerRig != null && spawnPointAndaime != null)
             {
                 if (playerHead != null)
                 {
-                    // Recenter the HEAD over the spawn (cancels the room-scale rig offset) so the
-                    // player lands centered on the scaffold deck regardless of where they physically
-                    // stand. PlayerRecenter calls Physics.SyncTransforms internally.
                     PlayerRecenter.Recenter(playerRig, playerHead, spawnPointAndaime);
                 }
                 else
                 {
-                    // Fallback: no head ref — move the rig origin directly (legacy behavior).
                     playerRig.position = spawnPointAndaime.position;
                     playerRig.rotation = Quaternion.Euler(0f, spawnPointAndaime.rotation.eulerAngles.y, 0f);
                     Physics.SyncTransforms();
@@ -243,8 +314,6 @@ namespace SafetyProto.Runtime
             if (transitionPanel != null)
                 transitionPanel.SetActive(true);
 
-            // Hold black for comfort AND until solid ground under the spawn is confirmed. The timeout is a
-            // safety cap so a missing/misconfigured floor never freezes the transition.
             float elapsed = 0f;
             bool groundReady = false;
             while (elapsed < holdBlackDuration || (!groundReady && elapsed < groundWaitTimeout))
@@ -257,11 +326,9 @@ namespace SafetyProto.Runtime
             if (!groundReady)
                 SafetyLog.Warning($"[PhaseController] Chão do andaime não confirmado em {groundWaitTimeout}s — religando locomotor mesmo assim.", this);
 
-            // Re-enable gravity/locomotion only now that the player has solid ground beneath them.
             if (playerLocomotor != null) playerLocomotor.enabled = _transitionLocomotorWasEnabled;
             _transitionLocomotor = null;
 
-            // Resume the dashboard pose stream now the latency-sensitive window is over.
             DashboardGate.PoseBroadcastSuspended = false;
 
             if (transitionPanel != null)
@@ -279,8 +346,6 @@ namespace SafetyProto.Runtime
             _simulationTransitionCompleted = true;
         }
 
-        // Probes straight down from the spawn for any non-player collider — confirms the scaffold deck
-        // has registered before gravity is restored. Returns true when there is no spawn to check.
         private bool IsGroundReadyAtSpawn()
         {
             if (spawnPointAndaime == null) return true;
@@ -290,7 +355,6 @@ namespace SafetyProto.Runtime
                 groundProbeDistance, groundMask, QueryTriggerInteraction.Ignore);
             foreach (var hit in hits)
             {
-                // Ignore the player's own colliders (capsule, hands, held items).
                 if (playerRig != null && hit.collider.transform.IsChildOf(playerRig)) continue;
                 return true;
             }
@@ -305,8 +369,6 @@ namespace SafetyProto.Runtime
                 SafetyLog.Warning("[PhaseController] playerRig não atribuído no Inspector.", this);
             if (spawnPointAndaime == null)
                 SafetyLog.Warning("[PhaseController] spawnPointAndaime não atribuído no Inspector.", this);
-            // OVRScreenFade.instance is assigned in OVRScreenFade.Start (not Awake), so a Start-time
-            // check against instance can race even with execOrder set. Look up the component directly.
             if (FindAnyObjectByType<OVRScreenFade>() == null)
                 SafetyLog.Warning("[PhaseController] OVRScreenFade não encontrado na cena — fade visual não funcionará no Quest. Adicione OVRScreenFade ao CenterEyeAnchor.", this);
         }
@@ -317,7 +379,6 @@ namespace SafetyProto.Runtime
             if (!string.IsNullOrEmpty(triggerGroupName))
                 triggerGroupName = triggerGroupName.Trim();
 
-            // Warn in the Editor if no OVRScreenFade exists anywhere in the scene.
             if (FindAnyObjectByType<OVRScreenFade>() == null)
             {
                 Debug.LogWarning(

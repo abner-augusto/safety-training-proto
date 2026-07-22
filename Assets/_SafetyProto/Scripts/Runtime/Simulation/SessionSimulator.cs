@@ -75,7 +75,6 @@ namespace SafetyProto.Runtime.Simulation
 
         private TrainingSessionManager? _sessionManager;
         private TaskManager? _taskManager;
-        private PhaseAdvanceGate? _phaseGate;
         private PhaseController? _phaseController;
         private InspectionGateValidator? _inspectionGate;
         private ScenarioDef? _scenario;
@@ -235,7 +234,6 @@ namespace SafetyProto.Runtime.Simulation
             _result.lastDiagnostic = "Preparando sessão simulada...";
             _sessionManager = FindFirstObjectByType<TrainingSessionManager>();
             _taskManager = TaskManager.Instance != null ? TaskManager.Instance : FindFirstObjectByType<TaskManager>();
-            _phaseGate = FindFirstObjectByType<PhaseAdvanceGate>();
             _phaseController = FindFirstObjectByType<PhaseController>();
             _inspectionGate = FindFirstObjectByType<InspectionGateValidator>();
             _scenario = string.IsNullOrWhiteSpace(externalScenarioPath)
@@ -352,16 +350,10 @@ namespace SafetyProto.Runtime.Simulation
 
             if (target == "phase" || target == "phase1" || target == "fase1")
             {
-                if (_phaseGate == null)
-                {
-                    Fail("Gate da fase 1 não encontrado na cena ativa.");
-                    yield break;
-                }
                 _phaseController?.SetSimulationAutoConfirm(true);
-                // Advance() forces the group closed only while PPE tasks are still pending; when every PPE
-                // was already equipped the group has self-completed and this is a no-op — the transition is
-                // already running from the auto-confirm armed at prepare time.
-                _phaseGate.Advance();
+                // OnAdvanceClicked() applies order penalties, marks pending omitted, and —
+                // with auto-confirm set — starts the teleport without a popup.
+                _phaseController?.OnAdvanceClicked();
 
                 if (_phaseController != null)
                 {
