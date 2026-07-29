@@ -146,6 +146,14 @@ Open the project in Unity 6000.3.14f1 with Meta XR SDK v201.0.0 installed. Targe
 Android (Meta Quest 3). Press Play in the `SafetyTraining` scene to run in the
 editor, or build an APK via `File → Build Settings`.
 
+On a fresh clone, two third-party asset packages are gitignored (Asset Store
+licensing) and must be imported manually before UI renders correctly:
+
+- **TextMesh Pro**: `Window → TextMeshPro → Import TMP Essential Resources`.
+  Without this, all TMP text renders blank.
+- **Dark UI**: re-import the Dark UI asset package (Asset Store) into
+  `Assets/Dark UI/`. Without this, UI icons are missing.
+
 ### Shared library + CLI harness
 
 ```bash
