@@ -151,8 +151,9 @@ licensing) and must be imported manually before UI renders correctly:
 
 - **TextMesh Pro**: `Window → TextMeshPro → Import TMP Essential Resources`.
   Without this, all TMP text renders blank.
-- **Dark UI**: re-import the Dark UI asset package (Asset Store) into
-  `Assets/Dark UI/`. Without this, UI icons are missing.
+- **Dark UI**: import [Dark Theme UI](https://assetstore.unity.com/packages/2d/gui/dark-theme-ui-199010)
+  (free, Giniel Villacote) from the Asset Store into `Assets/Dark UI/`.
+  Without this, UI icons are missing.
 
 ### Shared library + CLI harness
 
