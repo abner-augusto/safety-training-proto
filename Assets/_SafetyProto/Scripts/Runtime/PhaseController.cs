@@ -12,15 +12,18 @@ using UnityEditor;
 
 namespace SafetyProto.Runtime
 {
-    public class PhaseController : MonoBehaviour
+    public class PhaseController : MonoBehaviour, IRecenterAnchorProvider
     {
         [Header("Player")]
         [SerializeField] private Transform playerRig;
-        [Tooltip("Head transform (CenterEyeAnchor). Auto-resolved from playerRig if empty. Used to " +
-                 "cancel the room-scale offset when teleporting so the player — not the rig origin — " +
-                 "lands centered on the scaffold spawn.")]
-        [SerializeField] private Transform playerHead;
+        [Tooltip("Pre-transition anchor (Canteiro). Point the same Transform PlayerSpawnCenter.startPoint " +
+                 "uses. Returned by CurrentAnchor before the phase transition executes.")]
+        [SerializeField] private Transform startPointCanteiro;
         [SerializeField] private Transform spawnPointAndaime;
+
+        [Header("Recenter")]
+        [Tooltip("Shared fade -> recenter -> reground sequence and busy guard.")]
+        [SerializeField] private RecenterService recenterService;
 
         [Header("Zonas (opcional)")]
         [Tooltip("GameObjects a desativar ao sair do Canteiro. Deixe vazio se não usar.")]
@@ -58,9 +61,6 @@ namespace SafetyProto.Runtime
         [SerializeField] private string triggerGroupName = string.Empty;
 
         [Header("Anti-queda no teleporte")]
-        [Tooltip("Locomotor do jogador (FirstPersonLocomotor). Desabilitado durante o teleporte para " +
-                 "suspender a gravidade até o chão estar pronto. Auto-resolvido a partir do playerRig se vazio.")]
-        [SerializeField] private Behaviour playerLocomotor;
         [Tooltip("Layers consideradas 'chão' na sondagem pós-teleporte.")]
         [SerializeField] private LayerMask groundMask = ~0;
         [Tooltip("Distância máxima da sondagem para baixo a partir do spawn.")]
@@ -72,30 +72,27 @@ namespace SafetyProto.Runtime
 
         private bool _transitionExecuted;
         private bool _simulationAutoConfirm;
-        private bool _transitionInProgress;
         private bool _simulationTransitionCompleted;
         private bool _advanceConsumed;
-        private Behaviour _transitionLocomotor;
-        private bool _transitionLocomotorWasEnabled;
 
         private UnityAction<SessionStartedEventArgs>? _onSessionStarted;
 
-        public bool IsSimulationTransitionProcessing => _transitionInProgress;
+        public bool IsSimulationTransitionProcessing => recenterService != null && recenterService.IsBusy;
         public bool SimulationTransitionCompleted => _simulationTransitionCompleted;
+
+        /// <summary>IRecenterAnchorProvider — the current phase's center anchor. Canteiro before
+        /// the transition executes, Andaime after.</summary>
+        public Transform CurrentAnchor => _transitionExecuted ? spawnPointAndaime : startPointCanteiro;
 
         public void SetSimulationAutoConfirm(bool enabled) => _simulationAutoConfirm = enabled;
 
         public void CancelSimulationTransition()
         {
-            if (!_transitionInProgress) return;
+            if (recenterService == null || !recenterService.IsBusy) return;
             StopAllCoroutines();
-            if (_transitionLocomotor != null)
-                _transitionLocomotor.enabled = _transitionLocomotorWasEnabled;
+            recenterService.CancelActive();
             if (transitionPanel != null) transitionPanel.SetActive(false);
             SetButtonsActive(false);
-            DashboardGate.PoseBroadcastSuspended = false;
-            _transitionLocomotor = null;
-            _transitionInProgress = false;
             _simulationTransitionCompleted = false;
         }
 
@@ -113,12 +110,6 @@ namespace SafetyProto.Runtime
             if (taskManager == null)
                 taskManager = TaskManager.Instance != null ? TaskManager.Instance : FindFirstObjectByType<TaskManager>();
 
-            if (playerLocomotor == null && playerRig != null)
-                playerLocomotor = ResolveLocomotor(playerRig);
-
-            if (playerHead == null && playerRig != null)
-                playerHead = PlayerRecenter.ResolveHead(playerRig);
-
             _popupFeedback = popupFeedbackProvider as SafetyProto.Core.Interfaces.IPopupFeedback;
 
             SetButtonsActive(false);
@@ -126,14 +117,6 @@ namespace SafetyProto.Runtime
             _onSessionStarted = OnSessionStarted;
             EventBus.Instance.onSessionStarted.AddListener(_onSessionStarted);
             EventBus.Instance.onGroupCompleted.AddListener(OnGroupCompleted);
-        }
-
-        private static Behaviour ResolveLocomotor(Transform root)
-        {
-            foreach (var b in root.GetComponentsInChildren<Behaviour>(true))
-                if (b != null && b.GetType().Name == "FirstPersonLocomotor")
-                    return b;
-            return null;
         }
 
         private void OnDestroy()
@@ -145,10 +128,8 @@ namespace SafetyProto.Runtime
                     EventBus.Instance.onSessionStarted.RemoveListener(_onSessionStarted);
             }
 
-            DashboardGate.PoseBroadcastSuspended = false;
-            if (_transitionLocomotor != null)
-                _transitionLocomotor.enabled = _transitionLocomotorWasEnabled;
-            _transitionInProgress = false;
+            if (recenterService != null)
+                recenterService.CancelActive();
             _simulationAutoConfirm = false;
         }
 
@@ -276,73 +257,41 @@ namespace SafetyProto.Runtime
 
         private IEnumerator ExecutePhaseTransition()
         {
-            _transitionInProgress = true;
-            var ovr = OVRScreenFade.instance;
-
-            if (ovr != null)
+            if (recenterService == null)
             {
-                ovr.fadeTime = fadeOutDuration;
-                ovr.FadeOut();
-                yield return new WaitForSeconds(fadeOutDuration);
+                SafetyLog.Error("[PhaseController] recenterService não atribuído — transição abortada.", this);
+                yield break;
             }
 
-            foreach (var obj in objectsToHide)
-                if (obj != null) obj.SetActive(false);
-            foreach (var obj in objectsToShow)
-                if (obj != null) obj.SetActive(true);
-
-            _transitionLocomotor = playerLocomotor;
-            _transitionLocomotorWasEnabled = playerLocomotor != null && playerLocomotor.enabled;
-            if (playerLocomotor != null) playerLocomotor.enabled = false;
-
-            DashboardGate.PoseBroadcastSuspended = true;
-
-            if (playerRig != null && spawnPointAndaime != null)
+            var options = new RecenterOptions
             {
-                if (playerHead != null)
+                FadeOutDuration = fadeOutDuration,
+                HoldBlackDuration = holdBlackDuration,
+                FadeInDuration = fadeInDuration,
+                SuspendPoseBroadcast = true,
+                UseGroundProbe = true,
+                GroundReady = IsGroundReadyAtSpawn,
+                GroundWaitTimeout = groundWaitTimeout,
+                LocomotorHandling = LocomotorMode.ToggleEnabled,
+                OnBlackout = () =>
                 {
-                    PlayerRecenter.Recenter(playerRig, playerHead, spawnPointAndaime);
-                }
-                else
+                    foreach (var obj in objectsToHide)
+                        if (obj != null) obj.SetActive(false);
+                    foreach (var obj in objectsToShow)
+                        if (obj != null) obj.SetActive(true);
+                    if (transitionPanel != null)
+                        transitionPanel.SetActive(true);
+                },
+                OnBeforeFadeIn = () =>
                 {
-                    playerRig.position = spawnPointAndaime.position;
-                    playerRig.rotation = Quaternion.Euler(0f, spawnPointAndaime.rotation.eulerAngles.y, 0f);
-                    Physics.SyncTransforms();
-                }
-            }
+                    if (transitionPanel != null)
+                        transitionPanel.SetActive(false);
+                },
+            };
 
-            if (transitionPanel != null)
-                transitionPanel.SetActive(true);
-
-            float elapsed = 0f;
-            bool groundReady = false;
-            while (elapsed < holdBlackDuration || (!groundReady && elapsed < groundWaitTimeout))
-            {
-                if (!groundReady) groundReady = IsGroundReadyAtSpawn();
-                elapsed += Time.deltaTime;
-                yield return null;
-            }
-
-            if (!groundReady)
-                SafetyLog.Warning($"[PhaseController] Chão do andaime não confirmado em {groundWaitTimeout}s — religando locomotor mesmo assim.", this);
-
-            if (playerLocomotor != null) playerLocomotor.enabled = _transitionLocomotorWasEnabled;
-            _transitionLocomotor = null;
-
-            DashboardGate.PoseBroadcastSuspended = false;
-
-            if (transitionPanel != null)
-                transitionPanel.SetActive(false);
-
-            if (ovr != null)
-            {
-                ovr.fadeTime = fadeInDuration;
-                ovr.FadeIn();
-                yield return new WaitForSeconds(fadeInDuration);
-            }
+            yield return recenterService.RecenterTo(spawnPointAndaime, options);
 
             SafetyLog.Info("[PhaseController] Transição concluída. ZonaAndaime ativa.", this);
-            _transitionInProgress = false;
             _simulationTransitionCompleted = true;
         }
 
@@ -369,6 +318,10 @@ namespace SafetyProto.Runtime
                 SafetyLog.Warning("[PhaseController] playerRig não atribuído no Inspector.", this);
             if (spawnPointAndaime == null)
                 SafetyLog.Warning("[PhaseController] spawnPointAndaime não atribuído no Inspector.", this);
+            if (startPointCanteiro == null)
+                SafetyLog.Warning("[PhaseController] startPointCanteiro não atribuído no Inspector — CurrentAnchor retornará null antes da transição.", this);
+            if (recenterService == null)
+                SafetyLog.Warning("[PhaseController] recenterService não atribuído no Inspector.", this);
             if (FindAnyObjectByType<OVRScreenFade>() == null)
                 SafetyLog.Warning("[PhaseController] OVRScreenFade não encontrado na cena — fade visual não funcionará no Quest. Adicione OVRScreenFade ao CenterEyeAnchor.", this);
         }

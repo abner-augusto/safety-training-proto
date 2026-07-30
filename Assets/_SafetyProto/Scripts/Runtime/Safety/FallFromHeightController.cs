@@ -25,6 +25,8 @@ namespace SafetyProto.Runtime.Safety
     public class FallFromHeightController : MonoBehaviour, ISessionResettable
     {
         [Header("References")]
+        [Tooltip("OVRCameraRig root. Used only to auto-resolve locomotor when it is left empty.")]
+        [SerializeField] private Transform playerRig;
         [Tooltip("Meta FirstPersonLocomotor. Auto-resolved from playerRig if empty.")]
         [SerializeField] private FirstPersonLocomotor locomotor;
 
@@ -32,12 +34,10 @@ namespace SafetyProto.Runtime.Safety
         [SerializeField] private RetractableLanyardController lanyard;
 
         [Header("Recenter")]
-        [Tooltip("OVRCameraRig root. Used to recenter the player after a controlled fall.")]
-        [SerializeField] private Transform playerRig;
-        [Tooltip("Head transform (CenterEyeAnchor). Auto-resolved from playerRig if empty.")]
-        [SerializeField] private Transform playerHead;
         [Tooltip("Where the player lands after a controlled fall (ground level / safe spawn).")]
         [SerializeField] private Transform safeFallSpawn;
+        [Tooltip("Shared fade -> recenter -> reground sequence and busy guard.")]
+        [SerializeField] private RecenterService recenterService;
 
         [Header("Fall Timing")]
         [SerializeField] private float fadeOutDuration = 0.8f;
@@ -47,7 +47,6 @@ namespace SafetyProto.Runtime.Safety
 
         private float _defaultGravityFactor = 1f;
         private bool _fallSuspended;
-        private bool _falling;
 
         /// <summary>True while the fall is suspended (player anchored correctly).</summary>
         public bool IsFallSuspended => _fallSuspended;
@@ -64,9 +63,6 @@ namespace SafetyProto.Runtime.Safety
                 SafetyLog.Warning("[FallFromHeightController] FirstPersonLocomotor não encontrado — controle de queda inativo.", this);
             else
                 _defaultGravityFactor = locomotor.GravityFactor;
-
-            if (playerHead == null && playerRig != null)
-                playerHead = PlayerRecenter.ResolveHead(playerRig);
 
             if (lanyard != null)
             {
@@ -132,45 +128,31 @@ namespace SafetyProto.Runtime.Safety
                 yield break;
             }
 
-            if (_falling) yield break;
-            _falling = true;
+            if (recenterService == null)
+            {
+                SafetyLog.Error("[FallFromHeightController] recenterService não atribuído — queda controlada abortada.", this);
+                yield break;
+            }
+
+            if (recenterService.IsBusy) yield break;
 
             // Make sure gravity is active for the drop (the off-tether state).
             RestoreFall();
 
-            var fade = OVRScreenFade.instance;
-            float prevFadeTime = fade != null ? fade.fadeTime : 0f;
-
-            if (fade != null)
+            var options = new RecenterOptions
             {
-                fade.fadeTime = fadeOutDuration;
-                fade.FadeOut();
-                yield return new WaitForSeconds(fadeOutDuration);
-            }
+                FadeOutDuration = fadeOutDuration,
+                HoldBlackDuration = holdBlackDuration,
+                FadeInDuration = fadeInDuration,
+                SuspendPoseBroadcast = false,
+                UseGroundProbe = false,
+                RestoreFadeTime = true,
+                LocomotorHandling = LocomotorMode.EnableMovement,
+            };
 
             // Under black: relocate the player to the safe spawn (represents having fallen and
             // being returned to ground) and re-ground via the locomotor.
-            yield return new WaitForSeconds(holdBlackDuration);
-
-            if (playerRig != null && safeFallSpawn != null)
-            {
-                if (playerHead == null)
-                    playerHead = PlayerRecenter.ResolveHead(playerRig);
-                PlayerRecenter.Recenter(playerRig, playerHead, safeFallSpawn);
-            }
-
-            // EnableMovement re-grounds the character controller at the new position.
-            if (locomotor != null) locomotor.EnableMovement();
-
-            if (fade != null)
-            {
-                fade.fadeTime = fadeInDuration;
-                fade.FadeIn();
-                yield return new WaitForSeconds(fadeInDuration);
-                fade.fadeTime = prevFadeTime;
-            }
-
-            _falling = false;
+            yield return recenterService.RecenterTo(safeFallSpawn, options);
         }
 
         // ── ISessionResettable ────────────────────────────────────
@@ -180,7 +162,6 @@ namespace SafetyProto.Runtime.Safety
             // Never leave the next session with gravity suspended from a prior anchored state.
             if (locomotor != null) locomotor.GravityFactor = _defaultGravityFactor;
             _fallSuspended = false;
-            _falling = false;
         }
     }
 }
