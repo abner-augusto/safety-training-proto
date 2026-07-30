@@ -2,7 +2,7 @@
     import { applyTranslations, toggleLang } from './js/i18n.js';
     import { applyTheme, toggleTheme } from './js/theme.js';
     import { state } from './js/state.js';
-    import { renderTasks, closeReportModal } from './js/ui.js';
+    import { renderTasks, closeReportModal, handleRecenterClick } from './js/ui.js';
     import { loadHistory, renderHistory, clearHistory, exportAllHistory } from './js/history.js';
     import { route } from './js/router.js';
     import { WsManager } from './js/ws.js';
@@ -118,6 +118,9 @@
     applyTranslations();
     loadHistory();
     renderHistory();
+
+    /* ── Evaluator recenter control ── */
+    document.getElementById('btn-recenter').onclick = () => handleRecenterClick(ws);
 
     /* Gancho de teste: permite injetar eventos/poses pelo console do
        navegador quando não há headset (ex.: __spRoute({eventType, payload})). */

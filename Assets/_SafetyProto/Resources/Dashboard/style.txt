@@ -487,6 +487,23 @@
     }
     .report-btn.secondary:hover { background: var(--border); }
 
+    /* ── Evaluator recenter control ──────────────────────────────── */
+    .recenter-control { display: flex; flex-direction: column; gap: 8px; }
+    #btn-recenter { width: 100%; }
+    #btn-recenter.confirm {
+      background: var(--orange);
+      color: var(--on-accent);
+    }
+    #btn-recenter:disabled { opacity: 0.6; cursor: default; transform: none; box-shadow: none; }
+    .recenter-status {
+      min-height: 14px;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .recenter-status.pending { color: var(--orange); }
+    .recenter-status.success { color: var(--green); }
+    .recenter-status.error   { color: var(--red); }
+
     /* ── Session History ──────────────────────────────────────── */
     .history-count {
       font-family: var(--mono);

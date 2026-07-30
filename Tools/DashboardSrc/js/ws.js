@@ -81,4 +81,17 @@
         clearInterval(this._pingTimer);
         this._ws?.close();
       }
+
+      /** Generic outbound send. Returns true if the frame was handed to the socket, false when
+          not connected (caller decides how to surface that — e.g. a "no response" state). */
+      send(obj) {
+        if (this._ws?.readyState !== WebSocket.OPEN) return false;
+        try {
+          this._ws.send(JSON.stringify(obj));
+          return true;
+        } catch (e) {
+          console.error('Erro ao enviar comando:', e);
+          return false;
+        }
+      }
     }

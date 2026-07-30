@@ -20,6 +20,9 @@
       currentParticipantId: '—',
       currentSessionId: null,
       currentMode: null,
+      // requestId of an in-flight evaluator dashboard Command awaiting its CommandAck
+      // (e.g. "recenter_player"), or null when none is pending.
+      recenterPendingRequestId: null,
     };
 
     /* ── Live session timer (driven by session lifecycle events) ── */

@@ -384,6 +384,99 @@
       if (e.key === 'Escape') closeReportModal();
     }
 
+    /* ── Evaluator recenter control ───────────────────────────────
+       Two-stage confirm (click -> "Confirmar?" -> click) so a stray click cannot teleport a
+       participant mid-assessment, then a Command/CommandAck round-trip with a local timeout so
+       the evaluator is never left staring at a button that silently did nothing — the headset is
+       on the participant's head and the dashboard is the evaluator's only window into it. ── */
+    const RECENTER_CONFIRM_WINDOW_MS = 4000;
+    const RECENTER_ACK_TIMEOUT_MS = 5000;
+    let _recenterConfirmArmed = false;
+    let _recenterConfirmTimer = null;
+    let _recenterAckTimer = null;
+
+    function _recenterEls() {
+      return {
+        btn: document.getElementById('btn-recenter'),
+        status: document.getElementById('recenter-status'),
+      };
+    }
+
+    function _setRecenterStatus(text, kind) {
+      const { status } = _recenterEls();
+      if (!status) return;
+      status.textContent = text ?? '';
+      status.className = 'recenter-status' + (kind ? ` ${kind}` : '');
+    }
+
+    function _resetRecenterButton() {
+      _recenterConfirmArmed = false;
+      clearTimeout(_recenterConfirmTimer);
+      const { btn } = _recenterEls();
+      if (!btn) return;
+      btn.disabled = false;
+      btn.classList.remove('confirm');
+      btn.textContent = t('recenterButton');
+    }
+
+    /** Click handler for the "Recentralizar jogador" button. First click arms a short-lived
+        confirm state; the second click (within the window) actually sends the command and waits
+        for the CommandAck (or a local timeout if the app never answers). */
+    export function handleRecenterClick(ws) {
+      const { btn } = _recenterEls();
+      if (!btn) return;
+
+      if (!_recenterConfirmArmed) {
+        _recenterConfirmArmed = true;
+        btn.textContent = t('recenterConfirmButton');
+        btn.classList.add('confirm');
+        _setRecenterStatus('');
+        clearTimeout(_recenterConfirmTimer);
+        _recenterConfirmTimer = setTimeout(_resetRecenterButton, RECENTER_CONFIRM_WINDOW_MS);
+        return;
+      }
+
+      clearTimeout(_recenterConfirmTimer);
+      _recenterConfirmArmed = false;
+
+      const requestId = `recenter-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      btn.disabled = true;
+      btn.classList.remove('confirm');
+      btn.textContent = t('recenterButton');
+      _setRecenterStatus(t('recenterPending'), 'pending');
+
+      const sent = ws.send({ eventType: 'Command', command: 'recenter_player', requestId });
+      if (!sent) {
+        btn.disabled = false;
+        _setRecenterStatus(t('recenterNoConnection'), 'error');
+        return;
+      }
+
+      state.recenterPendingRequestId = requestId;
+      clearTimeout(_recenterAckTimer);
+      _recenterAckTimer = setTimeout(() => {
+        if (state.recenterPendingRequestId !== requestId) return; // superseded by a newer ack
+        state.recenterPendingRequestId = null;
+        btn.disabled = false;
+        _setRecenterStatus(t('recenterNoResponse'), 'error');
+      }, RECENTER_ACK_TIMEOUT_MS);
+    }
+
+    /** Routed from the CommandAck event — resolves the pending recenter request if this ack
+        matches it (ignored otherwise: a stale ack after the local timeout, or an ack for some
+        other command). */
+    export function resolveRecenterAck(payload) {
+      if (!payload || payload.requestId == null || payload.requestId !== state.recenterPendingRequestId) return;
+      clearTimeout(_recenterAckTimer);
+      state.recenterPendingRequestId = null;
+      const { btn } = _recenterEls();
+      if (btn) btn.disabled = false;
+      _setRecenterStatus(
+        payload.accepted ? t('recenterSuccess') : (payload.reason || t('recenterFailed')),
+        payload.accepted ? 'success' : 'error'
+      );
+    }
+
     export function downloadReport() {
       if (!state.sessionReport) return;
       const blob = new Blob([JSON.stringify(state.sessionReport, null, 2)], { type: 'application/json' });

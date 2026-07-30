@@ -163,4 +163,17 @@ namespace SafetyProto.Domain.Dashboard
     {
         public long timestampMs;
     }
+
+    /// <summary>Ack for an inbound "Command" envelope (see EvaluatorDashboardBootstrap). Without
+    /// this the evaluator clicks blind — the headset is on the participant's head and the
+    /// dashboard is their only window.</summary>
+    [Serializable]
+    public struct CommandAckDto
+    {
+        public string requestId;
+        public string command;
+        public bool accepted;
+        /// <summary>Portuguese, operator-facing. Empty when accepted.</summary>
+        public string reason;
+    }
 }

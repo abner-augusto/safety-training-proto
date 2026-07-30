@@ -16,6 +16,7 @@ using UnityEngine;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 
 namespace SafetyProto.Networking.Dashboard
 {
@@ -51,6 +52,7 @@ namespace SafetyProto.Networking.Dashboard
         private Coroutine _poseSendCoroutine;
         private readonly List<ITaskGroup> _knownGroups = new List<ITaskGroup>();
         private readonly Queue<Action> _mainThreadQueue = new Queue<Action>();
+        private readonly Dictionary<string, IDashboardCommandHandler> _commandHandlers = new Dictionary<string, IDashboardCommandHandler>();
 
         private void Awake()
         {
@@ -61,7 +63,14 @@ namespace SafetyProto.Networking.Dashboard
             }
             _instance = this;
             DontDestroyOnLoad(gameObject);
+            // This object survives scene reloads but command handlers do not: SceneLoader.
+            // ResetSession() reloads the scene between participants, destroying the handlers
+            // registered at Start() while this dictionary keeps pointing at them. Re-scan on
+            // every load so the evaluator's controls keep working after a session reset.
+            SceneManager.sceneLoaded += OnSceneLoaded;
         }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode) => RegisterCommandHandlers();
 
         private void OnEnable() { } // intentionally empty — subscription moved to Start
 
@@ -79,6 +88,25 @@ namespace SafetyProto.Networking.Dashboard
             {
                 _relay = new DashboardEventRelay(eventBus, this);
                 _relay.Subscribe();
+            }
+            RegisterCommandHandlers();
+        }
+
+        private void RegisterCommandHandlers()
+        {
+            _commandHandlers.Clear();
+            // Same discovery style as RegisterKnownGroupsFromTaskManager: a scan of the live
+            // scene rather than a continuously-maintained subscription. Re-run on every scene
+            // load (see Awake) so handlers recreated by a session reset replace the stale ones.
+            foreach (var behaviour in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+            {
+                if (behaviour is not IDashboardCommandHandler handler) continue;
+                if (_commandHandlers.ContainsKey(handler.Command))
+                {
+                    SafetyLog.Warning($"[EvaluatorDashboardBootstrap] Comando duplicado '{handler.Command}' — mantendo o primeiro handler registrado.", this);
+                    continue;
+                }
+                _commandHandlers[handler.Command] = handler;
             }
         }
 
@@ -104,6 +132,7 @@ namespace SafetyProto.Networking.Dashboard
 
         private void OnDestroy()
         {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
             _relay?.Unsubscribe();
             if (_poseSendCoroutine != null)
             {
@@ -200,15 +229,53 @@ namespace SafetyProto.Networking.Dashboard
                 if (json.Length == 0 || json[0] != '{') return;
 
                 var envelope = JsonUtility.FromJson<GenericEventEnvelope>(json);
-                if (envelope != null && envelope.eventType == "RequestSync")
+                if (envelope == null) return;
+
+                if (envelope.eventType == "RequestSync")
                 {
                     HandleRequestSync(client);
+                }
+                else if (envelope.eventType == "Command")
+                {
+                    HandleCommand(client, json);
                 }
             }
             catch (Exception e)
             {
                 SafetyLog.Error($"[EvaluatorDashboardBootstrap] Error parsing client message: {e.Message}", this);
             }
+        }
+
+        private void HandleCommand(EvaluatorWebSocketServer.ClientConnection client, string json)
+        {
+            var command = JsonUtility.FromJson<DashboardCommandEnvelope>(json);
+            if (command == null || string.IsNullOrEmpty(command.command))
+                return;
+
+            // An interface reference does not go through UnityEngine.Object's null override, so a
+            // destroyed handler still tests non-null here. Re-scan instead of throwing.
+            if (_commandHandlers.TryGetValue(command.command, out var known)
+                && known is UnityEngine.Object obj && obj == null)
+            {
+                RegisterCommandHandlers();
+            }
+
+            if (!_commandHandlers.TryGetValue(command.command, out var handler))
+            {
+                // A newer dashboard talking to an older build must not spam the console.
+                SafetyLog.Info($"[EvaluatorDashboardBootstrap] Comando desconhecido ignorado: '{command.command}'.", this);
+                return;
+            }
+
+            bool accepted = handler.TryExecute(out var reason);
+            var ack = new CommandAckDto
+            {
+                requestId = command.requestId,
+                command = command.command,
+                accepted = accepted,
+                reason = reason ?? string.Empty,
+            };
+            _wsServer.SendToClient(client, "CommandAck", ack);
         }
 
         private void HandleRequestSync(EvaluatorWebSocketServer.ClientConnection client)
@@ -248,6 +315,14 @@ namespace SafetyProto.Networking.Dashboard
         private class GenericEventEnvelope
         {
             public string eventType;
+        }
+
+        [Serializable]
+        private class DashboardCommandEnvelope
+        {
+            public string eventType;   // "Command"
+            public string command;     // e.g. "recenter_player"
+            public string requestId;   // echoed back in the ack
         }
 
         // --- IDashboardHost ---

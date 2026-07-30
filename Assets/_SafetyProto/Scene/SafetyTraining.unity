@@ -36626,11 +36626,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56b909c501b5cfb40aeb31f9b1850915, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Safety.FallFromHeightController
+  playerRig: {fileID: 516857788}
   locomotor: {fileID: 1064163038}
   lanyard: {fileID: 1708458613234854229}
-  playerRig: {fileID: 516857788}
-  playerHead: {fileID: 1586613345}
   safeFallSpawn: {fileID: 427140756}
+  recenterService: {fileID: 1900941137}
   fadeOutDuration: 0.8
   holdBlackDuration: 1
   fadeInDuration: 0.5
@@ -40854,6 +40854,75 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1879054156}
   m_Mesh: {fileID: 493873531904757411, guid: 9b1545b790c85354a9b6449bb3dee586, type: 3}
+--- !u!1 &1900941134
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1900941135}
+  - component: {fileID: 1900941137}
+  - component: {fileID: 1900941136}
+  m_Layer: 0
+  m_Name: RecenterService
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1900941135
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1900941134}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7322035375745015844}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1900941136
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1900941134}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bde00f9193eda894782bf5a206575fad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Networking.Unity::SafetyProto.Runtime.RecenterCommandHandler
+  recenterService: {fileID: 1900941137}
+  anchorProviderBehaviour: {fileID: 4644533603855273151}
+  popupFeedbackProvider: {fileID: 5455797637335201551}
+  blackoutTitle: "Reposicionando\u2026"
+  blackoutBody: "Voc\xEA est\xE1 sendo recentralizado na \xE1rea de treinamento."
+  blackoutMessageSeconds: 5
+  fadeOutDuration: 0.8
+  holdBlackDuration: 1
+  fadeInDuration: 0.8
+--- !u!114 &1900941137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1900941134}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bc8a48c7064ac6479a45a72d20b232c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.RecenterService
+  playerRig: {fileID: 516857788}
+  playerHead: {fileID: 1586613345}
+  playerLocomotor: {fileID: 1064163038}
 --- !u!1 &1907347138
 GameObject:
   m_ObjectHideFlags: 0
@@ -48905,8 +48974,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PhaseController
   playerRig: {fileID: 516857788}
-  playerHead: {fileID: 0}
+  startPointCanteiro: {fileID: 427140756}
   spawnPointAndaime: {fileID: 5392413851863469220}
+  recenterService: {fileID: 1900941137}
   objectsToHide:
   - {fileID: 1961176969}
   - {fileID: 1154844280}
@@ -48933,7 +49003,6 @@ MonoBehaviour:
   taskManager: {fileID: 0}
   targetGroupId: ppe_selection
   triggerGroupName: "Sele\xE7\xE3o de EPIs"
-  playerLocomotor: {fileID: 1064163038}
   groundMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -51968,6 +52037,7 @@ Transform:
   - {fileID: 7543211892067580043}
   - {fileID: 315065891}
   - {fileID: 1635052460}
+  - {fileID: 1900941135}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7322035375745015845

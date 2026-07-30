@@ -74,6 +74,11 @@
         detailTime: 'Time', detailScore: 'Score', detailCompleted: 'Completed',
         unknownAction: 'Uncatalogued action', unknownEvent: 'Unrecognized event',
         internalError: 'Internal system error', manualReset: 'The session was restarted manually.', origin: 'Source',
+        // evaluator recenter control (two-stage confirm; recenter/reject reasons come from the
+        // app itself in Portuguese — operator-facing SafetyLog text is not translated here)
+        recenterTitle: 'Repositioning', recenterButton: 'Recenter player', recenterConfirmButton: 'Confirm?',
+        recenterPending: 'Sending…', recenterSuccess: 'Player recentered.', recenterFailed: 'Recenter refused.',
+        recenterNoConnection: 'No connection to the app.', recenterNoResponse: 'No response from the app.',
       },
       pt: {
         currentScore: 'Pontuação',
@@ -147,6 +152,11 @@
         detailTime: 'Tempo', detailScore: 'Pontuação', detailCompleted: 'Concluídas',
         unknownAction: 'Ação não catalogada', unknownEvent: 'Evento não reconhecido',
         internalError: 'Erro interno do sistema', manualReset: 'A sessão foi reiniciada manualmente.', origin: 'Origem',
+        // controle de recentralização do avaliador (confirmação em duas etapas; os motivos de
+        // recusa vêm do próprio aplicativo, já em português)
+        recenterTitle: 'Reposicionamento', recenterButton: 'Recentralizar jogador', recenterConfirmButton: 'Confirmar?',
+        recenterPending: 'Enviando…', recenterSuccess: 'Jogador recentralizado.', recenterFailed: 'Recentralização recusada.',
+        recenterNoConnection: 'Sem conexão com o aplicativo.', recenterNoResponse: 'Sem resposta do aplicativo.',
       }
     };
 
