@@ -85,6 +85,35 @@ namespace SafetyProto.UI
         public void ShowSuccess(string title, string body)
             => Show(new PopupData { type = PopupType.Normal, title = title, body = body });
 
+        /// <summary>
+        /// Transient notice: shows the panel directly instead of going through <see cref="Show"/>,
+        /// so no SessionPaused/SessionResumed pair is raised. The participant has nothing to
+        /// answer here, and the recenter case fires it with no session running, where that pair
+        /// would land in the log with an empty session id.
+        /// </summary>
+        public void ShowTransient(string title, string body, float autoCloseSeconds)
+        {
+            if (popupPanel == null) return;
+
+            // There is a single shared panel, so showing this would replace whatever is already
+            // up — including the name-entry dialog, which is open during exactly the case the
+            // recenter targets. A courtesy notice must never destroy a prompt the participant
+            // still has to answer, so yield instead.
+            if (popupPanel.IsVisible)
+            {
+                SafetyLog.Info($"[PopupService] Aviso '{title}' suprimido — outro popup já está visível.", this);
+                return;
+            }
+
+            popupPanel.Show(new PopupData
+            {
+                type = PopupType.Normal,
+                title = title,
+                body = body,
+                autoCloseSeconds = autoCloseSeconds > 0f ? autoCloseSeconds : 5f,
+            });
+        }
+
         public void ShowNormal(string title, string body)
             => ShowNormal(title, body, 0f);
 
