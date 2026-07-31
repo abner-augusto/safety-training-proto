@@ -53,6 +53,13 @@ namespace SafetyProto.Domain.Sessions
             // ScoreChanged (totalScore reused by SessionCompleted)
             public int delta;
             public int totalScore;
+            // Task* — the risk the task carried, so a session log can be read and analysed on
+            // its own without joining it back to the scenario document it ran from.
+            // riskLevel is the NR-01 class token ("substantial"); riskSeverity/riskProbability
+            // are the 1-5 grades behind it, 0 when the scenario declared a level directly.
+            public string riskLevel;
+            public int riskSeverity;
+            public int riskProbability;
             // SafetyViolation (message reused by SafetyError)
             public string violationCode;
             public string message;
@@ -189,9 +196,17 @@ namespace SafetyProto.Domain.Sessions
                     _ => "TaskUnknown"
                 };
                 if (args.Phase == TaskPhase.Completed) _tasksCompletedCount++;
+
+                var risk = args.Task?.risk ?? default;
                 LogEvent(eventName, args.Task?.taskName ?? string.Empty,
                     args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
-                    new LogData { taskId = args.Task?.id ?? string.Empty });
+                    new LogData
+                    {
+                        taskId = args.Task?.id ?? string.Empty,
+                        riskLevel = args.Task != null ? RiskLevels.ToToken(risk.Level) : string.Empty,
+                        riskSeverity = risk.Severity,
+                        riskProbability = risk.Probability
+                    });
             };
             _onScoreChanged = args =>
             {
