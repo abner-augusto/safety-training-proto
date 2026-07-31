@@ -31,7 +31,24 @@ namespace SafetyProto.Tests.Editor.Support
             public string id => taskName;
             public string taskName { get; set; } = string.Empty;
             public string taskDescription { get; set; } = string.Empty;
-            public TaskSeverity severity { get; set; } = TaskSeverity.Moderate;
+
+            private RiskAssessment _risk = RiskAssessment.Default;
+
+            /// <summary>Settable in the fake: most fixtures only care about the tier, so they
+            /// assign <see cref="riskLevel"/>; the few that exercise the graded axes assign
+            /// <see cref="risk"/> directly.</summary>
+            public RiskAssessment risk
+            {
+                get => _risk;
+                set => _risk = value;
+            }
+
+            public RiskLevel riskLevel
+            {
+                get => _risk.Level;
+                set => _risk = RiskAssessment.FromLevel(value);
+            }
+
             public List<PPEType> requiredPPE { get; set; } = new List<PPEType>();
             public string hintText { get; set; } = string.Empty;
             public string failureAdvice { get; set; } = string.Empty;

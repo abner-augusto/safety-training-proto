@@ -183,7 +183,8 @@ namespace SafetyProto.UI
             public string id => taskName;
             public string taskName { get; }
             public string taskDescription => string.Empty;
-            public TaskSeverity severity => TaskSeverity.Moderate;
+            public RiskAssessment risk => RiskAssessment.Default;
+            public RiskLevel riskLevel => risk.Level;
             public IReadOnlyList<PPEType> requiredPPE => NoPPE;
             public string hintText => string.Empty;
             public string failureAdvice => string.Empty;

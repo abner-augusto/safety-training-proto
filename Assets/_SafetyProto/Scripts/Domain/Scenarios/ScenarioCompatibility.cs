@@ -74,8 +74,8 @@ namespace SafetyProto.Domain.Scenarios
                     if (!string.Equals(candidateTask.ResolveExpectedActionId(), loadedTask.ResolveExpectedActionId(),
                             StringComparison.OrdinalIgnoreCase))
                         errors.Add($"A ação da tarefa '{candidateTask.id}' não coincide com a carregada.");
-                    if (candidateTask.severity != loadedTask.severity)
-                        errors.Add($"A severidade da tarefa '{candidateTask.id}' não coincide com a carregada.");
+                    if (!candidateTask.risk.Equals(loadedTask.risk))
+                        errors.Add($"O nível de risco da tarefa '{candidateTask.id}' não coincide com o carregado.");
                     if (!SameStrings(candidateTask.RequiredPpeNames, loadedTask.RequiredPpeNames))
                         errors.Add($"Os EPIs da tarefa '{candidateTask.id}' não coincidem com os carregados.");
                 }
@@ -140,16 +140,21 @@ namespace SafetyProto.Domain.Scenarios
             return values.SetEquals(second);
         }
 
-        private static bool SameScoring(ScoringConfig first, ScoringConfig second) =>
-            first.CriticalPoints == second.CriticalPoints &&
-            first.ModeratePoints == second.ModeratePoints &&
-            first.MinorPoints == second.MinorPoints &&
-            first.CriticalPenalty == second.CriticalPenalty &&
-            first.ModeratePenalty == second.ModeratePenalty &&
-            first.MinorPenalty == second.MinorPenalty &&
-            first.CriticalUnsafeFactor.Equals(second.CriticalUnsafeFactor) &&
-            first.ModerateUnsafeFactor.Equals(second.ModerateUnsafeFactor) &&
-            first.MinorUnsafeFactor.Equals(second.MinorUnsafeFactor) &&
-            first.GateReductionFactor.Equals(second.GateReductionFactor);
+        // Compares the resolved economy per risk level rather than the raw JSON block, so a
+        // scenario that spells its levels out and one that inherits them from the defaults are
+        // recognised as the same economy.
+        private static bool SameScoring(ScoringConfig first, ScoringConfig second)
+        {
+            if (!first.GateReductionFactor.Equals(second.GateReductionFactor)) return false;
+
+            foreach (var level in RiskLevels.All)
+            {
+                if (first.PointsFor(level) != second.PointsFor(level)) return false;
+                if (first.BasePenaltyFor(level) != second.BasePenaltyFor(level)) return false;
+                if (!first.UnsafeFactorFor(level).Equals(second.UnsafeFactorFor(level))) return false;
+            }
+
+            return true;
+        }
     }
 }

@@ -31,7 +31,7 @@ namespace SafetyProto.Tests.Editor
         public void TaskCompleted_Safe_Moderate_AddsFullTierPoints()
         {
             var task = _builder.Task("t1", "action_a");
-            task.severity = TaskSeverity.Moderate;
+            task.riskLevel = RiskLevel.Moderate;
 
             _core = new ScoreRuleEngineCore(_bus, _score, config: ScoringConfig.Default);
             _core.Subscribe();
@@ -45,7 +45,7 @@ namespace SafetyProto.Tests.Editor
         public void TaskCompleted_Unsafe_Moderate_EarnsHalfTierPoints()
         {
             var task = _builder.Task("t1", "action_a");
-            task.severity = TaskSeverity.Moderate;
+            task.riskLevel = RiskLevel.Moderate;
 
             _core = new ScoreRuleEngineCore(_bus, _score, config: ScoringConfig.Default);
             _core.Subscribe();
@@ -64,7 +64,7 @@ namespace SafetyProto.Tests.Editor
         public void TaskCompleted_Unsafe_Minor_EarnsSeventyPercentOfTierPoints()
         {
             var task = _builder.Task("t1", "action_a");
-            task.severity = TaskSeverity.Minor;
+            task.riskLevel = RiskLevel.Tolerable;
 
             _core = new ScoreRuleEngineCore(_bus, _score, config: ScoringConfig.Default);
             _core.Subscribe();
@@ -87,7 +87,7 @@ namespace SafetyProto.Tests.Editor
             // never call it. Use the real ScoreService (not a fake) so the guard in
             // ScoreRuleEngineCore.ApplyTaskCompletedScoring is actually exercised.
             var task = _builder.Task("t1", "action_a");
-            task.severity = TaskSeverity.Critical;
+            task.riskLevel = RiskLevel.Substantial;
 
             IScoreService score = new ScoreService();
             _core = new ScoreRuleEngineCore(_bus, score, config: ScoringConfig.Default);
@@ -111,15 +111,17 @@ namespace SafetyProto.Tests.Editor
         [Test]
         public void UnsafeEarn_RoundsToNearestInt()
         {
-            var config = new ScoringConfig { ModeratePoints = 145, ModerateUnsafeFactor = 0.5 };
-            Assert.AreEqual(72, config.UnsafeEarnFor(TaskSeverity.Moderate)); // 72.5 -> Math.Round banker's rounding -> 72
+            var config = new ScoringConfig();
+            config.Levels["moderate"] = new RiskLevelScoring(points: 145, penalty: 50, unsafeFactor: 0.5);
+
+            Assert.AreEqual(72, config.UnsafeEarnFor(RiskLevel.Moderate)); // 72.5 -> Math.Round banker's rounding -> 72
         }
 
         [Test]
         public void TaskCompleted_NullRuntimeTask_CompliantDefaultsToSuccess()
         {
             var task = _builder.Task("t1", "action_a");
-            task.severity = TaskSeverity.Moderate;
+            task.riskLevel = RiskLevel.Moderate;
 
             _core = new ScoreRuleEngineCore(_bus, _score, config: ScoringConfig.Default);
             _core.Subscribe();
@@ -134,7 +136,7 @@ namespace SafetyProto.Tests.Editor
         public void TaskCompleted_NullRuntimeTask_NotCompliant_EarnsUnsafeAmount()
         {
             var task = _builder.Task("t1", "action_a");
-            task.severity = TaskSeverity.Moderate;
+            task.riskLevel = RiskLevel.Moderate;
 
             _core = new ScoreRuleEngineCore(_bus, _score, config: ScoringConfig.Default);
             _core.Subscribe();
@@ -150,7 +152,7 @@ namespace SafetyProto.Tests.Editor
         public void TaskCompleted_FailureState_NoPointsAdded()
         {
             var task = _builder.Task("t1", "action_a");
-            task.severity = TaskSeverity.Moderate;
+            task.riskLevel = RiskLevel.Moderate;
 
             _core = new ScoreRuleEngineCore(_bus, _score, config: ScoringConfig.Default);
             _core.Subscribe();
@@ -169,7 +171,7 @@ namespace SafetyProto.Tests.Editor
         public void TaskTimeout_Minor_SubtractsMinorBasePenalty()
         {
             var task = _builder.Task("t1", "action_a");
-            task.severity = TaskSeverity.Minor;
+            task.riskLevel = RiskLevel.Tolerable;
 
             _core = new ScoreRuleEngineCore(_bus, _score, config: ScoringConfig.Default);
             _core.Subscribe();
@@ -183,7 +185,7 @@ namespace SafetyProto.Tests.Editor
         public void TaskTimeout_Critical_SubtractsCriticalBasePenalty()
         {
             var task = _builder.Task("t1", "action_a");
-            task.severity = TaskSeverity.Critical;
+            task.riskLevel = RiskLevel.Substantial;
 
             _core = new ScoreRuleEngineCore(_bus, _score, config: ScoringConfig.Default);
             _core.Subscribe();
@@ -219,7 +221,7 @@ namespace SafetyProto.Tests.Editor
         public void Dispose_UnsubscribesFromBus()
         {
             var task = _builder.Task("t1", "action_a");
-            task.severity = TaskSeverity.Moderate;
+            task.riskLevel = RiskLevel.Moderate;
 
             _core = new ScoreRuleEngineCore(_bus, _score, config: ScoringConfig.Default);
             _core.Subscribe();
@@ -234,9 +236,9 @@ namespace SafetyProto.Tests.Editor
         public void MultipleTasks_AccumulateScore()
         {
             var t1 = _builder.Task("t1", "action_a");
-            t1.severity = TaskSeverity.Moderate;
+            t1.riskLevel = RiskLevel.Moderate;
             var t2 = _builder.Task("t2", "action_b");
-            t2.severity = TaskSeverity.Minor;
+            t2.riskLevel = RiskLevel.Tolerable;
 
             _core = new ScoreRuleEngineCore(_bus, _score, config: ScoringConfig.Default);
             _core.Subscribe();
@@ -251,10 +253,10 @@ namespace SafetyProto.Tests.Editor
         public void UnsafeThenSafeTask_CorrectRunningScore()
         {
             var t1 = _builder.Task("t1", "action_a");
-            t1.severity = TaskSeverity.Moderate;
+            t1.riskLevel = RiskLevel.Moderate;
 
             var t2 = _builder.Task("t2", "action_b");
-            t2.severity = TaskSeverity.Minor;
+            t2.riskLevel = RiskLevel.Tolerable;
 
             _core = new ScoreRuleEngineCore(_bus, _score, config: ScoringConfig.Default);
             _core.Subscribe();

@@ -210,7 +210,7 @@ namespace SafetyProto.Runtime
             });
 
             var scoring = taskManager.Scoring ?? ScoringConfig.Default;
-            int charge = scoring.BasePenaltyFor(TaskSeverity.Minor);
+            int charge = scoring.BasePenaltyFor(RiskLevels.IncidentalChargeTier);
             if (charge > 0)
                 ScoreService.Instance.SubtractPoints(charge, "ORDER_VIOLATION", string.Empty);
         }

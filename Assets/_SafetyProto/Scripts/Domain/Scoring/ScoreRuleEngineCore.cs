@@ -75,8 +75,8 @@ namespace SafetyProto.Domain.Scoring
             // separate penalty subtraction — the reduced earning IS the penalty, so an
             // unsafe completion can never net more than the tier's factor allows.
             int earned = state == TaskState.CompletedSuccessButUnsafe
-                ? _config.UnsafeEarnFor(args.Task.severity)
-                : _config.PointsFor(args.Task.severity);
+                ? _config.UnsafeEarnFor(args.Task.riskLevel)
+                : _config.PointsFor(args.Task.riskLevel);
 
             string reason = state == TaskState.CompletedSuccessButUnsafe
                 ? $"Task '{args.Task.taskName}' completed without required PPE"
@@ -91,7 +91,7 @@ namespace SafetyProto.Domain.Scoring
         internal void ApplyTaskTimeoutScoring(TaskEventArgs args)
         {
             if (args.Task == null) return;
-            int penalty = _config.BasePenaltyFor(args.Task.severity);
+            int penalty = _config.BasePenaltyFor(args.Task.riskLevel);
             if (penalty > 0)
                 _scoreService.SubtractPoints(penalty, $"Task '{args.Task.taskName}' timed out", args.Task.id);
         }

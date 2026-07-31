@@ -7,6 +7,20 @@ using SafetyProto.Core.Interfaces;
 namespace SafetyProto.Domain.Scenarios
 {
     /// <summary>
+    /// The two graded axes of a task's risk, as authored. Kept as its own object in the JSON
+    /// (<c>"risk": { "severity": 5, "probability": 5 }</c>) so the grades read as a pair and
+    /// cannot be mistaken for the retired flat <c>"severity"</c> string.
+    /// </summary>
+    public sealed class RiskGrades
+    {
+        /// <summary>Magnitude of the worst possible consequence, 1–5 (NR-01 1.5.4.4.4).</summary>
+        [JsonProperty("severity")] public int Severity { get; set; }
+
+        /// <summary>Chance of the injury occurring, 1–5 (NR-01 1.5.4.4.5 / 1.5.4.4.5.4).</summary>
+        [JsonProperty("probability")] public int Probability { get; set; }
+    }
+
+    /// <summary>
     /// JSON-backed, engine-independent <see cref="ISafetyTask"/>. Replaces both the
     /// Unity <c>SafetyTask</c> ScriptableObject (as the runtime source of truth) and
     /// the CLI harness's old <c>InMemorySafetyTask</c>. One model, all hosts.
@@ -34,13 +48,23 @@ namespace SafetyProto.Domain.Scenarios
         [JsonProperty("actionId")]
         public string ActionId { get; set; } = string.Empty;
 
-        /// <summary>Raw severity name as authored in JSON ("critical" | "moderate" | "minor").
-        /// Bound to the enum by <see cref="Bind"/>. Defaults to moderate.</summary>
+        /// <summary>Severity and probability grades as authored in JSON
+        /// (<c>"risk": { "severity": 5, "probability": 4 }</c>). Null on scenarios written
+        /// before the risk matrix, which carry <see cref="RiskLevelName"/> instead.</summary>
+        [JsonProperty("risk")]
+        public RiskGrades? Grades { get; set; }
+
+        /// <summary>Raw level token as authored in JSON. Retired three-tier names
+        /// ("critical" | "moderate" | "minor") are still accepted. Ignored when
+        /// <see cref="Grades"/> is present, since the level is derived from the grades.</summary>
         [JsonProperty("severity")]
-        public string SeverityName { get; set; } = "moderate";
+        public string RiskLevelName { get; set; } = string.Empty;
 
         [JsonIgnore]
-        public TaskSeverity severity { get; private set; } = TaskSeverity.Moderate;
+        public RiskAssessment risk { get; private set; } = RiskAssessment.Default;
+
+        [JsonIgnore]
+        public RiskLevel riskLevel => risk.Level;
 
         /// <summary>Raw PPE names as authored in JSON (e.g. "Boots"). Bound to enums by the loader.</summary>
         [JsonProperty("requiredPPE")]
@@ -74,15 +98,35 @@ namespace SafetyProto.Domain.Scenarios
         /// </summary>
         internal void Bind(string groupName, List<string> errors)
         {
-            if (System.Enum.TryParse<TaskSeverity>(SeverityName, ignoreCase: true, out var sev))
+            // Graded risk wins: it carries the criteria NR-01 1.5.4.4.2.2 wants documented, and
+            // the level falls out of it. The level token is the pre-matrix fallback.
+            if (Grades != null)
             {
-                severity = sev;
+                if (Grades.Severity < RiskAssessment.MinGrade || Grades.Severity > RiskAssessment.MaxGrade ||
+                    Grades.Probability < RiskAssessment.MinGrade || Grades.Probability > RiskAssessment.MaxGrade)
+                {
+                    errors.Add(
+                        $"Severidade e probabilidade devem estar entre {RiskAssessment.MinGrade} e " +
+                        $"{RiskAssessment.MaxGrade} na tarefa '{taskName}' (grupo '{groupName}'). " +
+                        $"Recebido: severidade={Grades.Severity}, probabilidade={Grades.Probability}.");
+                }
+
+                risk = RiskAssessment.FromGrades(Grades.Severity, Grades.Probability);
+            }
+            else if (string.IsNullOrWhiteSpace(RiskLevelName))
+            {
+                risk = RiskAssessment.Default;
+            }
+            else if (RiskLevels.TryParse(RiskLevelName, out var level))
+            {
+                risk = RiskAssessment.FromLevel(level);
             }
             else
             {
                 errors.Add(
-                    $"Severidade desconhecida '{SeverityName}' na tarefa '{taskName}' (grupo '{groupName}'). " +
-                    "Valores válidos: critical, moderate, minor");
+                    $"Nível de risco desconhecido '{RiskLevelName}' na tarefa '{taskName}' (grupo '{groupName}'). " +
+                    "Valores válidos: trivial, tolerable, moderate, substantial, intolerable " +
+                    "(ou informe \"risk\": { \"severity\": 1-5, \"probability\": 1-5 }).");
             }
 
             _requiredPpe.Clear();

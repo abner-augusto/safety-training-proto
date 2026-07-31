@@ -224,7 +224,7 @@ namespace SafetyProto.Runtime.Safety
             foreach (var task in pendingTasks)
             {
                 if (task.TaskData == null || !_chargedTaskIds.Add(task.id)) continue;
-                int charge = GateScoring.GateChargeFor(task.TaskData.severity);
+                int charge = GateScoring.GateChargeFor(task.TaskData.riskLevel);
                 if (charge > 0)
                     ScoreService.Instance.SubtractPoints(charge, "GATE_PENALTY", task.id);
             }

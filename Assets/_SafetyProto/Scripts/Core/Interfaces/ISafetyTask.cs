@@ -20,8 +20,15 @@ namespace SafetyProto.Core.Interfaces
         string taskName { get; }
         string taskDescription { get; }
 
-        /// <summary>Risk class driving all point/penalty math via the scenario's ScoringConfig.</summary>
-        TaskSeverity severity { get; }
+        /// <summary>
+        /// Occupational risk of the task: the severity and probability grades the safety
+        /// specialist assessed, plus the level they derive (NR-01 GRO). Drives all
+        /// point/penalty math via the scenario's ScoringConfig.
+        /// </summary>
+        RiskAssessment risk { get; }
+
+        /// <summary>Shorthand for <c>risk.Level</c> — the tier every scoring rule keys on.</summary>
+        RiskLevel riskLevel { get; }
         IReadOnlyList<PPEType> requiredPPE { get; }
         string hintText { get; }
         string failureAdvice { get; }

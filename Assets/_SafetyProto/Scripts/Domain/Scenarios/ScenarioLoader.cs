@@ -76,6 +76,10 @@ namespace SafetyProto.Domain.Scenarios
 
             var errors = new List<string>();
 
+            // Fold any retired flat scoring keys into the per-level block before anything reads
+            // the economy, so a pre-matrix scenario scores identically to how it always did.
+            scenario.Scoring?.NormalizeLegacyKeys();
+
             // Pass 1: bind execution modes and PPE on every group/task.
             foreach (var group in scenario.Groups)
             {

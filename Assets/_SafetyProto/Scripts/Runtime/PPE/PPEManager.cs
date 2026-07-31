@@ -141,7 +141,7 @@ namespace SafetyProto.Runtime.PPE
             if (!_chargedDistractors.Add(itemName)) return;
 
             var scoring = TaskManager.Instance != null ? TaskManager.Instance.Scoring : ScoringConfig.Default;
-            int charge = scoring.BasePenaltyFor(TaskSeverity.Minor);
+            int charge = scoring.BasePenaltyFor(RiskLevels.IncidentalChargeTier);
             if (charge > 0)
                 ScoreService.Instance.SubtractPoints(charge, "WRONG_PPE_SELECTED", string.Empty);
         }

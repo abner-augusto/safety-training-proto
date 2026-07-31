@@ -45,7 +45,7 @@ namespace SafetyProto.Tests.Editor
             Assert.That(result.Compatible, Is.False);
             StringAssert.Contains("modo de execução", result.ErrorSummary);
             StringAssert.Contains("ação da tarefa", result.ErrorSummary);
-            StringAssert.Contains("severidade", result.ErrorSummary);
+            StringAssert.Contains("nível de risco", result.ErrorSummary);
             StringAssert.Contains("EPIs", result.ErrorSummary);
         }
 

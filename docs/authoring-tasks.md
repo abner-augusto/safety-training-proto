@@ -63,9 +63,42 @@ Task fields:
 - `taskName`: HUD/report display name. Keep player-facing text in Portuguese.
 - `taskDescription`: longer description.
 - `actionId`: existing action id, or empty for equip-set tasks.
-- `successPoints`, `failurePenalty`, `ppePenalty`: scoring.
+- `risk`: the occupational risk assessment, `{ "severity": 1-5, "probability": 1-5 }`. Severity is the magnitude of the worst possible consequence (NR-01 1.5.4.4.4); probability is the chance of the injury given exposure and the effectiveness of the measures in place (1.5.4.4.5.4) — not the chance a worker skips the item. The risk level is derived from the product, so re-tuning the bands reclassifies every task without re-authoring.
 - `requiredPPE`: PPE names, e.g. `Boots`, `GloveLeft`.
 - `hintText`, `failureAdvice`, `ppeAdvice`: guidance/report copy.
+
+Points and penalties are not task fields: they come from the scenario's `scoring` block, keyed by the derived risk level.
+
+Risk index bands (`severity × probability`, 1–25):
+
+| Level | Index | Decision it implies (NR-01 1.5.4.4.3) |
+|---|---|---|
+| `trivial` | 1–4 | Keep the existing measure |
+| `tolerable` | 5–9 | Monitor |
+| `moderate` | 10–15 | Preventive measure with a set deadline |
+| `substantial` | 16–22 | Measure before starting or continuing the activity |
+| `intolerable` | 23–25 | Activity cannot happen until the measure is in place |
+
+`substantial` and above is the eliminatory threshold: failing, omitting or completing such a task without PPE caps the medal.
+
+Scenarios authored before the risk matrix carry a flat `"severity": "critical" | "moderate" | "minor"` string instead. Those still load, mapping to `substantial` / `moderate` / `tolerable`, and their `scoring` block may still use the flat `criticalPoints` / `minorPenalty` / … keys. New content should use `risk` and the `levels` block.
+
+Scoring block:
+
+```json
+"scoring": {
+  "levels": {
+    "trivial":     { "points": 50,  "penalty": 20,  "unsafeFactor": 0.8 },
+    "tolerable":   { "points": 100, "penalty": 30,  "unsafeFactor": 0.7 },
+    "moderate":    { "points": 150, "penalty": 50,  "unsafeFactor": 0.5 },
+    "substantial": { "points": 200, "penalty": 100, "unsafeFactor": 0.0 },
+    "intolerable": { "points": 250, "penalty": 150, "unsafeFactor": 0.0 }
+  },
+  "gateReductionFactor": 0.5
+}
+```
+
+`unsafeFactor` is the fraction of `points` still earned when the task completes without its required PPE. `gateReductionFactor` scales `penalty` into the charge applied per pending task at a failed inspection-gate press. Any level left out of `levels` falls back to the values above.
 
 `PPEType` values: `None=0`, `Helmet=1`, `Goggles=3`, `Harness=4`, `Vest=5`, `Boots=6`, `GloveLeft=7`, `GloveRight=8`. Ordinal `2` is intentionally skipped for legacy serialized compatibility.
 

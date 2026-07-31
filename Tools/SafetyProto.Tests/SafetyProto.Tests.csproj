@@ -59,6 +59,7 @@
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\PPEManagerEventProtocolTests.cs"    Link="PPEManagerEventProtocolTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\ScriptStepDefTests.cs"              Link="ScriptStepDefTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\ScenarioCompatibilityTests.cs"      Link="ScenarioCompatibilityTests.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\RiskAssessmentTests.cs"             Link="RiskAssessmentTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\DashboardDtoMapperTests.cs"         Link="DashboardDtoMapperTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\DashboardEventRelayTests.cs"         Link="DashboardEventRelayTests.cs" />
     <!-- Excluded (Unity-coupled): SafetyTrainingTests uses the Unity EventBus singleton + static

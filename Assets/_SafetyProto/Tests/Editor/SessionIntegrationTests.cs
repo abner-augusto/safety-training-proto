@@ -44,7 +44,7 @@ namespace SafetyProto.Tests.Editor
         // Loads the canonical Unity/CLI scenario JSON and replays its scripted playthrough.
         // This codifies the previously-manual "does the domain stack match
         // the CLI harness run?" parity check as an automated assertion: identical scenario +
-        // identical script ⇒ 9/9 tasks, score 1400, and the exact lifecycle milestone order.
+        // identical script ⇒ 9/9 tasks, score 1500, and the exact lifecycle milestone order.
         [Test]
         public void HappyPath_FullPpeInspectionScenario_MatchesCliParity()
         {
@@ -57,10 +57,13 @@ namespace SafetyProto.Tests.Editor
             h.StartSession();
             h.ReplayScript(scenario.Script);
 
-            // Final score parity with the CLI harness run (sum of the severity-tier points of all
-            // 9 default.json tasks: 3 critical x 200 + 3 moderate x 150 + 3 minor x 100 = 1350;
-            // no penalties because every task is completed with full PPE compliance).
-            Assert.AreEqual(1350, h.Score.CurrentScore, "Final score should match the CLI parity run.");
+            // Final score parity with the CLI harness run: the sum of the risk-level points of
+            // all 9 default.json tasks, whose levels are derived from the authored severity x
+            // probability grades. 1 intolerable x 250 + 3 substantial x 200 + 3 moderate x 150
+            // + 2 tolerable x 100 = 1500; no penalties because every task completes with full
+            // PPE compliance. (Was 1350 under the retired three-tier severity: the risk matrix
+            // raised goggles and toeboard a tier and gave the lanyard its own top tier.)
+            Assert.AreEqual(1500, h.Score.CurrentScore, "Final score should match the CLI parity run.");
 
             var summary = h.TaskManager.LastSessionSummary;
             Assert.IsTrue(summary.HasValue, "Session should have completed and produced a summary.");
@@ -122,7 +125,7 @@ namespace SafetyProto.Tests.Editor
         public void PpeViolation_ActionWithoutRequiredPpe_RaisesViolationAppliesPenalty()
         {
             var task = _tasks.Task("Conectar Talabarte", "connect_harness", PPEType.Harness, PPEType.Helmet);
-            task.severity = TaskSeverity.Critical;
+            task.riskLevel = RiskLevel.Substantial;
             var group = _tasks.Group("Inspeção", TaskExecutionModeShared.FreeOrder, task);
 
             using var h = new SessionTestHarness(new List<ITaskGroup> { group });

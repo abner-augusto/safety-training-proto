@@ -2,9 +2,33 @@
   "name": "default",
   "participantId": "P000",
   "scoring": {
-    "criticalPoints": 200, "moderatePoints": 150, "minorPoints": 100,
-    "criticalPenalty": 100, "moderatePenalty": 50, "minorPenalty": 30,
-    "criticalUnsafeFactor": 0.0, "moderateUnsafeFactor": 0.5, "minorUnsafeFactor": 0.7,
+    "levels": {
+      "trivial": {
+        "points": 50,
+        "penalty": 20,
+        "unsafeFactor": 0.8
+      },
+      "tolerable": {
+        "points": 100,
+        "penalty": 30,
+        "unsafeFactor": 0.7
+      },
+      "moderate": {
+        "points": 150,
+        "penalty": 50,
+        "unsafeFactor": 0.5
+      },
+      "substantial": {
+        "points": 200,
+        "penalty": 100,
+        "unsafeFactor": 0.0
+      },
+      "intolerable": {
+        "points": 250,
+        "penalty": 150,
+        "unsafeFactor": 0.0
+      }
+    },
     "gateReductionFactor": 0.5
   },
   "groups": [
@@ -20,7 +44,10 @@
           "name": "Equipar Botina de Segurança",
           "taskDescription": "Selecione a botina de segurança correta e equipe nos pés.",
           "actionId": "",
-          "severity": "minor",
+          "risk": {
+            "severity": 2,
+            "probability": 4
+          },
           "requiredPPE": [
             "Boots"
           ],
@@ -34,7 +61,10 @@
           "name": "Equipar Luvas",
           "taskDescription": "Selecione as luvas de raspa de couro e equipe nas duas mãos.",
           "actionId": "",
-          "severity": "minor",
+          "risk": {
+            "severity": 2,
+            "probability": 4
+          },
           "requiredPPE": [
             "GloveLeft",
             "GloveRight"
@@ -49,7 +79,10 @@
           "name": "Equipar Óculos de Proteção",
           "taskDescription": "Selecione os óculos de proteção e equipe no rosto.",
           "actionId": "",
-          "severity": "minor",
+          "risk": {
+            "severity": 4,
+            "probability": 3
+          },
           "requiredPPE": [
             "Goggles"
           ],
@@ -63,7 +96,10 @@
           "name": "Equipar Capacete com Jugular",
           "taskDescription": "Selecione o capacete CORRETO (com jugular) e equipe na cabeça.",
           "actionId": "",
-          "severity": "moderate",
+          "risk": {
+            "severity": 5,
+            "probability": 3
+          },
           "requiredPPE": [
             "Helmet"
           ],
@@ -77,7 +113,10 @@
           "name": "Equipar Cinto Paraquedista",
           "taskDescription": "Selecione o cinto tipo paraquedista e vista corretamente.",
           "actionId": "",
-          "severity": "critical",
+          "risk": {
+            "severity": 5,
+            "probability": 4
+          },
           "requiredPPE": [
             "Harness"
           ],
@@ -103,7 +142,10 @@
           "name": "Conectar Talabarte ao Ponto de Ancoragem",
           "taskDescription": "Conecte o talabarte do cinto ao ponto de ancoragem certificado na estrutura.",
           "actionId": "connect_harness",
-          "severity": "critical",
+          "risk": {
+            "severity": 5,
+            "probability": 5
+          },
           "requiredPPE": [
             "Harness",
             "Helmet"
@@ -118,7 +160,10 @@
           "name": "Instalar Guarda-corpo",
           "taskDescription": "Instale a seção de guarda-corpo faltante no lado direito da plataforma.",
           "actionId": "install_guardrail",
-          "severity": "critical",
+          "risk": {
+            "severity": 5,
+            "probability": 4
+          },
           "requiredPPE": [
             "Harness",
             "Helmet",
@@ -135,7 +180,10 @@
           "name": "Instalar Rodapé",
           "taskDescription": "Instale o rodapé de 20cm na seção faltante da plataforma.",
           "actionId": "install_toeboard",
-          "severity": "moderate",
+          "risk": {
+            "severity": 4,
+            "probability": 4
+          },
           "requiredPPE": [
             "Harness",
             "Helmet",
@@ -152,7 +200,10 @@
           "name": "Reportar Irregularidade na Tela Fachadeira",
           "taskDescription": "Inspecione a tela fachadeira e reporte a irregularidade encontrada.",
           "actionId": "flag_safety_net",
-          "severity": "moderate",
+          "risk": {
+            "severity": 4,
+            "probability": 3
+          },
           "requiredPPE": [
             "Harness",
             "Helmet"

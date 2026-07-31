@@ -67,11 +67,11 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
-        public void BuildTaskDto_UsesTaskNameAsIdAndAppliesScoringForSeverity()
+        public void BuildTaskDto_UsesTaskNameAsIdAndAppliesScoringForRiskLevel()
         {
             var scoring = ScoringConfig.Default;
             var task = _builder.Task("weld_pipe", "action_weld", PPEType.Helmet);
-            task.severity = TaskSeverity.Critical;
+            task.riskLevel = RiskLevel.Substantial;
             var group = _builder.Group("G", TaskExecutionModeShared.Sequential, task);
             var groups = new ITaskGroup[] { group };
 
@@ -88,10 +88,10 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual("completed", dto.status);
             Assert.AreEqual("S1", dto.sessionId);
             Assert.AreEqual(1234L, dto.timestampMs);
-            Assert.AreEqual(scoring.PointsFor(TaskSeverity.Critical), dto.successPoints);
-            Assert.AreEqual(scoring.BasePenaltyFor(TaskSeverity.Critical), dto.failurePenalty);
+            Assert.AreEqual(scoring.PointsFor(RiskLevel.Substantial), dto.successPoints);
+            Assert.AreEqual(scoring.BasePenaltyFor(RiskLevel.Substantial), dto.failurePenalty);
             Assert.AreEqual(
-                scoring.PointsFor(TaskSeverity.Critical) - scoring.UnsafeEarnFor(TaskSeverity.Critical),
+                scoring.PointsFor(RiskLevel.Substantial) - scoring.UnsafeEarnFor(RiskLevel.Substantial),
                 dto.ppePenalty);
             CollectionAssert.Contains(dto.requiredPpe, "Helmet");
         }

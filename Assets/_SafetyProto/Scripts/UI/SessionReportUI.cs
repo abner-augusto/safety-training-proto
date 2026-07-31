@@ -146,15 +146,17 @@ namespace SafetyProto.UI
             if (medal.HasValue) medalIcon.color = medal.Value;
         }
 
-        // A critical task that did not end in a clean CompletedSuccess is a critical
-        // violation for medal purposes (unsafe completion, timeout, or omission).
-        // Gate charges on critical tasks are covered by the same test: a charged
-        // task was pending, so it is not CompletedSuccess.
+        // A task at or above the eliminatory risk threshold that did not end in a clean
+        // CompletedSuccess is a critical violation for medal purposes (unsafe completion,
+        // timeout, or omission). Gate charges on those tasks are covered by the same test:
+        // a charged task was pending, so it is not CompletedSuccess.
+        // The comparison is a threshold, not an equality on one tier — that is what keeps a
+        // newly added top tier (Intolerable) inside the rule instead of silently outside it.
         private bool HasCriticalViolation(IReadOnlyList<RuntimeSafetyTask> tasks)
         {
             foreach (var t in tasks)
             {
-                if (t.TaskData == null || t.TaskData.severity != TaskSeverity.Critical) continue;
+                if (t.TaskData == null || t.TaskData.riskLevel < RiskLevels.EliminatoryThreshold) continue;
                 if (t.State != TaskState.CompletedSuccess) return true;
                 if (t.HasMissedPPEOnce) return true;
             }
@@ -175,7 +177,7 @@ namespace SafetyProto.UI
             for (int i = 0; i < tasks.Count; i++)
             {
                 var t = tasks[i];
-                var sev = t.TaskData?.severity ?? TaskSeverity.Moderate;
+                var sev = t.TaskData?.riskLevel ?? RiskAssessment.Default.Level;
                 int full = scoring.PointsFor(sev);
                 int earned = t.State switch
                 {
@@ -299,7 +301,7 @@ namespace SafetyProto.UI
             var scoring = taskManager != null ? taskManager.Scoring : ScoringConfig.Default;
             int total = 0;
             foreach (var t in tasks)
-                if (t.TaskData != null) total += scoring.PointsFor(t.TaskData.severity);
+                if (t.TaskData != null) total += scoring.PointsFor(t.TaskData.riskLevel);
             return total;
         }
 

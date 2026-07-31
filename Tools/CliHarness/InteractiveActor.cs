@@ -54,7 +54,7 @@ public sealed class InteractiveActor
             Console.WriteLine($"│  {task.taskDescription}");
 
         Console.WriteLine($"│  Action ID  : {task.ResolveExpectedActionId()}");
-        Console.WriteLine($"│  Severity   : {task.severity}");
+        Console.WriteLine($"│  Risco      : {task.risk}");
         if (!string.IsNullOrWhiteSpace(task.hintText))
             Console.WriteLine($"│  Hint       : {task.hintText}");
 

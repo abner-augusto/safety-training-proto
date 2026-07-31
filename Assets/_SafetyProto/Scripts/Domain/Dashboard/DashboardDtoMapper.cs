@@ -87,9 +87,9 @@ namespace SafetyProto.Domain.Dashboard
                 hint = task.hintText ?? string.Empty,
                 expectedAction = includeDetails ? task.ResolveExpectedActionId() : string.Empty,
                 requiredPpe = required,
-                successPoints = scoring.PointsFor(task.severity),
-                failurePenalty = scoring.BasePenaltyFor(task.severity),
-                ppePenalty = scoring.PointsFor(task.severity) - scoring.UnsafeEarnFor(task.severity)
+                successPoints = scoring.PointsFor(task.riskLevel),
+                failurePenalty = scoring.BasePenaltyFor(task.riskLevel),
+                ppePenalty = scoring.PointsFor(task.riskLevel) - scoring.UnsafeEarnFor(task.riskLevel)
             };
         }
 
@@ -103,7 +103,7 @@ namespace SafetyProto.Domain.Dashboard
             var name = task != null ? task.taskName : string.Empty;
             var id = name;
             var meta = BuildTaskMetadata(task, knownGroups, scoring);
-            var severity = task?.severity ?? TaskSeverity.Moderate;
+            var riskLevel = task?.riskLevel ?? RiskAssessment.Default.Level;
             return new TaskDto
             {
                 sessionId = args.SessionId,
@@ -116,9 +116,9 @@ namespace SafetyProto.Domain.Dashboard
                 executionMode = meta.executionMode,
                 expectedAction = meta.expectedAction,
                 requiredPpe = meta.requiredPpe,
-                successPoints = scoring.PointsFor(severity),
-                failurePenalty = scoring.BasePenaltyFor(severity),
-                ppePenalty = scoring.PointsFor(severity) - scoring.UnsafeEarnFor(severity),
+                successPoints = scoring.PointsFor(riskLevel),
+                failurePenalty = scoring.BasePenaltyFor(riskLevel),
+                ppePenalty = scoring.PointsFor(riskLevel) - scoring.UnsafeEarnFor(riskLevel),
                 status = status,
                 timestampMs = args.TimestampMs
             };
