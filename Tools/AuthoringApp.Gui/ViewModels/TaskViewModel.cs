@@ -1,9 +1,20 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using SafetyProto.Core;
 using SafetyProto.Domain.Scenarios;
 
 namespace SafetyProto.AuthoringApp.Gui.ViewModels;
+
+/// <summary>
+/// One graded step of a risk axis, with the criterion spelled out. The specialist picks from
+/// the criteria, not from bare numbers — the grade is the artefact, the wording is what makes
+/// it reproducible (and is what NR-01 1.5.4.4.2.2 asks to be documented).
+/// </summary>
+public sealed record RiskGradeOption(int Grade, string Name, string Criterion)
+{
+    public override string ToString() => $"{Grade} — {Name}: {Criterion}";
+}
 
 /// <summary>
 /// Editable wrapper over a <see cref="SafetyTaskDef"/>. Holds live values as the user
@@ -22,7 +33,8 @@ public sealed class TaskViewModel : ViewModelBase
     private string _taskName;
     private string _taskDescription;
     private string _actionId;
-    private string _severity;
+    private RiskGradeOption _severity;
+    private RiskGradeOption _probability;
     private string _hintText;
     private string _failureAdvice;
     private string _ppeAdvice;
@@ -37,7 +49,13 @@ public sealed class TaskViewModel : ViewModelBase
         _taskName = def.taskName;
         _taskDescription = def.taskDescription;
         _actionId = def.ActionId ?? string.Empty;
-        _severity = def.SeverityName ?? "moderate";
+        // A pre-matrix task carries only a level token; seed the grades from the closest
+        // pair so opening an old scenario shows a coherent classification instead of blanks.
+        var seeded = def.Grades != null
+            ? RiskAssessment.FromGrades(def.Grades.Severity, def.Grades.Probability)
+            : def.risk;
+        _severity = GradeFor(SeverityOptions, seeded.HasGrades ? seeded.Severity : SeedSeverity(seeded.Level));
+        _probability = GradeFor(ProbabilityOptions, seeded.HasGrades ? seeded.Probability : SeedProbability(seeded.Level));
         _hintText = def.hintText;
         _failureAdvice = def.failureAdvice;
         _ppeAdvice = def.ppeAdvice;
@@ -81,8 +99,55 @@ public sealed class TaskViewModel : ViewModelBase
         }
     }
 
-    public static IReadOnlyList<string> SeverityOptions { get; } = new[] { "critical", "moderate", "minor" };
-    public string Severity { get => _severity; set => SetField(ref _severity, value); }
+    /// <summary>Severity gradation — NR-01 1.5.4.4.4, magnitude of the worst possible
+    /// consequence (1.5.4.4.4.1: when several are possible, take the greatest).</summary>
+    public static IReadOnlyList<RiskGradeOption> SeverityOptions { get; } = new[]
+    {
+        new RiskGradeOption(1, "Desprezível",   "lesão sem afastamento"),
+        new RiskGradeOption(2, "Marginal",      "afastamento < 15 dias, sem sequela"),
+        new RiskGradeOption(3, "Moderada",      "afastamento > 15 dias, recuperação completa"),
+        new RiskGradeOption(4, "Crítica",       "incapacidade permanente parcial"),
+        new RiskGradeOption(5, "Catastrófica",  "óbito ou incapacidade permanente total"),
+    };
+
+    /// <summary>Probability gradation — NR-01 1.5.4.4.5; for accident-borne injuries
+    /// 1.5.4.4.5.4 grades it by exposure to the hazard and the effectiveness of the prevention
+    /// measures in place. It is NOT the chance a worker skips the item.</summary>
+    public static IReadOnlyList<RiskGradeOption> ProbabilityOptions { get; } = new[]
+    {
+        new RiskGradeOption(1, "Improvável", "exposição rara, medidas redundantes eficazes"),
+        new RiskGradeOption(2, "Remota",     "exposição ocasional, medida presente e eficaz"),
+        new RiskGradeOption(3, "Ocasional",  "exposição recorrente, medida de eficácia parcial"),
+        new RiskGradeOption(4, "Provável",   "exposição contínua, medida ausente ou ineficaz"),
+        new RiskGradeOption(5, "Frequente",  "exposição contínua sem nenhuma medida interposta"),
+    };
+
+    public RiskGradeOption SelectedSeverity
+    {
+        get => _severity;
+        set { if (SetField(ref _severity, value)) RaiseRiskChanged(); }
+    }
+
+    public RiskGradeOption SelectedProbability
+    {
+        get => _probability;
+        set { if (SetField(ref _probability, value)) RaiseRiskChanged(); }
+    }
+
+    private RiskAssessment Risk => RiskAssessment.FromGrades(_severity.Grade, _probability.Grade);
+
+    /// <summary>Read-only readout: the classification the two grades produce.</summary>
+    public string RiskLevelDisplay => $"{RiskLevels.DisplayName(Risk.Level)}  ({_severity.Grade} × {_probability.Grade} = {Risk.Index})";
+
+    /// <summary>What the classification obliges, per NR-01 1.5.4.4.3 — shown so the
+    /// specialist sees the consequence of the grade, not just its name.</summary>
+    public string RiskDecisionHint => RiskLevels.DecisionHint(Risk.Level);
+
+    private void RaiseRiskChanged()
+    {
+        OnPropertyChanged(nameof(RiskLevelDisplay));
+        OnPropertyChanged(nameof(RiskDecisionHint));
+    }
     public string HintText { get => _hintText; set => SetField(ref _hintText, value); }
     public string FailureAdvice { get => _failureAdvice; set => SetField(ref _failureAdvice, value); }
     public string PpeAdvice { get => _ppeAdvice; set => SetField(ref _ppeAdvice, value); }
@@ -105,11 +170,36 @@ public sealed class TaskViewModel : ViewModelBase
         taskName = _taskName,
         taskDescription = _taskDescription,
         ActionId = _actionId,
-        SeverityName = _severity,
+        Grades = new RiskGrades { Severity = _severity.Grade, Probability = _probability.Grade },
         hintText = _hintText,
         failureAdvice = _failureAdvice,
         ppeAdvice = _ppeAdvice,
         omissionAdvice = _omissionAdvice,
         RequiredPpeNames = PpeOptions.Where(p => p.IsSelected).Select(p => p.Name).ToList(),
+    };
+
+    private static RiskGradeOption GradeFor(IReadOnlyList<RiskGradeOption> options, int grade) =>
+        options.FirstOrDefault(o => o.Grade == grade) ?? options[2];
+
+    // Seeds for a scenario that declared a level with no grades behind it: the lowest pair
+    // that lands in that band, so the readout agrees with the level the file already had.
+    private static int SeedSeverity(RiskLevel level) => level switch
+    {
+        RiskLevel.Trivial => 2,
+        RiskLevel.Tolerable => 2,
+        RiskLevel.Moderate => 3,
+        RiskLevel.Substantial => 4,
+        RiskLevel.Intolerable => 5,
+        _ => 3
+    };
+
+    private static int SeedProbability(RiskLevel level) => level switch
+    {
+        RiskLevel.Trivial => 2,
+        RiskLevel.Tolerable => 4,
+        RiskLevel.Moderate => 4,
+        RiskLevel.Substantial => 4,
+        RiskLevel.Intolerable => 5,
+        _ => 4
     };
 }

@@ -146,11 +146,27 @@
                             HorizontalAlignment="Left" MinWidth="260"/>
                 </StackPanel>
 
-                <StackPanel Spacing="2">
-                  <TextBlock Text="Severidade (classe de risco)" Classes="label"/>
-                  <ComboBox ItemsSource="{Binding SeverityOptions}"
-                            SelectedItem="{Binding Severity}"
-                            HorizontalAlignment="Left" MinWidth="180"/>
+                <StackPanel Spacing="4">
+                  <TextBlock Text="Avaliação de risco ocupacional (NR-01)" Classes="label"/>
+                  <StackPanel Spacing="2">
+                    <TextBlock Text="Severidade — magnitude da consequência mais grave possível"/>
+                    <ComboBox ItemsSource="{Binding SeverityOptions}"
+                              SelectedItem="{Binding SelectedSeverity}"
+                              HorizontalAlignment="Left" MinWidth="460"/>
+                  </StackPanel>
+                  <StackPanel Spacing="2">
+                    <TextBlock Text="Probabilidade — chance da lesão, dada a exposição e a eficácia das medidas"/>
+                    <ComboBox ItemsSource="{Binding ProbabilityOptions}"
+                              SelectedItem="{Binding SelectedProbability}"
+                              HorizontalAlignment="Left" MinWidth="460"/>
+                  </StackPanel>
+                  <Border Classes="panel" Padding="8">
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="Nível de risco" Classes="label"/>
+                      <TextBlock Text="{Binding RiskLevelDisplay}" FontWeight="Bold"/>
+                      <TextBlock Text="{Binding RiskDecisionHint}" TextWrapping="Wrap" Opacity="0.8"/>
+                    </StackPanel>
+                  </Border>
                 </StackPanel>
 
                 <StackPanel Spacing="2">
