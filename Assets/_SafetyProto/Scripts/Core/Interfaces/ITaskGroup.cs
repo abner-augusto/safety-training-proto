@@ -30,6 +30,21 @@ namespace SafetyProto.Core.Interfaces
         /// <summary>General objective sentence shown INSTEAD of the task list in
         /// Evaluation mode (e.g. "Prepare-se com os EPIs necessários"). Optional.</summary>
         string objective { get; }
+
+        /// <summary>
+        /// Optional id of a task in this group that is the safety precondition for every
+        /// other task in it: while it is pending, no sibling task can be validated as
+        /// complete. Models NR-35 35.6.11 "a" (stay connected to the anchorage for the
+        /// whole period of exposure) without hard-coding the anchoring task. Empty = no
+        /// precondition, which is the behaviour of every group authored before this field.
+        /// </summary>
+        string prerequisiteTaskId { get; }
+
+        /// <summary>Participant-facing (pt-BR) explanation shown when a sibling task is
+        /// refused because <see cref="prerequisiteTaskId"/> is still pending. Optional;
+        /// a generic message naming the pending task is used when empty.</summary>
+        string prerequisiteAdvice { get; }
+
         IReadOnlyList<ISafetyTask> tasks { get; }
         IReadOnlyList<ITaskGroup> requiredGroups { get; }
     }

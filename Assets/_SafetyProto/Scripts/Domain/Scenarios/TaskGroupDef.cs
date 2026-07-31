@@ -32,6 +32,14 @@ namespace SafetyProto.Domain.Scenarios
         [JsonProperty("objective")]
         public string objective { get; set; } = string.Empty;
 
+        /// <summary>Id of the task that must be completed before any sibling task in this
+        /// group can be validated. See <see cref="ITaskGroup.prerequisiteTaskId"/>.</summary>
+        [JsonProperty("prerequisiteTaskId")]
+        public string prerequisiteTaskId { get; set; } = string.Empty;
+
+        [JsonProperty("prerequisiteAdvice")]
+        public string prerequisiteAdvice { get; set; } = string.Empty;
+
         [JsonProperty("tasks")]
         public List<SafetyTaskDef> TaskDefs { get; set; } = new();
 
@@ -70,6 +78,17 @@ namespace SafetyProto.Domain.Scenarios
             foreach (var task in TaskDefs)
             {
                 task.Bind(groupName, errors);
+            }
+
+            // A prerequisite that matches no task would silently block the whole group, so it
+            // is a load error rather than something the rule engine has to defend against.
+            prerequisiteTaskId = prerequisiteTaskId?.Trim() ?? string.Empty;
+            if (prerequisiteTaskId.Length > 0 &&
+                !TaskDefs.Exists(t => string.Equals(t.id, prerequisiteTaskId, System.StringComparison.OrdinalIgnoreCase)))
+            {
+                errors.Add(
+                    $"prerequisiteTaskId '{prerequisiteTaskId}' não corresponde a nenhuma tarefa do grupo " +
+                    $"'{groupName}'. Use o id de uma das tarefas do próprio grupo.");
             }
         }
 

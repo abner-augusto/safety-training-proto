@@ -17,6 +17,8 @@ namespace SafetyProto.UI
         [SerializeField] private string failureTitle = "Atenção";
         [SerializeField] private string ppeTitle = "EPI Incorreto";
         [SerializeField] private string wrongOrderTitle = "Ordem Incorreta";
+        [Tooltip("Título do alerta quando a tarefa é recusada porque o pré-requisito do grupo (ex.: talabarte ancorado) ainda está pendente.")]
+        [SerializeField] private string prerequisiteTitle = "Conecte-se Primeiro";
 
         [Header("Auto-fechamento")]
         [Tooltip("Tempo (s) para auto-fechar os alertas de task/EPI (ordem incorreta, EPI errado, etc.). 0 = sem timeout.")]
@@ -34,6 +36,7 @@ namespace SafetyProto.UI
 
             EventBus.Instance.onTaskTimeout.AddListener(OnTaskTimeout);
             EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
+            EventBus.Instance.onSafetyViolation.AddListener(OnSafetyViolation);
 
             foreach (var slot in snapSlots)
                 if (slot != null)
@@ -49,6 +52,7 @@ namespace SafetyProto.UI
             {
                 EventBus.Instance.onTaskTimeout.RemoveListener(OnTaskTimeout);
                 EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
+                EventBus.Instance.onSafetyViolation.RemoveListener(OnSafetyViolation);
             }
 
             foreach (var slot in snapSlots)
@@ -84,6 +88,20 @@ namespace SafetyProto.UI
                         PopupService.Instance?.ShowWarning(failureTitle, failText, autoCloseSeconds);
                     break;
             }
+        }
+
+        /// <summary>
+        /// A task was refused because the group's safety precondition is still pending (the
+        /// participant tried to work before anchoring the lanyard). The engine already carries
+        /// the authored pt-BR explanation in the violation message, so this only frames it.
+        /// Every other violation code has its own surface (LogHUD, dashboard) and is ignored here.
+        /// </summary>
+        private void OnSafetyViolation(SafetyViolationEventArgs args)
+        {
+            if (args.ViolationCode != "PREREQUISITE_PENDING") return;
+            if (string.IsNullOrWhiteSpace(args.Message)) return;
+
+            PopupService.Instance?.ShowWarning(prerequisiteTitle, args.Message, autoCloseSeconds);
         }
 
         private void OnDistractorSnapAttempted(PPEType attempted)

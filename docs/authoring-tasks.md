@@ -55,6 +55,8 @@ Group fields:
 - `timeLimit`: seconds for the group.
 - `tasks`: ordered list of task objects.
 - `requiredGroups`: names of groups that must complete first.
+- `prerequisiteTaskId` (optional): id of a task in this group that is the safety precondition for all the others. While it is pending, any sibling attempt is refused instead of completed and raises the `PREREQUISITE_PENDING` violation; the refused task stays pending and free order is preserved. Guided mode only — Evaluation lets the omission happen so the inspection gate can score it. Loading fails if the id matches no task in the group.
+- `prerequisiteAdvice` (optional): Portuguese text shown to the participant on that refusal. Falls back to a generic message naming the pending task.
 
 Task fields:
 

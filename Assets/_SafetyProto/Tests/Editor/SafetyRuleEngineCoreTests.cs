@@ -232,5 +232,119 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual(1, _taskCompletions.Count);
             Assert.IsFalse(_taskCompletions[0].WasPpeCompliant);
         }
+
+        // ── Group prerequisite (NR-35: anchor before working) ────────────────────
+
+        private const string AnchorAdvice =
+            "Conecte o talabarte ao ponto de ancoragem antes de trabalhar.";
+
+        /// <summary>Free-order platform group whose first task is the anchoring precondition.
+        /// No requiredPPE anywhere, so PPE compliance never clouds the assertions.</summary>
+        private (FakeTaskBuilder.FakeTaskGroup group,
+                 FakeTaskBuilder.FakeSafetyTask lanyard,
+                 FakeTaskBuilder.FakeSafetyTask guardrail,
+                 FakeTaskBuilder.FakeSafetyTask toeboard) BuildPlatformGroup(
+            string prerequisiteId = "Talabarte")
+        {
+            var lanyard = _tasks.Task("Talabarte", "connect_harness");
+            var guardrail = _tasks.Task("Guarda-corpo", "install_guardrail");
+            var toeboard = _tasks.Task("Rodapé", "install_toeboard");
+
+            var group = _tasks.Group("Plataforma", TaskExecutionModeShared.FreeOrder,
+                lanyard, guardrail, toeboard);
+            group.prerequisiteTaskId = prerequisiteId;
+            group.prerequisiteAdvice = AnchorAdvice;
+
+            return (group, lanyard, guardrail, toeboard);
+        }
+
+        [Test]
+        public void GuidedMode_PrerequisitePending_RefusesSiblingAndRaisesViolation()
+        {
+            var (group, _, _, _) = BuildPlatformGroup();
+            _bus.Publish(new TaskGroupEventArgs(group, TaskGroupPhase.Started));
+
+            _bus.Publish(new ActionAttemptedEvent("install_guardrail"));
+
+            CollectionAssert.IsEmpty(_taskCompletions, "Sibling must not complete before the precondition.");
+            Assert.AreEqual(1, _violations.Count);
+            Assert.AreEqual("PREREQUISITE_PENDING", _violations[0].ViolationCode);
+            Assert.AreEqual(AnchorAdvice, _violations[0].Message, "Authored advice drives the popup body.");
+            Assert.AreEqual("Guarda-corpo", _violations[0].TaskName, "The violation names the REFUSED task.");
+        }
+
+        [Test]
+        public void GuidedMode_RefusedSibling_StaysPendingAndCompletesAfterPrerequisite()
+        {
+            var (group, _, _, _) = BuildPlatformGroup();
+            _bus.Publish(new TaskGroupEventArgs(group, TaskGroupPhase.Started));
+
+            // Refused, then the participant anchors and retries the same task.
+            _bus.Publish(new ActionAttemptedEvent("install_guardrail"));
+            _bus.Publish(new ActionAttemptedEvent("connect_harness"));
+            _bus.Publish(new ActionAttemptedEvent("install_guardrail"));
+
+            var completions = _taskCompletions.Select(e => e.Task.taskName).ToList();
+            CollectionAssert.AreEqual(new[] { "Talabarte", "Guarda-corpo" }, completions);
+        }
+
+        [Test]
+        public void GuidedMode_PrerequisiteMet_SiblingsStillCompleteInAnyOrder()
+        {
+            // The precondition must not turn the group into a sequence: once anchored, the
+            // remaining tasks are free-order again, here done back-to-front.
+            var (group, _, _, _) = BuildPlatformGroup();
+            _bus.Publish(new TaskGroupEventArgs(group, TaskGroupPhase.Started));
+
+            _bus.Publish(new ActionAttemptedEvent("connect_harness"));
+            _bus.Publish(new ActionAttemptedEvent("install_toeboard"));
+            _bus.Publish(new ActionAttemptedEvent("install_guardrail"));
+
+            var completions = _taskCompletions.Select(e => e.Task.taskName).ToList();
+            CollectionAssert.AreEqual(new[] { "Talabarte", "Rodapé", "Guarda-corpo" }, completions);
+            CollectionAssert.IsEmpty(_violations);
+        }
+
+        [Test]
+        public void EvaluationMode_PrerequisitePending_DoesNotBlockSibling()
+        {
+            // Evaluation has to let the participant work unanchored — the inspection gate's
+            // consequences are what measure the omission.
+            SessionModeState.Current = SessionMode.Evaluation;
+
+            var (group, _, _, _) = BuildPlatformGroup();
+            _bus.Publish(new TaskGroupEventArgs(group, TaskGroupPhase.Started));
+
+            _bus.Publish(new ActionAttemptedEvent("install_guardrail"));
+
+            Assert.AreEqual(1, _taskCompletions.Count);
+            Assert.AreEqual("Guarda-corpo", _taskCompletions[0].Task.taskName);
+            CollectionAssert.IsEmpty(_violations);
+        }
+
+        [Test]
+        public void GuidedMode_UnknownPrerequisiteId_DoesNotDeadlockGroup()
+        {
+            var (group, _, _, _) = BuildPlatformGroup(prerequisiteId: "nao_existe");
+            _bus.Publish(new TaskGroupEventArgs(group, TaskGroupPhase.Started));
+
+            _bus.Publish(new ActionAttemptedEvent("install_guardrail"));
+
+            Assert.AreEqual(1, _taskCompletions.Count);
+            Assert.AreEqual("Guarda-corpo", _taskCompletions[0].Task.taskName);
+        }
+
+        [Test]
+        public void GuidedMode_GroupWithoutPrerequisite_IsUnaffected()
+        {
+            var (group, _, _, _) = BuildPlatformGroup(prerequisiteId: "");
+            group.prerequisiteAdvice = string.Empty;
+            _bus.Publish(new TaskGroupEventArgs(group, TaskGroupPhase.Started));
+
+            _bus.Publish(new ActionAttemptedEvent("install_guardrail"));
+
+            Assert.AreEqual(1, _taskCompletions.Count);
+            CollectionAssert.IsEmpty(_violations);
+        }
     }
 }
