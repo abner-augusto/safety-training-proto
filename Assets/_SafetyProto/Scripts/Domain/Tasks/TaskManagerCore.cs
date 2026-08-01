@@ -28,6 +28,7 @@ namespace SafetyProto.Domain.Tasks
         private int _currentGroupIndex = -1;
         private int _currentTaskIndex = -1;
         private SessionCompletedEventArgs? _lastSessionSummary;
+        private bool _terminal;
 
         private readonly Action<TaskEventArgs> _onTaskLifecycle;
         private CancellationTokenSource? _taskDelayCts;
@@ -39,10 +40,7 @@ namespace SafetyProto.Domain.Tasks
         /// Guided respects the authored mode. All mode branches in this engine must
         /// go through here — reading group.executionMode directly reintroduces
         /// sequential enforcement in Evaluation.</summary>
-        private static TaskExecutionModeShared EffectiveMode(ITaskGroup group) =>
-            SessionModeState.Current == SessionMode.Evaluation
-                ? TaskExecutionModeShared.FreeOrder
-                : group.executionMode;
+        private static TaskExecutionModeShared EffectiveMode(ITaskGroup group) => TaskExecutionRules.EffectiveMode(group);
 
         public int CurrentTaskIndex => _currentTaskIndex;
         public RuntimeSafetyTask? CurrentRuntimeTask => _currentTask;
@@ -86,6 +84,7 @@ namespace SafetyProto.Domain.Tasks
 
         public void StartSession()
         {
+            if (_terminal) return;
             StartNextGroup();
         }
 
@@ -387,13 +386,14 @@ namespace SafetyProto.Domain.Tasks
                 return;
             }
 
-            if (_currentTask != null) return;
+            if (_terminal || _currentTask != null) return;
             StartNextTask();
         }
 
         private void EndSession()
         {
-            if (_currentTask != null) return;
+            if (_terminal || _currentTask != null) return;
+            _terminal = true;
 
             _logger?.Info("TaskManagerCore: All task groups completed or no groups available.");
 
@@ -527,8 +527,7 @@ namespace SafetyProto.Domain.Tasks
 
         private static bool IsEquipTask(ISafetyTask task)
         {
-            return string.IsNullOrEmpty(task.ResolveExpectedActionId()) &&
-                   task.requiredPPE != null && task.requiredPPE.Count > 0;
+            return TaskExecutionRules.IsEquipTask(task);
         }
 
         private static bool RequiresPpe(ISafetyTask task, PPEType type)
@@ -584,6 +583,7 @@ namespace SafetyProto.Domain.Tasks
             _completedGroups.Clear();
             _orderViolations.Clear();
             _lastSessionSummary = null;
+            _terminal = false;
             _currentGroupIndex = -1;
             _currentTaskIndex = -1;
             _currentTask = null;
@@ -613,10 +613,7 @@ namespace SafetyProto.Domain.Tasks
 
         private static bool MatchesAction(RuntimeSafetyTask? task, string actionId)
         {
-            if (task == null) return false;
-            var expected = task.ExpectedActionId;
-            return !string.IsNullOrEmpty(expected) &&
-                   string.Equals(expected, actionId, StringComparison.OrdinalIgnoreCase);
+            return TaskExecutionRules.MatchesAction(task?.TaskData, actionId);
         }
 
         public void Dispose()

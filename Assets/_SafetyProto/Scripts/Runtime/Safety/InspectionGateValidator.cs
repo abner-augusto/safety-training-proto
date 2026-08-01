@@ -145,7 +145,6 @@ namespace SafetyProto.Runtime.Safety
             _chargedTaskIds.Clear();
             HideConsequenceFeedback();
 
-            EventBus.Instance?.onSessionCompleted.AddListener(OnSessionCompletedEvent);
         }
 
         /// <summary>
@@ -275,7 +274,7 @@ namespace SafetyProto.Runtime.Safety
             void Finish()
             {
                 HideConsequenceFeedback();
-                EndSession("validação");
+                taskManager.CloseCurrentGroup();
                 _isProcessing = false;
             }
 
@@ -537,30 +536,6 @@ namespace SafetyProto.Runtime.Safety
             _isProcessing = false;
         }
 
-        // ── Session end ───────────────────────────────────────────
-
-        private void EndSession(string reason)
-        {
-            var sessionTasks = taskManager.GetSessionTasks();
-            float elapsed = timerSystem != null ? timerSystem.GetTotalSessionTime() : 0f;
-
-            SessionEvents.RaiseSessionCompleted(new SessionCompletedEventArgs(
-                totalElapsedTime: elapsed,
-                totalScore: ScoreService.Instance.CurrentScore,
-                tasksCompleted: sessionTasks.Count(t =>
-                    t.State == TaskState.CompletedSuccess ||
-                    t.State == TaskState.CompletedSuccessButUnsafe),
-                totalTasks: sessionTasks.Count
-            ));
-
-            if (verboseLogging)
-                SafetyLog.Info($"[InspectionGateValidator] SessionCompleted disparado ({reason}).", this);
-
-            if (sessionEndPanels != null)
-                foreach (var panel in sessionEndPanels)
-                    if (panel != null) panel.SetActive(true);
-        }
-
         // ── Individual consequence implementations ────────────────
 
         private IEnumerator ExecuteObjectFall(ConsequenceMapping mapping)
@@ -712,20 +687,7 @@ namespace SafetyProto.Runtime.Safety
 
         private void OnDestroy()
         {
-            if (EventBus.Instance != null)
-                EventBus.Instance.onSessionCompleted.RemoveListener(OnSessionCompletedEvent);
-
             StopAllCoroutines();
-        }
-
-        private void OnSessionCompletedEvent(SessionCompletedEventArgs _)
-        {
-            if (!_evaluationFinalized) return;
-            _evaluationFinalized = false;
-
-            if (sessionEndPanels != null)
-                foreach (var panel in sessionEndPanels)
-                    if (panel != null) panel.SetActive(true);
         }
     }
 }
