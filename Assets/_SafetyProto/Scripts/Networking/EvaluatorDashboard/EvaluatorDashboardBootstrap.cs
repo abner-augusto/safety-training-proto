@@ -44,6 +44,7 @@ namespace SafetyProto.Networking.Dashboard
         private MiniHttpServer _httpServer;
         private EvaluatorWebSocketServer _wsServer;
         private DashboardEventRelay _relay;
+        private SessionLogger _sessionLogger;
         private Coroutine _poseSendCoroutine;
         private readonly List<ITaskGroup> _knownGroups = new List<ITaskGroup>();
         private readonly Queue<Action> _mainThreadQueue = new Queue<Action>();
@@ -65,13 +66,29 @@ namespace SafetyProto.Networking.Dashboard
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode) => RegisterCommandHandlers();
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            RegisterCommandHandlers();
+            AttachSessionLogger();
+        }
+
+        private void AttachSessionLogger()
+        {
+            if (_sessionLogger != null) return;
+            _sessionLogger = FindFirstObjectByType<SessionLogger>();
+            if (_sessionLogger != null)
+                _sessionLogger.CompletedLogWritten += OnCompletedLogWritten;
+        }
+
+        private void OnCompletedLogWritten(string sessionId, string playerId, string path) =>
+            BroadcastCompletedSessionLog(sessionId, playerId, path);
 
         private void OnEnable() { } // intentionally empty — subscription moved to Start
 
         private void Start()
         {
             StartServers();
+            AttachSessionLogger();
             if (poseChannel != null)
             {
                 var poseSender = new PoseSender(poseChannel, _wsServer, poseSendRateHz, poseDecimalPrecision);
@@ -128,6 +145,8 @@ namespace SafetyProto.Networking.Dashboard
         private void OnDestroy()
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
+            if (_sessionLogger != null)
+                _sessionLogger.CompletedLogWritten -= OnCompletedLogWritten;
             _relay?.Unsubscribe();
             if (_poseSendCoroutine != null)
             {

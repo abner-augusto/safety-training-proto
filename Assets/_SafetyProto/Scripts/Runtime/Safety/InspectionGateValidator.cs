@@ -103,7 +103,7 @@ namespace SafetyProto.Runtime.Safety
             StopAllCoroutines();
             HideConsequenceFeedback();
             _isProcessing = false;
-            _evaluationFinalized = false;
+            _showSessionEndPanels = false;
             _simulationAutoConfirm = false;
         }
 
@@ -112,7 +112,7 @@ namespace SafetyProto.Runtime.Safety
         // ── Private ───────────────────────────────────────────────
 
         private bool _isProcessing;
-        private bool _evaluationFinalized;
+        private bool _showSessionEndPanels;
         private bool _simulationAutoConfirm;
         private bool _simulationCancellationRequested;
         private float _playerFallPreviousFadeTime;
@@ -139,7 +139,7 @@ namespace SafetyProto.Runtime.Safety
                 SafetyLog.Error("[InspectionGateValidator] TaskManager not found.", this);
 
             _popupFeedback = popupFeedbackProvider as IPopupFeedback;
-            _evaluationFinalized = false;
+            EventBus.Instance?.onSessionCompleted.AddListener(OnSessionCompletedEvent);
 
             FailedAttemptCount = 0;
             _chargedTaskIds.Clear();
@@ -274,7 +274,9 @@ namespace SafetyProto.Runtime.Safety
             void Finish()
             {
                 HideConsequenceFeedback();
+                _showSessionEndPanels = true;
                 taskManager.CloseCurrentGroup();
+                ActivateSessionEndPanelsIfComplete();
                 _isProcessing = false;
             }
 
@@ -470,7 +472,8 @@ namespace SafetyProto.Runtime.Safety
             if (verboseLogging)
                 SafetyLog.Info($"[InspectionGateValidator] Sessão finalizada em modo Avaliação ({notPerformed.Count} tarefa(s) não realizada(s)).", this);
 
-            _evaluationFinalized = true;
+            _showSessionEndPanels = true;
+            ActivateSessionEndPanelsIfComplete();
             _isProcessing = false;
         }
 
@@ -625,7 +628,25 @@ namespace SafetyProto.Runtime.Safety
 
         private void OnDestroy()
         {
+            if (EventBus.Instance != null)
+                EventBus.Instance.onSessionCompleted.RemoveListener(OnSessionCompletedEvent);
             StopAllCoroutines();
+        }
+
+        private void OnSessionCompletedEvent(SessionCompletedEventArgs _)
+        {
+            ActivateSessionEndPanelsIfComplete();
+        }
+
+        private void ActivateSessionEndPanelsIfComplete()
+        {
+            if (!_showSessionEndPanels || taskManager == null || !taskManager.LastSessionSummary.HasValue)
+                return;
+
+            _showSessionEndPanels = false;
+            if (sessionEndPanels == null) return;
+            foreach (var panel in sessionEndPanels)
+                if (panel != null) panel.SetActive(true);
         }
     }
 }
