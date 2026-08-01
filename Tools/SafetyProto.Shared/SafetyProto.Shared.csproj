@@ -50,6 +50,7 @@
 
     <!-- Part 7 additions -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Tasks\TaskManagerCore.cs"        Link="Domain\Tasks\TaskManagerCore.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Tasks\TaskExecutionRules.cs"    Link="Domain\Tasks\TaskExecutionRules.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scoring\ScoreRuleEngineCore.cs"  Link="Domain\Scoring\ScoreRuleEngineCore.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scoring\ScoringConfig.cs"        Link="Domain\Scoring\ScoringConfig.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Dashboard\DashboardDtos.cs"       Link="Domain\Dashboard\DashboardDtos.cs" />
