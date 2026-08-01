@@ -37,12 +37,24 @@ MonoBehaviour:
   onTaskCompleted:
     m_PersistentCalls:
       m_Calls: []
-  onAllTasksCompleted:
-    m_PersistentCalls:
-      m_Calls: []
-  onTaskTimeout:
-    m_PersistentCalls:
-      m_Calls: []
   onScoreChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onGroupStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onGroupCompleted:
+    m_PersistentCalls:
+      m_Calls: []
+  onSessionCompleted:
+    m_PersistentCalls:
+      m_Calls: []
+  onSafetyViolation:
+    m_PersistentCalls:
+      m_Calls: []
+  onCriticalSafetyFailure:
+    m_PersistentCalls:
+      m_Calls: []
+  onSafetyError:
     m_PersistentCalls:
       m_Calls: []
