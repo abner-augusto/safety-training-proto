@@ -48,18 +48,67 @@ public sealed class ScriptedActor
                     break;
 
                 case "gate":
-                    // Simulates the participant pressing a phase gate in Evaluation mode:
-                    // every pending task in the current group closes as Omitted and the
-                    // session advances (next group or SessionCompleted). In Guided mode the
-                    // real gates block instead — scripted Guided runs should not use this.
-                    var omitted = _taskManager.MarkPendingTasksOmitted();
-                    System.Console.WriteLine($"[ScriptedActor] gate: {omitted.Count} task(s) omitted.");
+                    RunGate(step);
                     break;
 
                 default:
                     System.Console.Error.WriteLine($"[ScriptedActor] Unknown step kind: {step.Kind}");
                     break;
             }
+        }
+    }
+
+    /// <summary>
+    /// Group whose gate is the Evaluation phase-advance button — <c>PhaseController.targetGroupId</c>
+    /// in the scene. Same convention <c>SessionSimulator</c> uses to resolve an empty gateTarget.
+    /// </summary>
+    private const string PhaseGateGroupId = "ppe_selection";
+
+    /// <summary>
+    /// Simulates the participant pressing a gate in Evaluation mode, mirroring what the
+    /// corresponding scene component does so a scripted run closes the session the same
+    /// way a Unity run does:
+    /// <list type="bullet">
+    /// <item><c>phase1</c> — <c>PhaseController</c>: closes its group without touching task
+    /// states (pending tasks stay never attempted). It only acts while that group is current;
+    /// pressing it after the group already completed on its own is a no-op, exactly as in the
+    /// scene, where the click is rejected for not matching <c>targetGroupId</c>.</item>
+    /// <item><c>inspection</c> — <c>InspectionGateValidator</c>: closes every pending task in
+    /// the current group as CompletedFailure.</item>
+    /// </list>
+    /// An empty target is inferred from the current group, keeping older CLI scripts working.
+    /// In Guided mode the real gates block instead — scripted Guided runs should not use this.
+    /// Note the phase-1 order penalty (ORDER_VIOLATION) is NOT mirrored here.
+    /// </summary>
+    private void RunGate(ScriptStepDef step)
+    {
+        var currentGroup = _taskManager.GetCurrentGroup();
+        var target = (step.GateTarget ?? string.Empty).Trim().ToLowerInvariant();
+        if (target.Length == 0)
+            target = currentGroup?.id == PhaseGateGroupId ? "phase1" : "inspection";
+
+        switch (target)
+        {
+            case "phase" or "phase1" or "fase1":
+                if (currentGroup?.id != PhaseGateGroupId)
+                {
+                    System.Console.WriteLine(
+                        $"[ScriptedActor] gate phase1: no-op — current group is " +
+                        $"'{currentGroup?.id ?? "(none)"}', not '{PhaseGateGroupId}'.");
+                    return;
+                }
+                _taskManager.ForceCompleteCurrentGroup();
+                System.Console.WriteLine("[ScriptedActor] gate phase1: group closed.");
+                break;
+
+            case "inspection" or "final" or "inspecao":
+                var failed = _taskManager.MarkPendingTasksFailed();
+                System.Console.WriteLine($"[ScriptedActor] gate inspection: {failed.Count} task(s) failed.");
+                break;
+
+            default:
+                System.Console.Error.WriteLine($"[ScriptedActor] Unknown gate target: {step.GateTarget}");
+                break;
         }
     }
 }
