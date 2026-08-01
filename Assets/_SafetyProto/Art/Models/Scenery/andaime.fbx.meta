@@ -24,6 +24,16 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: andaime_platforma
     second: {fileID: 2100000, guid: d9dc64757360eb54bb8b465af8540cb2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: blue_mesh
+    second: {fileID: 2100000, guid: 23390a282e5e7e742847a52c960dd3ae, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: plastico_preto
+    second: {fileID: 2100000, guid: d9c70dc03b7f31d41b15b47b0abc7ac7, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
