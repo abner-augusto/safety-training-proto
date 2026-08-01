@@ -32,7 +32,7 @@ public sealed class HarnessEventBus : IEventBus
 
     public void Publish<T>(T payload)
     {
-        payload = StampMetadata(payload);
+        payload = EventMetadata.Stamp(payload);
 
         _queue.Enqueue(() =>
         {
@@ -65,106 +65,4 @@ public sealed class HarnessEventBus : IEventBus
         }
     }
 
-    private static T StampMetadata<T>(T payload)
-    {
-        object? boxed = payload;
-        if (boxed == null) return payload;
-
-        switch (boxed)
-        {
-            case SessionStartedEventArgs s:
-                s.SessionId = EventContext.CurrentSessionId ?? string.Empty;
-                s.PlayerId = EventContext.CurrentPlayerId ?? string.Empty;
-                s.ScenarioId = EventContext.CurrentScenarioId ?? string.Empty;
-                s.TimestampMs = EventContext.NowUnixMs();
-                boxed = s;
-                break;
-            case SessionPausedEventArgs sp:
-                sp.SessionId = EventContext.CurrentSessionId ?? string.Empty;
-                sp.PlayerId = EventContext.CurrentPlayerId ?? string.Empty;
-                sp.ScenarioId = EventContext.CurrentScenarioId ?? string.Empty;
-                sp.TimestampMs = EventContext.NowUnixMs();
-                boxed = sp;
-                break;
-            case SessionResumedEventArgs sr:
-                sr.SessionId = EventContext.CurrentSessionId ?? string.Empty;
-                sr.PlayerId = EventContext.CurrentPlayerId ?? string.Empty;
-                sr.ScenarioId = EventContext.CurrentScenarioId ?? string.Empty;
-                sr.TimestampMs = EventContext.NowUnixMs();
-                boxed = sr;
-                break;
-            case SessionCompletedEventArgs sc:
-                sc.SessionId = EventContext.CurrentSessionId ?? string.Empty;
-                sc.PlayerId = EventContext.CurrentPlayerId ?? string.Empty;
-                sc.ScenarioId = EventContext.CurrentScenarioId ?? string.Empty;
-                sc.TimestampMs = EventContext.NowUnixMs();
-                boxed = sc;
-                break;
-            case SessionEndedEventArgs se2:
-                se2.SessionId = EventContext.CurrentSessionId ?? string.Empty;
-                se2.PlayerId = EventContext.CurrentPlayerId ?? string.Empty;
-                se2.ScenarioId = EventContext.CurrentScenarioId ?? string.Empty;
-                se2.TimestampMs = EventContext.NowUnixMs();
-                boxed = se2;
-                break;
-            case ActionAttemptedEvent a:
-                a.SessionId = EventContext.CurrentSessionId ?? string.Empty;
-                a.PlayerId = EventContext.CurrentPlayerId ?? string.Empty;
-                a.ScenarioId = EventContext.CurrentScenarioId ?? string.Empty;
-                a.TimestampMs = EventContext.NowUnixMs();
-                boxed = a;
-                break;
-            case PPEStateChangedEventArgs p:
-                p.SessionId = EventContext.CurrentSessionId ?? string.Empty;
-                p.PlayerId = EventContext.CurrentPlayerId ?? string.Empty;
-                p.ScenarioId = EventContext.CurrentScenarioId ?? string.Empty;
-                p.TimestampMs = EventContext.NowUnixMs();
-                boxed = p;
-                break;
-            case TaskEventArgs t:
-                t.SessionId = EventContext.CurrentSessionId ?? string.Empty;
-                t.PlayerId = EventContext.CurrentPlayerId ?? string.Empty;
-                t.ScenarioId = EventContext.CurrentScenarioId ?? string.Empty;
-                t.TimestampMs = EventContext.NowUnixMs();
-                boxed = t;
-                break;
-            case TaskGroupEventArgs g:
-                g.SessionId = EventContext.CurrentSessionId ?? string.Empty;
-                g.PlayerId = EventContext.CurrentPlayerId ?? string.Empty;
-                g.ScenarioId = EventContext.CurrentScenarioId ?? string.Empty;
-                g.TimestampMs = EventContext.NowUnixMs();
-                boxed = g;
-                break;
-            case ScoreChangedEventArgs sch:
-                sch.SessionId = EventContext.CurrentSessionId ?? string.Empty;
-                sch.PlayerId = EventContext.CurrentPlayerId ?? string.Empty;
-                sch.ScenarioId = EventContext.CurrentScenarioId ?? string.Empty;
-                sch.TimestampMs = EventContext.NowUnixMs();
-                boxed = sch;
-                break;
-            case SafetyViolationEventArgs v:
-                v.SessionId = EventContext.CurrentSessionId ?? string.Empty;
-                v.PlayerId = EventContext.CurrentPlayerId ?? string.Empty;
-                v.ScenarioId = EventContext.CurrentScenarioId ?? string.Empty;
-                v.TimestampMs = EventContext.NowUnixMs();
-                boxed = v;
-                break;
-            case SafetyErrorEventArgs se:
-                se.SessionId = EventContext.CurrentSessionId ?? string.Empty;
-                se.PlayerId = EventContext.CurrentPlayerId ?? string.Empty;
-                se.ScenarioId = EventContext.CurrentScenarioId ?? string.Empty;
-                se.TimestampMs = EventContext.NowUnixMs();
-                boxed = se;
-                break;
-            case CriticalSafetyFailureEventArgs cf:
-                cf.SessionId = EventContext.CurrentSessionId ?? string.Empty;
-                cf.PlayerId = EventContext.CurrentPlayerId ?? string.Empty;
-                cf.ScenarioId = EventContext.CurrentScenarioId ?? string.Empty;
-                cf.TimestampMs = EventContext.NowUnixMs();
-                boxed = cf;
-                break;
-        }
-
-        return (T)boxed;
-    }
 }

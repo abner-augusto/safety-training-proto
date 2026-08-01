@@ -41,6 +41,7 @@
 
     <!-- Part 4 additions -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Events\EventContext.cs"        Link="Core\Events\EventContext.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Events\EventMetadata.cs"       Link="Core\Events\EventMetadata.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scoring\ScoreService.cs"               Link="Domain\Scoring\ScoreService.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Sessions\SessionLoggerCore.cs"         Link="Domain\Sessions\SessionLoggerCore.cs" />
 

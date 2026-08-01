@@ -221,10 +221,7 @@ namespace SafetyProto.Core
 
         private static void StampMetadata(ref string sessionId, ref string playerId, ref string scenarioId, ref long timestampMs)
         {
-            sessionId = EventContext.CurrentSessionId;
-            playerId = EventContext.CurrentPlayerId;
-            scenarioId = EventContext.CurrentScenarioId;
-            timestampMs = EventContext.NowUnixMs();
+            EventMetadata.StampFields(ref sessionId, ref playerId, ref scenarioId, ref timestampMs);
         }
 
         [Header("Debug")]
