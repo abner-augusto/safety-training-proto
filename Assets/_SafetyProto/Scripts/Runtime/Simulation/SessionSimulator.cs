@@ -351,8 +351,9 @@ namespace SafetyProto.Runtime.Simulation
             if (target == "phase" || target == "phase1" || target == "fase1")
             {
                 _phaseController?.SetSimulationAutoConfirm(true);
-                // OnAdvanceClicked() applies order penalties, marks pending omitted, and —
-                // with auto-confirm set — starts the teleport without a popup.
+                // OnAdvanceClicked() applies order penalties, closes the group without
+                // touching pending task states, and — with auto-confirm set — starts the
+                // teleport without a popup.
                 _phaseController?.OnAdvanceClicked();
 
                 if (_phaseController != null)

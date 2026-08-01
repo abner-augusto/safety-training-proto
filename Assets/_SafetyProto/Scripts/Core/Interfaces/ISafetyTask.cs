@@ -34,8 +34,10 @@ namespace SafetyProto.Core.Interfaces
         string failureAdvice { get; }
         string ppeAdvice { get; }
 
-        /// <summary>Finish-screen advice for an OMITTED task: what skipping it means
-        /// in the real world, with the NR citation. Falls back to hintText when empty.</summary>
+        /// <summary>Finish-screen advice for a task the participant did NOT perform —
+        /// left never attempted at the phase gate, or closed as failed at the inspection
+        /// gate: what skipping it means in the real world, with the NR citation. Falls
+        /// back to hintText when empty.</summary>
         string omissionAdvice { get; }
 
         /// <summary>

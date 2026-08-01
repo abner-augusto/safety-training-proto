@@ -168,10 +168,10 @@ namespace SafetyProto.Tests.Editor
             core.Dispose();
         }
 
-        // ── MarkPendingTasksOmitted ────────────────────────────────────────────────
+        // ── MarkPendingTasksFailed ─────────────────────────────────────────────────
 
         [Test]
-        public void MarkPendingTasksOmitted_ClosesPendingAsOmitted_AndCompletesGroup()
+        public void MarkPendingTasksFailed_ClosesPendingAsFailed_AndCompletesGroup()
         {
             var t1 = _tasks.Task("t1", "action_a");
             var t2 = _tasks.Task("t2", "action_b");
@@ -183,24 +183,24 @@ namespace SafetyProto.Tests.Editor
 
             _bus.Publish(new TaskEventArgs(t1, new RuntimeSafetyTask(t1) { State = TaskState.CompletedSuccess }, TaskPhase.Completed));
 
-            var omitted = core.MarkPendingTasksOmitted();
+            var failed = core.MarkPendingTasksFailed();
 
-            Assert.AreEqual(1, omitted.Count);
-            Assert.AreEqual(TaskState.Omitted, omitted[0].State);
-            Assert.AreEqual("t2", omitted[0].taskName);
+            Assert.AreEqual(1, failed.Count);
+            Assert.AreEqual(TaskState.CompletedFailure, failed[0].State);
+            Assert.AreEqual("t2", failed[0].taskName);
 
             var completed = _groupEvents.FindAll(e => e.Phase == TaskGroupPhase.Completed);
             Assert.AreEqual(1, completed.Count);
 
-            var taskOmittedViolations = _violations.FindAll(v => v.ViolationCode == "TASK_OMITTED");
-            Assert.AreEqual(1, taskOmittedViolations.Count);
-            Assert.AreEqual(t2.id, taskOmittedViolations[0].TaskId);
+            var taskFailedViolations = _violations.FindAll(v => v.ViolationCode == "TASK_FAILED");
+            Assert.AreEqual(1, taskFailedViolations.Count);
+            Assert.AreEqual(t2.id, taskFailedViolations[0].TaskId);
 
             core.Dispose();
         }
 
         [Test]
-        public void MarkPendingTasksOmitted_LastGroup_EndsSession()
+        public void MarkPendingTasksFailed_LastGroup_EndsSession()
         {
             var t1 = _tasks.Task("t1", "action_a");
             var t2 = _tasks.Task("t2", "action_b");
@@ -210,9 +210,9 @@ namespace SafetyProto.Tests.Editor
             core.Subscribe();
             core.StartSession();
 
-            var omitted = core.MarkPendingTasksOmitted();
+            var failed = core.MarkPendingTasksFailed();
 
-            Assert.AreEqual(2, omitted.Count);
+            Assert.AreEqual(2, failed.Count);
             Assert.AreEqual(1, _sessionCompletions.Count);
             Assert.AreEqual(0, _sessionCompletions[0].tasksCompleted);
             Assert.AreEqual(2, _sessionCompletions[0].totalTasks);
@@ -223,7 +223,7 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
-        public void MarkPendingTasksOmitted_NoActiveGroup_IsNoOp()
+        public void MarkPendingTasksFailed_NoActiveGroup_IsNoOp()
         {
             var t1 = _tasks.Task("t1", "action_a");
             var group = _tasks.Group("g1", TaskExecutionModeShared.Sequential, t1);
@@ -232,13 +232,42 @@ namespace SafetyProto.Tests.Editor
             core.Subscribe();
             // StartSession() intentionally not called — no active group yet.
 
-            var omitted = core.MarkPendingTasksOmitted();
+            var failed = core.MarkPendingTasksFailed();
 
-            Assert.IsEmpty(omitted);
+            Assert.IsEmpty(failed);
             Assert.IsEmpty(_groupEvents);
             Assert.IsEmpty(_taskEvents);
             Assert.IsEmpty(_violations);
             Assert.IsEmpty(_sessionCompletions);
+
+            core.Dispose();
+        }
+
+        // ── ForceCompleteCurrentGroup ──────────────────────────────────────────────
+
+        [Test]
+        public void ForceCompleteCurrentGroup_WithPendingTasks_StartsTheNextGroup()
+        {
+            // The Evaluation phase-advance gate closes its group while a task is still
+            // open (the participant skipped a PPE). The session must move on to the next
+            // group, exactly as it does when the group completes on its own.
+            var t1 = _tasks.Task("t1", "action_a");
+            var t2 = _tasks.Task("t2", "action_b");
+            var groupA = _tasks.Group("gA", TaskExecutionModeShared.FreeOrder, t1, t2);
+
+            var t3 = _tasks.Task("t3", "action_c");
+            var groupB = _tasks.Group("gB", TaskExecutionModeShared.FreeOrder, t3);
+
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { groupA, groupB });
+            core.Subscribe();
+            core.StartSession();
+
+            core.ForceCompleteCurrentGroup();
+
+            var started = _groupEvents.FindAll(e => e.Phase == TaskGroupPhase.Started);
+            Assert.AreEqual(2, started.Count, "groupB should have started after groupA was forced closed.");
+            Assert.AreEqual("gB", started[1].Group!.groupName);
+            Assert.AreEqual("gB", core.GetCurrentGroup()!.groupName);
 
             core.Dispose();
         }
@@ -304,7 +333,7 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
-        public void GetCompletionOrderDeviations_IgnoresPendingAndOmitted()
+        public void GetCompletionOrderDeviations_IgnoresPendingAndFailed()
         {
             var t1 = _tasks.Task("t1", "action_a");
             var t2 = _tasks.Task("t2", "action_b");
@@ -319,12 +348,12 @@ namespace SafetyProto.Tests.Editor
             _bus.Publish(new TaskEventArgs(t1, new RuntimeSafetyTask(t1) { State = TaskState.CompletedSuccess, CompletionTime = 1f }, TaskPhase.Completed));
             _bus.Publish(new TaskEventArgs(t3, new RuntimeSafetyTask(t3) { State = TaskState.CompletedSuccess, CompletionTime = 2f }, TaskPhase.Completed));
 
-            // t2 is marked Omitted directly (not via MarkPendingTasksOmitted, which
-            // would also close t4 and complete the group) — the omitted task must be
+            // t2 is failed directly (not via MarkPendingTasksFailed, which would also
+            // close t4 and complete the group) — a task that never completed must be
             // skipped rather than treated as an out-of-order completion.
             var t2Runtime = core.GetSessionTasks()[1];
             Assert.AreEqual("t2", t2Runtime.taskName);
-            t2Runtime.State = TaskState.Omitted;
+            t2Runtime.State = TaskState.CompletedFailure;
             t2Runtime.CompletionTime = 0.5f;
 
             // t4 stays NotStarted (pending) so the group remains "current".

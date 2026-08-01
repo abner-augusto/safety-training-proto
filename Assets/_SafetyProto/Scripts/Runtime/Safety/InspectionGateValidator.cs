@@ -419,9 +419,9 @@ namespace SafetyProto.Runtime.Safety
         // ── Evaluation finish ────────────────────────────────────
 
         /// <summary>
-        /// Evaluation-mode gate confirm: play consequences only for omitted tasks
-        /// that have a mapped consequence, then close all open tasks as Omitted.
-        /// MarkPendingTasksOmitted completes the group, so TaskManagerCore.EndSession
+        /// Evaluation-mode gate confirm: play consequences only for pending tasks
+        /// that have a mapped consequence, then close all open tasks as failed.
+        /// MarkPendingTasksFailed completes the group, so TaskManagerCore.EndSession
         /// publishes the single SessionCompleted/SessionEnded pair; this path must
         /// not raise its own.
         /// </summary>

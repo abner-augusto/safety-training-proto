@@ -47,9 +47,11 @@ without putting on a Quest.
 
 - **Guiado** (`Guided`) — the guided flow: the gate button auto-completes and the
   phase advances when its group is done.
-- **Avaliação** (`Evaluation`) — the evaluation flow: gates close pending tasks as
-  `Omitted`, apply omission consequences, and the run finishes with a scored
-  report. Use this mode to exercise the consequence path.
+- **Avaliação** (`Evaluation`) — the evaluation flow: the phase-1 gate closes its
+  group leaving pending tasks untouched (never attempted), the inspection gate
+  closes pending tasks as `CompletedFailure` and applies their consequences, and
+  the run finishes with a scored report. Use this mode to exercise the
+  consequence path.
 
 ## Scripts
 
@@ -69,15 +71,17 @@ otherwise. Being explicit is clearer; the inference exists so CLI scripts run
 unchanged.
 
 A step that is not equipped/performed before its gate leaves its task pending, and
-the gate closes it as `Omitted` in evaluation mode. That omission is how you author
-"the participant forgot X".
+the gate closes it in evaluation mode — as `CompletedFailure` at the inspection
+gate, or untouched (never attempted) at the phase-1 gate. That omission is how you
+author "the participant forgot X".
 
 ### Phase-1 gate and the PPE group
 
 The `phase1` gate works **whether or not** every PPE was equipped:
 
-- If some PPE is still missing, the gate closes the group (marking the missing
-  tasks `Omitted`) and then teleports.
+- If some PPE is still missing, the gate closes the group (leaving the missing
+  tasks in their pending state — never attempted, no violation raised) and then
+  teleports.
 - If every PPE was equipped, the group has already completed on its own; the gate
   is a no-op and the simulator waits for the teleport that is already running.
 
@@ -98,7 +102,8 @@ edit only the `script`.
 Under `Tools/CliHarness/scenarios/` (all compatible with the default scenario):
 
 - **`eval_omission.json`** — omits the boots (PPE) and the damaged-mesh report,
-  completing everything else. Shows `TASK_OMITTED` at both gates with no visual
+  completing everything else. The boots stay never-attempted at the phase-1 gate;
+  the mesh report shows `TASK_FAILED` at the inspection gate. No visual
   consequence (neither omitted task has a consequence mapping).
 - **`eval_consequence.json`** — equips all PPE and completes the guardrail, toeboard
   and mesh report, but omits the lanyard connection (`connect_harness`). At the
@@ -108,7 +113,7 @@ Under `Tools/CliHarness/scenarios/` (all compatible with the default scenario):
 ## Triggering consequences
 
 In evaluation mode the inspection gate plays a visual/synchronous consequence for
-each **omitted task that has a `ConsequenceMapping`** on the scene's
+each **pending task that has a `ConsequenceMapping`** on the scene's
 `InspectionGateValidator`. To make a consequence fire, omit a task whose `actionId`
 is mapped.
 
@@ -116,7 +121,7 @@ The default scene maps exactly one: `connect_harness` (the lanyard) →
 `PlayerFallSimulation` blackout. So omitting the lanyard connection while completing
 the rest — what `eval_consequence.json` does — raises `ConsequenceStarted`/`Ended`
 plus a `CriticalSafetyFailure` ("Trabalhou desconectado"). Omitting a task with no
-mapping (e.g. the mesh report) is still recorded as `TASK_OMITTED` but plays no
+mapping (e.g. the mesh report) is still recorded as `TASK_FAILED` but plays no
 animation.
 
 ## Reading the results
@@ -126,7 +131,7 @@ The window and the `SessionSimulationResult` expose:
 - **status** — `Running`, `Completed`, `Failed`, or `Cancelled`, plus the current
   step, active group, and score.
 - **tasks** — every session task and its final state (`CompletedSuccess`,
-  `CompletedSuccessButUnsafe`, `Omitted`, …).
+  `CompletedSuccessButUnsafe`, `CompletedFailure`, `NotStarted`, …).
 - **transcript** — the ordered event stream (SessionStarted, PPE/action attempts,
   task/group lifecycle, score changes, violations, consequences).
 - **consequences** — the `ConsequenceStarted` entries that fired.

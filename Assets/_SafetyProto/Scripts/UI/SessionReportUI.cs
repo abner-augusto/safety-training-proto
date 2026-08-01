@@ -184,7 +184,6 @@ namespace SafetyProto.UI
                     TaskState.CompletedSuccess => full,
                     TaskState.CompletedSuccessButUnsafe => scoring.UnsafeEarnFor(sev),
                     TaskState.CompletedFailure => -scoring.BasePenaltyFor(sev),
-                    TaskState.Omitted => 0,
                     _ => 0
                 };
                 var row = Instantiate(taskRowPrefab, taskListParent);
@@ -241,12 +240,18 @@ namespace SafetyProto.UI
 
                 string name = t.TaskData.taskName;
 
+                // CompletedFailure covers both a timeout and a task the inspection gate
+                // closed because the participant never did it, and the state cannot tell
+                // them apart — so the message stays neutral about the cause. failureAdvice
+                // is written for the timeout case, omissionAdvice for the skipped one;
+                // prefer the former and fall back to the latter.
                 if (t.State == TaskState.CompletedFailure)
                 {
-                    string advice = !string.IsNullOrEmpty(t.TaskData.failureAdvice)
-                        ? t.TaskData.failureAdvice
-                        : $"Pratique identificar esta irregularidade mais rapidamente.";
-                    messages.Add($"{name}: Tempo esgotado. {advice}");
+                    string advice = FirstNonEmpty(
+                        t.TaskData.failureAdvice,
+                        t.TaskData.omissionAdvice,
+                        "Pratique identificar esta irregularidade mais rapidamente.");
+                    messages.Add($"{name}: Tarefa não concluída. {advice}");
                 }
                 else if (t.State == TaskState.CompletedSuccessButUnsafe)
                 {
@@ -255,17 +260,15 @@ namespace SafetyProto.UI
                         : "Sempre verifique seus equipamentos antes de agir.";
                     messages.Add($"{name}: Concluída sem EPIs completos. {advice}");
                 }
-                else if (t.State == TaskState.Omitted)
-                {
-                    string advice = !string.IsNullOrEmpty(t.TaskData.omissionAdvice)
-                        ? t.TaskData.omissionAdvice
-                        : t.TaskData.hintText;
-                    string suffix = string.IsNullOrEmpty(advice) ? string.Empty : $" {advice}";
-                    messages.Add($"{name}: Tarefa não realizada.{suffix}");
-                }
                 else if (t.State == TaskState.NotStarted || t.State == TaskState.InProgress)
                 {
-                    messages.Add($"{name}: Tarefa não concluída.");
+                    // Never attempted — the phase-advance gate closed the group with this
+                    // task still open. This is exactly what omissionAdvice is written for.
+                    string advice = FirstNonEmpty(
+                        t.TaskData.omissionAdvice,
+                        t.TaskData.hintText);
+                    string suffix = string.IsNullOrEmpty(advice) ? string.Empty : $" {advice}";
+                    messages.Add($"{name}: Tarefa não realizada.{suffix}");
                 }
 
                 if (t.HasFailedOnce && t.State == TaskState.CompletedSuccess)
@@ -295,6 +298,14 @@ namespace SafetyProto.UI
         }
 
         // ── Helpers ───────────────────────────────────────────────
+
+        /// <summary>First non-empty candidate, or empty when every candidate is blank.</summary>
+        private static string FirstNonEmpty(params string[] candidates)
+        {
+            for (int i = 0; i < candidates.Length; i++)
+                if (!string.IsNullOrEmpty(candidates[i])) return candidates[i];
+            return string.Empty;
+        }
 
         private int ComputeMaxScore(IReadOnlyList<RuntimeSafetyTask> tasks)
         {

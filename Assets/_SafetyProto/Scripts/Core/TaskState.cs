@@ -6,7 +6,9 @@ namespace SafetyProto.Core
     /// </summary>
     public enum TaskState
     {
-        /// <summary>The task has not yet been started.</summary>
+        /// <summary>The task has not yet been started. Also the terminal state of a
+        /// task the participant never attempted: the Evaluation phase-advance gate
+        /// closes its group without touching pending task states.</summary>
         NotStarted,
         /// <summary>The task is currently active and awaiting user action.</summary>
         InProgress,
@@ -15,10 +17,6 @@ namespace SafetyProto.Core
         /// <summary>The task was failed (e.g., by timeout).</summary>
         CompletedFailure,
         /// <summary>The task was completed, but without the correct PPE.</summary>
-        CompletedSuccessButUnsafe,
-        /// <summary>The task was never attempted and the session moved past it
-        /// (Evaluation mode: the participant advanced/finished with this task open).
-        /// Terminal, earns nothing; distinct from CompletedFailure (timeout).</summary>
-        Omitted
+        CompletedSuccessButUnsafe
     }
 }

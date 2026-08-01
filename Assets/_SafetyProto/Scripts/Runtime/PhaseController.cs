@@ -140,7 +140,7 @@ namespace SafetyProto.Runtime
             SetButtonsActive(SessionModeState.Current == SessionMode.Evaluation);
         }
 
-        /// <summary>Wire to the advance button OnClick. Evaluation mode only: applies order penalties, marks pending tasks omitted, shows popup, then teleports.</summary>
+        /// <summary>Wire to the advance button OnClick. Evaluation mode only: applies order penalties, closes the group leaving pending tasks untouched (never attempted), shows popup, then teleports.</summary>
         public void OnAdvanceClicked()
         {
             if (_advanceConsumed) { SafetyLog.Warning("[PhaseController] OnAdvanceClicked ignorado — já consumido.", this); return; }

@@ -241,8 +241,10 @@ enforces order and how it reports what the participant did *not* do.
   through phases behind a **phase-advance gate**: the participant must explicitly
   complete and confirm a phase, and the gate evaluates whether the tasks were
   done, done out of order (an order deviation carries a penalty), or left undone.
-  Pending tasks at phase end are marked omitted rather than silently dropped, so
-  the session log distinguishes *failed* from *never attempted*. The session
+  Pending tasks at phase end are closed explicitly rather than silently dropped:
+  the inspection gate marks them *failed*, while the phase-advance gate leaves
+  them untouched, so the session log distinguishes *failed* from *never
+  attempted*. The session
   summary carries a completion flag and the per-task/per-group outcome, which is
   what an evaluator reads afterward.
 

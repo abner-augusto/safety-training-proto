@@ -206,56 +206,15 @@ namespace SafetyProto.Domain.Tasks
         }
 
         /// <summary>
-        /// Evaluation-mode primitive used by both phase gates: closes every pending
-        /// task in the CURRENT group as <see cref="TaskState.Omitted"/>, raising one
-        /// TASK_OMITTED safety violation per task (0 points — omissions earn nothing
-        /// and charge nothing; the foregone points are the cost), then replays the
-        /// normal completion orchestration so GroupCompleted / next group / EndSession
-        /// fire exactly as a natural completion would. No-op when no group is active.
-        /// Returns the omitted tasks (callers drive consequences/UI from them).
+        /// Evaluation-mode primitive used by the inspection gate: closes every pending
+        /// task in the CURRENT group as <see cref="TaskState.CompletedFailure"/>, raising
+        /// one TASK_FAILED safety violation per task, then replays the normal completion
+        /// orchestration so GroupCompleted / next group / EndSession fire exactly as a
+        /// natural completion would. No-op when no group is active. Returns the failed
+        /// tasks (callers drive consequences/UI from them).
+        /// Contrast with <see cref="ForceCompleteCurrentGroup"/>, which closes the group
+        /// while leaving task states untouched (never attempted).
         /// </summary>
-        public IReadOnlyList<RuntimeSafetyTask> MarkPendingTasksOmitted()
-        {
-            var omitted = new List<RuntimeSafetyTask>();
-            var currentGroup = GetCurrentGroup();
-            if (currentGroup == null) return omitted;
-
-            for (int i = 0; i < _sessionTasks.Count; i++)
-            {
-                var t = _sessionTasks[i];
-                if (!ContainsByReference(currentGroup.tasks, t.TaskData)) continue;
-
-                if (t.State == TaskState.NotStarted || t.State == TaskState.InProgress)
-                {
-                    t.State = TaskState.Omitted;
-                    t.CompletionTime = _timer?.ElapsedSeconds ?? 0f;
-                    omitted.Add(t);
-
-                    _bus.Publish(new SafetyViolationEventArgs
-                    {
-                        ViolationCode = "TASK_OMITTED",
-                        Message = $"Tarefa omitida pelo participante: {t.taskName}",
-                        TaskId = t.id,
-                        GroupId = currentGroup.id,
-                        TaskName = t.taskName,
-                        GroupName = currentGroup.groupName
-                    });
-                }
-            }
-
-            _currentTask = null;
-            _currentTaskIndex = -1;
-
-            CheckGroupCompletion();
-
-            if (GetCurrentGroup() != null)
-            {
-                _ = WaitAndStartNextTaskAsync(_delayBetweenTasks);
-            }
-
-            return omitted;
-        }
-
         public IReadOnlyList<RuntimeSafetyTask> MarkPendingTasksFailed()
         {
             var failed = new List<RuntimeSafetyTask>();
@@ -302,6 +261,10 @@ namespace SafetyProto.Domain.Tasks
         /// Forces the current group to complete without changing individual task states.
         /// Tasks retain their current state (e.g. NotStarted). Used when the participant
         /// skips the group via the Phase 1 advance button.
+        /// Unlike the other closers, this one advances to the next group directly instead
+        /// of replaying the per-task orchestration. It leaves task states untouched by
+        /// design, so the group it just closed still holds pending tasks: StartNextTask()
+        /// would find one and re-focus it, stranding the session in a completed group.
         /// </summary>
         public void ForceCompleteCurrentGroup()
         {
@@ -311,10 +274,10 @@ namespace SafetyProto.Domain.Tasks
             _completedGroups.Add(currentGroup);
             _bus.Publish(new TaskGroupEventArgs(currentGroup, TaskGroupPhase.Completed));
 
-            if (GetCurrentGroup() != null)
-            {
-                _ = WaitAndStartNextTaskAsync(_delayBetweenTasks);
-            }
+            _currentTask = null;
+            _currentTaskIndex = -1;
+
+            StartNextGroup();
         }
 
         /// <summary>
