@@ -480,8 +480,7 @@ namespace SafetyProto.Networking.Dashboard
         {
             public readonly TcpClient Client;
             public readonly NetworkStream Stream;
-            public readonly BlockingCollection<byte[]> Outgoing =
-                new BlockingCollection<byte[]>(new ConcurrentQueue<byte[]>(), ClientQueueCapacity);
+            public readonly OutgoingMessageBuffer Outgoing = new OutgoingMessageBuffer(ClientQueueCapacity);
             public readonly CancellationTokenSource Cts = new();
             public readonly Thread SenderThread;
             public readonly string Path;
@@ -503,7 +502,8 @@ namespace SafetyProto.Networking.Dashboard
                 {
                     try
                     {
-                        foreach (var frame in Outgoing.GetConsumingEnumerable(Cts.Token))
+                        Outgoing.Wait(Cts.Token);
+                        while (Outgoing.TryDequeue(out var frame))
                         {
                             try
                             {
@@ -524,20 +524,13 @@ namespace SafetyProto.Networking.Dashboard
             public bool Enqueue(byte[] frame, bool droppable)
             {
                 if (frame == null || Cts.IsCancellationRequested) return false;
-                if (Outgoing.TryAdd(frame)) return true;
-                if (!droppable) return false;
-
-                if (Outgoing.TryTake(out _))
-                {
-                    return Outgoing.TryAdd(frame);
-                }
-                return false;
+                return Outgoing.TryEnqueue(frame, droppable);
             }
 
             public void Dispose()
             {
                 Cts.Cancel();
-                try { Outgoing.CompleteAdding(); } catch (InvalidOperationException) { }
+                Outgoing.Complete();
                 try { SenderThread?.Join(50); } catch { /* ignore */ }
                 try { Client.Close(); } catch { /* ignore */ }
                 Outgoing.Dispose();
