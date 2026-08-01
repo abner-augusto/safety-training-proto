@@ -237,7 +237,7 @@ namespace SafetyProto.Runtime.Safety
 
             if (FailedAttemptCount == 1)
             {
-                StartCoroutine(ExecuteConsequencesSequence(pendingTasks, currentGroup));
+                StartCoroutine(ExecuteConsequencesSequence(pendingTasks, currentGroup, includeFallback: true, emitViolations: true, onComplete: null));
             }
             else
             {
@@ -291,7 +291,10 @@ namespace SafetyProto.Runtime.Safety
 
         private IEnumerator ExecuteConsequencesSequence(
             List<RuntimeSafetyTask> pendingTasks,
-            ITaskGroup currentGroup)
+            ITaskGroup currentGroup,
+            bool includeFallback,
+            bool emitViolations,
+            Action onComplete)
         {
             _isProcessing = true;
 
@@ -314,19 +317,23 @@ namespace SafetyProto.Runtime.Safety
 
             foreach (var (task, mapping) in pendingMappings)
             {
-                // Emit safety violation for SessionLogger
-                SafetyEvents.RaiseSafetyViolation(new SafetyViolationEventArgs
+                if (_simulationCancellationRequested) yield break;
+                if (emitViolations)
                 {
-                    ViolationCode = mapping != null ? "GATE_FAILED" : "INSPECTION_INCOMPLETE",
-                    Message = $"Tentou iniciar sem corrigir: {mapping?.displayName ?? task.taskName}",
-                    TaskId = task.id,
-                    GroupId = currentGroup.id,
-                    TaskName = task.taskName,
-                    GroupName = currentGroup.groupName
-                });
+                    SafetyEvents.RaiseSafetyViolation(new SafetyViolationEventArgs
+                    {
+                        ViolationCode = mapping != null ? "GATE_FAILED" : "INSPECTION_INCOMPLETE",
+                        Message = $"Tentou iniciar sem corrigir: {mapping?.displayName ?? task.taskName}",
+                        TaskId = task.id,
+                        GroupId = currentGroup.id,
+                        TaskName = task.taskName,
+                        GroupName = currentGroup.groupName
+                    });
+                }
 
                 if (mapping == null)
                 {
+                    if (!includeFallback) continue;
                     // Fallback: generic warning + hintText
                     PlaySound(warningSound);
                     ShowConsequenceFeedback(task.taskName, task.TaskData?.hintText ?? task.taskName);
@@ -389,7 +396,10 @@ namespace SafetyProto.Runtime.Safety
             // B7: warn-and-continue. The gate no longer ends the session on failure — list the
             // still-pending tasks and let the player keep going to finish them. _isProcessing is
             // released only when the player presses "Continuar".
-            ShowPendingWarningAndContinue(pendingTasks);
+            if (onComplete != null)
+                onComplete();
+            else
+                ShowPendingWarningAndContinue(pendingTasks);
         }
 
         // B7: warning popup listing the remaining tasks, with a "Continuar" button that dismisses
@@ -442,86 +452,14 @@ namespace SafetyProto.Runtime.Safety
                 .ToList();
 
             if (mappedPending.Count > 0)
-                StartCoroutine(ExecuteEvaluationConsequences(mappedPending));
+                StartCoroutine(ExecuteConsequencesSequence(
+                    mappedPending,
+                    taskManager.GetCurrentGroup(),
+                    includeFallback: false,
+                    emitViolations: false,
+                    onComplete: FinalizeEvaluation));
             else
                 FinalizeEvaluation();
-        }
-
-        private IEnumerator ExecuteEvaluationConsequences(
-            List<RuntimeSafetyTask> mappedPending)
-        {
-            var pendingMappings = new List<(RuntimeSafetyTask task, ConsequenceMapping mapping)>();
-            foreach (var task in mappedPending)
-            {
-                var mapping = consequenceMappings
-                    .FirstOrDefault(m => string.Equals(m.taskActionId, task.ExpectedActionId,
-                        StringComparison.OrdinalIgnoreCase));
-                if (mapping != null)
-                    pendingMappings.Add((task, mapping));
-            }
-
-            pendingMappings.Sort((a, b) =>
-            {
-                if (a.mapping.consequenceType == ConsequenceType.PlayerFallSimulation) return 1;
-                if (b.mapping.consequenceType == ConsequenceType.PlayerFallSimulation) return -1;
-                return 0;
-            });
-
-            foreach (var (_, mapping) in pendingMappings)
-            {
-                if (_simulationCancellationRequested) yield break;
-                ConsequenceEvents.RaiseConsequenceStarted(new ConsequenceStartedEventArgs
-                {
-                    ConsequenceType = mapping.consequenceType,
-                    TargetObject = mapping.consequenceTarget,
-                    MappingId = mapping.taskActionId
-                });
-
-                bool feedbackHandledByConsequence = false;
-                switch (mapping.consequenceType)
-                {
-                    case ConsequenceType.ObjectFall:
-                        yield return ExecuteObjectFall(mapping);
-                        break;
-
-                    case ConsequenceType.PlayerFallSimulation:
-                        if (mapping.blackoutOnly)
-                        {
-                            yield return ExecutePlayerFallSimulation(mapping);
-                            feedbackHandledByConsequence = true;
-                        }
-                        else if (fallController != null)
-                            yield return fallController.TriggerControlledFall();
-                        else
-                        {
-                            yield return ExecutePlayerFallSimulation(mapping);
-                            feedbackHandledByConsequence = true;
-                        }
-                        SafetyEvents.RaiseCriticalSafetyFailure(new CriticalSafetyFailureEventArgs
-                        {
-                            Reason = $"Trabalhou desconectado: {mapping.displayName}",
-                            ViolationCount = 1,
-                            WindowSeconds = 0f
-                        });
-                        break;
-
-                    case ConsequenceType.VisualAlert:
-                        yield return ExecuteVisualAlert(mapping);
-                        break;
-                }
-
-                PlaySound(mapping.consequenceSound != null ? mapping.consequenceSound : warningSound);
-                if (!feedbackHandledByConsequence)
-                    ShowConsequenceFeedback(mapping.displayName, mapping.feedbackMessage);
-                ConsequenceEvents.RaiseConsequenceEnded();
-
-                yield return new WaitForSeconds(delayBetweenConsequences);
-            }
-
-            yield return new WaitForSeconds(delayAfterAllConsequences);
-            HideConsequenceFeedback();
-
-            FinalizeEvaluation();
         }
 
         private void FinalizeEvaluation()
