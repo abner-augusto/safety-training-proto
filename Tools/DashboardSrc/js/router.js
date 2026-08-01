@@ -52,7 +52,7 @@
       const seen = new Set();
 
       snapshot.forEach((task, idx) => {
-         const id = task.taskId ?? task.taskName;
+        const id = task.taskId ?? task.taskName;
         if (!id) return;
 
         seen.add(id);

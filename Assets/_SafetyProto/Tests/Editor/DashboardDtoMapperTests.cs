@@ -71,6 +71,8 @@ namespace SafetyProto.Tests.Editor
         {
             var scoring = ScoringConfig.Default;
             var task = _builder.Task("weld_pipe", "action_weld", PPEType.Helmet);
+            task.id = "equip_boots";
+            task.taskName = "Equipar Botina de Segurança";
             task.riskLevel = RiskLevel.Substantial;
             var group = _builder.Group("G", TaskExecutionModeShared.Sequential, task);
             var groups = new ITaskGroup[] { group };
@@ -83,8 +85,8 @@ namespace SafetyProto.Tests.Editor
 
             var dto = DashboardDtoMapper.BuildTaskDto(args, "completed", groups, scoring);
 
-            Assert.AreEqual("weld_pipe", dto.taskId);
-            Assert.AreEqual("weld_pipe", dto.taskName);
+            Assert.AreEqual("equip_boots", dto.taskId);
+            Assert.AreEqual("Equipar Botina de Segurança", dto.taskName);
             Assert.AreEqual("completed", dto.status);
             Assert.AreEqual("S1", dto.sessionId);
             Assert.AreEqual(1234L, dto.timestampMs);

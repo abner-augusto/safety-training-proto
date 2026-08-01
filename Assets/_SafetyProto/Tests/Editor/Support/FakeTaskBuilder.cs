@@ -10,6 +10,7 @@ namespace SafetyProto.Tests.Editor.Support
         {
             return new FakeSafetyTask
             {
+                id = taskName,
                 taskName = taskName,
                 ExpectedActionId = actionId,
                 requiredPPE = new List<PPEType>(requiredPpe)
@@ -28,7 +29,7 @@ namespace SafetyProto.Tests.Editor.Support
 
         public sealed class FakeSafetyTask : ISafetyTask
         {
-            public string id => taskName;
+            public string id { get; set; } = string.Empty;
             public string taskName { get; set; } = string.Empty;
             public string taskDescription { get; set; } = string.Empty;
 
