@@ -16,7 +16,6 @@ namespace SafetyProto.UI
         [Header("Bar Colors")]
         [SerializeField] private Color successColor  = new Color(0.153f, 0.682f, 0.376f); // #27AE60
         [SerializeField] private Color unsafeColor   = new Color(0.953f, 0.612f, 0.071f); // #F39C12
-        [SerializeField] private Color failureColor  = new Color(0.906f, 0.298f, 0.235f); // #E74C3C
         [SerializeField] private Color notTriedColor = new Color(0.365f, 0.427f, 0.494f); // #5D6D7E
 
         public void Setup(int order, RuntimeSafetyTask runtimeTask, int fullPoints, int earnedPoints)
@@ -29,20 +28,19 @@ namespace SafetyProto.UI
             progressBarFill.fillAmount = fill;
             progressBarFill.color = barColor;
 
-            pointsText.text = earnedPoints > 0 ? $"+{earnedPoints} pts"
-                            : earnedPoints < 0 ? $"{earnedPoints} pts"
-                            : "0 pts";
+            pointsText.text = earnedPoints > 0 ? $"+{earnedPoints} pts" : "0 pts";
             pointsText.color = barColor;
         }
 
+        // No red tier: nothing on this report subtracts points, so a row is either earned
+        // (green), earned-but-unsafe (amber), or not performed (grey).
         private Color GetBarColor(TaskState state)
         {
             return state switch
             {
-                TaskState.CompletedSuccess        => successColor,
+                TaskState.CompletedSuccess          => successColor,
                 TaskState.CompletedSuccessButUnsafe => unsafeColor,
-                TaskState.CompletedFailure        => failureColor,
-                _                                 => notTriedColor
+                _                                   => notTriedColor
             };
         }
     }

@@ -41,7 +41,6 @@ namespace SafetyProto.UI
 
                 EventBus.Instance.onTaskStarted.AddListener(OnTaskStarted);
                 EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
-                EventBus.Instance.onTaskTimeout.AddListener(OnTaskTimeout);
 
                 EventBus.Instance.onScoreChanged.AddListener(OnScoreChanged);
 
@@ -69,7 +68,6 @@ namespace SafetyProto.UI
 
                 EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStarted);
                 EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
-                EventBus.Instance.onTaskTimeout.RemoveListener(OnTaskTimeout);
 
                 EventBus.Instance.onScoreChanged.RemoveListener(OnScoreChanged);
 
@@ -139,12 +137,6 @@ namespace SafetyProto.UI
         {
             string taskName = args.Task != null ? args.Task.taskName : "<Tarefa sem nome>";
             AppendLog($"[Tarefa] Concluída '{taskName}'");
-        }
-
-        private void OnTaskTimeout(TaskEventArgs args)
-        {
-            string taskName = args.Task != null ? args.Task.taskName : "<Tarefa sem nome>";
-            AppendLog($"[Tarefa] TEMPO ESGOTADO '{taskName}'");
         }
 
         private void OnScoreChanged(ScoreChangedEventArgs args)
@@ -222,7 +214,7 @@ namespace SafetyProto.UI
                 "NO_ACTIVE_GROUP" => "Nenhum grupo de tarefas ativo",
                 "WRONG_ACTION" => "Ação incorreta",
                 "PPE_MISSING" => "EPI obrigatório ausente",
-                "TASK_OMITTED" => "Tarefa omitida",
+                "TASK_NOT_PERFORMED" => "Tarefa não realizada",
                 "GATE_FAILED" => "Inspeção não aprovada",
                 _ => $"Violação não identificada ({code})"
             };

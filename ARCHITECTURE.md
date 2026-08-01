@@ -222,10 +222,17 @@ gap preserves serialized-asset compatibility for the values above it.
 `ScoreService` is a pure C# class in `Domain/Scoring/` with no engine
 dependencies; it tracks the running score and raises `ScoreChanged`.
 `ScoreManagerAdapter` (in `Runtime/Task/`) bridges gameplay events
-(`TaskCompleted`, `TaskTimeout`) to `ScoreService` calls. Rule evaluation for
-scoring — success points, penalties, severity weighting — lives in
+(`TaskCompleted`) to `ScoreService` calls. Rule evaluation for scoring lives in
 `ScoreRuleEngineCore`, so the economy of the game is engine-independent and
 testable without Unity.
+
+No task outcome subtracts points. A task is worth what its risk level grades it
+at; completing it without the required PPE earns a reduced share, and not doing
+it at all earns nothing. The risk weighting therefore does the work a penalty
+tier would: skipping an Intolerable task forfeits more than skipping a Tolerable
+one, without the report having to show a participant a negative number. The only
+subtraction left in the session is the order-deviation charge applied by the
+phase-advance gate.
 
 ---
 
@@ -241,12 +248,12 @@ enforces order and how it reports what the participant did *not* do.
   through phases behind a **phase-advance gate**: the participant must explicitly
   complete and confirm a phase, and the gate evaluates whether the tasks were
   done, done out of order (an order deviation carries a penalty), or left undone.
-  Pending tasks at phase end are closed explicitly rather than silently dropped:
-  the inspection gate marks them *failed*, while the phase-advance gate leaves
-  them untouched, so the session log distinguishes *failed* from *never
-  attempted*. The session
-  summary carries a completion flag and the per-task/per-group outcome, which is
-  what an evaluator reads afterward.
+  Both gates run the same closer: pending tasks at phase end are marked
+  `NotPerformed` and each raises a `TASK_NOT_PERFORMED` violation, so a skipped
+  PPE leaves the same trace as a skipped inspection step. The session summary
+  carries a completion flag and a per-task outcome block — id, group, risk
+  grading and final state for every task — which is what an evaluator reads
+  afterward and what makes adherence per task analysable across sessions.
 
 Both modes run the same `TaskManagerCore` and the same rule engine; the mode
 changes gating and reporting, not the underlying orchestration. The evaluator

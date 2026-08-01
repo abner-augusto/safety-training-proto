@@ -47,7 +47,7 @@ namespace SafetyProto.UI
         {
             TaskState.CompletedSuccess,
             TaskState.CompletedSuccessButUnsafe,
-            TaskState.CompletedFailure,
+            TaskState.NotPerformed,
             TaskState.NotStarted,
         };
 

@@ -25,8 +25,8 @@ namespace SafetyProto.Domain.Dashboard
                 case TaskState.CompletedSuccess:
                 case TaskState.CompletedSuccessButUnsafe:
                     return "completed";
-                case TaskState.CompletedFailure:
-                    return "failed";
+                case TaskState.NotPerformed:
+                    return "not_performed";
                 default:
                     return "pending";
             }
@@ -88,7 +88,6 @@ namespace SafetyProto.Domain.Dashboard
                 expectedAction = includeDetails ? task.ResolveExpectedActionId() : string.Empty,
                 requiredPpe = required,
                 successPoints = scoring.PointsFor(task.riskLevel),
-                failurePenalty = scoring.BasePenaltyFor(task.riskLevel),
                 ppePenalty = scoring.PointsFor(task.riskLevel) - scoring.UnsafeEarnFor(task.riskLevel)
             };
         }
@@ -117,7 +116,6 @@ namespace SafetyProto.Domain.Dashboard
                 expectedAction = meta.expectedAction,
                 requiredPpe = meta.requiredPpe,
                 successPoints = scoring.PointsFor(riskLevel),
-                failurePenalty = scoring.BasePenaltyFor(riskLevel),
                 ppePenalty = scoring.PointsFor(riskLevel) - scoring.UnsafeEarnFor(riskLevel),
                 status = status,
                 timestampMs = args.TimestampMs
@@ -157,7 +155,6 @@ namespace SafetyProto.Domain.Dashboard
         public string expectedAction;
         public string[] requiredPpe;
         public int successPoints;
-        public int failurePenalty;
         public int ppePenalty;
 
         public static TaskMetadata Empty => new TaskMetadata
@@ -170,7 +167,6 @@ namespace SafetyProto.Domain.Dashboard
             expectedAction = string.Empty,
             requiredPpe = Array.Empty<string>(),
             successPoints = 0,
-            failurePenalty = 0,
             ppePenalty = 0
         };
     }

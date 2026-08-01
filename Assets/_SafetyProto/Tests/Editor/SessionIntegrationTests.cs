@@ -265,8 +265,9 @@ namespace SafetyProto.Tests.Editor
             h.Bus.AssertPublishCount<SessionEndedEventArgs>(1);
             h.Bus.AssertPublishCount<SessionCompletedEventArgs>(1);
 
-            // Unfinished tasks were force-failed by the timeout cascade.
-            Assert.IsTrue(h.SessionTasks.All(t => t.State == TaskState.CompletedFailure));
+            // Unfinished tasks were closed by the timeout cascade. Running out of time and
+            // skipping the task are the same outcome here — see TaskState.NotPerformed.
+            Assert.IsTrue(h.SessionTasks.All(t => t.State == TaskState.NotPerformed));
 
             var summary = h.TaskManager.LastSessionSummary;
             Assert.IsTrue(summary.HasValue);

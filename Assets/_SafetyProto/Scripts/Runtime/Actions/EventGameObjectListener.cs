@@ -18,7 +18,6 @@ namespace SafetyProto.Runtime.Actions
             SessionEnded,
             TaskStarted,
             TaskCompleted,
-            TaskTimeout,
             ScoreChanged,
             PpeStateChanged,
             ActionAttempt,
@@ -37,7 +36,6 @@ namespace SafetyProto.Runtime.Actions
         private UnityEngine.Events.UnityAction<SessionEndedEventArgs>     _onSessionEnded;
         private UnityEngine.Events.UnityAction<TaskEventArgs>             _onTaskStarted;
         private UnityEngine.Events.UnityAction<TaskEventArgs>             _onTaskCompleted;
-        private UnityEngine.Events.UnityAction<TaskEventArgs>             _onTaskTimeout;
         private UnityEngine.Events.UnityAction<ScoreChangedEventArgs>     _onScoreChanged;
         private UnityEngine.Events.UnityAction<PPEStateChangedEventArgs>  _onPpeStateChanged;
         private UnityEngine.Events.UnityAction<ActionAttemptedEvent>      _onActionAttempt;
@@ -118,10 +116,6 @@ namespace SafetyProto.Runtime.Actions
                     _onTaskCompleted = _ => Toggle();
                     EventBus.Instance.onTaskCompleted.AddListener(_onTaskCompleted);
                     break;
-                case EventType.TaskTimeout:
-                    _onTaskTimeout = _ => Toggle();
-                    EventBus.Instance.onTaskTimeout.AddListener(_onTaskTimeout);
-                    break;
                 case EventType.ScoreChanged:
                     _onScoreChanged = _ => Toggle();
                     EventBus.Instance.onScoreChanged.AddListener(_onScoreChanged);
@@ -150,7 +144,6 @@ namespace SafetyProto.Runtime.Actions
             if (_onSessionEnded    != null) EventBus.Instance.onSessionEnded.RemoveListener(_onSessionEnded);
             if (_onTaskStarted     != null) EventBus.Instance.onTaskStarted.RemoveListener(_onTaskStarted);
             if (_onTaskCompleted   != null) EventBus.Instance.onTaskCompleted.RemoveListener(_onTaskCompleted);
-            if (_onTaskTimeout     != null) EventBus.Instance.onTaskTimeout.RemoveListener(_onTaskTimeout);
             if (_onScoreChanged    != null) EventBus.Instance.onScoreChanged.RemoveListener(_onScoreChanged);
             if (_onPpeStateChanged != null) EventBus.Instance.onPpeStateChanged.RemoveListener(_onPpeStateChanged);
             if (_onActionAttempt   != null) EventBus.Instance.onActionAttempt.RemoveListener(_onActionAttempt);

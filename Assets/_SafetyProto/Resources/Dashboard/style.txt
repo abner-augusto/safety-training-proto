@@ -334,8 +334,8 @@
 
     .tr.completed .g, .tr.completed .pt { color: var(--green); }
     .tr.completed .nm { color: var(--text-muted); font-weight: 400; }
-    .tr.failed .g, .tr.failed .pt { color: var(--red); }
-    .tr.failed .nm { color: var(--text-muted); }
+    .tr.not_performed .g, .tr.not_performed .pt { color: var(--red); }
+    .tr.not_performed .nm { color: var(--text-muted); }
     .tr.pending .g { color: var(--text-dim); }
     .tr.active { background: var(--accent-weak); outline: 1px solid var(--accent); outline-offset: -1px; }
     .tr.active .g, .tr.active .pt { color: var(--accent); }

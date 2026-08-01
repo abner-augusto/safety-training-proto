@@ -67,7 +67,6 @@
           expectedAction:existing.expectedAction?? '',
           requiredPpe:   existing.requiredPpe   ?? [],
           successPoints: existing.successPoints ?? 0,
-          failurePenalty:existing.failurePenalty?? 0,
           ppePenalty:    existing.ppePenalty    ?? 0,
           status:        task.status       ?? existing.status        ?? 'pending',
         });
@@ -127,7 +126,6 @@
         expectedAction:p.expectedAction    ?? existing.expectedAction?? '',
         requiredPpe:   p.requiredPpe       ?? existing.requiredPpe   ?? [],
         successPoints: p.successPoints     ?? existing.successPoints ?? 0,
-        failurePenalty:p.failurePenalty    ?? existing.failurePenalty?? 0,
         ppePenalty:    p.ppePenalty        ?? existing.ppePenalty    ?? 0,
         status,
       });
@@ -136,7 +134,8 @@
 
     on('TaskStarted',   p => { upsertTask(p, 'active');    addLog(`${t('logStarted')}: ${p.taskName}`); });
     on('TaskCompleted', p => { upsertTask(p, 'completed'); addLog(`${t('logCompleted')}: ${p.taskName}`, 'success'); });
-    on('TaskTimeout',   p => { upsertTask(p, 'failed');    addLog(`${t('logTimeout')}: ${p.taskName}`, 'violation'); });
+    // Não há evento para "não realizada": a tarefa fica pendente no manifesto até o portão
+    // fechar o grupo, e é a violação TASK_NOT_PERFORMED que registra o desfecho no log.
 
     /* ── Group events ── */
     on('GroupStarted',   p => addLog(`${t('logGroupStarted')}: ${p.groupName}`));

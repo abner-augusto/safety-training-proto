@@ -8,7 +8,7 @@
     /**
      * tasks: Map<taskId, { id, name, description, groupName, order,
      *   executionMode, expectedAction, requiredPpe[], successPoints,
-     *   failurePenalty, ppePenalty, status }>
+     *   ppePenalty, status }>
      */
     export const tasks      = new Map();
     export const wornPpe = new Set();     // ppeType com isWearing=true

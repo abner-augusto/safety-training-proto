@@ -102,7 +102,6 @@ namespace SafetyProto.Domain.Dashboard
             switch (args.Phase)
             {
                 case TaskPhase.Started: eventType = "TaskStarted"; status = "active"; break;
-                case TaskPhase.Timeout: eventType = "TaskTimeout"; status = "failed"; break;
                 case TaskPhase.Completed:
                 default: eventType = "TaskCompleted"; status = "completed"; break;
             }

@@ -64,7 +64,7 @@ namespace SafetyProto.UI
                 return;
 
             bool ppeMissing = newState == TaskState.CompletedSuccessButUnsafe;
-            bool failedOnce = newState == TaskState.CompletedFailure;
+            bool notPerformed = newState == TaskState.NotPerformed;
 
             if (ppeMissingIcon != null)
             {
@@ -75,7 +75,7 @@ namespace SafetyProto.UI
             if (failedOnceIcon != null)
             {
                 failedOnceIcon.sprite = failedOnceSprite;
-                failedOnceIcon.gameObject.SetActive(failedOnce);
+                failedOnceIcon.gameObject.SetActive(notPerformed);
             }
 
             switch (newState)
@@ -100,7 +100,7 @@ namespace SafetyProto.UI
                     backgroundImage.color = normalColor;
                     break;
 
-                case TaskState.CompletedFailure:
+                case TaskState.NotPerformed:
                     stateIcon.sprite = failureSprite;
                     backgroundImage.color = normalColor;
                     break;

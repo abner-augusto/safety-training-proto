@@ -13,8 +13,6 @@ namespace SafetyProto.UI
         [SerializeField] private PPESnapSlot[] snapSlots;
 
         [Header("Títulos dos popups")]
-        [SerializeField] private string hintTitle    = "Dica";
-        [SerializeField] private string failureTitle = "Atenção";
         [SerializeField] private string ppeTitle = "EPI Incorreto";
         [SerializeField] private string wrongOrderTitle = "Ordem Incorreta";
         [Tooltip("Título do alerta quando a tarefa é recusada porque o pré-requisito do grupo (ex.: talabarte ancorado) ainda está pendente.")]
@@ -34,7 +32,6 @@ namespace SafetyProto.UI
 
             if (!this.IsEventBusReady()) return;
 
-            EventBus.Instance.onTaskTimeout.AddListener(OnTaskTimeout);
             EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
             EventBus.Instance.onSafetyViolation.AddListener(OnSafetyViolation);
 
@@ -50,7 +47,6 @@ namespace SafetyProto.UI
         {
             if (EventBus.Instance != null)
             {
-                EventBus.Instance.onTaskTimeout.RemoveListener(OnTaskTimeout);
                 EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
                 EventBus.Instance.onSafetyViolation.RemoveListener(OnSafetyViolation);
             }
@@ -63,30 +59,18 @@ namespace SafetyProto.UI
                 }
         }
 
-        private void OnTaskTimeout(TaskEventArgs args)
-        {
-            var text = args.Task?.hintText;
-            if (string.IsNullOrWhiteSpace(text)) return;
-            PopupService.Instance?.ShowNormal(hintTitle, text, autoCloseSeconds);
-        }
-
+        // Only a completion reaches here. A task the participant never carried out is closed
+        // by a gate without a TaskCompleted event, and its advice belongs on the final report
+        // (see SessionReportUI) — not as a popup fired while the gate is teleporting them.
         private void OnTaskCompleted(TaskEventArgs args)
         {
             if (args.RuntimeTask == null) return;
 
-            switch (args.RuntimeTask.State)
+            if (args.RuntimeTask.State == TaskState.CompletedSuccessButUnsafe)
             {
-                case TaskState.CompletedSuccessButUnsafe:
-                    var ppeText = args.Task?.ppeAdvice;
-                    if (!string.IsNullOrWhiteSpace(ppeText))
-                        PopupService.Instance?.ShowWarning(ppeTitle, ppeText, autoCloseSeconds);
-                    break;
-
-                case TaskState.CompletedFailure:
-                    var failText = args.Task?.failureAdvice;
-                    if (!string.IsNullOrWhiteSpace(failText))
-                        PopupService.Instance?.ShowWarning(failureTitle, failText, autoCloseSeconds);
-                    break;
+                var ppeText = args.Task?.ppeAdvice;
+                if (!string.IsNullOrWhiteSpace(ppeText))
+                    PopupService.Instance?.ShowWarning(ppeTitle, ppeText, autoCloseSeconds);
             }
         }
 

@@ -58,9 +58,9 @@ namespace SafetyProto.Domain.Dashboard
         public string expectedAction;
         public string[] requiredPpe;
         public int successPoints;
-        public int failurePenalty;
         // Points lost to an unsafe (missing-PPE) completion, derived from the scenario's
-        // ScoringConfig - no longer an authored per-task field.
+        // ScoringConfig - no longer an authored per-task field. There is no counterpart for
+        // a task left undone: that outcome forfeits successPoints and subtracts nothing.
         public int ppePenalty;
         public string status;
         public long timestampMs;

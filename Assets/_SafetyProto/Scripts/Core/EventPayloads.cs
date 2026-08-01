@@ -12,8 +12,7 @@ namespace SafetyProto.Core
     public enum TaskPhase
     {
         Started,
-        Completed,
-        Timeout
+        Completed
     }
 
     [System.Serializable]
@@ -39,7 +38,7 @@ namespace SafetyProto.Core
     }
 
     [System.Serializable]
-    public struct TaskEventArgs // Used for TaskStarted, TaskCompleted, TaskTimeout
+    public struct TaskEventArgs // Used for TaskStarted, TaskCompleted
     {
         public string SessionId;
         public string PlayerId;
@@ -199,20 +198,26 @@ namespace SafetyProto.Core
         public int totalTasks;
         public int orderViolationCount;
 
+        /// <summary>
+        /// Final outcome of every task in the session, in authoring order. Lets the session
+        /// log write a per-task block in its summary, so adherence per task (how many
+        /// participants skipped the boots) is readable as a table instead of requiring a
+        /// replay of each log's event stream. Never null once published by the domain;
+        /// empty on payloads built by callers that do not own the task list.
+        /// </summary>
+        public TaskOutcome[] taskOutcomes;
+
         public SessionCompletedEventArgs(float totalElapsedTime, int totalScore, int tasksCompleted, int totalTasks)
+            : this(totalElapsedTime, totalScore, tasksCompleted, totalTasks, 0, System.Array.Empty<TaskOutcome>())
         {
-            SessionId = string.Empty;
-            PlayerId = string.Empty;
-            ScenarioId = string.Empty;
-            TimestampMs = 0L;
-            this.totalElapsedTime = totalElapsedTime;
-            this.totalScore = totalScore;
-            this.tasksCompleted = tasksCompleted;
-            this.totalTasks = totalTasks;
-            orderViolationCount = 0;
         }
 
         public SessionCompletedEventArgs(float totalElapsedTime, int totalScore, int tasksCompleted, int totalTasks, int orderViolationCount)
+            : this(totalElapsedTime, totalScore, tasksCompleted, totalTasks, orderViolationCount, System.Array.Empty<TaskOutcome>())
+        {
+        }
+
+        public SessionCompletedEventArgs(float totalElapsedTime, int totalScore, int tasksCompleted, int totalTasks, int orderViolationCount, TaskOutcome[] taskOutcomes)
         {
             SessionId = string.Empty;
             PlayerId = string.Empty;
@@ -223,7 +228,28 @@ namespace SafetyProto.Core
             this.tasksCompleted = tasksCompleted;
             this.totalTasks = totalTasks;
             this.orderViolationCount = orderViolationCount;
+            this.taskOutcomes = taskOutcomes ?? System.Array.Empty<TaskOutcome>();
         }
+    }
+
+    /// <summary>
+    /// How a single task ended, with the risk grading it carried at the time. The grades
+    /// travel with the outcome on purpose: a session log stays self-describing even if the
+    /// scenario's risk matrix is regraded afterwards, so an old log always shows the
+    /// weighting that was actually in force when the participant ran it.
+    /// </summary>
+    [System.Serializable]
+    public struct TaskOutcome
+    {
+        public string TaskId;
+        public string TaskName;
+        public string GroupId;
+        public string GroupName;
+        public TaskState State;
+        public RiskAssessment Risk;
+
+        /// <summary>Seconds into the session when the task reached its terminal state.</summary>
+        public float CompletionTime;
     }
 
     [System.Serializable]

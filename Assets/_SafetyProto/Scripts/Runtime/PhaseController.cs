@@ -140,7 +140,7 @@ namespace SafetyProto.Runtime
             SetButtonsActive(SessionModeState.Current == SessionMode.Evaluation);
         }
 
-        /// <summary>Wire to the advance button OnClick. Evaluation mode only: applies order penalties, closes the group leaving pending tasks untouched (never attempted), shows popup, then teleports.</summary>
+        /// <summary>Wire to the advance button OnClick. Evaluation mode only: applies order penalties, closes the group marking any PPE the participant skipped as not performed, shows popup, then teleports.</summary>
         public void OnAdvanceClicked()
         {
             if (_advanceConsumed) { SafetyLog.Warning("[PhaseController] OnAdvanceClicked ignorado — já consumido.", this); return; }
@@ -167,8 +167,10 @@ namespace SafetyProto.Runtime
             SetButtonsActive(false);
 
             ApplyOrderPenaltyIfDeviated(currentGroup.id, currentGroup.groupName);
-            taskManager.ForceCompleteCurrentGroup();
-            SafetyLog.Info("[PhaseController] Grupo de EPIs fechado.", this);
+            var notPerformed = taskManager.CloseCurrentGroup();
+            SafetyLog.Info(notPerformed.Count == 0
+                ? "[PhaseController] Grupo de EPIs fechado."
+                : $"[PhaseController] Grupo de EPIs fechado com {notPerformed.Count} EPI(s) não equipado(s).", this);
 
             if (_simulationAutoConfirm)
             {

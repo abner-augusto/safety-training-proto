@@ -149,7 +149,7 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
-        public void TaskCompleted_FailureState_NoPointsAdded()
+        public void TaskCompleted_NotPerformedState_NoPointsAdded()
         {
             var task = _builder.Task("t1", "action_a");
             task.riskLevel = RiskLevel.Moderate;
@@ -159,7 +159,7 @@ namespace SafetyProto.Tests.Editor
 
             var runtimeTask = new RuntimeSafetyTask(task)
             {
-                State = TaskState.CompletedFailure
+                State = TaskState.NotPerformed
             };
 
             _bus.Publish(new TaskEventArgs(task, runtimeTask, TaskPhase.Completed));
@@ -167,34 +167,9 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual(0, _score.CurrentScore);
         }
 
-        [Test]
-        public void TaskTimeout_Minor_SubtractsMinorBasePenalty()
-        {
-            var task = _builder.Task("t1", "action_a");
-            task.riskLevel = RiskLevel.Tolerable;
-
-            _core = new ScoreRuleEngineCore(_bus, _score, config: ScoringConfig.Default);
-            _core.Subscribe();
-
-            _bus.Publish(new TaskEventArgs(task, null, TaskPhase.Timeout));
-
-            Assert.AreEqual(-30, _score.CurrentScore);
-        }
-
-        [Test]
-        public void TaskTimeout_Critical_SubtractsCriticalBasePenalty()
-        {
-            var task = _builder.Task("t1", "action_a");
-            task.riskLevel = RiskLevel.Substantial;
-
-            _core = new ScoreRuleEngineCore(_bus, _score, config: ScoringConfig.Default);
-            _core.Subscribe();
-
-            _bus.Publish(new TaskEventArgs(task, null, TaskPhase.Timeout));
-
-            Assert.AreEqual(-100, _score.CurrentScore);
-        }
-
+        // No test for a task-level penalty: this engine has no path that subtracts points from
+        // a task. Not doing one forfeits what it was worth and costs nothing beyond that, so a
+        // higher-risk task already carries a heavier consequence through what it stops earning.
         [Test]
         public void TaskCompleted_NullTask_NoChange()
         {
@@ -202,17 +177,6 @@ namespace SafetyProto.Tests.Editor
             _core.Subscribe();
 
             _bus.Publish(new TaskEventArgs(null!, null, TaskPhase.Completed));
-
-            Assert.AreEqual(0, _score.CurrentScore);
-        }
-
-        [Test]
-        public void TaskTimeout_NullTask_NoChange()
-        {
-            _core = new ScoreRuleEngineCore(_bus, _score, config: ScoringConfig.Default);
-            _core.Subscribe();
-
-            _bus.Publish(new TaskEventArgs(null!, null, TaskPhase.Timeout));
 
             Assert.AreEqual(0, _score.CurrentScore);
         }

@@ -179,11 +179,13 @@ namespace SafetyProto.UI
                 var t = tasks[i];
                 var sev = t.TaskData?.riskLevel ?? RiskAssessment.Default.Level;
                 int full = scoring.PointsFor(sev);
+                // Not doing a task costs nothing but the points it would have earned. The
+                // weighting still shows through: a task graded higher on the risk matrix is
+                // worth more, so skipping it forfeits more.
                 int earned = t.State switch
                 {
                     TaskState.CompletedSuccess => full,
                     TaskState.CompletedSuccessButUnsafe => scoring.UnsafeEarnFor(sev),
-                    TaskState.CompletedFailure => -scoring.BasePenaltyFor(sev),
                     _ => 0
                 };
                 var row = Instantiate(taskRowPrefab, taskListParent);
@@ -240,42 +242,26 @@ namespace SafetyProto.UI
 
                 string name = t.TaskData.taskName;
 
-                // CompletedFailure covers both a timeout and a task the inspection gate
-                // closed because the participant never did it, and the state cannot tell
-                // them apart — so the message stays neutral about the cause. failureAdvice
-                // is written for the timeout case, omissionAdvice for the skipped one;
-                // prefer the former and fall back to the latter.
-                if (t.State == TaskState.CompletedFailure)
-                {
-                    string advice = FirstNonEmpty(
-                        t.TaskData.failureAdvice,
-                        t.TaskData.omissionAdvice,
-                        "Pratique identificar esta irregularidade mais rapidamente.");
-                    messages.Add($"{name}: Tarefa não concluída. {advice}");
-                }
-                else if (t.State == TaskState.CompletedSuccessButUnsafe)
+                if (t.State == TaskState.CompletedSuccessButUnsafe)
                 {
                     string advice = !string.IsNullOrEmpty(t.TaskData.ppeAdvice)
                         ? t.TaskData.ppeAdvice
                         : "Sempre verifique seus equipamentos antes de agir.";
                     messages.Add($"{name}: Concluída sem EPIs completos. {advice}");
                 }
-                else if (t.State == TaskState.NotStarted || t.State == TaskState.InProgress)
+                else if (t.State != TaskState.CompletedSuccess)
                 {
-                    // Never attempted — the phase-advance gate closed the group with this
-                    // task still open. This is exactly what omissionAdvice is written for.
+                    // NotPerformed, or still open because the report was built before a gate
+                    // closed the group. Either way the participant did not carry the task
+                    // out, which is what omissionAdvice — the NR-quoting text — is written
+                    // for; failureAdvice survives as a fallback for scenarios authored
+                    // before omissionAdvice existed.
                     string advice = FirstNonEmpty(
                         t.TaskData.omissionAdvice,
+                        t.TaskData.failureAdvice,
                         t.TaskData.hintText);
                     string suffix = string.IsNullOrEmpty(advice) ? string.Empty : $" {advice}";
                     messages.Add($"{name}: Tarefa não realizada.{suffix}");
-                }
-
-                if (t.HasFailedOnce && t.State == TaskState.CompletedSuccess)
-                {
-                    string hint = !string.IsNullOrEmpty(t.TaskData.hintText) ? t.TaskData.hintText : "";
-                    string hintSuffix = !string.IsNullOrEmpty(hint) ? $" Revise: {hint}" : "";
-                    messages.Add($"{name}: Necessitou mais de uma tentativa.{hintSuffix}");
                 }
 
                 if (t.HasMissedPPEOnce && t.State == TaskState.CompletedSuccess)

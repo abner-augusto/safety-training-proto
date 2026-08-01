@@ -56,7 +56,6 @@ namespace SafetyProto.UI
             EventBus.Instance.onGroupStarted.AddListener(OnGroupStarted);
             EventBus.Instance.onTaskStarted.AddListener(OnTaskStarted);
             EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
-            EventBus.Instance.onTaskTimeout.AddListener(OnTaskTimeout);
         }
 
         private void OnDestroy()
@@ -65,7 +64,6 @@ namespace SafetyProto.UI
             EventBus.Instance.onGroupStarted.RemoveListener(OnGroupStarted);
             EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStarted);
             EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
-            EventBus.Instance.onTaskTimeout.RemoveListener(OnTaskTimeout);
         }
 
         // ── Group ────────────────────────────────────────────────────────────
@@ -166,14 +164,6 @@ namespace SafetyProto.UI
 
             var state = args.RuntimeTask?.State ?? TaskState.CompletedSuccess;
             ScheduleRemoval(task, state);
-        }
-
-        private void OnTaskTimeout(TaskEventArgs args)
-        {
-            if (args.Task is not { } task) return;
-            if (!_visibleTasks.Contains(task)) return;
-
-            ScheduleRemoval(task, TaskState.CompletedFailure);
         }
 
         private void ScheduleRemoval(ISafetyTask task, TaskState state)

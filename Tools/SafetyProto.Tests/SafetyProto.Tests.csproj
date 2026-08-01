@@ -62,6 +62,7 @@
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\RiskAssessmentTests.cs"             Link="RiskAssessmentTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\DashboardDtoMapperTests.cs"         Link="DashboardDtoMapperTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\DashboardEventRelayTests.cs"         Link="DashboardEventRelayTests.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\SessionLogSummaryTests.cs"          Link="SessionLogSummaryTests.cs" />
     <!-- Excluded (Unity-coupled): SafetyTrainingTests uses the Unity EventBus singleton + static
          event facades (SessionEvents/TaskEvents/...), which live in the Unity assemblies, not
          SafetyProto.Shared. SafetyPatternTests uses Runtime.Analytics. Both stay Unity-only and are intentionally excluded. -->

@@ -420,8 +420,8 @@ namespace SafetyProto.Runtime.Safety
 
         /// <summary>
         /// Evaluation-mode gate confirm: play consequences only for pending tasks
-        /// that have a mapped consequence, then close all open tasks as failed.
-        /// MarkPendingTasksFailed completes the group, so TaskManagerCore.EndSession
+        /// that have a mapped consequence, then close every open task as not performed.
+        /// CloseCurrentGroup completes the group, so TaskManagerCore.EndSession
         /// publishes the single SessionCompleted/SessionEnded pair; this path must
         /// not raise its own.
         /// </summary>
@@ -528,10 +528,10 @@ namespace SafetyProto.Runtime.Safety
         private void FinalizeEvaluation()
         {
             if (_simulationCancellationRequested) return;
-            var failed = taskManager.MarkPendingTasksFailed();
+            var notPerformed = taskManager.CloseCurrentGroup();
 
             if (verboseLogging)
-                SafetyLog.Info($"[InspectionGateValidator] Sessão finalizada em modo Avaliação ({failed.Count} tarefa(s) como falha).", this);
+                SafetyLog.Info($"[InspectionGateValidator] Sessão finalizada em modo Avaliação ({notPerformed.Count} tarefa(s) não realizada(s)).", this);
 
             _evaluationFinalized = true;
             _isProcessing = false;

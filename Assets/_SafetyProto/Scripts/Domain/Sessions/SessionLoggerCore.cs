@@ -108,6 +108,34 @@ namespace SafetyProto.Domain.Sessions
             public int totalScore;
             public int tasksCompleted;
             public int totalTasks;
+
+            /// <summary>
+            /// How each task ended, in authoring order. Present only on a completed session
+            /// (the fallback summary written for a reset/abandoned run has no task list to
+            /// report). This is what makes adherence per task readable as a table across the
+            /// collected logs instead of requiring a replay of every event stream.
+            /// </summary>
+            public List<TaskOutcomeEntry>? tasks;
+        }
+
+        /// <summary>
+        /// One row of <see cref="SessionSummary.tasks"/>. Carries the risk grading in force
+        /// when the participant ran the session, so a log stays self-describing if the
+        /// scenario's matrix is regraded later.
+        /// </summary>
+        [Serializable]
+        public sealed class TaskOutcomeEntry
+        {
+            public string taskId = string.Empty;
+            public string taskName = string.Empty;
+            public string groupId = string.Empty;
+            /// <summary>"completed" | "completed_unsafe" | "not_performed" | "pending".</summary>
+            public string outcome = string.Empty;
+            /// <summary>NR-01 class token ("substantial"); the S and P behind it follow.</summary>
+            public string riskLevel = string.Empty;
+            public int riskSeverity;
+            public int riskProbability;
+            public float completionTime;
         }
 
         [Serializable]
@@ -192,7 +220,6 @@ namespace SafetyProto.Domain.Sessions
                 {
                     TaskPhase.Started => "TaskStarted",
                     TaskPhase.Completed => "TaskCompleted",
-                    TaskPhase.Timeout => "TaskTimeout",
                     _ => "TaskUnknown"
                 };
                 if (args.Phase == TaskPhase.Completed) _tasksCompletedCount++;
@@ -293,11 +320,46 @@ namespace SafetyProto.Domain.Sessions
                 totalElapsedTime = args.totalElapsedTime,
                 totalScore = args.totalScore,
                 tasksCompleted = args.tasksCompleted,
-                totalTasks = args.totalTasks
+                totalTasks = args.totalTasks,
+                tasks = BuildTaskOutcomes(args.taskOutcomes)
             };
 
             _ = WriteLogAsync();
         }
+
+        private static List<TaskOutcomeEntry>? BuildTaskOutcomes(TaskOutcome[]? outcomes)
+        {
+            if (outcomes == null || outcomes.Length == 0) return null;
+
+            var rows = new List<TaskOutcomeEntry>(outcomes.Length);
+            foreach (var o in outcomes)
+            {
+                rows.Add(new TaskOutcomeEntry
+                {
+                    taskId = o.TaskId ?? string.Empty,
+                    taskName = o.TaskName ?? string.Empty,
+                    groupId = o.GroupId ?? string.Empty,
+                    outcome = ToOutcomeToken(o.State),
+                    riskLevel = RiskLevels.ToToken(o.Risk.Level),
+                    riskSeverity = o.Risk.Severity,
+                    riskProbability = o.Risk.Probability,
+                    completionTime = o.CompletionTime
+                });
+            }
+            return rows;
+        }
+
+        /// <summary>
+        /// Stable wire token for a task's final state. Kept separate from the enum name so
+        /// renaming a state does not silently reshape logs that are already collected.
+        /// </summary>
+        private static string ToOutcomeToken(TaskState state) => state switch
+        {
+            TaskState.CompletedSuccess => "completed",
+            TaskState.CompletedSuccessButUnsafe => "completed_unsafe",
+            TaskState.NotPerformed => "not_performed",
+            _ => "pending"
+        };
 
         private void LogEvent(string eventName, string details, string sessionId, string playerId, string scenarioId, long timestampMs, LogData data = default)
         {

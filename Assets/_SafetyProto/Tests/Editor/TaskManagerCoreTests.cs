@@ -105,26 +105,6 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
-        public void TaskTimeout_MarksFailedAndAdvances()
-        {
-            var t1 = _tasks.Task("t1", "action_a");
-            var t2 = _tasks.Task("t2", "action_b");
-            var group = _tasks.Group("g1", TaskExecutionModeShared.Sequential, t1, t2);
-
-            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
-            core.Subscribe();
-            core.StartSession();
-
-            _bus.Publish(new TaskEventArgs(t1, null, TaskPhase.Timeout));
-
-            var started = _taskEvents.FindAll(e => e.Phase == TaskPhase.Started);
-            Assert.AreEqual(2, started.Count, "Second task should have started after first timed out.");
-            Assert.AreEqual("t2", started[1].Task.taskName);
-
-            core.Dispose();
-        }
-
-        [Test]
         public void GroupDependency_UnmetGroupIsSkipped()
         {
             var tA = _tasks.Task("tA", "action_a");
@@ -168,10 +148,10 @@ namespace SafetyProto.Tests.Editor
             core.Dispose();
         }
 
-        // ── MarkPendingTasksFailed ─────────────────────────────────────────────────
+        // ── CloseCurrentGroup ──────────────────────────────────────────────────────
 
         [Test]
-        public void MarkPendingTasksFailed_ClosesPendingAsFailed_AndCompletesGroup()
+        public void CloseCurrentGroup_ClosesPendingAsNotPerformed_AndCompletesGroup()
         {
             var t1 = _tasks.Task("t1", "action_a");
             var t2 = _tasks.Task("t2", "action_b");
@@ -183,24 +163,24 @@ namespace SafetyProto.Tests.Editor
 
             _bus.Publish(new TaskEventArgs(t1, new RuntimeSafetyTask(t1) { State = TaskState.CompletedSuccess }, TaskPhase.Completed));
 
-            var failed = core.MarkPendingTasksFailed();
+            var closed = core.CloseCurrentGroup();
 
-            Assert.AreEqual(1, failed.Count);
-            Assert.AreEqual(TaskState.CompletedFailure, failed[0].State);
-            Assert.AreEqual("t2", failed[0].taskName);
+            Assert.AreEqual(1, closed.Count);
+            Assert.AreEqual(TaskState.NotPerformed, closed[0].State);
+            Assert.AreEqual("t2", closed[0].taskName);
 
             var completed = _groupEvents.FindAll(e => e.Phase == TaskGroupPhase.Completed);
             Assert.AreEqual(1, completed.Count);
 
-            var taskFailedViolations = _violations.FindAll(v => v.ViolationCode == "TASK_FAILED");
-            Assert.AreEqual(1, taskFailedViolations.Count);
-            Assert.AreEqual(t2.id, taskFailedViolations[0].TaskId);
+            var notPerformedViolations = _violations.FindAll(v => v.ViolationCode == "TASK_NOT_PERFORMED");
+            Assert.AreEqual(1, notPerformedViolations.Count);
+            Assert.AreEqual(t2.id, notPerformedViolations[0].TaskId);
 
             core.Dispose();
         }
 
         [Test]
-        public void MarkPendingTasksFailed_LastGroup_EndsSession()
+        public void CloseCurrentGroup_LastGroup_EndsSession()
         {
             var t1 = _tasks.Task("t1", "action_a");
             var t2 = _tasks.Task("t2", "action_b");
@@ -210,9 +190,9 @@ namespace SafetyProto.Tests.Editor
             core.Subscribe();
             core.StartSession();
 
-            var failed = core.MarkPendingTasksFailed();
+            var closed = core.CloseCurrentGroup();
 
-            Assert.AreEqual(2, failed.Count);
+            Assert.AreEqual(2, closed.Count);
             Assert.AreEqual(1, _sessionCompletions.Count);
             Assert.AreEqual(0, _sessionCompletions[0].tasksCompleted);
             Assert.AreEqual(2, _sessionCompletions[0].totalTasks);
@@ -223,7 +203,7 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
-        public void MarkPendingTasksFailed_NoActiveGroup_IsNoOp()
+        public void CloseCurrentGroup_NoActiveGroup_IsNoOp()
         {
             var t1 = _tasks.Task("t1", "action_a");
             var group = _tasks.Group("g1", TaskExecutionModeShared.Sequential, t1);
@@ -232,9 +212,9 @@ namespace SafetyProto.Tests.Editor
             core.Subscribe();
             // StartSession() intentionally not called — no active group yet.
 
-            var failed = core.MarkPendingTasksFailed();
+            var closed = core.CloseCurrentGroup();
 
-            Assert.IsEmpty(failed);
+            Assert.IsEmpty(closed);
             Assert.IsEmpty(_groupEvents);
             Assert.IsEmpty(_taskEvents);
             Assert.IsEmpty(_violations);
@@ -243,14 +223,15 @@ namespace SafetyProto.Tests.Editor
             core.Dispose();
         }
 
-        // ── ForceCompleteCurrentGroup ──────────────────────────────────────────────
-
         [Test]
-        public void ForceCompleteCurrentGroup_WithPendingTasks_StartsTheNextGroup()
+        public void CloseCurrentGroup_WithPendingTasks_StartsTheNextGroup()
         {
             // The Evaluation phase-advance gate closes its group while a task is still
             // open (the participant skipped a PPE). The session must move on to the next
-            // group, exactly as it does when the group completes on its own.
+            // group, exactly as it does when the group completes on its own. This is the
+            // regression that stranded a participant on a scaffold whose inspection group
+            // never started, and it depends on CheckGroupCompletion treating NotPerformed
+            // as terminal.
             var t1 = _tasks.Task("t1", "action_a");
             var t2 = _tasks.Task("t2", "action_b");
             var groupA = _tasks.Group("gA", TaskExecutionModeShared.FreeOrder, t1, t2);
@@ -262,12 +243,45 @@ namespace SafetyProto.Tests.Editor
             core.Subscribe();
             core.StartSession();
 
-            core.ForceCompleteCurrentGroup();
+            core.CloseCurrentGroup();
 
             var started = _groupEvents.FindAll(e => e.Phase == TaskGroupPhase.Started);
-            Assert.AreEqual(2, started.Count, "groupB should have started after groupA was forced closed.");
+            Assert.AreEqual(2, started.Count, "groupB should have started after groupA was closed.");
             Assert.AreEqual("gB", started[1].Group!.groupName);
             Assert.AreEqual("gB", core.GetCurrentGroup()!.groupName);
+
+            core.Dispose();
+        }
+
+        [Test]
+        public void EndSession_SummaryCarriesPerTaskOutcomesWithTheirRisk()
+        {
+            // The session log's per-task block is built from this payload. It has to carry the
+            // risk grading in force during the run so a log stays readable after the scenario's
+            // matrix is regraded.
+            var t1 = _tasks.Task("t1", "action_a");
+            t1.risk = RiskAssessment.FromGrades(4, 3);
+            var t2 = _tasks.Task("t2", "action_b");
+            var group = _tasks.Group("g1", TaskExecutionModeShared.FreeOrder, t1, t2);
+
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
+            core.Subscribe();
+            core.StartSession();
+
+            _bus.Publish(new TaskEventArgs(t1, new RuntimeSafetyTask(t1) { State = TaskState.CompletedSuccess }, TaskPhase.Completed));
+            core.CloseCurrentGroup();
+
+            var outcomes = _sessionCompletions[0].taskOutcomes;
+            Assert.AreEqual(2, outcomes.Length);
+
+            Assert.AreEqual("t1", outcomes[0].TaskId);
+            Assert.AreEqual("g1", outcomes[0].GroupId);
+            Assert.AreEqual(TaskState.CompletedSuccess, outcomes[0].State);
+            Assert.AreEqual(4, outcomes[0].Risk.Severity);
+            Assert.AreEqual(3, outcomes[0].Risk.Probability);
+
+            Assert.AreEqual("t2", outcomes[1].TaskId);
+            Assert.AreEqual(TaskState.NotPerformed, outcomes[1].State);
 
             core.Dispose();
         }
@@ -333,7 +347,7 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
-        public void GetCompletionOrderDeviations_IgnoresPendingAndFailed()
+        public void GetCompletionOrderDeviations_IgnoresPendingAndNotPerformed()
         {
             var t1 = _tasks.Task("t1", "action_a");
             var t2 = _tasks.Task("t2", "action_b");
@@ -348,12 +362,12 @@ namespace SafetyProto.Tests.Editor
             _bus.Publish(new TaskEventArgs(t1, new RuntimeSafetyTask(t1) { State = TaskState.CompletedSuccess, CompletionTime = 1f }, TaskPhase.Completed));
             _bus.Publish(new TaskEventArgs(t3, new RuntimeSafetyTask(t3) { State = TaskState.CompletedSuccess, CompletionTime = 2f }, TaskPhase.Completed));
 
-            // t2 is failed directly (not via MarkPendingTasksFailed, which would also
-            // close t4 and complete the group) — a task that never completed must be
-            // skipped rather than treated as an out-of-order completion.
+            // t2 is closed directly (not via CloseCurrentGroup, which would also close t4
+            // and complete the group) — a task that never completed must be skipped rather
+            // than treated as an out-of-order completion.
             var t2Runtime = core.GetSessionTasks()[1];
             Assert.AreEqual("t2", t2Runtime.taskName);
-            t2Runtime.State = TaskState.CompletedFailure;
+            t2Runtime.State = TaskState.NotPerformed;
             t2Runtime.CompletionTime = 0.5f;
 
             // t4 stays NotStarted (pending) so the group remains "current".

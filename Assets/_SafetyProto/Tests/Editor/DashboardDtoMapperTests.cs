@@ -18,7 +18,7 @@ namespace SafetyProto.Tests.Editor
         [TestCase(TaskState.InProgress, "active")]
         [TestCase(TaskState.CompletedSuccess, "completed")]
         [TestCase(TaskState.CompletedSuccessButUnsafe, "completed")]
-        [TestCase(TaskState.CompletedFailure, "failed")]
+        [TestCase(TaskState.NotPerformed, "not_performed")]
         [TestCase(TaskState.NotStarted, "pending")]
         public void ResolveTaskStatus_MapsStateToWireString(TaskState state, string expected)
         {
@@ -89,7 +89,6 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual("S1", dto.sessionId);
             Assert.AreEqual(1234L, dto.timestampMs);
             Assert.AreEqual(scoring.PointsFor(RiskLevel.Substantial), dto.successPoints);
-            Assert.AreEqual(scoring.BasePenaltyFor(RiskLevel.Substantial), dto.failurePenalty);
             Assert.AreEqual(
                 scoring.PointsFor(RiskLevel.Substantial) - scoring.UnsafeEarnFor(RiskLevel.Substantial),
                 dto.ppePenalty);

@@ -94,7 +94,6 @@ namespace SafetyProto.Domain.Tasks
             switch (args.Phase)
             {
                 case TaskPhase.Completed: OnTaskCompleted(args); break;
-                case TaskPhase.Timeout:   OnTaskTimeout(args); break;
             }
         }
 
@@ -138,88 +137,35 @@ namespace SafetyProto.Domain.Tasks
             }
         }
 
-        private void OnTaskTimeout(TaskEventArgs args)
-        {
-            var runtimeTask = GetRuntimeTask(args);
-            if (runtimeTask == null) return;
-
-            runtimeTask.State = TaskState.CompletedFailure;
-            runtimeTask.CompletionTime = _timer?.ElapsedSeconds ?? 0f;
-
-            if (ReferenceEquals(_currentTask, runtimeTask))
-            {
-                _currentTask = null;
-                _currentTaskIndex = -1;
-            }
-
-            CheckGroupCompletion();
-
-            if (GetCurrentGroup() != null)
-            {
-                _ = WaitAndStartNextTaskAsync(_delayBetweenTasks);
-            }
-        }
-
         /// <summary>
         /// Called when the current group's time limit elapses (driven by the Runtime timer —
-        /// see <c>TimerSystem.onTimerTimeout</c>). Force-fails any task in the current group
-        /// that hasn't reached a terminal state, then replays the exact same
-        /// completion/orchestration path a natural last-task completion would take
-        /// (<see cref="CheckGroupCompletion"/> → next task/group → <see cref="EndSession"/>).
-        /// This is what makes a group timeout drive the session to a terminal state — and, via
-        /// <see cref="EndSession"/>, dispatch <c>SessionCompleted</c>/<c>SessionEnded</c> — the
-        /// same way normal completion does, instead of leaving the session stuck with a dead
-        /// timer and a group that can never finish.
-        /// Mirrors <see cref="ForceCompleteAllPendingTasks"/> in that it does not publish a
-        /// <c>TaskEventArgs</c> per forced task (no per-task timeout penalty is scored for them),
-        /// consistent with how leftover pending tasks are already handled at session end.
-        /// Safe to call when there is no current group, or when the current group already
-        /// finished (e.g. the last task completed the same frame the timer expired) — both are
-        /// no-ops beyond the idempotent orchestration replay.
+        /// see <c>TimerSystem.onTimerTimeout</c>). Closes the group exactly as a gate does:
+        /// running out of time and skipping a task are the same outcome here, because no
+        /// working-at-height task benefits from being done faster. The scenarios shipped with
+        /// the project author no time limit, so this path is dormant unless an instructor
+        /// deliberately sets one.
         /// </summary>
-        public void HandleGroupTimeout()
-        {
-            var currentGroup = GetCurrentGroup();
-            if (currentGroup == null) return;
-
-            for (int i = 0; i < _sessionTasks.Count; i++)
-            {
-                var t = _sessionTasks[i];
-                if (!ContainsByReference(currentGroup.tasks, t.TaskData)) continue;
-
-                if (t.State == TaskState.NotStarted || t.State == TaskState.InProgress)
-                {
-                    t.State = TaskState.CompletedFailure;
-                    t.CompletionTime = _timer?.ElapsedSeconds ?? 0f;
-                }
-            }
-
-            _currentTask = null;
-            _currentTaskIndex = -1;
-
-            CheckGroupCompletion();
-
-            if (GetCurrentGroup() != null)
-            {
-                _ = WaitAndStartNextTaskAsync(_delayBetweenTasks);
-            }
-        }
+        public void HandleGroupTimeout() => CloseCurrentGroup();
 
         /// <summary>
-        /// Evaluation-mode primitive used by the inspection gate: closes every pending
-        /// task in the CURRENT group as <see cref="TaskState.CompletedFailure"/>, raising
-        /// one TASK_FAILED safety violation per task, then replays the normal completion
-        /// orchestration so GroupCompleted / next group / EndSession fire exactly as a
-        /// natural completion would. No-op when no group is active. Returns the failed
-        /// tasks (callers drive consequences/UI from them).
-        /// Contrast with <see cref="ForceCompleteCurrentGroup"/>, which closes the group
-        /// while leaving task states untouched (never attempted).
+        /// The single way a group is closed while tasks are still open, used by BOTH gates
+        /// (the Phase 1 advance button and the inspection gate) and by the group timer.
+        /// Marks every pending task in the CURRENT group <see cref="TaskState.NotPerformed"/>,
+        /// raises one <c>TASK_NOT_PERFORMED</c> violation per task, then replays the normal
+        /// completion orchestration so GroupCompleted / next group / EndSession fire exactly
+        /// as a natural completion would. No-op when no group is active. Returns the tasks it
+        /// closed (callers drive consequences/UI from them).
+        ///
+        /// The two gates used to differ — one failed the pending tasks and one left them
+        /// untouched — which meant a skipped PPE left no trace at all, and left the closed
+        /// group holding pending tasks that <see cref="StartNextTask"/> would re-focus,
+        /// stranding the session. One outcome, one record, one closer.
         /// </summary>
-        public IReadOnlyList<RuntimeSafetyTask> MarkPendingTasksFailed()
+        public IReadOnlyList<RuntimeSafetyTask> CloseCurrentGroup()
         {
-            var failed = new List<RuntimeSafetyTask>();
+            var closed = new List<RuntimeSafetyTask>();
             var currentGroup = GetCurrentGroup();
-            if (currentGroup == null) return failed;
+            if (currentGroup == null) return closed;
 
             for (int i = 0; i < _sessionTasks.Count; i++)
             {
@@ -228,14 +174,14 @@ namespace SafetyProto.Domain.Tasks
 
                 if (t.State == TaskState.NotStarted || t.State == TaskState.InProgress)
                 {
-                    t.State = TaskState.CompletedFailure;
+                    t.State = TaskState.NotPerformed;
                     t.CompletionTime = _timer?.ElapsedSeconds ?? 0f;
-                    failed.Add(t);
+                    closed.Add(t);
 
                     _bus.Publish(new SafetyViolationEventArgs
                     {
-                        ViolationCode = "TASK_FAILED",
-                        Message = $"Tarefa não concluída: {t.taskName}",
+                        ViolationCode = "TASK_NOT_PERFORMED",
+                        Message = $"Tarefa não realizada: {t.taskName}",
                         TaskId = t.id,
                         GroupId = currentGroup.id,
                         TaskName = t.taskName,
@@ -254,30 +200,7 @@ namespace SafetyProto.Domain.Tasks
                 _ = WaitAndStartNextTaskAsync(_delayBetweenTasks);
             }
 
-            return failed;
-        }
-
-        /// <summary>
-        /// Forces the current group to complete without changing individual task states.
-        /// Tasks retain their current state (e.g. NotStarted). Used when the participant
-        /// skips the group via the Phase 1 advance button.
-        /// Unlike the other closers, this one advances to the next group directly instead
-        /// of replaying the per-task orchestration. It leaves task states untouched by
-        /// design, so the group it just closed still holds pending tasks: StartNextTask()
-        /// would find one and re-focus it, stranding the session in a completed group.
-        /// </summary>
-        public void ForceCompleteCurrentGroup()
-        {
-            var currentGroup = GetCurrentGroup();
-            if (currentGroup == null || _completedGroups.Contains(currentGroup)) return;
-
-            _completedGroups.Add(currentGroup);
-            _bus.Publish(new TaskGroupEventArgs(currentGroup, TaskGroupPhase.Completed));
-
-            _currentTask = null;
-            _currentTaskIndex = -1;
-
-            StartNextGroup();
+            return closed;
         }
 
         /// <summary>
@@ -421,10 +344,14 @@ namespace SafetyProto.Domain.Tasks
                 var t = _sessionTasks[i];
                 if (!ContainsByReference(currentGroup.tasks, t.TaskData)) continue;
 
+                // Every terminal state must be listed here. Dropping one (NotPerformed's
+                // predecessor was dropped in b5d28f4) leaves the group open forever: the
+                // gate closes its tasks, nothing publishes GroupCompleted, and a later
+                // group that depends on this one is skipped in silence.
                 var s = t.State;
                 if (s != TaskState.CompletedSuccess &&
-                    s != TaskState.CompletedFailure &&
-                    s != TaskState.CompletedSuccessButUnsafe)
+                    s != TaskState.CompletedSuccessButUnsafe &&
+                    s != TaskState.NotPerformed)
                 {
                     allDone = false;
                     break;
@@ -488,7 +415,8 @@ namespace SafetyProto.Domain.Tasks
                 totalScore: totalScore,
                 tasksCompleted: tasksCompletedCount,
                 totalTasks: _sessionTasks.Count,
-                orderViolationCount: _orderViolations.Count
+                orderViolationCount: _orderViolations.Count,
+                taskOutcomes: BuildTaskOutcomes()
             );
             _lastSessionSummary = summary;
             _bus.Publish(summary);
@@ -502,6 +430,44 @@ namespace SafetyProto.Domain.Tasks
             // Publishing it here also makes it observable from a pure-domain integration test
             // (no Unity Mono layer required).
             _bus.Publish(new SessionEndedEventArgs());
+        }
+
+        /// <summary>
+        /// Final state of every task, tagged with the group it belongs to and the risk it
+        /// carried. Rides on the session summary so the log can write a per-task outcome
+        /// block instead of leaving adherence per task to be reconstructed by replaying
+        /// each log's event stream.
+        /// </summary>
+        private TaskOutcome[] BuildTaskOutcomes()
+        {
+            var outcomes = new TaskOutcome[_sessionTasks.Count];
+            for (int i = 0; i < _sessionTasks.Count; i++)
+            {
+                var t = _sessionTasks[i];
+                var group = FindOwningGroup(t.TaskData);
+                outcomes[i] = new TaskOutcome
+                {
+                    TaskId = t.id,
+                    TaskName = t.taskName,
+                    GroupId = group?.id ?? string.Empty,
+                    GroupName = group?.groupName ?? string.Empty,
+                    State = t.State,
+                    Risk = t.TaskData?.risk ?? RiskAssessment.Default,
+                    CompletionTime = t.CompletionTime
+                };
+            }
+            return outcomes;
+        }
+
+        private ITaskGroup? FindOwningGroup(ISafetyTask? task)
+        {
+            if (task == null) return null;
+            for (int i = 0; i < _taskGroups.Count; i++)
+            {
+                var group = _taskGroups[i];
+                if (group?.tasks != null && ContainsByReference(group.tasks, task)) return group;
+            }
+            return null;
         }
 
         public IReadOnlyList<RuntimeSafetyTask> GetSessionTasks() => _sessionTasks;
@@ -601,7 +567,7 @@ namespace SafetyProto.Domain.Tasks
                 var t = _sessionTasks[i];
                 if (t.State == TaskState.NotStarted || t.State == TaskState.InProgress)
                 {
-                    t.State = TaskState.CompletedFailure;
+                    t.State = TaskState.NotPerformed;
                     t.CompletionTime = _timer?.ElapsedSeconds ?? 0f;
                 }
             }

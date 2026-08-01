@@ -172,9 +172,6 @@ namespace SafetyProto.Core
                         case TaskPhase.Started:
                             RaiseTaskStarted(t);
                             return;
-                        case TaskPhase.Timeout:
-                            RaiseTaskTimeout(t);
-                            return;
                         case TaskPhase.Completed:
                         default:
                             RaiseTaskCompleted(t);
@@ -244,7 +241,6 @@ namespace SafetyProto.Core
         public UnityEvent<PPEStateChangedEventArgs> onPpeStateChanged;
         public UnityEvent<TaskEventArgs> onTaskStarted;
         public UnityEvent<TaskEventArgs> onTaskCompleted;
-        public UnityEvent<TaskEventArgs> onTaskTimeout;
         public UnityEvent<ScoreChangedEventArgs> onScoreChanged;
 
         [Header("Group Events")]
@@ -366,20 +362,6 @@ namespace SafetyProto.Core
                 if (verboseLogging && payload.Task != null) SafetyLog.Info($"[EventBus] TaskCompleted: {payload.Task.taskName}");
                 try { onTaskCompleted?.Invoke(payload); }
                 catch (Exception ex) { ReportListenerError("EventBus.onTaskCompleted", ex, raiseSafetyError: true); }
-                InvokeTyped(payload);
-            });
-        }
-
-        public void RaiseTaskTimeout(TaskEventArgs args)
-        {
-            var payload = args;
-            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
-            payload.Phase = TaskPhase.Timeout;
-            Enqueue(() =>
-            {
-                if (verboseLogging && payload.Task != null) SafetyLog.Info($"[EventBus] TaskTimeout: {payload.Task.taskName}");
-                try { onTaskTimeout?.Invoke(payload); }
-                catch (Exception ex) { ReportListenerError("EventBus.onTaskTimeout", ex, raiseSafetyError: true); }
                 InvokeTyped(payload);
             });
         }

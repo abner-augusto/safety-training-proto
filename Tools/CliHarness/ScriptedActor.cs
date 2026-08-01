@@ -69,12 +69,12 @@ public sealed class ScriptedActor
     /// corresponding scene component does so a scripted run closes the session the same
     /// way a Unity run does:
     /// <list type="bullet">
-    /// <item><c>phase1</c> — <c>PhaseController</c>: closes its group without touching task
-    /// states (pending tasks stay never attempted). It only acts while that group is current;
+    /// <item><c>phase1</c> — <c>PhaseController</c>: closes its group, marking any PPE the
+    /// participant skipped as NotPerformed. It only acts while that group is current;
     /// pressing it after the group already completed on its own is a no-op, exactly as in the
     /// scene, where the click is rejected for not matching <c>targetGroupId</c>.</item>
-    /// <item><c>inspection</c> — <c>InspectionGateValidator</c>: closes every pending task in
-    /// the current group as CompletedFailure.</item>
+    /// <item><c>inspection</c> — <c>InspectionGateValidator</c>: closes the current group the
+    /// same way. Both gates run the one closer; only the group they act on differs.</item>
     /// </list>
     /// An empty target is inferred from the current group, keeping older CLI scripts working.
     /// In Guided mode the real gates block instead — scripted Guided runs should not use this.
@@ -97,13 +97,13 @@ public sealed class ScriptedActor
                         $"'{currentGroup?.id ?? "(none)"}', not '{PhaseGateGroupId}'.");
                     return;
                 }
-                _taskManager.ForceCompleteCurrentGroup();
-                System.Console.WriteLine("[ScriptedActor] gate phase1: group closed.");
+                var skipped = _taskManager.CloseCurrentGroup();
+                System.Console.WriteLine($"[ScriptedActor] gate phase1: group closed, {skipped.Count} task(s) not performed.");
                 break;
 
             case "inspection" or "final" or "inspecao":
-                var failed = _taskManager.MarkPendingTasksFailed();
-                System.Console.WriteLine($"[ScriptedActor] gate inspection: {failed.Count} task(s) failed.");
+                var pending = _taskManager.CloseCurrentGroup();
+                System.Console.WriteLine($"[ScriptedActor] gate inspection: {pending.Count} task(s) not performed.");
                 break;
 
             default:

@@ -84,7 +84,6 @@
           PpeStateChanged: 'EPI alterado',
           TaskStarted: 'Tarefa iniciada',
           TaskCompleted: 'Tarefa concluída',
-          TaskTimeout: 'Tempo da tarefa esgotado',
           ScoreChanged: 'Pontuação alterada',
           GroupStarted: 'Grupo iniciado',
           GroupCompleted: 'Grupo concluído',
@@ -103,7 +102,6 @@
           PpeStateChanged: 'PPE changed',
           TaskStarted: 'Task started',
           TaskCompleted: 'Task completed',
-          TaskTimeout: 'Task timeout',
           ScoreChanged: 'Score changed',
           GroupStarted: 'Group started',
           GroupCompleted: 'Group completed',
@@ -185,7 +183,7 @@
     /* ── Task renderer — manifesto de procedimento: grupos com
        cabeçalho (modo de execução + progresso) e linhas numeradas
        num trilho de glifos. A tarefa ativa é a única expandida. ── */
-    const STATUS_GLYPH = { completed: '✔', active: '▶', pending: '·', failed: '✕' };
+    const STATUS_GLYPH = { completed: '✔', active: '▶', pending: '·', not_performed: '✕' };
 
     function modeLabel(mode) {
       const m = String(mode ?? '').toLowerCase();
@@ -223,18 +221,19 @@
         container.appendChild(header);
 
         list.forEach((task, idx) => {
-          if (state.hideCompleted && (task.status === 'completed' || task.status === 'failed')) return;
+          if (state.hideCompleted && (task.status === 'completed' || task.status === 'not_performed')) return;
 
+          // Uma tarefa não realizada não subtrai pontos — perde os que valia. O '✕' marca
+          // o desfecho sem anunciar uma penalidade que não existe.
           let pt = '';
-          if (task.status === 'active')      pt = t('active').toUpperCase();
-          else if (task.status === 'failed') pt = task.failurePenalty ? `−${task.failurePenalty}` : '✕';
-          else if (task.successPoints)       pt = `+${task.successPoints}`;
+          if (task.status === 'active')             pt = t('active').toUpperCase();
+          else if (task.status === 'not_performed') pt = '✕';
+          else if (task.successPoints)              pt = `+${task.successPoints}`;
 
           let expand = '';
           if (task.status === 'active') {
             const chips = [];
             (task.requiredPpe ?? []).forEach(p => chips.push(`<span class="chip">${t('detailPpe')}: ${esc(ppeLabel(p))}</span>`));
-            if (task.failurePenalty) chips.push(`<span class="chip pen">−${task.failurePenalty}</span>`);
             if (task.ppePenalty)     chips.push(`<span class="chip pen">−${task.ppePenalty} ${t('detailPpe')}</span>`);
             expand = `
               <div class="tr-x">

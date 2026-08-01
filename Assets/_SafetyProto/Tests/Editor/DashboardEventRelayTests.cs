@@ -53,11 +53,9 @@ namespace SafetyProto.Tests.Editor
 
             _bus.Publish(new TaskEventArgs(task, null, TaskPhase.Started) { SessionId = "S1", TimestampMs = 10L });
             _bus.Publish(new TaskEventArgs(task, null, TaskPhase.Completed) { SessionId = "S1", TimestampMs = 20L });
-            _bus.Publish(new TaskEventArgs(task, null, TaskPhase.Timeout) { SessionId = "S1", TimestampMs = 30L });
 
             Assert.AreEqual("active", _host.Last<TaskDto>("TaskStarted").status);
             Assert.AreEqual("completed", _host.Last<TaskDto>("TaskCompleted").status);
-            Assert.AreEqual("failed", _host.Last<TaskDto>("TaskTimeout").status);
             Assert.AreEqual(20L, _host.Last<TaskDto>("TaskCompleted").timestampMs);
         }
 

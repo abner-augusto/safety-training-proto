@@ -15,8 +15,6 @@ namespace SafetyProto.Core
 
         public TaskState State { get; set; }
 
-        public bool HasFailedOnce { get; set; }
-
         public bool HasMissedPPEOnce { get; set; }
 
         public float CompletionTime { get; set; }
@@ -40,7 +38,7 @@ namespace SafetyProto.Core
             InvalidReason = reason;
             if (State == TaskState.NotStarted || State == TaskState.InProgress)
             {
-                State = TaskState.CompletedFailure;
+                State = TaskState.NotPerformed;
             }
         }
     }

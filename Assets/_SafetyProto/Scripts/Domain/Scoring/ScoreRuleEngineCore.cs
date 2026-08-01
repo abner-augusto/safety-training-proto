@@ -51,7 +51,6 @@ namespace SafetyProto.Domain.Scoring
             switch (args.Phase)
             {
                 case TaskPhase.Completed: ApplyTaskCompletedScoring(args); break;
-                case TaskPhase.Timeout:   ApplyTaskTimeoutScoring(args); break;
             }
         }
 
@@ -68,7 +67,7 @@ namespace SafetyProto.Domain.Scoring
             var state = args.RuntimeTask?.State
                 ?? (args.WasPpeCompliant ? TaskState.CompletedSuccess : TaskState.CompletedSuccessButUnsafe);
 
-            if (state == TaskState.CompletedFailure) return;
+            if (state == TaskState.NotPerformed) return;
 
             // Severity-driven earning: a safe completion earns the tier's full points;
             // an unsafe completion earns points × unsafeFactor (critical = 0). No
@@ -86,14 +85,6 @@ namespace SafetyProto.Domain.Scoring
             {
                 _scoreService.AddPoints(earned, reason, args.Task.id);
             }
-        }
-
-        internal void ApplyTaskTimeoutScoring(TaskEventArgs args)
-        {
-            if (args.Task == null) return;
-            int penalty = _config.BasePenaltyFor(args.Task.riskLevel);
-            if (penalty > 0)
-                _scoreService.SubtractPoints(penalty, $"Task '{args.Task.taskName}' timed out", args.Task.id);
         }
 
         public void Dispose()
