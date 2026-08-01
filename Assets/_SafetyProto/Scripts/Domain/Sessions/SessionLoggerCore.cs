@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
+using System.Threading;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
@@ -157,6 +158,9 @@ namespace SafetyProto.Domain.Sessions
         /// </summary>
         private readonly Func<string, string>? _actionNameResolver;
         private readonly Func<string>? _outputDirectoryResolver;
+        private readonly SemaphoreSlim _writeGate = new SemaphoreSlim(1, 1);
+
+        public event Action<string, string, string>? LogWritten;
 
         private readonly Action<SessionStartedEventArgs>          _onSessionStarted;
         private readonly Action<SessionPausedEventArgs>           _onSessionPaused;
@@ -182,6 +186,7 @@ namespace SafetyProto.Domain.Sessions
         private int _tasksCompletedCount;
         private int _totalTasks;
         private string _sessionId = string.Empty;
+        private string _playerId = string.Empty;
         private string _mode = string.Empty;
 
         public SessionLoggerCore(IEventBus eventBus, string outputDirectory, Func<SessionLog, string> serialize, IHarnessLogger? logger = null, Func<string, string>? actionNameResolver = null, Func<string>? outputDirectoryResolver = null)
@@ -198,8 +203,9 @@ namespace SafetyProto.Domain.Sessions
                 ResetTallies(args.TimestampMs);
                 _totalTasks = args.TotalTasks;
                 _sessionId = args.SessionId ?? string.Empty;
+                _playerId = args.PlayerId ?? string.Empty;
                 _mode = SessionModeState.CurrentName;
-                LogEvent("SessionStarted", string.Empty, _sessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
+                LogEvent("SessionStarted", string.Empty, _sessionId, _playerId, args.ScenarioId ?? string.Empty, args.TimestampMs);
             };
             _onSessionPaused         = args => LogEvent("SessionPaused",     string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
             _onSessionResumed        = args => LogEvent("SessionResumed",    string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
@@ -446,9 +452,20 @@ namespace SafetyProto.Domain.Sessions
                 _log.summary ??= BuildFallbackSummary();
 
                 var json = _serialize(_log);
-                await File.WriteAllTextAsync(path, json);
+                var writtenSessionId = _sessionId;
+                var writtenPlayerId = _playerId;
+                await _writeGate.WaitAsync();
+                try
+                {
+                    await File.WriteAllTextAsync(path, json);
+                }
+                finally
+                {
+                    _writeGate.Release();
+                }
 
                 _logger?.Info($"[SessionLogger] Log gravado em: {path}");
+                LogWritten?.Invoke(writtenSessionId, writtenPlayerId, path);
                 return path;
             }
             catch (Exception ex)
@@ -478,6 +495,7 @@ namespace SafetyProto.Domain.Sessions
         {
             if (_disposed) return;
             Unsubscribe();
+            _writeGate.Dispose();
             _disposed = true;
         }
     }

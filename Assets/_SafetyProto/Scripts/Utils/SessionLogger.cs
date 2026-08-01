@@ -7,6 +7,7 @@ using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Domain.Actions;
 using SafetyProto.Domain.Sessions;
+using SafetyProto.Networking.Dashboard;
 
 namespace SafetyProto.Utils
 {
@@ -30,8 +31,12 @@ namespace SafetyProto.Utils
                 () => (EventContext.CurrentPlayerId ?? string.Empty).StartsWith("SIM-", StringComparison.OrdinalIgnoreCase)
                     ? Path.Combine(Application.persistentDataPath, "simulations")
                     : Application.persistentDataPath);
+            _core.LogWritten += OnLogWritten;
             _core.Subscribe();
         }
+
+        private static void OnLogWritten(string sessionId, string playerId, string path) =>
+            EvaluatorDashboardBootstrap.BroadcastCompletedSessionLog(sessionId, playerId, path);
 
         /// <summary>
         /// Builds an actionId → friendly-name resolver from the embedded action catalog
@@ -50,6 +55,7 @@ namespace SafetyProto.Utils
 
         private void OnDestroy()
         {
+            if (_core != null) _core.LogWritten -= OnLogWritten;
             _core?.Dispose();
             _core = null;
         }
