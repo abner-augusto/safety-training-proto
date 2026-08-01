@@ -458,10 +458,10 @@ namespace SafetyProto.Domain.Sessions
                 var json = _serialize(_log);
                 var writtenSessionId = _sessionId;
                 var writtenPlayerId = _playerId;
-                await _writeGate.WaitAsync();
+                await _writeGate.WaitAsync().ConfigureAwait(false);
                 try
                 {
-                    await File.WriteAllTextAsync(path, json);
+                    await File.WriteAllTextAsync(path, json).ConfigureAwait(false);
                 }
                 finally
                 {
