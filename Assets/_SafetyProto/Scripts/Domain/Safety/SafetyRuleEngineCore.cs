@@ -6,6 +6,7 @@ using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Core.Events;
+using SafetyProto.Domain.Tasks;
 
 namespace SafetyProto.Domain.Safety
 {
@@ -38,10 +39,7 @@ namespace SafetyProto.Domain.Safety
         /// Guided respects the authored mode. All mode branches in this engine must
         /// go through here — reading group.executionMode directly reintroduces
         /// sequential enforcement in Evaluation.</summary>
-        private static TaskExecutionModeShared EffectiveMode(ITaskGroup group) =>
-            SessionModeState.Current == SessionMode.Evaluation
-                ? TaskExecutionModeShared.FreeOrder
-                : group.executionMode;
+        private static TaskExecutionModeShared EffectiveMode(ITaskGroup group) => TaskExecutionRules.EffectiveMode(group);
 
         public SafetyRuleEngineCore(
             IEventBus bus,
@@ -181,12 +179,7 @@ namespace SafetyProto.Domain.Safety
         /// completes the moment every item in that set is worn, regardless of equip order. This
         /// is what lets a single "wear gloves" task accept left/right in any sequence.
         /// </summary>
-        private static bool IsEquipTask(ISafetyTask? task)
-        {
-            return task != null &&
-                   string.IsNullOrEmpty(task.ResolveExpectedActionId()) &&
-                   task.requiredPPE != null && task.requiredPPE.Count > 0;
-        }
+        private static bool IsEquipTask(ISafetyTask? task) => TaskExecutionRules.IsEquipTask(task);
 
         private bool TryCompleteEquipTask(ISafetyTask? task)
         {
@@ -446,17 +439,7 @@ namespace SafetyProto.Domain.Safety
             });
         }
 
-        private static bool MatchesAction(ISafetyTask? task, string actionId)
-        {
-            if (task == null || string.IsNullOrWhiteSpace(actionId))
-            {
-                return false;
-            }
-
-            var expectedId = task.ResolveExpectedActionId();
-            return !string.IsNullOrEmpty(expectedId) &&
-                   string.Equals(expectedId, actionId, StringComparison.OrdinalIgnoreCase);
-        }
+        private static bool MatchesAction(ISafetyTask? task, string actionId) => TaskExecutionRules.MatchesAction(task, actionId);
 
         public void Dispose()
         {

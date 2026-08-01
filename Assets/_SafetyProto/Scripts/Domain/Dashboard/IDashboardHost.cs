@@ -19,7 +19,6 @@ namespace SafetyProto.Domain.Dashboard
         void RegisterKnownGroup(ITaskGroup group);
         long ResolveTimestamp(long timestampMs);
         SessionManifestDto BuildSessionManifest(string sessionId);
-        void QueueSessionLogBroadcast(string sessionId, string playerId);
         void Broadcast<T>(string eventType, T payload);
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using SafetyProto.Core;
@@ -35,8 +36,10 @@ namespace SafetyProto.Tests.Editor
         [Test]
         public void CompletedSession_WritesPerTaskOutcomeBlock()
         {
+            var notifications = new List<string>();
             using var logger = new SessionLoggerCore(
                 _bus, _outputDir, SessionLoggerCore.SerializeIndentedOmittingDefaults);
+            logger.CompletedLogWritten += (_, _, path) => notifications.Add(path);
             logger.Subscribe();
 
             _bus.Publish(new SessionStartedEventArgs { SessionId = "S1", TotalTasks = 3, TimestampMs = 1000L });
@@ -56,6 +59,7 @@ namespace SafetyProto.Tests.Editor
             { SessionId = "S1", TimestampMs = 2000L };
 
             _bus.Publish(summary);
+            _bus.Publish(summary);
 
             var tasks = ReadWrittenSummary()["tasks"] as JArray;
             Assert.IsNotNull(tasks, "The summary must carry the per-task block.");
@@ -73,6 +77,8 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual(3, (int?)tasks[1]["riskSeverity"]);
             Assert.AreEqual(2, (int?)tasks[1]["riskProbability"]);
             Assert.IsNotEmpty((string?)tasks[1]["riskLevel"] ?? string.Empty);
+            Assert.AreEqual(1, notifications.Count);
+            Assert.IsTrue(File.Exists(notifications[0]));
         }
 
         [Test]
@@ -90,6 +96,22 @@ namespace SafetyProto.Tests.Editor
             var written = ReadWrittenSummary();
             Assert.IsNull(written["tasks"]);
             Assert.AreEqual(3, (int?)written["totalTasks"]);
+        }
+
+        [Test]
+        public void ResetSession_DoesNotNotifyCompletedLog()
+        {
+            var notifications = 0;
+            using var logger = new SessionLoggerCore(
+                _bus, _outputDir, SessionLoggerCore.SerializeIndentedOmittingDefaults);
+            logger.CompletedLogWritten += (_, _, _) => notifications++;
+
+            _bus.Publish(new SessionStartedEventArgs { SessionId = "S1", TotalTasks = 1, TimestampMs = 1000L });
+            logger.ResetSession();
+
+            Assert.IsTrue(SpinWait.SpinUntil(() => Directory.Exists(_outputDir) &&
+                Directory.GetFiles(_outputDir, "session_log_*.json").Length == 1, 5000));
+            Assert.AreEqual(0, notifications);
         }
 
         private static TaskOutcome Outcome(string id, string groupId, TaskState state, int severity, int probability) =>

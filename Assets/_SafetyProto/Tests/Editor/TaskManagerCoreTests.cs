@@ -105,6 +105,26 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
+        public void DuplicateCompletionAndClose_PublishOneTerminalPair()
+        {
+            var task = _tasks.Task("t1", "action_a");
+            var group = _tasks.Group("g1", TaskExecutionModeShared.Sequential, task);
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
+            core.Subscribe();
+            core.StartSession();
+
+            var completion = new TaskEventArgs(task,
+                new RuntimeSafetyTask(task) { State = TaskState.CompletedSuccess }, TaskPhase.Completed);
+            _bus.Publish(completion);
+            _bus.Publish(completion);
+            core.CloseCurrentGroup();
+
+            Assert.AreEqual(1, _sessionCompletions.Count);
+            Assert.AreEqual(1, _sessionEnded.Count);
+            core.Dispose();
+        }
+
+        [Test]
         public void GroupDependency_UnmetGroupIsSkipped()
         {
             var tA = _tasks.Task("tA", "action_a");

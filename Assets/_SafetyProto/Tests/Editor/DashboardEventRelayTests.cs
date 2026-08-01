@@ -90,12 +90,10 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
-        public void SessionCompleted_BroadcastsAndTriggersLog()
+        public void SessionCompleted_BroadcastsWithoutStartingAFileScan()
         {
             _bus.Publish(new SessionCompletedEventArgs { SessionId = "S1", PlayerId = "P-1", TimestampMs = 9L, totalScore = 500 });
             Assert.AreEqual(500, _host.Last<SessionCompletedDto>("SessionCompleted").totalScore);
-            Assert.AreEqual(1, _host.LogBroadcasts.Count);
-            Assert.AreEqual(("S1", "P-1"), _host.LogBroadcasts[0]);
         }
 
         [Test]

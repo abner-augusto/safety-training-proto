@@ -67,10 +67,12 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
-        public void BuildTaskDto_UsesTaskNameAsIdAndAppliesScoringForRiskLevel()
+        public void BuildTaskDto_UsesStableTaskIdAndAppliesScoringForRiskLevel()
         {
             var scoring = ScoringConfig.Default;
             var task = _builder.Task("weld_pipe", "action_weld", PPEType.Helmet);
+            task.id = "equip_boots";
+            task.taskName = "Equipar Botina de Segurança";
             task.riskLevel = RiskLevel.Substantial;
             var group = _builder.Group("G", TaskExecutionModeShared.Sequential, task);
             var groups = new ITaskGroup[] { group };
@@ -83,8 +85,8 @@ namespace SafetyProto.Tests.Editor
 
             var dto = DashboardDtoMapper.BuildTaskDto(args, "completed", groups, scoring);
 
-            Assert.AreEqual("weld_pipe", dto.taskId);
-            Assert.AreEqual("weld_pipe", dto.taskName);
+            Assert.AreEqual("equip_boots", dto.taskId);
+            Assert.AreEqual("Equipar Botina de Segurança", dto.taskName);
             Assert.AreEqual("completed", dto.status);
             Assert.AreEqual("S1", dto.sessionId);
             Assert.AreEqual(1234L, dto.timestampMs);
@@ -106,6 +108,7 @@ namespace SafetyProto.Tests.Editor
             var item = DashboardDtoMapper.BuildManifestItem(t2, groups, ScoringConfig.Default, "active");
 
             Assert.AreEqual("t2", item.taskName);
+            Assert.AreEqual("t2", item.taskId);
             Assert.AreEqual("G", item.groupName);
             Assert.AreEqual(2, item.order);
             Assert.AreEqual("active", item.status);

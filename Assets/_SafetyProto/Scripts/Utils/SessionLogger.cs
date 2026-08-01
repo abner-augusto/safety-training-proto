@@ -30,8 +30,14 @@ namespace SafetyProto.Utils
                 () => (EventContext.CurrentPlayerId ?? string.Empty).StartsWith("SIM-", StringComparison.OrdinalIgnoreCase)
                     ? Path.Combine(Application.persistentDataPath, "simulations")
                     : Application.persistentDataPath);
+            _core.CompletedLogWritten += OnCompletedLogWritten;
             _core.Subscribe();
         }
+
+        public event Action<string, string, string> CompletedLogWritten;
+
+        private void OnCompletedLogWritten(string sessionId, string playerId, string path) =>
+            CompletedLogWritten?.Invoke(sessionId, playerId, path);
 
         /// <summary>
         /// Builds an actionId → friendly-name resolver from the embedded action catalog
@@ -50,6 +56,7 @@ namespace SafetyProto.Utils
 
         private void OnDestroy()
         {
+            if (_core != null) _core.CompletedLogWritten -= OnCompletedLogWritten;
             _core?.Dispose();
             _core = null;
         }

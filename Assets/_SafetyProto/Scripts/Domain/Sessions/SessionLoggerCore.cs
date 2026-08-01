@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
+using System.Threading;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
@@ -157,6 +158,9 @@ namespace SafetyProto.Domain.Sessions
         /// </summary>
         private readonly Func<string, string>? _actionNameResolver;
         private readonly Func<string>? _outputDirectoryResolver;
+        private readonly SemaphoreSlim _writeGate = new SemaphoreSlim(1, 1);
+
+        public event Action<string, string, string>? CompletedLogWritten;
 
         private readonly Action<SessionStartedEventArgs>          _onSessionStarted;
         private readonly Action<SessionPausedEventArgs>           _onSessionPaused;
@@ -182,7 +186,9 @@ namespace SafetyProto.Domain.Sessions
         private int _tasksCompletedCount;
         private int _totalTasks;
         private string _sessionId = string.Empty;
+        private string _playerId = string.Empty;
         private string _mode = string.Empty;
+        private bool _completionWriteStarted;
 
         public SessionLoggerCore(IEventBus eventBus, string outputDirectory, Func<SessionLog, string> serialize, IHarnessLogger? logger = null, Func<string, string>? actionNameResolver = null, Func<string>? outputDirectoryResolver = null)
         {
@@ -198,8 +204,10 @@ namespace SafetyProto.Domain.Sessions
                 ResetTallies(args.TimestampMs);
                 _totalTasks = args.TotalTasks;
                 _sessionId = args.SessionId ?? string.Empty;
+                _playerId = args.PlayerId ?? string.Empty;
                 _mode = SessionModeState.CurrentName;
-                LogEvent("SessionStarted", string.Empty, _sessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
+                _completionWriteStarted = false;
+                LogEvent("SessionStarted", string.Empty, _sessionId, _playerId, args.ScenarioId ?? string.Empty, args.TimestampMs);
             };
             _onSessionPaused         = args => LogEvent("SessionPaused",     string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
             _onSessionResumed        = args => LogEvent("SessionResumed",    string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
@@ -300,6 +308,8 @@ namespace SafetyProto.Domain.Sessions
 
         private void OnSessionCompleted(SessionCompletedEventArgs args)
         {
+            if (_completionWriteStarted) return;
+            _completionWriteStarted = true;
             var details = string.Format(CultureInfo.InvariantCulture,
                 "Tempo={0}, Pontuação={1}, Concluídas={2}/{3}",
                 args.totalElapsedTime, args.totalScore, args.tasksCompleted, args.totalTasks);
@@ -324,7 +334,7 @@ namespace SafetyProto.Domain.Sessions
                 tasks = BuildTaskOutcomes(args.taskOutcomes)
             };
 
-            _ = WriteLogAsync();
+            _ = WriteLogAsync(notifyCompletion: true);
         }
 
         private static List<TaskOutcomeEntry>? BuildTaskOutcomes(TaskOutcome[]? outcomes)
@@ -416,7 +426,7 @@ namespace SafetyProto.Domain.Sessions
             totalElapsedTime = _sessionStartMs > 0 ? (_lastEventMs - _sessionStartMs) / 1000f : 0f
         };
 
-        public async Task<string?> WriteLogAsync()
+        public async Task<string?> WriteLogAsync(bool notifyCompletion = false)
         {
             try
             {
@@ -446,9 +456,21 @@ namespace SafetyProto.Domain.Sessions
                 _log.summary ??= BuildFallbackSummary();
 
                 var json = _serialize(_log);
-                await File.WriteAllTextAsync(path, json);
+                var writtenSessionId = _sessionId;
+                var writtenPlayerId = _playerId;
+                await _writeGate.WaitAsync();
+                try
+                {
+                    await File.WriteAllTextAsync(path, json);
+                }
+                finally
+                {
+                    _writeGate.Release();
+                }
 
                 _logger?.Info($"[SessionLogger] Log gravado em: {path}");
+                if (notifyCompletion)
+                    CompletedLogWritten?.Invoke(writtenSessionId, writtenPlayerId, path);
                 return path;
             }
             catch (Exception ex)

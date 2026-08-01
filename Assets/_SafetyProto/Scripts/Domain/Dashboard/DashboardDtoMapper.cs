@@ -100,7 +100,7 @@ namespace SafetyProto.Domain.Dashboard
         {
             var task = args.Task;
             var name = task != null ? task.taskName : string.Empty;
-            var id = name;
+            var id = string.IsNullOrWhiteSpace(task?.id) ? name : task.id;
             var meta = BuildTaskMetadata(task, knownGroups, scoring);
             var riskLevel = task?.riskLevel ?? RiskAssessment.Default.Level;
             return new TaskDto
@@ -131,6 +131,7 @@ namespace SafetyProto.Domain.Dashboard
             var meta = BuildTaskMetadata(task, knownGroups, scoring, includeDetails: false);
             return new TaskManifestItemDto
             {
+                taskId = string.IsNullOrWhiteSpace(task.id) ? task.taskName : task.id,
                 taskName = task.taskName,
                 groupName = meta.groupName,
                 description = meta.description,

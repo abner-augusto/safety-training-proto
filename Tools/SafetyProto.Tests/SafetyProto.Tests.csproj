@@ -50,11 +50,15 @@
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\Support\SessionTestHarness.cs"      Link="Support\SessionTestHarness.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\Support\EventTimeline.cs"           Link="Support\EventTimeline.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\Support\FakeDashboardHost.cs"        Link="Support\FakeDashboardHost.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Networking\EvaluatorDashboard\OutgoingMessageBuffer.cs" Link="Support\OutgoingMessageBuffer.cs" />
     <!-- Engine-independent fixtures. -->
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\SessionIntegrationTests.cs"         Link="SessionIntegrationTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\ScoreRuleEngineCoreTests.cs"        Link="ScoreRuleEngineCoreTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\SafetyRuleEngineCoreTests.cs"       Link="SafetyRuleEngineCoreTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\TaskManagerCoreTests.cs"            Link="TaskManagerCoreTests.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\TaskExecutionRulesTests.cs"         Link="TaskExecutionRulesTests.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\OutgoingMessageBufferTests.cs"       Link="OutgoingMessageBufferTests.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\EventMetadataTests.cs"              Link="EventMetadataTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\SafetyRuleEngineDiagnosticTests.cs" Link="SafetyRuleEngineDiagnosticTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\PPEManagerEventProtocolTests.cs"    Link="PPEManagerEventProtocolTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\ScriptStepDefTests.cs"              Link="ScriptStepDefTests.cs" />

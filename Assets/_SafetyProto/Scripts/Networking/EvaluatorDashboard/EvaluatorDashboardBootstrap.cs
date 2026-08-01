@@ -39,16 +39,12 @@ namespace SafetyProto.Networking.Dashboard
         [Tooltip("If false, reduces chatter by skipping high-volume events (ActionAttempts, PPE changes).")]
         public bool verboseEvents = true;
 
-        [Header("Session Log Broadcast")]
-        [Tooltip("Delay (seconds) before broadcasting the session log to ensure it has been written to disk.")]
-        [SerializeField] private float sessionLogBroadcastDelay = 0.25f;
-
         private static EvaluatorDashboardBootstrap _instance;
 
         private MiniHttpServer _httpServer;
         private EvaluatorWebSocketServer _wsServer;
         private DashboardEventRelay _relay;
-        private Coroutine _pendingLogBroadcast;
+        private SessionLogger _sessionLogger;
         private Coroutine _poseSendCoroutine;
         private readonly List<ITaskGroup> _knownGroups = new List<ITaskGroup>();
         private readonly Queue<Action> _mainThreadQueue = new Queue<Action>();
@@ -70,13 +66,29 @@ namespace SafetyProto.Networking.Dashboard
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode) => RegisterCommandHandlers();
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            RegisterCommandHandlers();
+            AttachSessionLogger();
+        }
+
+        private void AttachSessionLogger()
+        {
+            if (_sessionLogger != null) return;
+            _sessionLogger = FindFirstObjectByType<SessionLogger>();
+            if (_sessionLogger != null)
+                _sessionLogger.CompletedLogWritten += OnCompletedLogWritten;
+        }
+
+        private void OnCompletedLogWritten(string sessionId, string playerId, string path) =>
+            BroadcastCompletedSessionLog(sessionId, playerId, path);
 
         private void OnEnable() { } // intentionally empty — subscription moved to Start
 
         private void Start()
         {
             StartServers();
+            AttachSessionLogger();
             if (poseChannel != null)
             {
                 var poseSender = new PoseSender(poseChannel, _wsServer, poseSendRateHz, poseDecimalPrecision);
@@ -133,16 +145,13 @@ namespace SafetyProto.Networking.Dashboard
         private void OnDestroy()
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
+            if (_sessionLogger != null)
+                _sessionLogger.CompletedLogWritten -= OnCompletedLogWritten;
             _relay?.Unsubscribe();
             if (_poseSendCoroutine != null)
             {
                 StopCoroutine(_poseSendCoroutine);
                 _poseSendCoroutine = null;
-            }
-            if (_pendingLogBroadcast != null)
-            {
-                StopCoroutine(_pendingLogBroadcast);
-                _pendingLogBroadcast = null;
             }
             _httpServer?.Stop();
             _wsServer?.StopServer();
@@ -335,7 +344,6 @@ namespace SafetyProto.Networking.Dashboard
         }
         long IDashboardHost.ResolveTimestamp(long timestampMs) => ResolveTimestamp(timestampMs);
         SessionManifestDto IDashboardHost.BuildSessionManifest(string sessionId) => BuildSessionManifest(sessionId);
-        void IDashboardHost.QueueSessionLogBroadcast(string sessionId, string playerId) => QueueSessionLogBroadcast(sessionId, playerId);
         void IDashboardHost.Broadcast<T>(string eventType, T payload) => Broadcast(eventType, payload);
 
         private void RegisterKnownGroupsFromTaskManager(SafetyProto.Runtime.Task.TaskManager taskManager)
@@ -426,84 +434,26 @@ namespace SafetyProto.Networking.Dashboard
             _wsServer.Broadcast(eventType, payload);
         }
 
-        private void QueueSessionLogBroadcast(string sessionId, string playerId)
+        public static void BroadcastCompletedSessionLog(string sessionId, string playerId, string path)
         {
-            if (!isActiveAndEnabled)
-                return;
-
-            if (_pendingLogBroadcast != null)
-            {
-                StopCoroutine(_pendingLogBroadcast);
-            }
-
-            _pendingLogBroadcast = StartCoroutine(BroadcastLogDelayed(sessionId, playerId));
+            var instance = _instance;
+            if (instance == null || instance._wsServer == null || string.IsNullOrEmpty(path)) return;
+            _ = System.Threading.Tasks.Task.Run(() => instance.TryBroadcastSessionLog(path, sessionId, playerId));
         }
 
-        private IEnumerator BroadcastLogDelayed(string sessionId, string playerId)
-        {
-            if (sessionLogBroadcastDelay > 0f)
-            {
-                yield return new WaitForSeconds(sessionLogBroadcastDelay);
-            }
-            else
-            {
-                yield return null;
-            }
-
-            // Capture the Unity-thread-only path here, then run the disk read + JSON
-            // encode + frame enqueue on a background thread. The whole session log
-            // (which grows with session length) was being read and re-serialized on the
-            // main thread, causing a ~300ms freeze at session completion. The WebSocket
-            // send itself is already off-thread (per-client SenderThread), and both
-            // File IO and JsonUtility.ToJson over a plain struct are thread-safe.
-            string persistentDataPath = Application.persistentDataPath;
-            _pendingLogBroadcast = null;
-            string logDirectory = playerId != null && playerId.StartsWith("SIM-", StringComparison.OrdinalIgnoreCase)
-                ? Path.Combine(persistentDataPath, "simulations")
-                : persistentDataPath;
-            _ = System.Threading.Tasks.Task.Run(() =>
-                TryBroadcastLatestSessionLog(logDirectory, sessionId, playerId));
-        }
-
-        private void TryBroadcastLatestSessionLog(string dir, string sessionId, string playerId)
+        private void TryBroadcastSessionLog(string path, string sessionId, string playerId)
         {
             try
             {
-                if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir))
+                if (!File.Exists(path))
                     return;
-
-                var files = Directory.GetFiles(dir, "session_log_*.json");
-                if (files == null || files.Length == 0)
-                    return;
-
-                string latestFile = null;
-                DateTime latestTime = DateTime.MinValue;
-                string sessionSuffix = string.IsNullOrEmpty(sessionId)
-                    ? null
-                    : "_" + sessionId.Substring(0, Math.Min(8, sessionId.Length)) + ".json";
-                foreach (var f in files)
-                {
-                    if (sessionSuffix != null &&
-                        !f.EndsWith(sessionSuffix, StringComparison.OrdinalIgnoreCase))
-                        continue;
-                    var t = File.GetLastWriteTimeUtc(f);
-                    if (t > latestTime)
-                    {
-                        latestTime = t;
-                        latestFile = f;
-                    }
-                }
-
-                if (string.IsNullOrEmpty(latestFile))
-                    return;
-
-                var content = File.ReadAllText(latestFile);
+                var content = File.ReadAllText(path);
                 var payload = new SessionLogFileDto
                 {
                     sessionId = sessionId,
                     participantId = playerId,
-                    fileName = Path.GetFileName(latestFile),
-                    path = latestFile,
+                    fileName = Path.GetFileName(path),
+                    path = path,
                     content = content
                 };
                 Broadcast("SessionLogFile", payload);

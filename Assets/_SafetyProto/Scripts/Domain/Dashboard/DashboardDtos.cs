@@ -151,6 +151,7 @@ namespace SafetyProto.Domain.Dashboard
     [Serializable]
     public struct TaskManifestItemDto
     {
+        public string taskId;
         public string taskName;
         public string groupName;
         public string description;

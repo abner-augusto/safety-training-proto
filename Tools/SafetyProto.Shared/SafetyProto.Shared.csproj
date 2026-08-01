@@ -41,6 +41,7 @@
 
     <!-- Part 4 additions -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Events\EventContext.cs"        Link="Core\Events\EventContext.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Events\EventMetadata.cs"       Link="Core\Events\EventMetadata.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scoring\ScoreService.cs"               Link="Domain\Scoring\ScoreService.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Sessions\SessionLoggerCore.cs"         Link="Domain\Sessions\SessionLoggerCore.cs" />
 
@@ -50,6 +51,7 @@
 
     <!-- Part 7 additions -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Tasks\TaskManagerCore.cs"        Link="Domain\Tasks\TaskManagerCore.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Tasks\TaskExecutionRules.cs"    Link="Domain\Tasks\TaskExecutionRules.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scoring\ScoreRuleEngineCore.cs"  Link="Domain\Scoring\ScoreRuleEngineCore.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scoring\ScoringConfig.cs"        Link="Domain\Scoring\ScoringConfig.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Dashboard\DashboardDtos.cs"       Link="Domain\Dashboard\DashboardDtos.cs" />

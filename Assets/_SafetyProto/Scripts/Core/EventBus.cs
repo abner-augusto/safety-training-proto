@@ -102,7 +102,7 @@ namespace SafetyProto.Core
             _stopwatch.Stop();
         }
 
-        private void InvokeTyped<T>(T payload)
+        private void InvokeTyped<T>(T payload, string source)
         {
             if (!_typedSubscribers.TryGetValue(typeof(T), out var raw)) return;
             if (raw is Action<T> handlers)
@@ -110,7 +110,7 @@ namespace SafetyProto.Core
                 try { handlers.Invoke(payload); }
                 catch (Exception ex)
                 {
-                    ReportListenerError("EventBus.InvokeTyped", ex, payload is SafetyErrorEventArgs ? false : true);
+                    ReportListenerError(source, ex, payload is SafetyErrorEventArgs ? false : true);
                 }
             }
         }
@@ -193,38 +193,30 @@ namespace SafetyProto.Core
                 case CriticalSafetyFailureEventArgs c:   RaiseCriticalSafetyFailure(c); return;
                 case SafetyErrorEventArgs e:             RaiseSafetyError(e); return;
                 default:
-                    DispatchTyped(payload);
+                    DispatchTyped(EventMetadata.Stamp(payload));
                     return;
             }
         }
 
         internal void DispatchTyped<T>(T payload)
         {
-            if (!_typedSubscribers.TryGetValue(typeof(T), out var raw)) return;
-            if (raw is Action<T> handlers)
+            EnqueueDispatch(payload, null, "EventBus.DispatchTyped");
+        }
+
+        private void EnqueueDispatch<T>(T payload, UnityEvent<T> unityEvent, string source, Action? beforeDispatch = null, bool raiseSafetyError = true)
+        {
+            Enqueue(() =>
             {
-                Enqueue(() =>
-                {
-                    try { handlers.Invoke(payload); }
-                    catch (Exception ex)
-                    {
-                        SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
-                        {
-                            Source = "EventBus.DispatchTyped",
-                            Message = "Typed subscriber threw",
-                            Details = ex.ToString()
-                        });
-                    }
-                });
-            }
+                beforeDispatch?.Invoke();
+                try { unityEvent?.Invoke(payload); }
+                catch (Exception ex) { ReportListenerError(source + ".UnityEvent", ex, raiseSafetyError); }
+                InvokeTyped(payload, source + ".Typed");
+            });
         }
 
         private static void StampMetadata(ref string sessionId, ref string playerId, ref string scenarioId, ref long timestampMs)
         {
-            sessionId = EventContext.CurrentSessionId;
-            playerId = EventContext.CurrentPlayerId;
-            scenarioId = EventContext.CurrentScenarioId;
-            timestampMs = EventContext.NowUnixMs();
+            EventMetadata.StampFields(ref sessionId, ref playerId, ref scenarioId, ref timestampMs);
         }
 
         [Header("Debug")]
@@ -260,68 +252,45 @@ namespace SafetyProto.Core
         {
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
-            Enqueue(() =>
-            {
-                if (verboseLogging) SafetyLog.Info("[EventBus] SessionStarted");
-                try { onSessionStarted?.Invoke(payload); }
-                catch (Exception ex) { ReportListenerError("EventBus.onSessionStarted", ex, raiseSafetyError: true); }
-                InvokeTyped(payload);
-            });
+            EnqueueDispatch(payload, onSessionStarted, "EventBus.onSessionStarted",
+                () => { if (verboseLogging) SafetyLog.Info("[EventBus] SessionStarted"); });
         }
 
         public void RaiseSessionPaused(SessionPausedEventArgs args = new SessionPausedEventArgs())
         {
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
-            Enqueue(() =>
-            {
-                if (verboseLogging) SafetyLog.Info("[EventBus] SessionPaused");
-                try { onSessionPaused?.Invoke(payload); }
-                catch (Exception ex) { ReportListenerError("EventBus.onSessionPaused", ex, raiseSafetyError: true); }
-                InvokeTyped(payload);
-            });
+            EnqueueDispatch(payload, onSessionPaused, "EventBus.onSessionPaused",
+                () => { if (verboseLogging) SafetyLog.Info("[EventBus] SessionPaused"); });
         }
 
         public void RaiseSessionResumed(SessionResumedEventArgs args = new SessionResumedEventArgs())
         {
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
-            Enqueue(() =>
-            {
-                if (verboseLogging) SafetyLog.Info("[EventBus] SessionResumed");
-                try { onSessionResumed?.Invoke(payload); }
-                catch (Exception ex) { ReportListenerError("EventBus.onSessionResumed", ex, raiseSafetyError: true); }
-                InvokeTyped(payload);
-            });
+            EnqueueDispatch(payload, onSessionResumed, "EventBus.onSessionResumed",
+                () => { if (verboseLogging) SafetyLog.Info("[EventBus] SessionResumed"); });
         }
 
         public void RaiseSessionEnded(SessionEndedEventArgs args = new SessionEndedEventArgs())
         {
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
-            Enqueue(() =>
-            {
-                if (verboseLogging) SafetyLog.Info("[EventBus] SessionEnded");
-                try { onSessionEnded?.Invoke(payload); }
-                catch (Exception ex) { ReportListenerError("EventBus.onSessionEnded", ex, raiseSafetyError: true); }
-                InvokeTyped(payload);
-            });
+            EnqueueDispatch(payload, onSessionEnded, "EventBus.onSessionEnded",
+                () => { if (verboseLogging) SafetyLog.Info("[EventBus] SessionEnded"); });
         }
 
         public void RaiseActionAttempt(ActionAttemptedEvent args)
         {
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
-            Enqueue(() =>
+            EnqueueDispatch(payload, onActionAttempt, "EventBus.onActionAttempt", () =>
             {
                 if (verboseLogging)
                 {
                     var positionText = payload.Position.HasValue ? payload.Position.Value.ToString() : "<none>";
                     SafetyLog.Info($"[EventBus] ActionAttempt: {payload.ActionId}, Interactor: {payload.InteractorId}, Pos: {positionText}");
                 }
-                try { onActionAttempt?.Invoke(payload); }
-                catch (Exception ex) { ReportListenerError("EventBus.onActionAttempt", ex, raiseSafetyError: true); }
-                InvokeTyped(payload);
             });
         }
 
@@ -329,13 +298,8 @@ namespace SafetyProto.Core
         {
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
-            Enqueue(() =>
-            {
-                if (verboseLogging) SafetyLog.Info($"[EventBus] PPEStateChanged: {payload.PpeType}, Wearing: {payload.IsWearing}");
-                try { onPpeStateChanged?.Invoke(payload); }
-                catch (Exception ex) { ReportListenerError("EventBus.onPpeStateChanged", ex, raiseSafetyError: true); }
-                InvokeTyped(payload);
-            });
+            EnqueueDispatch(payload, onPpeStateChanged, "EventBus.onPpeStateChanged",
+                () => { if (verboseLogging) SafetyLog.Info($"[EventBus] PPEStateChanged: {payload.PpeType}, Wearing: {payload.IsWearing}"); });
         }
 
         public void RaiseTaskStarted(TaskEventArgs args)
@@ -343,13 +307,8 @@ namespace SafetyProto.Core
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             payload.Phase = TaskPhase.Started;
-            Enqueue(() =>
-            {
-                if (verboseLogging && payload.Task != null) SafetyLog.Info($"[EventBus] TaskStarted: {payload.Task.taskName}");
-                try { onTaskStarted?.Invoke(payload); }
-                catch (Exception ex) { ReportListenerError("EventBus.onTaskStarted", ex, raiseSafetyError: true); }
-                InvokeTyped(payload);
-            });
+            EnqueueDispatch(payload, onTaskStarted, "EventBus.onTaskStarted",
+                () => { if (verboseLogging && payload.Task != null) SafetyLog.Info($"[EventBus] TaskStarted: {payload.Task.taskName}"); });
         }
 
         public void RaiseTaskCompleted(TaskEventArgs args)
@@ -357,26 +316,16 @@ namespace SafetyProto.Core
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             payload.Phase = TaskPhase.Completed;
-            Enqueue(() =>
-            {
-                if (verboseLogging && payload.Task != null) SafetyLog.Info($"[EventBus] TaskCompleted: {payload.Task.taskName}");
-                try { onTaskCompleted?.Invoke(payload); }
-                catch (Exception ex) { ReportListenerError("EventBus.onTaskCompleted", ex, raiseSafetyError: true); }
-                InvokeTyped(payload);
-            });
+            EnqueueDispatch(payload, onTaskCompleted, "EventBus.onTaskCompleted",
+                () => { if (verboseLogging && payload.Task != null) SafetyLog.Info($"[EventBus] TaskCompleted: {payload.Task.taskName}"); });
         }
 
         public void RaiseScoreChanged(ScoreChangedEventArgs args)
         {
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
-            Enqueue(() =>
-            {
-                if (verboseLogging) SafetyLog.Info($"[EventBus] ScoreChanged: Total {payload.TotalScore}, Delta {payload.Delta}");
-                try { onScoreChanged?.Invoke(payload); }
-                catch (Exception ex) { ReportListenerError("EventBus.onScoreChanged", ex, raiseSafetyError: true); }
-                InvokeTyped(payload);
-            });
+            EnqueueDispatch(payload, onScoreChanged, "EventBus.onScoreChanged",
+                () => { if (verboseLogging) SafetyLog.Info($"[EventBus] ScoreChanged: Total {payload.TotalScore}, Delta {payload.Delta}"); });
         }
 
         public void RaiseGroupStarted(TaskGroupEventArgs args)
@@ -384,13 +333,8 @@ namespace SafetyProto.Core
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             payload.Phase = TaskGroupPhase.Started;
-            Enqueue(() =>
-            {
-                if (verboseLogging && payload.Group != null) SafetyLog.Info($"[EventBus] GroupStarted: {payload.Group.groupName}");
-                try { onGroupStarted?.Invoke(payload); }
-                catch (Exception ex) { ReportListenerError("EventBus.onGroupStarted", ex, raiseSafetyError: true); }
-                InvokeTyped(payload);
-            });
+            EnqueueDispatch(payload, onGroupStarted, "EventBus.onGroupStarted",
+                () => { if (verboseLogging && payload.Group != null) SafetyLog.Info($"[EventBus] GroupStarted: {payload.Group.groupName}"); });
         }
 
         public void RaiseGroupCompleted(TaskGroupEventArgs args)
@@ -398,65 +342,41 @@ namespace SafetyProto.Core
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
             payload.Phase = TaskGroupPhase.Completed;
-            Enqueue(() =>
-            {
-                if (verboseLogging && payload.Group != null) SafetyLog.Info($"[EventBus] GroupCompleted: {payload.Group.groupName}");
-                try { onGroupCompleted?.Invoke(payload); }
-                catch (Exception ex) { ReportListenerError("EventBus.onGroupCompleted", ex, raiseSafetyError: true); }
-                InvokeTyped(payload);
-            });
+            EnqueueDispatch(payload, onGroupCompleted, "EventBus.onGroupCompleted",
+                () => { if (verboseLogging && payload.Group != null) SafetyLog.Info($"[EventBus] GroupCompleted: {payload.Group.groupName}"); });
         }
 
         public void RaiseSessionCompleted(SessionCompletedEventArgs args)
         {
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
-            Enqueue(() =>
-            {
-                if (verboseLogging) SafetyLog.Info($"[EventBus] SessionCompleted: {payload.tasksCompleted} tasks, {payload.totalElapsedTime:F2}s, Score: {payload.totalScore}");
-                try { onSessionCompleted?.Invoke(payload); }
-                catch (Exception ex) { ReportListenerError("EventBus.onSessionCompleted", ex, raiseSafetyError: true); }
-                InvokeTyped(payload);
-            });
+            EnqueueDispatch(payload, onSessionCompleted, "EventBus.onSessionCompleted",
+                () => { if (verboseLogging) SafetyLog.Info($"[EventBus] SessionCompleted: {payload.tasksCompleted} tasks, {payload.totalElapsedTime:F2}s, Score: {payload.totalScore}"); });
         }
 
         public void RaiseSafetyViolation(SafetyViolationEventArgs args)
         {
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
-            Enqueue(() =>
-            {
-                if (verboseLogging) SafetyLog.Info($"[EventBus] SafetyViolation: {payload.ViolationCode} - {payload.Message}");
-                try { onSafetyViolation?.Invoke(payload); }
-                catch (Exception ex) { ReportListenerError("EventBus.onSafetyViolation", ex, raiseSafetyError: true); }
-                InvokeTyped(payload);
-            });
+            EnqueueDispatch(payload, onSafetyViolation, "EventBus.onSafetyViolation",
+                () => { if (verboseLogging) SafetyLog.Info($"[EventBus] SafetyViolation: {payload.ViolationCode} - {payload.Message}"); });
         }
 
         public void RaiseCriticalSafetyFailure(CriticalSafetyFailureEventArgs args)
         {
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
-            Enqueue(() =>
-            {
-                if (verboseLogging) SafetyLog.Info($"[EventBus] CriticalSafetyFailure: {payload.Reason} ({payload.ViolationCount} in {payload.WindowSeconds}s)");
-                try { onCriticalSafetyFailure?.Invoke(payload); }
-                catch (Exception ex) { ReportListenerError("EventBus.onCriticalSafetyFailure", ex, raiseSafetyError: true); }
-                InvokeTyped(payload);
-            });
+            EnqueueDispatch(payload, onCriticalSafetyFailure, "EventBus.onCriticalSafetyFailure",
+                () => { if (verboseLogging) SafetyLog.Info($"[EventBus] CriticalSafetyFailure: {payload.Reason} ({payload.ViolationCount} in {payload.WindowSeconds}s)"); });
         }
 
         public void RaiseSafetyError(SafetyErrorEventArgs args)
         {
             var payload = args;
             StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
-            Enqueue(() =>
-            {
-                if (verboseLogging) SafetyLog.Info($"[EventBus] SafetyError: {payload.Source} - {payload.Message}");
-                try { onSafetyError?.Invoke(payload); }
-                catch (Exception ex) { ReportListenerError("EventBus.onSafetyError", ex, raiseSafetyError: false); }
-                InvokeTyped(payload);
-            });
+            EnqueueDispatch(payload, onSafetyError, "EventBus.onSafetyError",
+                () => { if (verboseLogging) SafetyLog.Info($"[EventBus] SafetyError: {payload.Source} - {payload.Message}"); },
+                raiseSafetyError: false);
         }
     }
 }

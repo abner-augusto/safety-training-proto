@@ -11,7 +11,6 @@ namespace SafetyProto.Tests.Editor.Support
     {
         public readonly List<(string eventType, object payload)> Broadcasts = new List<(string, object)>();
         public readonly List<ITaskGroup> Registered = new List<ITaskGroup>();
-        public readonly List<(string sessionId, string playerId)> LogBroadcasts = new List<(string, string)>();
         private readonly List<ITaskGroup> _knownGroups = new List<ITaskGroup>();
 
         public bool VerboseEvents { get; set; } = true;
@@ -35,9 +34,6 @@ namespace SafetyProto.Tests.Editor.Support
             ManifestBuilds++;
             return new SessionManifestDto { sessionId = sessionId, tasks = System.Array.Empty<TaskManifestItemDto>() };
         }
-
-        public void QueueSessionLogBroadcast(string sessionId, string playerId) =>
-            LogBroadcasts.Add((sessionId, playerId));
 
         public void Broadcast<T>(string eventType, T payload) => Broadcasts.Add((eventType, payload!));
 
