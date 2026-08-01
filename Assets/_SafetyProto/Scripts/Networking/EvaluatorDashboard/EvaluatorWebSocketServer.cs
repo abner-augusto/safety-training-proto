@@ -19,6 +19,7 @@ namespace SafetyProto.Networking.Dashboard
     {
         private const string WebSocketGuid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
         private const int DefaultTimeoutMs = 5000;
+        private const int ClientQueueCapacity = 128;
 
         private readonly List<ClientConnection> _clients = new();
         private readonly object _clientLock = new();
@@ -43,7 +44,8 @@ namespace SafetyProto.Networking.Dashboard
             var frame = BuildTextFrame(utf8Json, utf8Json.Length);
             if (conn.IsAlive)
             {
-                conn.Outgoing.Enqueue(frame);
+                if (!conn.Enqueue(frame, droppable: false))
+                    DisconnectClient(conn);
             }
         }
 
@@ -125,10 +127,10 @@ namespace SafetyProto.Networking.Dashboard
             if (!_running || utf8Json == null || length <= 0)
                 return;
 
-            EnqueueFrameToClients(BuildTextFrame(utf8Json, length));
+            EnqueueFrameToClients(BuildTextFrame(utf8Json, length), droppable: true);
         }
 
-        private void EnqueueFrameToClients(byte[] frame)
+        private void EnqueueFrameToClients(byte[] frame, bool droppable)
         {
             if (frame == null)
                 return;
@@ -146,7 +148,11 @@ namespace SafetyProto.Networking.Dashboard
                         continue;
                     }
 
-                    conn.Outgoing.Enqueue(frame);
+                    if (!conn.Enqueue(frame, droppable))
+                    {
+                        disconnected ??= new List<ClientConnection>();
+                        disconnected.Add(conn);
+                    }
                 }
 
                 if (disconnected != null)
@@ -192,7 +198,7 @@ namespace SafetyProto.Networking.Dashboard
                 {
                     try
                     {
-                        EnqueueFrameToClients(encode());
+                        EnqueueFrameToClients(encode(), droppable: false);
                     }
                     catch
                     {
@@ -355,7 +361,7 @@ namespace SafetyProto.Networking.Dashboard
                             MessageReceived?.Invoke(conn, text);
                             break;
                         case 0x9: // Ping
-                            conn.Outgoing.Enqueue(BuildControlFrame(0xA, payload, payloadRead));
+                            conn.Enqueue(BuildControlFrame(0xA, payload, payloadRead), droppable: false);
                             break;
                         case 0x8: // Close
                             DisconnectClient(conn);
@@ -474,7 +480,8 @@ namespace SafetyProto.Networking.Dashboard
         {
             public readonly TcpClient Client;
             public readonly NetworkStream Stream;
-            public readonly ConcurrentQueue<byte[]> Outgoing = new();
+            public readonly BlockingCollection<byte[]> Outgoing =
+                new BlockingCollection<byte[]>(new ConcurrentQueue<byte[]>(), ClientQueueCapacity);
             public readonly CancellationTokenSource Cts = new();
             public readonly Thread SenderThread;
             public readonly string Path;
@@ -494,30 +501,46 @@ namespace SafetyProto.Networking.Dashboard
             {
                 while (!Cts.IsCancellationRequested)
                 {
-                    if (Outgoing.TryDequeue(out var frame))
+                    try
                     {
-                        try
+                        foreach (var frame in Outgoing.GetConsumingEnumerable(Cts.Token))
                         {
-                            Stream.Write(frame, 0, frame.Length);
-                        }
-                        catch
-                        {
-                            Cts.Cancel();
-                            break;
+                            try
+                            {
+                                Stream.Write(frame, 0, frame.Length);
+                            }
+                            catch
+                            {
+                                Cts.Cancel();
+                                break;
+                            }
                         }
                     }
-                    else
-                    {
-                        Thread.Sleep(10);
-                    }
+                    catch (OperationCanceledException) { }
+                    catch (InvalidOperationException) { }
                 }
+            }
+
+            public bool Enqueue(byte[] frame, bool droppable)
+            {
+                if (frame == null || Cts.IsCancellationRequested) return false;
+                if (Outgoing.TryAdd(frame)) return true;
+                if (!droppable) return false;
+
+                if (Outgoing.TryTake(out _))
+                {
+                    return Outgoing.TryAdd(frame);
+                }
+                return false;
             }
 
             public void Dispose()
             {
                 Cts.Cancel();
+                try { Outgoing.CompleteAdding(); } catch (InvalidOperationException) { }
                 try { SenderThread?.Join(50); } catch { /* ignore */ }
                 try { Client.Close(); } catch { /* ignore */ }
+                Outgoing.Dispose();
             }
         }
 
