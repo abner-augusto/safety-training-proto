@@ -92,7 +92,6 @@ namespace SafetyProto.Domain.Dashboard
                 orderViolationCount = args.orderViolationCount
             };
             _host.Broadcast("SessionCompleted", dto);
-            _host.QueueSessionLogBroadcast(args.SessionId, args.PlayerId);
         }
 
         private void OnTask(TaskEventArgs args)
@@ -116,7 +115,7 @@ namespace SafetyProto.Domain.Dashboard
             var dto = new GroupDto
             {
                 sessionId = args.SessionId,
-                groupId = group != null ? group.groupName : string.Empty,
+                groupId = group != null ? group.id : string.Empty,
                 groupName = group != null ? group.groupName : string.Empty,
                 timestampMs = _host.ResolveTimestamp(args.TimestampMs)
             };

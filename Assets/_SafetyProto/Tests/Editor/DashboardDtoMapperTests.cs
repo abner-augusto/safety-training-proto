@@ -67,7 +67,7 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
-        public void BuildTaskDto_UsesTaskNameAsIdAndAppliesScoringForRiskLevel()
+        public void BuildTaskDto_UsesStableTaskIdAndAppliesScoringForRiskLevel()
         {
             var scoring = ScoringConfig.Default;
             var task = _builder.Task("weld_pipe", "action_weld", PPEType.Helmet);
@@ -106,6 +106,7 @@ namespace SafetyProto.Tests.Editor
             var item = DashboardDtoMapper.BuildManifestItem(t2, groups, ScoringConfig.Default, "active");
 
             Assert.AreEqual("t2", item.taskName);
+            Assert.AreEqual("t2", item.taskId);
             Assert.AreEqual("G", item.groupName);
             Assert.AreEqual(2, item.order);
             Assert.AreEqual("active", item.status);
