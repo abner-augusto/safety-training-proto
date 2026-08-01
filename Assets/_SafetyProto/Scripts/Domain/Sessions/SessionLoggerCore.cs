@@ -201,6 +201,11 @@ namespace SafetyProto.Domain.Sessions
 
             _onSessionStarted        = args =>
             {
+                // The logger exists before the participant session starts, so Editor focus and
+                // application lifecycle events may arrive without session metadata. A report is
+                // session-scoped and must always begin with its authoritative SessionStarted.
+                _log.entries.Clear();
+                _log.summary = null;
                 ResetTallies(args.TimestampMs);
                 _totalTasks = args.TotalTasks;
                 _sessionId = args.SessionId ?? string.Empty;

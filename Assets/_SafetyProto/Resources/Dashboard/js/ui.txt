@@ -157,20 +157,22 @@
       switch (entry.eventName) {
         case 'PpeStateChanged':
           return `${t('detailPpe')}: ${ppeLabel(d.ppeType)} · ${d.wearing ? t('detailWorn') : t('detailRemoved')}`;
-        case 'ScoreChanged':
-          return `${t('detailDelta')}: ${d.delta >= 0 ? '+' : ''}${d.delta} · ${t('detailTotal')}: ${d.totalScore}`;
+        case 'ScoreChanged': {
+          const delta = d.delta ?? 0;
+          return `${t('detailDelta')}: ${delta >= 0 ? '+' : ''}${delta} · ${t('detailTotal')}: ${d.totalScore ?? 0}`;
+        }
         case 'SafetyViolation':
           return `${violationLabel(d.violationCode)}${d.message ? ` · ${violationMessage(d.violationCode, d.message)}` : ''}`;
         case 'SafetyError':
           return `${t('internalError')}${d.source ? ` · ${t('origin')}: ${d.source}` : ''}`;
         case 'CriticalSafetyFailure':
-          return `${d.violationCount} ${t('violations').toLowerCase()} ${t('detailIn')} ${d.windowSeconds}s`;
+          return `${d.violationCount ?? 0} ${t('violations').toLowerCase()} ${t('detailIn')} ${d.windowSeconds ?? 0}s`;
         case 'SessionReset':
           return t('manualReset');
         case 'SessionCompleted': {
           const m = Math.floor((d.totalElapsedTime ?? 0) / 60);
           const s = Math.floor((d.totalElapsedTime ?? 0) % 60);
-          return `${t('detailTime')}: ${m}:${String(s).padStart(2, '0')} · ${t('detailScore')}: ${d.totalScore} · ${t('detailCompleted')}: ${d.tasksCompleted}/${d.totalTasks}`;
+          return `${t('detailTime')}: ${m}:${String(s).padStart(2, '0')} · ${t('detailScore')}: ${d.totalScore ?? 0} · ${t('detailCompleted')}: ${d.tasksCompleted ?? 0}/${d.totalTasks ?? 0}`;
         }
         default:
           return '';

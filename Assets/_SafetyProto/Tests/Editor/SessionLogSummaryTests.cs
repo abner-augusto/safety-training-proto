@@ -114,6 +114,24 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual(0, notifications);
         }
 
+        [Test]
+        public void SessionStarted_DiscardsPreSessionEvents()
+        {
+            using var logger = new SessionLoggerCore(
+                _bus, _outputDir, SessionLoggerCore.SerializeIndentedOmittingDefaults);
+            logger.Subscribe();
+
+            _bus.Publish(new SessionPausedEventArgs { TimestampMs = 500L });
+            _bus.Publish(new SessionStartedEventArgs { SessionId = "S1", TotalTasks = 1, TimestampMs = 1000L });
+            _bus.Publish(new SessionCompletedEventArgs(1f, 0, 0, 1) { SessionId = "S1", TimestampMs = 2000L });
+
+            var entries = ReadWrittenLog()["entries"] as JArray;
+            Assert.IsNotNull(entries);
+            Assert.AreEqual(2, entries!.Count);
+            Assert.AreEqual("SessionStarted", (string?)entries[0]["eventName"]);
+            Assert.AreEqual("SessionCompleted", (string?)entries[1]["eventName"]);
+        }
+
         private static TaskOutcome Outcome(string id, string groupId, TaskState state, int severity, int probability) =>
             new TaskOutcome
             {
@@ -131,7 +149,9 @@ namespace SafetyProto.Tests.Editor
         /// after Publish returns. Poll rather than sleep a fixed amount: the read also has to
         /// survive catching the file mid-write, which shows up as a parse failure.
         /// </summary>
-        private JToken ReadWrittenSummary()
+        private JToken ReadWrittenSummary() => ReadWrittenLog()["summary"]!;
+
+        private JObject ReadWrittenLog()
         {
             var deadline = DateTime.UtcNow.AddSeconds(5);
             Exception? last = null;
@@ -146,8 +166,8 @@ namespace SafetyProto.Tests.Editor
                 {
                     try
                     {
-                        var summary = JObject.Parse(File.ReadAllText(files[0]))["summary"];
-                        if (summary != null) return summary;
+                        var log = JObject.Parse(File.ReadAllText(files[0]));
+                        if (log["summary"] != null) return log;
                     }
                     catch (Exception ex) { last = ex; }
                 }

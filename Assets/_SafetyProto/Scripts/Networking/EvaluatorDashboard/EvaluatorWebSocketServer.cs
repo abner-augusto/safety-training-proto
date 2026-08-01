@@ -18,7 +18,7 @@ namespace SafetyProto.Networking.Dashboard
     public class EvaluatorWebSocketServer
     {
         private const string WebSocketGuid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-        private const int DefaultTimeoutMs = 5000;
+        private const int DefaultSendTimeoutMs = 5000;
         private const int ClientQueueCapacity = 128;
 
         private readonly List<ClientConnection> _clients = new();
@@ -281,8 +281,7 @@ namespace SafetyProto.Networking.Dashboard
             var responseBytes = Encoding.ASCII.GetBytes(responseBuilder.ToString());
             stream.Write(responseBytes, 0, responseBytes.Length);
 
-            client.ReceiveTimeout = DefaultTimeoutMs;
-            client.SendTimeout = DefaultTimeoutMs;
+            client.SendTimeout = DefaultSendTimeoutMs;
 
             var connection = new ClientConnection(client, stream, path);
             lock (_clientLock)
