@@ -37,7 +37,7 @@
       "name": "Seleção de EPIs",
       "objective": "Prepare-se para o trabalho em altura: selecione e vista os EPIs adequados disponíveis na bancada.",
       "executionMode": "Sequential",
-      "timeLimit": 420.0,
+      "timeLimit": 0.0,
       "tasks": [
         {
           "id": "equip_boots",
@@ -135,7 +135,7 @@
       "prerequisiteTaskId": "connect_lanyard",
       "prerequisiteAdvice": "Você ainda não conectou o talabarte ao ponto de ancoragem. Conecte-se antes de executar qualquer tarefa na plataforma e permaneça conectado durante todo o período de exposição ao risco de queda (NR-35, item 35.6.11 \"a\").",
       "executionMode": "FreeOrder",
-      "timeLimit": 300.0,
+      "timeLimit": 0.0,
       "tasks": [
         {
           "id": "connect_lanyard",

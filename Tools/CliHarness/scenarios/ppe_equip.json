@@ -5,7 +5,7 @@
     {
       "name": "Selecao de EPIs",
       "executionMode": "Sequential",
-      "timeLimit": 270,
+      "timeLimit": 0.0,
       "tasks": [
         {
           "name": "Equipar Botina de Seguranca",

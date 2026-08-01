@@ -13,7 +13,7 @@
       "name": "Seleção de EPIs",
       "objective": "Prepare-se para o trabalho em altura: selecione e vista os EPIs adequados disponíveis na bancada.",
       "executionMode": "Sequential",
-      "timeLimit": 420.0,
+      "timeLimit": 0.0,
       "tasks": [
         {
           "id": "equip_boots",
@@ -94,7 +94,7 @@
       "name": "Inspeção em Andaime Fachadeiro",
       "objective": "Inspecione o andaime fachadeiro, corrija as irregularidades que encontrar e conecte-se com segurança antes de iniciar a atividade.",
       "executionMode": "FreeOrder",
-      "timeLimit": 300.0,
+      "timeLimit": 0.0,
       "tasks": [
         {
           "id": "connect_lanyard",

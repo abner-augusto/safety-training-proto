@@ -52,7 +52,11 @@ Group fields:
 
 - `groupName`: display/id string.
 - `executionMode`: `Sequential` or `FreeOrder`.
-- `timeLimit`: seconds for the group.
+- `timeLimit`: seconds for the group; `0` (the shipped value) means no timer. The
+  scenarios author no limit because no working-at-height task is safer for being
+  done faster. Setting one closes the group when it elapses, marking whatever is
+  still open `NotPerformed` — the same outcome as skipping it. There is no
+  per-task limit.
 - `tasks`: ordered list of task objects.
 - `requiredGroups`: names of groups that must complete first.
 - `prerequisiteTaskId` (optional): id of a task in this group that is the safety precondition for all the others. While it is pending, any sibling attempt is refused instead of completed and raises the `PREREQUISITE_PENDING` violation; the refused task stays pending and free order is preserved. Guided mode only — Evaluation lets the omission happen so the inspection gate can score it. Loading fails if the id matches no task in the group.
