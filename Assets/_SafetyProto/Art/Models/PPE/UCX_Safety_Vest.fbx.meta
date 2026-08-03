@@ -1,79 +1,9 @@
 fileFormatVersion: 2
-guid: 8a69427872f566a4d9709896efc071dc
+guid: a5d255ddceae5f54c908e26944d2c73d
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Cement_Mixer
-    second: {fileID: 2100000, guid: 1db867d9b30f7a1448b90d74a0746af5, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Concrete_Roadblocks
-    second: {fileID: 2100000, guid: 50612eea009f89f41b1858b978495a95, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Contener
-    second: {fileID: 2100000, guid: 75a052988f5d49749bc20fbfc77e4300, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Electric_Screwdriver
-    second: {fileID: 2100000, guid: cce8715d5a737e741b4a8a2290dbfe2d, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Hammer
-    second: {fileID: 2100000, guid: 5c22563df5308bb4fbb9369e71d23706, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Hardhat
-    second: {fileID: 2100000, guid: 16f7f46f2727ddb4a806a3f1ca1dbfc6, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Ladder
-    second: {fileID: 2100000, guid: d9c6c5d8ef126924ba946f1c486f675a, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Oil_Barrel
-    second: {fileID: 2100000, guid: 14b7cb623d7ae124299ff9a06347825b, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Orange_Cone
-    second: {fileID: 2100000, guid: 60e1df1efe4bc6a44acd029edb336a22, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Roadblock_1
-    second: {fileID: 2100000, guid: 3e85aade04e8b8d47abe3ffe48f3d733, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Roadblocks_2
-    second: {fileID: 2100000, guid: 9f2c0b06b0a9a1840bc17e654b64718a, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Screwdriver
-    second: {fileID: 2100000, guid: e8316ca5d7ffebf448e3305477737da7, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Water_Barrel
-    second: {fileID: 2100000, guid: 975559380030c0a4bacfd30af77231b6, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Wrench
-    second: {fileID: 2100000, guid: 8047208f741294d489c7a612f76a642f, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -100,11 +30,11 @@ ModelImporter:
     extraExposedTransformPaths: []
     extraUserProperties: []
     clipAnimations: []
-    isReadable: 0
+    isReadable: 1
   meshes:
     lODScreenPercentages: []
     globalScale: 1
-    meshCompression: 3
+    meshCompression: 0
     addColliders: 0
     useSRGBMaterialColor: 1
     sortHierarchyByName: 1
@@ -116,7 +46,7 @@ ModelImporter:
     nodeNameCollisionStrategy: 1
     fileIdsGeneration: 2
     swapUVChannels: 0
-    generateSecondaryUV: 1
+    generateSecondaryUV: 0
     useFileUnits: 1
     keepQuads: 0
     weldVertices: 1
