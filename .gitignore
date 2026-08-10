@@ -49,6 +49,7 @@ scene_dump_*.md
 # ============================================================
 /[Mm]emoryCaptures/
 /[Rr]ecordings/
+*.blend
 .env*
 *.local
 

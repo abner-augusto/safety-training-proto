@@ -60435,7 +60435,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1382241779439910191, guid: 7ba70831d1b548345a0a702c1ae5c3f1, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2814252796813588660, guid: 7ba70831d1b548345a0a702c1ae5c3f1, type: 3}
       propertyPath: isDistractor
@@ -60975,12 +60975,12 @@ Light:
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
     m_Type: 2
-    m_Resolution: -1
+    m_Resolution: 2
     m_CustomResolution: -1
-    m_Strength: 0.8
+    m_Strength: 0.693
     m_Bias: 0.005
-    m_NormalBias: 0.1
-    m_NearPlane: 0.1
+    m_NormalBias: 0.2
+    m_NearPlane: 0.24
     m_CullingMatrixOverride:
       e00: 1
       e01: 0
