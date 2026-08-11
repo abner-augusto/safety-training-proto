@@ -60,6 +60,13 @@ namespace SafetyProto.Runtime.Feedback
         private void OnSafetyViolation(SafetyViolationEventArgs _)
             => TriggerHaptics(errorAmplitude, errorDuration);
 
+        /// <summary>
+        /// Requests a pulse directly, for feedback moments that have no event to react to
+        /// (e.g. a gaze dwell completing). Routes through the same platform path as the
+        /// event-driven pulses, including the non-Meta editor fallback.
+        /// </summary>
+        public void Pulse(float amplitude, float duration) => TriggerHaptics(amplitude, duration);
+
         private void TriggerHaptics(float amplitude, float duration)
         {
 #if USING_META_XR
