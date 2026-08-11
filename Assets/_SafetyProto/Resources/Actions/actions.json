@@ -9,7 +9,8 @@
       "telemetryName": "conectar_talabarte",
       "tags": [],
       "regulatoryRefs": [
-        "NR-35 §35.5"
+        "NR-35, item 35.6.11 'a'",
+        "NR-35, item 35.6.9.1.1"
       ],
       "isSafetyCritical": true,
       "isHiddenInUI": false,
@@ -26,7 +27,8 @@
       "telemetryName": "instalar_guarda_corpo",
       "tags": [],
       "regulatoryRefs": [
-        "NR-18 §18.9.4.2"
+        "NR-18, item 18.12.1 'd'",
+        "NR-18, item 18.12.15.2"
       ],
       "isSafetyCritical": true,
       "isHiddenInUI": false,
@@ -38,12 +40,14 @@
     {
       "actionId": "install_toeboard",
       "displayName": "Instalar Rodapé",
-      "description": "Instalar o rodapé de 20cm na seção faltante da plataforma.",
+      "description": "Instalar o rodapé na seção faltante da plataforma.",
       "category": "Safety",
       "telemetryName": "instalar_rodape",
       "tags": [],
       "regulatoryRefs": [
-        "NR-18 §18.9.4.2 'c'"
+        "NR-18, item 18.9.4.2 'c'",
+        "NR-18, item 18.12.15.2",
+        "NR-35, item 35.5.5.1 'f'"
       ],
       "isSafetyCritical": true,
       "isHiddenInUI": false,
@@ -60,8 +64,9 @@
       "telemetryName": "sinalizar_tela_protecao",
       "tags": [],
       "regulatoryRefs": [
-        "NR-18 §18.12.15",
-        "NR-18 §18.12.15.1"
+        "NR-18, item 18.12.15",
+        "NR-18, item 18.12.15.1",
+        "NR-35, item 35.5.5.1 'f'"
       ],
       "isSafetyCritical": true,
       "isHiddenInUI": false,

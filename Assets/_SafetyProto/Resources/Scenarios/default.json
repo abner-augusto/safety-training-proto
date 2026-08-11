@@ -106,7 +106,7 @@
           "hintText": "Escolha o capacete com jugular para mantê-lo preso à cabeça durante o trabalho em altura.",
           "failureAdvice": "Para trabalho em altura, o capacete deve possuir sistema de fixação (jugular) que impeça sua queda durante a atividade (seleção de EPI — NR-06 e NR-35).",
           "ppeAdvice": "",
-          "omissionAdvice": "Você não colocou o capacete com jugular. Para trabalho em altura o capacete deve permanecer preso à cabeça — sem ele, a queda de um objeto pode ser fatal (NR-06; NR-35)."
+          "omissionAdvice": "Você não colocou o capacete com jugular. Para trabalho em altura o capacete deve permanecer preso à cabeça — sem ele, a queda de um objeto pode ser fatal (NR-06 e NR-35)."
         },
         {
           "id": "equip_harness",
@@ -121,9 +121,9 @@
             "Harness"
           ],
           "hintText": "Para retenção de queda, escolha o cinturão de segurança tipo paraquedista; o cinto abdominal não é adequado a esse sistema.",
-          "failureAdvice": "No sistema de retenção de queda, o EPI deve ser o cinturão de segurança tipo paraquedista (NR-35 §35.6.9). Cintos abdominais não são aceitos para retenção de queda.",
+          "failureAdvice": "No sistema de retenção de queda, o EPI deve ser o cinturão de segurança tipo paraquedista (NR-35, item 35.6.9). Cintos abdominais não são aceitos para retenção de queda.",
           "ppeAdvice": "",
-          "omissionAdvice": "Você não vestiu o cinturão tipo paraquedista. Sem ele não existe sistema de retenção de queda — é o EPI central do trabalho em altura (NR-35 §35.6.9)."
+          "omissionAdvice": "Você não vestiu o cinturão tipo paraquedista. Sem ele não existe sistema de retenção de queda — é o EPI central do trabalho em altura (NR-35, item 35.6.9)."
         }
       ],
       "requiredGroups": []
@@ -133,7 +133,7 @@
       "name": "Inspeção em Andaime Fachadeiro",
       "objective": "Inspecione o andaime fachadeiro, corrija as irregularidades que encontrar e conecte-se com segurança antes de iniciar a atividade.",
       "prerequisiteTaskId": "connect_lanyard",
-      "prerequisiteAdvice": "Você ainda não conectou o talabarte ao ponto de ancoragem. Conecte-se antes de executar qualquer tarefa na plataforma e permaneça conectado durante todo o período de exposição ao risco de queda (NR-35, item 35.6.11 \"a\").",
+      "prerequisiteAdvice": "Você ainda não conectou o talabarte ao ponto de ancoragem. Conecte-se antes de executar qualquer tarefa na plataforma e permaneça conectado durante todo o período de exposição ao risco de queda (NR-35, item 35.6.11 'a').",
       "executionMode": "FreeOrder",
       "timeLimit": 0.0,
       "tasks": [
@@ -151,9 +151,9 @@
             "Helmet"
           ],
           "hintText": "Conecte o talabarte ao ponto de ancoragem indicado antes de se expor ao risco e permaneça conectado durante a atividade.",
-          "failureAdvice": "Conectar o talabarte ao ponto de ancoragem certificado é a primeira ação ao chegar na plataforma. Trabalhar desconectado é a principal causa de quedas fatais.",
+          "failureAdvice": "Conectar o talabarte ao ponto de ancoragem certificado é a primeira ação ao chegar na plataforma. Trabalhar desconectado é a principal causa de quedas fatais. Quando o elemento de ligação para retenção de queda for um talabarte, ele deve ser integrado com absorvedor de energia (NR-35, item 35.6.9.1.1).",
           "ppeAdvice": "Você conectou o talabarte, mas estava sem algum EPI obrigatório. Verifique todos os equipamentos ANTES de subir.",
-          "omissionAdvice": "Você trabalhou desconectado do ponto de ancoragem. Trabalhar em altura sem o talabarte conectado é a principal causa de quedas fatais (NR-35)."
+          "omissionAdvice": "Você trabalhou desconectado do ponto de ancoragem. Trabalhar em altura sem o talabarte conectado é a principal causa de quedas fatais (NR-35, item 35.6.11 'a')."
         },
         {
           "id": "install_guardrail",
@@ -170,15 +170,15 @@
             "GloveLeft",
             "GloveRight"
           ],
-          "hintText": "Verifique todo o perímetro aberto: o guarda-corpo deve ter travessão superior a 1,20 m, intermediário a 0,70 m e rodapé (NR-18, itens 18.9.4.2 e 18.12.1 'd').",
-          "failureAdvice": "O guarda-corpo deve estar presente em todo o perímetro do andaime, exceto na face de trabalho (NR-18 §18.12.1 'd'). Sua ausência expõe o trabalhador a queda direta.",
+          "hintText": "Verifique todo o perímetro aberto: no andaime multidirecional, o guarda-corpo deve ter travessão superior entre 1,0 m e 1,20 m acima do estrado, travessão intermediário 0,50 m abaixo do superior e rodapé de no mínimo 15 cm (NR-18, item 18.12.15.2).",
+          "failureAdvice": "O andaime deve possuir sistema de guarda-corpo e rodapé em todo o perímetro, com exceção do lado da face de trabalho (NR-18, item 18.12.1 'd'). Sua ausência expõe o trabalhador a queda direta.",
           "ppeAdvice": "Instalar o guarda-corpo sem luvas de proteção e/ou capacete expõe suas mãos a cortes nas estruturas metálicas.",
-          "omissionAdvice": "Você deixou o perímetro sem guarda-corpo. A abertura expõe qualquer trabalhador na plataforma a queda direta (NR-18 §18.12.1 'd')."
+          "omissionAdvice": "Você deixou o perímetro sem guarda-corpo. A abertura expõe qualquer trabalhador na plataforma a queda direta (NR-18, item 18.12.1 'd')."
         },
         {
           "id": "install_toeboard",
           "name": "Instalar Rodapé",
-          "taskDescription": "Instale o rodapé de 20cm na seção faltante da plataforma.",
+          "taskDescription": "Instale o rodapé na seção faltante da plataforma.",
           "actionId": "install_toeboard",
           "risk": {
             "severity": 4,
@@ -190,10 +190,10 @@
             "GloveLeft",
             "GloveRight"
           ],
-          "hintText": "Verifique a base do guarda-corpo: o rodapé deve ter no mínimo 15 cm e impedir a queda de materiais (NR-18, item 18.9.4.2 'c').",
-          "failureAdvice": "O rodapé impede que ferramentas e materiais caiam da plataforma sobre trabalhadores abaixo (NR-18 §18.9.4.2 'c' — altura mínima de 15 cm).",
+          "hintText": "Verifique a base do guarda-corpo: o rodapé deve ter no mínimo 15 cm, rente à superfície, e impedir a queda de materiais (NR-18, itens 18.9.4.2 'c' e 18.12.15.2).",
+          "failureAdvice": "O rodapé impede que ferramentas e materiais caiam da plataforma sobre trabalhadores abaixo. Ele é exigido em todo o perímetro do andaime, junto com o guarda-corpo, com altura mínima de 15 cm (NR-18, itens 18.12.1 'd' e 18.9.4.2 'c').",
           "ppeAdvice": "Manipular peças metálicas sem luvas é uma violação de segurança.",
-          "omissionAdvice": "Você não instalou o rodapé. Ferramentas e materiais podem cair da plataforma sobre quem está abaixo (NR-18 §18.9.4.2 'c')."
+          "omissionAdvice": "Você não instalou o rodapé. Ferramentas e materiais podem cair da plataforma sobre quem está abaixo. A análise de risco do trabalho em altura deve considerar o risco de queda de materiais e ferramentas (NR-35, item 35.5.5.1 'f'; NR-18, item 18.9.4.2 'c')."
         },
         {
           "id": "report_damaged_safety_mesh",
@@ -209,7 +209,7 @@
             "Helmet"
           ],
           "hintText": "Verifique a continuidade da tela e seus pontos de fixação. Rasgos, partes soltas ou amarrações rompidas comprometem a proteção.",
-          "failureAdvice": "A tela estava rasgada e com um ponto de amarração rompido. Essa condição compromete a barreira contra a projeção e a queda de materiais e ferramentas. A irregularidade deve ser reportada antes da liberação da atividade (NR-18, itens 18.12.15 e 18.12.15.1).",
+          "failureAdvice": "A tela estava rasgada e com um ponto de amarração rompido. Essa condição compromete a barreira contra a projeção e a queda de materiais e ferramentas, risco que a análise de risco do trabalho em altura deve considerar. A irregularidade deve ser reportada antes da liberação da atividade (NR-18, itens 18.12.15 e 18.12.15.1; NR-35, item 35.5.5.1 'f').",
           "ppeAdvice": "A inspeção deve ser realizada com os EPIs obrigatórios e com o talabarte conectado durante a exposição ao risco de queda.",
           "omissionAdvice": "Você não reportou a tela fachadeira danificada. O rasgo compromete a barreira contra projeção de materiais e a irregularidade deve ser comunicada antes da liberação da atividade (NR-18, itens 18.12.15 e 18.12.15.1)."
         }
