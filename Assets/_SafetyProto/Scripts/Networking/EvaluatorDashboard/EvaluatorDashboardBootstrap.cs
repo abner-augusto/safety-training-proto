@@ -14,7 +14,6 @@ using SafetyProto.Domain.Scoring;
 using SafetyProto.Utils;
 using UnityEngine;
 using System.IO;
-using System.Linq;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 

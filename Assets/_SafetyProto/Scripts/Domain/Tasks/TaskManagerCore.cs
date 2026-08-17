@@ -36,12 +36,6 @@ namespace SafetyProto.Domain.Tasks
         private bool _subscribed;
         private bool _disposed;
 
-        /// <summary>Evaluation mode overrides every group to free-order semantics;
-        /// Guided respects the authored mode. All mode branches in this engine must
-        /// go through here — reading group.executionMode directly reintroduces
-        /// sequential enforcement in Evaluation.</summary>
-        private static TaskExecutionModeShared EffectiveMode(ITaskGroup group) => TaskExecutionRules.EffectiveMode(group);
-
         public int CurrentTaskIndex => _currentTaskIndex;
         public RuntimeSafetyTask? CurrentRuntimeTask => _currentTask;
         public SessionCompletedEventArgs? LastSessionSummary => _lastSessionSummary;
@@ -155,10 +149,9 @@ namespace SafetyProto.Domain.Tasks
         /// as a natural completion would. No-op when no group is active. Returns the tasks it
         /// closed (callers drive consequences/UI from them).
         ///
-        /// The two gates used to differ — one failed the pending tasks and one left them
-        /// untouched — which meant a skipped PPE left no trace at all, and left the closed
-        /// group holding pending tasks that <see cref="StartNextTask"/> would re-focus,
-        /// stranding the session. One outcome, one record, one closer.
+        /// Invariants: every pending task in the closed group is left
+        /// <see cref="TaskState.NotPerformed"/> and recorded, and no closed group retains
+        /// pending tasks that <see cref="StartNextTask"/> could re-focus.
         /// </summary>
         public IReadOnlyList<RuntimeSafetyTask> CloseCurrentGroup()
         {
@@ -343,10 +336,9 @@ namespace SafetyProto.Domain.Tasks
                 var t = _sessionTasks[i];
                 if (!ContainsByReference(currentGroup.tasks, t.TaskData)) continue;
 
-                // Every terminal state must be listed here. Dropping one (NotPerformed's
-                // predecessor was dropped in b5d28f4) leaves the group open forever: the
-                // gate closes its tasks, nothing publishes GroupCompleted, and a later
-                // group that depends on this one is skipped in silence.
+                // Every terminal state must be listed here. Dropping one leaves the group
+                // open forever: the gate closes its tasks, nothing publishes GroupCompleted,
+                // and a later group that depends on this one is skipped in silence.
                 var s = t.State;
                 if (s != TaskState.CompletedSuccess &&
                     s != TaskState.CompletedSuccessButUnsafe &&
@@ -423,12 +415,9 @@ namespace SafetyProto.Domain.Tasks
 
             // Domain-level terminal signal, published unconditionally alongside the summary so
             // any path that reaches EndSession() (normal completion or a group-timeout cascade
-            // via HandleGroupTimeout) drives the session to the same terminal state. Previously
-            // SessionEnded was only raised by TrainingSessionManager.OnDestroy — a Unity
-            // lifecycle hook tied to scene unload/app quit, not to the session actually
-            // finishing — which meant a timed-out group never produced SessionEnded at all.
-            // Publishing it here also makes it observable from a pure-domain integration test
-            // (no Unity Mono layer required).
+            // via HandleGroupTimeout) drives the session to the same terminal state. Publishing
+            // it here also makes it observable from a pure-domain integration test (no Unity
+            // Mono layer required).
             _bus.Publish(new SessionEndedEventArgs());
         }
 
@@ -484,9 +473,9 @@ namespace SafetyProto.Domain.Tasks
             var currentGroup = GetCurrentGroup();
             if (currentGroup == null) return null;
 
-            if (EffectiveMode(currentGroup) == TaskExecutionModeShared.Sequential)
+            if (TaskExecutionRules.EffectiveMode(currentGroup) == TaskExecutionModeShared.Sequential)
             {
-                return MatchesAction(_currentTask, normalized) ? _currentTask : null;
+                return TaskExecutionRules.MatchesAction(_currentTask?.TaskData, normalized) ? _currentTask : null;
             }
 
             for (int i = 0; i < _sessionTasks.Count; i++)
@@ -495,7 +484,7 @@ namespace SafetyProto.Domain.Tasks
                 var s = t.State;
                 if (s != TaskState.NotStarted && s != TaskState.InProgress) continue;
                 if (!ContainsByReference(currentGroup.tasks, t.TaskData)) continue;
-                if (MatchesAction(t, normalized)) return t;
+                if (TaskExecutionRules.MatchesAction(t.TaskData, normalized)) return t;
             }
             return null;
         }
@@ -510,7 +499,7 @@ namespace SafetyProto.Domain.Tasks
         public bool IsPpeAheadOfCurrentStep(PPEType type)
         {
             var group = GetCurrentGroup();
-            if (group == null || EffectiveMode(group) != TaskExecutionModeShared.Sequential) return false;
+            if (group == null || TaskExecutionRules.EffectiveMode(group) != TaskExecutionModeShared.Sequential) return false;
             if (_currentTask == null) return false;
 
             var tasks = group.tasks;
@@ -520,14 +509,9 @@ namespace SafetyProto.Domain.Tasks
                 var t = tasks[i];
                 if (ReferenceEquals(t, _currentTask.TaskData)) activeIdx = i;
                 // The "owning" step is the first task that introduces this PPE type.
-                if (owningIdx < 0 && IsEquipTask(t) && RequiresPpe(t, type)) owningIdx = i;
+                if (owningIdx < 0 && TaskExecutionRules.IsEquipTask(t) && RequiresPpe(t, type)) owningIdx = i;
             }
             return activeIdx >= 0 && owningIdx > activeIdx;
-        }
-
-        private static bool IsEquipTask(ISafetyTask task)
-        {
-            return TaskExecutionRules.IsEquipTask(task);
         }
 
         private static bool RequiresPpe(ISafetyTask task, PPEType type)
@@ -609,11 +593,6 @@ namespace SafetyProto.Domain.Tasks
                 if (ReferenceEquals(tasks[i], target)) return true;
             }
             return false;
-        }
-
-        private static bool MatchesAction(RuntimeSafetyTask? task, string actionId)
-        {
-            return TaskExecutionRules.MatchesAction(task?.TaskData, actionId);
         }
 
         public void Dispose()

@@ -8,6 +8,10 @@ namespace SafetyProto.Domain.Tasks
     /// <summary>Canonical task execution rules shared by the task and safety engines.</summary>
     public static class TaskExecutionRules
     {
+        /// <summary>Evaluation mode overrides every group to free-order semantics;
+        /// Guided respects the authored mode. All mode branches in the task and safety
+        /// engines must go through here — reading group.executionMode directly
+        /// reintroduces sequential enforcement in Evaluation.</summary>
         public static TaskExecutionModeShared EffectiveMode(ITaskGroup group) =>
             SessionModeState.Current == SessionMode.Evaluation
                 ? TaskExecutionModeShared.FreeOrder

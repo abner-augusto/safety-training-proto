@@ -366,7 +366,7 @@ namespace SafetyProto.Networking.Dashboard
                             DisconnectClient(conn);
                             return;
                         default:
-                            // Ignore other opcodes for now (text/binary not needed)
+                            // Unsupported opcodes (e.g. binary) are ignored; the connection stays open.
                             break;
                     }
                 }
@@ -389,36 +389,11 @@ namespace SafetyProto.Networking.Dashboard
             return Convert.ToBase64String(hash);
         }
 
-        private static byte[] BuildFrame(byte[] payload)
-        {
-            return BuildTextFrame(payload, payload.Length);
-        }
-
         private static byte[] BuildTextFrame(byte[] payload, int payloadLength)
         {
             using var ms = new MemoryStream();
             ms.WriteByte(0x81); // FIN + text frame
-
-            if (payloadLength <= 125)
-            {
-                ms.WriteByte((byte)payloadLength);
-            }
-            else if (payloadLength <= ushort.MaxValue)
-            {
-                ms.WriteByte(126);
-                ms.WriteByte((byte)((payloadLength >> 8) & 0xFF));
-                ms.WriteByte((byte)(payloadLength & 0xFF));
-            }
-            else
-            {
-                ms.WriteByte(127);
-                var len = (ulong)payloadLength;
-                for (int i = 7; i >= 0; i--)
-                {
-                    ms.WriteByte((byte)((len >> (8 * i)) & 0xFF));
-                }
-            }
-
+            WritePayloadLength(ms, payloadLength);
             ms.Write(payload, 0, payloadLength);
             return ms.ToArray();
         }
@@ -427,7 +402,17 @@ namespace SafetyProto.Networking.Dashboard
         {
             using var ms = new MemoryStream();
             ms.WriteByte((byte)(0x80 | opcode)); // FIN + opcode
+            WritePayloadLength(ms, payloadLength);
 
+            if (payload != null && payloadLength > 0)
+            {
+                ms.Write(payload, 0, payloadLength);
+            }
+            return ms.ToArray();
+        }
+
+        private static void WritePayloadLength(MemoryStream ms, int payloadLength)
+        {
             if (payloadLength <= 125)
             {
                 ms.WriteByte((byte)payloadLength);
@@ -447,12 +432,6 @@ namespace SafetyProto.Networking.Dashboard
                     ms.WriteByte((byte)((len >> (8 * i)) & 0xFF));
                 }
             }
-
-            if (payload != null && payloadLength > 0)
-            {
-                ms.Write(payload, 0, payloadLength);
-            }
-            return ms.ToArray();
         }
 
         private static bool ReadExact(NetworkStream stream, byte[] buffer, int offset, int count, out int bytesRead)

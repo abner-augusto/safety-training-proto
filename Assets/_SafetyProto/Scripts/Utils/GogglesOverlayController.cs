@@ -1,4 +1,3 @@
-using SafetyProto.Utils;
 using UnityEngine;
 
 public sealed class GogglesOverlayController : MonoBehaviour

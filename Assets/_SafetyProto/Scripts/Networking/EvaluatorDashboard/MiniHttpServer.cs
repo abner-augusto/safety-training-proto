@@ -8,8 +8,8 @@ using System.Threading;
 namespace SafetyProto.Networking.Dashboard
 {
     /// <summary>
-    /// Ultra-small HTTP server to serve embedded dashboard files directly from Resources.
-    /// Only supports GET for index.html, app.js, and optional style.css.
+    /// Ultra-small HTTP server that serves the registered GET routes from Resources.
+    /// Only supports GET; every served path is a route registered in the constructor.
     /// </summary>
     public class MiniHttpServer
     {

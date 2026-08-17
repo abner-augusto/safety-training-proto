@@ -4,7 +4,6 @@ namespace SafetyProto.Domain.Dashboard
 {
     // Wire DTOs broadcast to the evaluator dashboard over WebSocket. Field names are the
     // protocol - the dashboard JS reads them off the JSON, so never rename a field.
-    // Extracted verbatim from EvaluatorDashboardBootstrap; behavior is unchanged.
 
     [Serializable]
     public struct SessionDto

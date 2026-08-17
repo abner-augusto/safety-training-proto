@@ -15,7 +15,6 @@ namespace SafetyProto.UI
 
         private TextMeshProUGUI _timerText;
         private int _lastDisplayedSecond = -1;
-        private Color _currentColor = Color.white;
 
         private void Start()
         {
@@ -106,7 +105,7 @@ namespace SafetyProto.UI
 
         private void OnSessionResumed(SessionResumedEventArgs obj)
         {
-            _timerText.color = _currentColor;
+            _timerText.color = Color.white;
         }
     }
 }
