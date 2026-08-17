@@ -249,7 +249,7 @@ GameObject:
   - component: {fileID: 8003114477324211141}
   - component: {fileID: 1663720478126465423}
   - component: {fileID: 2230874946090158001}
-  - component: {fileID: 8331567111680190658}
+  - component: {fileID: 1963090459020548238}
   m_Layer: 6
   m_Name: Visuals
   m_TagString: Untagged
@@ -330,7 +330,7 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &8331567111680190658
+--- !u!65 &1963090459020548238
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -349,8 +349,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.16649245, y: 0.17876655, z: 0.049808796}
-  m_Center: {x: 0, y: -0.011803988, z: 0.006216578}
+  m_Size: {x: 0.16649245, y: 0.049808796, z: 0.17876655}
+  m_Center: {x: 0, y: -0.006216578, z: 0.011803988}
 --- !u!1 &2980669127786881329
 GameObject:
   m_ObjectHideFlags: 0
@@ -605,7 +605,7 @@ MonoBehaviour:
     - {x: 0.24257873, y: -0.03170307, z: 0.058904763, w: 0.9678227}
     - {x: 0.09707392, y: 0.048864618, z: -0.0010591527, w: 0.9940764}
   _ghostProvider: {fileID: 0}
-  _handGhostProvider: {fileID: 0}
+  _handGhostProvider: {fileID: 11400000, guid: 9b9df4f150839de48af887d742aabf53, type: 2}
   _ovrOffsetMode: 0
 --- !u!1 &5123576640106811540
 GameObject:
