@@ -44,12 +44,20 @@ namespace SafetyProto.UI
 
         private void OnEnable()
         {
-            if (_dwellTarget != null) _dwellTarget.ProgressChanged += HandleProgressChanged;
+            if (_dwellTarget != null)
+            {
+                _dwellTarget.ProgressChanged += HandleProgressChanged;
+                _dwellTarget.Completed += HandleDwellCompleted;
+            }
         }
 
         private void OnDisable()
         {
-            if (_dwellTarget != null) _dwellTarget.ProgressChanged -= HandleProgressChanged;
+            if (_dwellTarget != null)
+            {
+                _dwellTarget.ProgressChanged -= HandleProgressChanged;
+                _dwellTarget.Completed -= HandleDwellCompleted;
+            }
         }
 
         private void HandleProgressChanged(float progress)
@@ -57,6 +65,11 @@ namespace SafetyProto.UI
             if (_fillImage != null) _fillImage.fillAmount = progress;
             SetVisible(progress > 0f);
         }
+
+        // Completed fires right after the final ProgressChanged(1) in the same LateUpdate, so this
+        // wins the race and hides the ring the moment the report button takes over — no full-ring
+        // flash left sitting on top of the button.
+        private void HandleDwellCompleted() => SetVisible(false);
 
         private void LateUpdate()
         {
