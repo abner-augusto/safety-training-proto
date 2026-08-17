@@ -1,8 +1,10 @@
+using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Runtime.Feedback;
 using SafetyProto.Runtime.Interaction;
+using SafetyProto.Runtime.Task;
 using UnityEngine;
 
 namespace SafetyProto.Runtime.Safety
@@ -80,18 +82,26 @@ namespace SafetyProto.Runtime.Safety
 
         private bool _confirmationOpen;
 
+        /// <summary>
+        /// Id of the task the last publish targeted, captured just before publishing so the
+        /// PREREQUISITE_PENDING violation (if any) can be matched back to this attempt.
+        /// </summary>
+        private string _pendingTaskId;
+
         private void Awake() => HideButton();
 
         private void OnEnable()
         {
             if (_dwellTarget != null) _dwellTarget.Completed += HandleDwellCompleted;
             if (_reportButton != null) _reportButton.Clicked += Report;
+            if (EventBus.Instance != null) EventBus.Instance.onSafetyViolation.AddListener(HandleSafetyViolation);
         }
 
         private void OnDisable()
         {
             if (_dwellTarget != null) _dwellTarget.Completed -= HandleDwellCompleted;
             if (_reportButton != null) _reportButton.Clicked -= Report;
+            if (EventBus.Instance != null) EventBus.Instance.onSafetyViolation.RemoveListener(HandleSafetyViolation);
         }
 
         private void HandleDwellCompleted()
@@ -140,6 +150,10 @@ namespace SafetyProto.Runtime.Safety
             if (HasReported) return;
             HasReported = true;
 
+            // Captured before publishing: TaskManager processes the attempt synchronously off the
+            // event queue, but the pending task is still resolvable right up to that point.
+            _pendingTaskId = TaskManager.Instance?.FindPendingTaskByActionId(_actionId)?.id;
+
             ActionEvents.PublishActionAttempt(
                 _actionId,
                 sourceId: name,
@@ -149,11 +163,33 @@ namespace SafetyProto.Runtime.Safety
             HideButton();
         }
 
+        /// <summary>
+        /// Undoes the optimistic report when TaskManager refuses the attempt because the group's
+        /// safety precondition is still pending (e.g. the lanyard isn't connected yet) — the
+        /// participant sees the warning popup but never actually filed the report, so the button
+        /// must come back for another try.
+        /// </summary>
+        private void HandleSafetyViolation(SafetyViolationEventArgs args)
+        {
+            if (!HasReported) return;
+            if (args.ViolationCode != "PREREQUISITE_PENDING") return;
+            if (!string.IsNullOrEmpty(_pendingTaskId) && args.TaskId != _pendingTaskId) return;
+
+            HasReported = false;
+            _pendingTaskId = null;
+            ShowButton();
+
+            SafetyLog.Info(
+                $"[SafetyIssueReporter] Reporte recusado (pré-requisito pendente) em '{name}'; botão reexibido.",
+                this);
+        }
+
         public void ResetSession()
         {
             HasReported = false;
             CancelledReportCount = 0;
             _confirmationOpen = false;
+            _pendingTaskId = null;
             if (_dwellTarget != null) _dwellTarget.ResetDwell();
             HideButton();
         }
