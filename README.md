@@ -142,7 +142,7 @@ the same conceptual event, avoiding `Delegate.Combine` collisions. See
 
 ### Unity side
 
-Open the project in Unity 6000.3.14f1 with Meta XR SDK v201.0.0 installed. Target platform:
+Open the project in Unity 6000.5.10f1 with Meta XR SDK v205.0.0 installed. Target platform:
 Android (Meta Quest 3). Press Play in the `SafetyTraining` scene to run in the
 editor, or build an APK via `File → Build Settings`.
 
@@ -176,7 +176,7 @@ so the same `.cs` files participate in both the Unity compilation and the
 
 ### Authoring GUI (Avalonia)
 
-The desktop scenario editor is an Avalonia app (Avalonia 11.3, `net10.0`). It is
+The desktop scenario editor is an Avalonia app (Avalonia 11.3.18, `net10.0`). It is
 not part of `SafetyProto.sln`, so build and run it by project path:
 
 ```bash
@@ -406,8 +406,10 @@ examples.
 
 ## Version and environment
 
-- Unity 6 (6000.3.14f1)
-- Meta XR SDK v201.0.0
+- Unity 6 (6000.5.10f1)
+- Meta XR SDK v205.0.0 (`com.meta.xr.sdk.all`)
+- OpenXR plugin 1.17.1, XR Hands 1.8.1
 - Built-in Render Pipeline
-- .NET 10 SDK for Shared library and CLI harness
-- Target device: Meta Quest 3
+- .NET 10 SDK for the Shared library, CLI harness, and Avalonia authoring app
+- Target device: Meta Quest 3 — Android (min SDK 32, target SDK 34)
+- App version 0.11 (Android versionCode 8)
