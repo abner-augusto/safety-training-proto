@@ -22,6 +22,15 @@ TagManager:
   - QDSUITextInputField
   - QDSUIToggleCheckboxRadio
   - QDSUIDestructiveButton
+  - QDSUIBackplate
+  - PassThroughButton
+  - PassThrough
+  - Locomotion
+  - LocoButton
+  - LocoText
+  - SamplesInfoPanel
+  - QDSUILineDrawing
+  - QDSUIToggleThumbnail
   layers:
   - Default
   - TransparentFX
@@ -61,3 +70,4 @@ TagManager:
     locked: 0
   m_RenderingLayers:
   - Default
+  m_MigratedRenderPipelines: []

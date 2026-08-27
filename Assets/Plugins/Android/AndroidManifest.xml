@@ -18,10 +18,11 @@
   </application>
   <uses-feature android:name="android.hardware.vr.headtracking" android:version="1" android:required="true" />
   <uses-feature android:name="oculus.software.handtracking" android:required="false" />
-  <uses-feature android:name="oculus.software.overlay_keyboard" android:required="false" />
   <uses-permission android:name="com.oculus.permission.HAND_TRACKING" />
   <uses-feature android:name="com.oculus.software.body_tracking" android:required="false" />
   <uses-permission android:name="com.oculus.permission.BODY_TRACKING" />
   <horizonos:uses-horizonos-sdk horizonos:minSdkVersion="60" horizonos:targetSdkVersion="83" />
   <uses-permission android:name="android.permission.VIBRATE" />
+  <uses-feature android:name="oculus.software.eye_tracking" android:required="false" />
+  <uses-permission android:name="com.oculus.permission.EYE_TRACKING" />
 </manifest>

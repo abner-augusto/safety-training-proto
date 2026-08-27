@@ -3,7 +3,7 @@
 --- !u!129 &1
 PlayerSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 28
+  serializedVersion: 29
   productGUID: 4254eb43322b866419678033578f7890
   AndroidProfiler: 0
   AndroidFilterTouchesWhenObscured: 0
@@ -43,7 +43,6 @@ PlayerSettings:
   - logo: {fileID: 21300000, guid: c4bed21c53127e25958e35df7308ad33, type: 3}
     duration: 2
   m_VirtualRealitySplashScreen: {fileID: 2800000, guid: c4bed21c53127e25958e35df7308ad33, type: 3}
-  m_HolographicTrackingLossScreen: {fileID: 0}
   defaultScreenWidth: 1920
   defaultScreenHeight: 1080
   defaultScreenWidthWeb: 960
@@ -68,10 +67,15 @@ PlayerSettings:
   useOSAutorotation: 1
   use32BitDisplayBuffer: 1
   preserveFramebufferAlpha: 0
+  adjustIOSFPSUsingThermalState: 1
+  thermalStateSeriousIOSFPS: 30
+  thermalStateCriticalIOSFPS: 15
   disableDepthAndStencilBuffers: 0
   androidStartInFullscreen: 1
   androidRenderOutsideSafeArea: 1
   androidUseSwappy: 1
+  androidRequestedVisibleInsets: 0
+  androidSystemBarsBehavior: 2
   androidDisplayOptions: 1
   androidBlitType: 0
   androidResizeableActivity: 1
@@ -152,12 +156,10 @@ PlayerSettings:
   - {fileID: -944628639613478452, guid: 289c1b55c9541489481df5cc06664110, type: 3}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
-  m_HolographicPauseOnTrackingLoss: 1
   xboxOneDisableKinectGpuReservation: 1
   xboxOneEnable7thCore: 1
   vrSettings:
     enable360StereoCapture: 0
-  isWsaHolographicRemotingEnabled: 0
   enableFrameTimingStats: 1
   enableOpenGLProfilerGPURecorders: 1
   allowHDRDisplaySupport: 0
@@ -205,6 +207,7 @@ PlayerSettings:
   tvOSTargetOSVersionString: 15.0
   VisionOSSdkVersion: 0
   VisionOSTargetOSVersionString: 1.0
+  xcodeProjectType: 0
   uIPrerenderedIcon: 0
   uIRequiresPersistentWiFi: 0
   uIRequiresFullScreen: 1
@@ -272,7 +275,6 @@ PlayerSettings:
   useCustomGradleSettingsTemplate: 0
   useCustomProguardFile: 0
   AndroidTargetArchitectures: 2
-  AndroidAllowedArchitectures: -1
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
   AndroidKeystoreName: 
@@ -473,12 +475,6 @@ PlayerSettings:
   - m_BuildTarget: WindowsStandaloneSupport
     m_APIs: 02000000
     m_Automatic: 0
-  m_BuildTargetVRSettings:
-  - m_BuildTarget: Standalone
-    m_Enabled: 0
-    m_Devices:
-    - Oculus
-    - OpenVR
   m_DefaultShaderChunkSizeInMB: 16
   m_DefaultShaderChunkCount: 0
   openGLRequireES31: 0
@@ -670,6 +666,8 @@ PlayerSettings:
   switchMicroSleepForYieldTime: 25
   switchRamDiskSpaceSize: 12
   switchUpgradedPlayerSettingsToNMETA: 0
+  switchCaStoreSource: 0
+  switchCaStoreFilePath: 
   ps4NPAgeRating: 12
   ps4NPTitleSecret: 
   ps4NPTrophyPackPath: 
@@ -788,6 +786,7 @@ PlayerSettings:
     Android: 1
   il2cppCompilerConfiguration: {}
   il2cppCodeGeneration: {}
+  il2cppLTOMode: {}
   il2cppStacktraceInformation: {}
   managedStrippingLevel: {}
   incrementalIl2cppBuild: {}
@@ -857,7 +856,6 @@ PlayerSettings:
   XboxOneXTitleMemory: 8
   XboxOneOverrideIdentityName: 
   XboxOneOverrideIdentityPublisher: 
-  vrEditorSettings: {}
   cloudServicesEnabled:
     UNet: 1
   luminIcon:
@@ -881,6 +879,7 @@ PlayerSettings:
   captureStartupLogs: {}
   activeInputHandler: 1
   windowsGamepadBackendHint: 0
+  enableDirectStorage: 0
   cloudProjectId: ff73114c-e116-4cfe-88b7-8c4f72cdc7a7
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
