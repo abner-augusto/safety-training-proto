@@ -20,8 +20,8 @@ public class SceneDumper : EditorWindow
     private bool filterIgnoreSuffix = true;
     private string ignoreSuffix = "_ignore";
 
-    private Dictionary<int, List<RefEdge>> refGraph;
-    private Dictionary<int, string> idToName;
+    private Dictionary<EntityId, List<RefEdge>> refGraph;
+    private Dictionary<EntityId, string> idToName;
 
     // ── HIERARCHY FILTERS ───────────────────────────────────────────────────
 
@@ -160,7 +160,7 @@ public class SceneDumper : EditorWindow
     {
         public string sourceComponent;
         public string fieldName;
-        public int targetId;
+        public EntityId targetId;
         public string targetName;
         public RefTargetKind targetKind;
     }
@@ -201,8 +201,8 @@ public class SceneDumper : EditorWindow
 
     void Dump(bool toClipboard)
     {
-        refGraph = new Dictionary<int, List<RefEdge>>();
-        idToName = new Dictionary<int, string>();
+        refGraph = new Dictionary<EntityId, List<RefEdge>>();
+        idToName = new Dictionary<EntityId, string>();
 
         var scene = EditorSceneManager.GetActiveScene();
         var roots = scene.GetRootGameObjects();
@@ -233,9 +233,9 @@ public class SceneDumper : EditorWindow
 
     void IndexHierarchy(GameObject go)
     {
-        idToName[go.GetInstanceID()] = go.name;
+        idToName[go.GetEntityId()] = go.name;
         foreach (var c in go.GetComponents<Component>())
-            if (c != null) idToName[c.GetInstanceID()] = $"{go.name}/{c.GetType().Name}";
+            if (c != null) idToName[c.GetEntityId()] = $"{go.name}/{c.GetType().Name}";
         foreach (Transform child in go.transform)
             IndexHierarchy(child.gameObject);
     }
@@ -372,7 +372,7 @@ public class SceneDumper : EditorWindow
             sb.AppendLine();
 
             if (includeReferences && refs.Count > 0)
-                RegisterEdges(go.GetInstanceID(), go.name, refs);
+                RegisterEdges(go.GetEntityId(), go.name, refs);
         }
 
         // Mirror: emit note and do not expand
@@ -457,7 +457,7 @@ public class SceneDumper : EditorWindow
 
         sb.AppendLine($"{pad}{{");
         sb.AppendLine($"{pad}  \"name\": \"{J(go.name)}\",");
-        sb.AppendLine($"{pad}  \"id\": {go.GetInstanceID()},");
+        sb.AppendLine($"{pad}  \"id\": {go.GetEntityId().GetRawData()},");
         sb.AppendLine($"{pad}  \"active\": {active},");
         sb.AppendLine($"{pad}  \"tag\": \"{go.tag}\",");
         sb.AppendLine($"{pad}  \"layer\": \"{LayerMask.LayerToName(go.layer)}\",");
@@ -472,7 +472,7 @@ public class SceneDumper : EditorWindow
             var c = components[i];
             var (fields, refs) = GetFieldsAndRefs(c);
             if (includeReferences && refs.Count > 0)
-                RegisterEdges(go.GetInstanceID(), go.name, refs);
+                RegisterEdges(go.GetEntityId(), go.name, refs);
 
             sb.Append($"{pad}    {{ \"type\": \"{c.GetType().Name}\"");
             if (includeComponentFields)
@@ -587,8 +587,8 @@ public class SceneDumper : EditorWindow
                         {
                             sourceComponent = c.GetType().Name,
                             fieldName       = prop.name,
-                            targetId        = target.GetInstanceID(),
-                            targetName      = idToName.TryGetValue(target.GetInstanceID(), out var tn)
+                            targetId        = target.GetEntityId(),
+                            targetName      = idToName.TryGetValue(target.GetEntityId(), out var tn)
                                               ? tn : target.name,
                             targetKind      = kind
                         });
@@ -618,7 +618,7 @@ public class SceneDumper : EditorWindow
         return (fields, refs);
     }
 
-    void RegisterEdges(int srcId, string srcName, List<RefEdge> edges)
+    void RegisterEdges(EntityId srcId, string srcName, List<RefEdge> edges)
     {
         var valid = edges
             .Where(e =>
