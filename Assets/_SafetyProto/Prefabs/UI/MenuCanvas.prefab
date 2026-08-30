@@ -214,27 +214,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _pointableCanvas: {fileID: 4438039485688050900}
   _suppressWhileDragging: 1
-  _whenBeginHighlight:
-    m_PersistentCalls:
-      m_Calls: []
-  _whenEndHighlight:
-    m_PersistentCalls:
-      m_Calls: []
-  _whenSelectedHovered:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 5004607074023006300}
-        m_TargetAssemblyTypeName: Oculus.Interaction.AudioTrigger, Oculus.Interaction.Samples
-        m_MethodName: PlayAudio
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
   _whenSelectedEmpty:
     m_PersistentCalls:
       m_Calls:
@@ -250,9 +229,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  _whenUnselectedHovered:
-    m_PersistentCalls:
-      m_Calls: []
   _whenUnselectedEmpty:
     m_PersistentCalls:
       m_Calls: []
@@ -299,7 +275,7 @@ GameObject:
   - component: {fileID: 1557875468924353553}
   - component: {fileID: 4112148559300949745}
   - component: {fileID: 4377999502858048423}
-  - component: {fileID: 1862340098773013063}
+  - component: {fileID: 4652874752818202285}
   - component: {fileID: 6549416440709629923}
   m_Layer: 3
   m_Name: Unity Canvas
@@ -347,6 +323,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -470,7 +447,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   borderRadius: {x: 24, y: 24, z: 24, w: 24}
---- !u!114 &1862340098773013063
+--- !u!114 &4652874752818202285
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -479,16 +456,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 2538392216543907746}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 85589845d6421a540836f22e40176e49, type: 3}
+  m_Script: {fileID: 11500000, guid: ce4e01f8b0424ff28b893052ab7fa5d2, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: SafetyProto.UI.Unity::SafetyProto.UI.MenuSnapInFront
   hmdTransform: {fileID: 0}
-  followDistance: 0.5
-  menuOffset: {x: 0, y: 0, z: 0}
-  positionDeadzone: 0.05
-  positionLerpSpeed: 5
-  rotationLerpSpeed: 7
-  rotationDeadzoneDegrees: 15
+  distance: 0.6
+  heightOffset: -0.1
 --- !u!114 &6549416440709629923
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1470,17 +1443,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 13a74428dd920fd4797387cc4bb18321, type: 3}
---- !u!114 &5004607074023006300 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7410389675181900697, guid: 13a74428dd920fd4797387cc4bb18321, type: 3}
-  m_PrefabInstance: {fileID: 2568478659689898949}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 925ef87c5bafc37469a2f7ec825dee4b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!4 &7134495070150904166 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4658904325700070051, guid: 13a74428dd920fd4797387cc4bb18321, type: 3}
