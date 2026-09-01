@@ -102,7 +102,7 @@ safety-training-proto/
 │   │   └── SafetyTraining.unity
 │   ├── Prefabs/
 │   ├── Resources/             # EventBus.asset, Scenarios/default.json, Actions/actions.json
-│   └── Tests/Editor/          # NUnit edit-mode tests (52 test methods)
+│   └── Tests/Editor/          # NUnit edit-mode tests (122 run headless via dotnet test)
 │
 ├── Tools/
 │   ├── SafetyProto.Shared/    # .NET 10 library, links Core/ + Domain/ source files
@@ -136,7 +136,7 @@ All communication between modules is through typed event payloads defined in
 The `Phase` discriminator on `TaskEventArgs` and `TaskGroupEventArgs` is
 essential: it lets a single typed subscriber key carry both lifecycle phases of
 the same conceptual event, avoiding `Delegate.Combine` collisions. See
-`docs/phase-discriminator.md` if present.
+[ARCHITECTURE.md](ARCHITECTURE.md) §4 for the rationale.
 
 ## Building
 
@@ -220,11 +220,18 @@ macOS or Linux:
 ./scripts/reproduce-manuscript-evidence.sh
 ```
 
-Both scripts run all 46 headless tests, isolate the eight integration tests,
-collect coverage, execute both CLI scenarios, validate the reported results,
-and write logs plus a summary to `artifacts/reproduction/`. The Bash runner uses
-a timestamped subdirectory for each execution. The six Unity-only test methods
-still require the Unity Test Runner.
+Both scripts collect coverage, execute both CLI scenarios, validate the reported
+results, and write logs plus a summary to `artifacts/reproduction/`. The Bash
+runner uses a timestamped subdirectory for each execution.
+
+> These scripts reproduce the frozen manuscript evidence captured at tag
+> `v1.0.0` (documented in `metrics/revision-evidence-1.0.0.md`). They run against
+> a throwaway worktree checked out at that tag — not your current branch — and
+> assert its exact figures (46 headless tests, 8 integration, 70.3%/57.3%
+> coverage, CLI 750/1400). They need the `v1.0.0` tag present locally
+> (`git fetch --tags`); pass a different ref as the second argument to pin
+> elsewhere. For metrics at `main`, see `metrics/revision-evidence.md` and run
+> the current suite with `dotnet test` (below).
 
 ### NUnit tests
 
@@ -243,23 +250,26 @@ dotnet test Tools/SafetyProto.Tests/SafetyProto.Tests.csproj \
   --settings Tools/SafetyProto.Tests/coverlet.runsettings
 ```
 
-This command runs 46 tests. To run all 52 test methods, including the six
-Unity-dependent tests, use `Window → General → Test Runner → EditMode → Run All`
-inside Unity.
+This runs the 122 engine-independent tests (15 linked fixtures). The remaining
+fixtures under `Assets/_SafetyProto/Tests/Editor/` are Unity-coupled — UI,
+head-gaze, menu-follow, player-recenter, dashboard command routing, the analytics
+pattern detector, and the scene smoke tests — and run only via
+`Window → General → Test Runner → EditMode → Run All` inside Unity.
 
-Test suites:
+Headless coverage by concern:
 
-- `PPEManagerEventProtocolTests` (5) — PPE event delivery through `FakeEventBus`.
-- `SafetyPatternTests` (3) — sliding-window violation detector (pure C#).
-- `SafetyRuleEngineCoreTests` (8) — rule engine under controlled scenarios.
-- `SafetyRuleEngineDiagnosticTests` (4) — regression tests for the Delegate.Combine
-  handler-collision bug fixed in the Phase-discriminator refactor.
-- `SafetyTrainingTests` (3) — integration-style smoke tests.
-- `TaskManagerCoreTests` (6) — session orchestration.
-- `ScoreRuleEngineCoreTests` (15) — scoring rules and PPE-penalty regressions.
-- `SessionIntegrationTests` (8) — full domain-stack scenarios using scripted drivers and stubs.
-
-Total: 52 test methods; 46 run headlessly and six require Unity.
+- Rule engine and diagnostics — `SafetyRuleEngineCoreTests`,
+  `SafetyRuleEngineDiagnosticTests` (the `Delegate.Combine` handler-collision
+  regression from the Phase-discriminator refactor).
+- Scoring — `ScoreRuleEngineCoreTests`, including PPE-penalty regressions.
+- Session orchestration — `TaskManagerCoreTests`, `TaskExecutionRulesTests`,
+  `SessionIntegrationTests` (8 full domain-stack scenarios via scripted drivers
+  and stubs), `SessionLogSummaryTests`.
+- Risk model — `RiskAssessmentTests` (severity × probability → risk level).
+- PPE protocol — `PPEManagerEventProtocolTests` (delivery through `FakeEventBus`).
+- Scenario/action data — `ScenarioCompatibilityTests`, `ScriptStepDefTests`.
+- Dashboard DTOs and relay — `DashboardDtoMapperTests`, `DashboardEventRelayTests`,
+  `OutgoingMessageBufferTests`, `EventMetadataTests`.
 
 ### EventBus benchmark
 
@@ -350,7 +360,7 @@ Create a JSON file under `Tools/CliHarness/scenarios/`:
         {
           "name": "Task 1",
           "actionId": "some.action",
-          "successPoints": 100,
+          "risk": { "severity": 4, "probability": 3 },
           "requiredPPE": ["Helmet"]
         }
       ]
@@ -362,6 +372,12 @@ Create a JSON file under `Tools/CliHarness/scenarios/`:
   ]
 }
 ```
+
+Tasks carry no points directly: the value of a task is derived from its `risk`
+(`severity × probability` → risk level) and looked up in the scenario's optional
+`scoring` block. Scenarios authored before the risk matrix still load with a flat
+`"severity": "critical" | "moderate" | "minor"` string instead. See
+[docs/authoring-tasks.md](docs/authoring-tasks.md) for the full field reference.
 
 Run:
 
@@ -396,8 +412,9 @@ examples.
 ### Implemented
 
 - Event-driven architecture with shared business logic.
-- 52 automated NUnit test methods covering core rule evaluation, scoring,
-  session orchestration, and domain-stack integration; 46 run without Unity.
+- Automated NUnit suite covering rule evaluation, scoring, the risk model,
+  session orchestration, and domain-stack integration; 122 run headless without
+  Unity, the rest (UI, gaze, analytics, scene) via the Unity Test Runner.
 - CLI harness with producer/observer/state-stub extensibility roles.
 - Session log format compatible between Unity and CLI harness outputs.
 - Quest APK build validated with the construction-safety scenario on Meta Quest 3.
