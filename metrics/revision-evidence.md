@@ -15,6 +15,14 @@
 > **Refreshed for release `v1.0.0` on 2026-07-12.** Tests, coverage, structural indicators,
 > scenario files, and type counts were recomputed after the canonical-scenario unification.
 > Historical change-impact figures remain tied to the explicit ranges stated in T5.
+>
+> **Hashes re-anchored on 2026-08-31.** History was rewritten at some point after these metrics were
+> first recorded, so the commit ids cited here no longer resolved in a fresh clone. Every id was
+> re-identified by commit message and content and replaced with its current equivalent; all figures
+> were re-run against the new ids and reproduce unchanged. Mapping (old → new): `fbcab4c` →
+> `8ca943a`, `0f47171` → `0a1b40d`, `2d8f522` → `4c2b962`, `fa68e01` → `7bfb81e`, `82352a7` →
+> `dcddfbc`, `284e6a1` → `d3f6b5d`, `f2a68e4` → `ca2eb19`, `d8d16d2` → `c2462de` (the commit tagged
+> `v1.0.0`). Verify with `git rev-parse v1.0.0^{commit}`.
 
 ---
 
@@ -123,15 +131,15 @@ Line counts are additions/deletions as git reports them (includes `.meta` and as
 
 ### SO→JSON data-layer migration (Phases 1–6)
 
-Range: **`fbcab4c^ .. 284e6a1`** — from just before the first phase (`fbcab4c` "unify scenario model
-+ loader across Unity and CLI") through the deletion commit (`284e6a1` "remove legacy ScriptableObject
+Range: **`8ca943a^ .. d3f6b5d`** — from just before the first phase (`8ca943a` "unify scenario model
++ loader across Unity and CLI") through the deletion commit (`d3f6b5d` "remove legacy ScriptableObject
 authoring"). Phase mapping is documented in `docs/refatoracao-sistema-dados.md`.
 
 ```
-git diff --shortstat fbcab4c^ 284e6a1
+git diff --shortstat 8ca943a^ d3f6b5d
   → 121 files changed, 2562 insertions(+), 1463 deletions(-)
 
-git diff --shortstat fbcab4c^ 284e6a1 -- Assets/_SafetyProto/Scripts Tools   (code only)
+git diff --shortstat 8ca943a^ d3f6b5d -- Assets/_SafetyProto/Scripts Tools   (code only)
   → 79 files changed, 2293 insertions(+), 885 deletions(-)
 ```
 
@@ -142,12 +150,12 @@ its consumers, and the desktop authoring tool, exactly the surface the migration
 
 ### Meta XR SDK update (85.0.0 → 201.0.0)
 
-Isolable to a single commit **`f2a68e4`** ("upgrade Meta XR SDK from 85.0.0 to 201.0.0 with Horizon OS
+Isolable to a single commit **`ca2eb19`** ("upgrade Meta XR SDK from 85.0.0 to 201.0.0 with Horizon OS
 support"). (The submitted paper's "v76→v201" framing is superseded by the actual repo history: the
 tracked upgrade is 85→201.)
 
 ```
-git show --shortstat f2a68e4
+git show --shortstat ca2eb19
   → 8 files changed, 668 insertions(+), 55 deletions(-)
 ```
 
@@ -158,7 +166,7 @@ The 8 files are **entirely configuration / scene wiring — zero C# scripts**:
 `TestScene.unity`).
 
 ```
-git show --stat f2a68e4 -- Assets/_SafetyProto/Scripts/Domain Assets/_SafetyProto/Scripts/Networking
+git show --stat ca2eb19 -- Assets/_SafetyProto/Scripts/Domain Assets/_SafetyProto/Scripts/Networking
   → (empty)   # zero Domain Core / Evaluator-dashboard files changed
 ```
 
@@ -184,7 +192,7 @@ logging mixed with unrelated work — 12 files, +2824/−819 — and is not the 
 
 ### Add / swap a scenario (now a JSON edit)
 
-After the migration, runtime scenario data is 100% JSON (commit `82352a7`, "runtime 100% JSON — drop SO
+After the migration, runtime scenario data is 100% JSON (commit `dcddfbc`, "runtime 100% JSON — drop SO
 dependency"), loaded via `Resources.Load` + `ScenarioLoader`. Swapping or adding a scenario is a single
 JSON file edit — **0 C# files changed, 0 recompilation**.
 
@@ -330,9 +338,9 @@ artifact. (The writing track turns this into the paper's centralized evidence ta
 | Claim | Evidence |
 |---|---|
 | **Engine independence** (domain logic has no Unity dependency) | `Domain.Core.asmdef` `noEngineReferences:true` (build-enforced); 16 Domain files / 2,172 LoC compile in pure .NET via `SafetyProto.Shared`; module instability `Domain.Core` I=0.17, `EventBus.Core` I=0.00, .NET `SafetyProto.Shared` I=0.00 at the stable end (T4); the Meta XR 85→201 upgrade changed **0** Domain files (T5). |
-| **SDK isolation** (engine/SDK churn doesn't reach domain/evaluation) | Meta XR 85→201 = commit `f2a68e4`, 8 files, config/scene only, **zero C#**, zero `Domain`/`Networking` (T5); the 17 Meta-XR-importing files are all in `Runtime`/`Utils`, none in `Domain` (T6). |
+| **SDK isolation** (engine/SDK churn doesn't reach domain/evaluation) | Meta XR 85→201 = commit `ca2eb19`, 8 files, config/scene only, **zero C#**, zero `Domain`/`Networking` (T5); the 17 Meta-XR-importing files are all in `Runtime`/`Utils`, none in `Domain` (T6). |
 | **Testability outside Unity** | 46 tests run via `dotnet test` with no Unity Editor (T3); the same test `.cs` compile under both Unity and .NET (linked-source); full-stack `SessionIntegrationTests` drive the real domain through a real in-process bus (T2); coverage 70.3% line / 57.3% branch on `SafetyProto.Shared` (T3). |
-| **Zero-modification scenario authoring** | Runtime is 100% JSON (commit `82352a7`); scenario edits require **0 C# changes and no C# compilation**; external overrides require no application rebuild (T5); loader validates bad input without throwing (integration case 7). |
+| **Zero-modification scenario authoring** | Runtime is 100% JSON (commit `dcddfbc`); scenario edits require **0 C# changes and no C# compilation**; external overrides require no application rebuild (T5); loader validates bad input without throwing (integration case 7). |
 | **Event-driven decoupling** | 16 typed EventBus channels + 13 payload types (T6); adding `SessionLogger` touched only `Core`+`Utils`, no gameplay producers, purely by subscribing (T5); strict layered DAG, no cycles (T4). |
 | **Correct safety/scoring semantics** | Group-timeout terminality (T1 + case 6); PPE-missing penalty applied end-to-end (scoring fix + case 2); Sequential/FreeOrder/group-gating behavior (integration cases 3–5). |
 
@@ -347,7 +355,7 @@ artifact. (The writing track turns this into the paper's centralized evidence ta
 - **Abstractness `A` / distance `D` are a lexical heuristic**, not a type-system analysis (see T4
   caveats). `Ca`/`Ce`/`I` are exact (declared reference graph).
 - **Meta XR range** is reported as the repository's actual tracked upgrade **85.0.0 → 201.0.0**
-  (commit `f2a68e4`); the submitted paper's "v76→v201" framing does not match repo history and is
+  (commit `ca2eb19`); the submitted paper's "v76→v201" framing does not match repo history and is
   superseded here.
 - **LoC = physical lines** (`wc -l`, includes braces/blank/comment lines), not logical SLOC; git
   ±figures include `.meta`/asset text as git counts them. Methods are stated so any stricter recount

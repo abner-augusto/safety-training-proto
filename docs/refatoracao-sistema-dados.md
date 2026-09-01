@@ -144,13 +144,13 @@ e valida o cenário com o mesmo `ScenarioLoader` **antes** de enviar ao Quest.
 
 Cada fase fecha em estado compilável/verde.
 
-1. **Modelo + loader compartilhados.** ✅ **Concluída** (commit `fbcab4c`). Records
+1. **Modelo + loader compartilhados.** ✅ **Concluída** (commit `8ca943a`). Records
    `ScenarioDef`/`TaskGroupDef`/`SafetyTaskDef`/`ScriptStepDef` + `ScenarioLoader`
    (Newtonsoft, `ScenarioLoadResult` sem throw) + `CapabilityCatalog` (model) no
    `SafetyProto.Shared`. CLI migrado (deletados `InMemory*` / `Scenario*` /
    `BuildTaskGroups`). Paridade confirmada (`dotnet run`: equip 5/5 score 750,
    inspection 9/9 score 1400). Build IL2CPP/Quest limpo.
-2. **Descolar o Unity dos tipos SO concretos.** ✅ **Concluída** (commit `0f47171`).
+2. **Descolar o Unity dos tipos SO concretos.** ✅ **Concluída** (commit `0a1b40d`).
    Removidos os downcasts `as SafetyTask`/`as TaskGroup` em `TaskUIController`,
    `EvaluatorDashboardBootstrap`, `InspectionGateValidator`, `TimerSystem` e
    `TaskManager.GetCurrentGroup`; comparação por `TaskExecutionModeShared`; `ConvertAll`
@@ -158,7 +158,7 @@ Cada fase fecha em estado compilável/verde.
    **Campos `[SerializeField]` continuam concretos** (`TaskManager.taskGroups`,
    `TaskPopupFeedback.knownTasks`, `PhaseController.triggerGroup`) — são a fonte de
    dados, trocada na Fase 3.
-3. **`TaskManager` carrega JSON.** ✅ **Concluída** (commit `2d8f522`). `ScenarioSource`
+3. **`TaskManager` carrega JSON.** ✅ **Concluída** (commit `4c2b962`). `ScenarioSource`
    (override em `persistentDataPath` → default em `Resources/Scenarios/` → fallback SO)
    alimenta o `TaskManager`. `ScenarioExporter` (menu `SafetyProto/Bake Scene Scenario
    to JSON`) gera `default.json` a partir da cena (2 grupos, 8 tasks, paridade incl. os
@@ -169,7 +169,7 @@ Cada fase fecha em estado compilável/verde.
    - **Pendente (Fase 6):** `TaskPopupFeedback.knownTasks` continua sendo um lookup por
      `taskName` baseado em SO; revisar/migrar quando os SOs forem removidos.
 4. **App de autoria desktop + exportador de catálogo.** 🟡 **Fundação concluída**
-   (commit `fa68e01`). `Tools/AuthoringApp` (.NET, consumidor de `SafetyProto.Shared`)
+   (commit `7bfb81e`). `Tools/AuthoringApp` (.NET, consumidor de `SafetyProto.Shared`)
    valida cenários fora do Unity em duas camadas: tier 1 estrutural (`ScenarioLoader`) +
    tier 2 semântico (`ScenarioValidator` contra o `CapabilityCatalog`). Lado Unity:
     `CapabilityCatalogExporter` (menu `SafetyProto/Export Capability Catalog`) gera
@@ -202,7 +202,7 @@ Cada fase fecha em estado compilável/verde.
    - **Fechado na Fase 6:** `ActionTypeSO`/`ActionRegistry` deletados; refs de cena/prefab
      trocadas por strings `actionId`.
 6. **Runtime 100% JSON — remover dependência de SO dos caminhos de runtime.** ✅
-   **Concluída**. A primeira etapa (commit `82352a7`) removeu a dependência de runtime e manteve
+   **Concluída**. A primeira etapa (commit `dcddfbc`) removeu a dependência de runtime e manteve
    os SOs apenas como fonte de autoria/bake offline. Com a GUI desktop operacional, a deleção final
    foi feita: os SOs e bakers foram removidos, e a cena/prefabs passaram a serializar só strings.
    Mudanças da etapa soft:
