@@ -1,8 +1,10 @@
 # Refatoração do Sistema de Dados
 
-> Status: planejado (2026-06-30). Reduzir a dependência de ScriptableObjects e
-> unificar o carregamento de dados entre Unity, CLI harness e um futuro app de
-> autoria desktop, em torno de um modelo de cenário em JSON compartilhado.
+> Status: concluído. Planejado em 2026-06-30; todas as seis fases foram
+> implementadas e validadas no dispositivo (build 0.7). Este documento é o
+> registro histórico da refatoração que reduziu a dependência de
+> ScriptableObjects e unificou o carregamento de dados entre Unity, CLI harness e
+> o app de autoria desktop em torno de um modelo de cenário em JSON compartilhado.
 
 ## Motivação
 

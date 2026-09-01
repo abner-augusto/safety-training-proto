@@ -1,81 +1,86 @@
 # CliHarness Sample Output
 
-> **Historical trace.** This file predates the current facade-mesh reporting task and is not the
-> evidence source for the revised manuscript. Regenerate the current 9/9-task, 1,400-point trace from
-> the canonical Unity/CLI scenario with `dotnet run --project Tools/CliHarness -- Assets/_SafetyProto/Resources/Scenarios/default.json`.
+Reference transcripts from the .NET CLI harness, captured at `main` (`db2dc2a`).
 
-**Date:** 2026-05-16
-**Runtime:** .NET 10, Release configuration
+**Runtime:** .NET 10.0.400, Release configuration
 **Command:** `dotnet run --project Tools/CliHarness --configuration Release -- <scenario.json>`
 
-## Scenario 1: PPE Inspection (historical pre-unification file)
+Regenerate with:
 
-Two task groups: PPE selection (sequential) followed by scaffold inspection (free-order).
-All 9 tasks completed successfully.
+```bash
+dotnet run --project Tools/CliHarness -- Tools/CliHarness/scenarios/ppe_equip.json
+dotnet run --project Tools/CliHarness -- Assets/_SafetyProto/Resources/Scenarios/default.json
+```
+
+> Scores here follow the current NR-01 GRO risk-matrix economy (task value derived
+> from `risk` → risk level → scenario `scoring` block). The frozen manuscript
+> figures (`v1.0.0`: 750 / 1400) differ — see `metrics/revision-evidence-1.0.0.md`.
+> Timestamps and per-run timings vary; task/score/count lines are stable.
+
+## Scenario 1: canonical `default.json`
+
+Two task groups: PPE selection (sequential) then scaffold inspection. The scripted
+playthrough drives all 9 tasks; every one completes.
 
 ```
 === SafetyProto CLI Harness ===
-Scenario: PPEInspection
-Participant: P001
+Scenario: default
+Participant: P000
 Groups: 2
 
-  19:56:42.682  SessionStarted
+  SessionStarted
 --- Transcript ---
-  19:56:42.698  GroupStarted       | Seleção de EPIs
-  19:56:42.700  TaskStarted        | Equipar Botina de Segurança
-  19:56:42.921  PpeStateChanged    | Boots=WORN
-  19:56:42.980  ActionAttempt      | equip_boots
-  19:56:42.983  TaskCompleted      | Equipar Botina de Segurança
-  19:56:42.983  ScoreChanged       | Delta=100, Total=100
-  19:56:42.983  TaskStarted        | Equipar Luvas de Proteção
-  19:56:43.196  PpeStateChanged    | Gloves=WORN
-  19:56:43.261  ActionAttempt      | equip_gloves
-  19:56:43.261  TaskCompleted      | Equipar Luvas de Proteção
-  19:56:43.261  ScoreChanged       | Delta=100, Total=200
-  19:56:43.261  TaskStarted        | Equipar Óculos de Proteção
-  19:56:43.461  PpeStateChanged    | Goggles=WORN
-  19:56:43.524  ActionAttempt      | equip_goggles
-  19:56:43.524  TaskCompleted      | Equipar Óculos de Proteção
-  19:56:43.524  ScoreChanged       | Delta=100, Total=300
-  19:56:43.524  TaskStarted        | Equipar Capacete com Jugular
-  19:56:43.726  PpeStateChanged    | Helmet=WORN
-  19:56:43.787  ActionAttempt      | equip_helmet
-  19:56:43.788  TaskCompleted      | Equipar Capacete com Jugular
-  19:56:43.788  ScoreChanged       | Delta=150, Total=450
-  19:56:43.788  TaskStarted        | Equipar Cinto Paraquedista
-  19:56:44.003  PpeStateChanged    | Harness=WORN
-  19:56:44.065  ActionAttempt      | equip_harness
-  19:56:44.065  TaskCompleted      | Equipar Cinto Paraquedista
-  19:56:44.065  ScoreChanged       | Delta=200, Total=650
-  19:56:44.065  GroupCompleted     | Seleção de EPIs
-  19:56:44.065  GroupStarted       | Inspeção em Andaime Fachadeiro
-  19:56:44.065  TaskStarted        | Conectar Talabarte ao Ponto de Ancoragem
-  19:56:44.267  ActionAttempt      | connect_harness
-  19:56:44.267  TaskCompleted      | Conectar Talabarte ao Ponto de Ancoragem
-  19:56:44.267  ScoreChanged       | Delta=200, Total=850
-  19:56:44.267  TaskStarted        | Instalar Guarda-corpo
-  19:56:44.469  ActionAttempt      | install_guardrail
-  19:56:44.469  TaskCompleted      | Instalar Guarda-corpo
-  19:56:44.469  ScoreChanged       | Delta=200, Total=1050
-  19:56:44.469  TaskStarted        | Instalar Rodapé
-  19:56:44.670  ActionAttempt      | install_toeboard
-  19:56:44.670  TaskCompleted      | Instalar Rodapé
-  19:56:44.670  ScoreChanged       | Delta=150, Total=1200
-  19:56:44.670  TaskStarted        | Sinalizar Tela de Proteção
-  19:56:44.871  ActionAttempt      | flag_safety_net
+  GroupStarted       | Seleção de EPIs
+  TaskStarted        | Equipar Botina de Segurança
+  PpeStateChanged    | Boots=WORN
+  TaskCompleted      | Equipar Botina de Segurança
+  ScoreChanged       | Delta=100, Total=100
+  TaskStarted        | Equipar Luvas
+  PpeStateChanged    | GloveRight=WORN
+  PpeStateChanged    | GloveLeft=WORN
+  TaskCompleted      | Equipar Luvas
+  ScoreChanged       | Delta=100, Total=200
+  TaskStarted        | Equipar Óculos de Proteção
+  PpeStateChanged    | Goggles=WORN
+  TaskCompleted      | Equipar Óculos de Proteção
+  ScoreChanged       | Delta=150, Total=350
+  TaskStarted        | Equipar Capacete com Jugular
+  PpeStateChanged    | Helmet=WORN
+  TaskCompleted      | Equipar Capacete com Jugular
+  ScoreChanged       | Delta=150, Total=500
+  TaskStarted        | Equipar Cinto Paraquedista
+  PpeStateChanged    | Harness=WORN
+  TaskCompleted      | Equipar Cinto Paraquedista
+  ScoreChanged       | Delta=200, Total=700
+  GroupCompleted     | Seleção de EPIs
+  GroupStarted       | Inspeção em Andaime Fachadeiro
+  TaskStarted        | Conectar Talabarte ao Ponto de Ancoragem
+  ActionAttempt      | connect_harness
+  TaskCompleted      | Conectar Talabarte ao Ponto de Ancoragem
+  ScoreChanged       | Delta=250, Total=950
+  TaskStarted        | Instalar Guarda-corpo
+  ActionAttempt      | install_guardrail
+  TaskCompleted      | Instalar Guarda-corpo
+  ScoreChanged       | Delta=200, Total=1150
+  TaskStarted        | Instalar Rodapé
+  ActionAttempt      | install_toeboard
+  TaskCompleted      | Instalar Rodapé
+  ScoreChanged       | Delta=200, Total=1350
+  TaskStarted        | Reportar Irregularidade na Tela Fachadeira
+  ActionAttempt      | flag_safety_net
 [INFO]  TaskManagerCore: All task groups completed or no groups available.
-  19:56:44.872  TaskCompleted      | Sinalizar Tela de Proteção
-  19:56:44.872  ScoreChanged       | Delta=100, Total=1300
-  19:56:44.872  GroupCompleted     | Inspeção em Andaime Fachadeiro
-  19:56:44.889  SessionCompleted   | Time=2.20s, Score=1300, Tasks=9/9
+  TaskCompleted      | Reportar Irregularidade na Tela Fachadeira
+  ScoreChanged       | Delta=150, Total=1500
+  GroupCompleted     | Inspeção em Andaime Fachadeiro
+  SessionCompleted   | Score=1500, Tasks=9/9
 ------------------
 
-Session summary: 9/9 tasks, score 1300, 2.20s
+Session summary: 9/9 tasks, score 1500
 ```
 
-## Scenario 2: PPE Equip (`ppe_equip.json`)
+## Scenario 2: `ppe_equip.json`
 
-Single task group: PPE selection (free-order). All 5 tasks completed successfully.
+Single task group: PPE selection (sequential). All 5 equip-set tasks complete.
 
 ```
 === SafetyProto CLI Harness ===
@@ -83,38 +88,34 @@ Scenario: PPEEquip
 Participant: P001
 Groups: 1
 
-  19:56:43.673  SessionStarted
+  SessionStarted
 --- Transcript ---
-  19:56:43.689  GroupStarted       | Selecao de EPIs
-  19:56:43.691  TaskStarted        | Equipar Botina de Seguranca
-  19:56:43.900  PpeStateChanged    | Boots=WORN
-  19:56:43.959  ActionAttempt      | equip_boots
-  19:56:43.962  TaskCompleted      | Equipar Botina de Seguranca
-  19:56:43.962  ScoreChanged       | Delta=100, Total=100
-  19:56:43.962  TaskStarted        | Equipar Luvas de Protecao
-  19:56:44.173  PpeStateChanged    | Gloves=WORN
-  19:56:44.237  ActionAttempt      | equip_gloves
-  19:56:44.237  TaskCompleted      | Equipar Luvas de Protecao
-  19:56:44.237  ScoreChanged       | Delta=100, Total=200
-  19:56:44.237  TaskStarted        | Equipar Oculos de Protecao
-  19:56:44.437  PpeStateChanged    | Goggles=WORN
-  19:56:44.499  ActionAttempt      | equip_goggles
-  19:56:44.499  TaskCompleted      | Equipar Oculos de Protecao
-  19:56:44.499  ScoreChanged       | Delta=100, Total=300
-  19:56:44.499  TaskStarted        | Equipar Capacete com Jugular
-  19:56:44.701  PpeStateChanged    | Helmet=WORN
-  19:56:44.763  ActionAttempt      | equip_helmet
-  19:56:44.763  TaskCompleted      | Equipar Capacete com Jugular
-  19:56:44.763  ScoreChanged       | Delta=150, Total=450
-  19:56:44.763  TaskStarted        | Equipar Cinto Paraquedista
-  19:56:44.965  PpeStateChanged    | Harness=WORN
-  19:56:45.027  ActionAttempt      | equip_harness
+  GroupStarted       | Selecao de EPIs
+  TaskStarted        | Equipar Botina de Seguranca
+  PpeStateChanged    | Boots=WORN
+  TaskCompleted      | Equipar Botina de Seguranca
+  ScoreChanged       | Delta=100, Total=100
+  TaskStarted        | Equipar Luvas de Protecao
+  PpeStateChanged    | GloveRight=WORN
+  PpeStateChanged    | GloveLeft=WORN
+  TaskCompleted      | Equipar Luvas de Protecao
+  ScoreChanged       | Delta=100, Total=200
+  TaskStarted        | Equipar Oculos de Protecao
+  PpeStateChanged    | Goggles=WORN
+  TaskCompleted      | Equipar Oculos de Protecao
+  ScoreChanged       | Delta=100, Total=300
+  TaskStarted        | Equipar Capacete com Jugular
+  PpeStateChanged    | Helmet=WORN
+  TaskCompleted      | Equipar Capacete com Jugular
+  ScoreChanged       | Delta=150, Total=450
+  TaskStarted        | Equipar Cinto Paraquedista
+  PpeStateChanged    | Harness=WORN
 [INFO]  TaskManagerCore: All task groups completed or no groups available.
-  19:56:45.028  TaskCompleted      | Equipar Cinto Paraquedista
-  19:56:45.028  ScoreChanged       | Delta=200, Total=650
-  19:56:45.028  GroupCompleted     | Selecao de EPIs
-  19:56:45.042  SessionCompleted   | Time=1.37s, Score=650, Tasks=5/5
+  TaskCompleted      | Equipar Cinto Paraquedista
+  ScoreChanged       | Delta=200, Total=650
+  GroupCompleted     | Selecao de EPIs
+  SessionCompleted   | Score=650, Tasks=5/5
 ------------------
 
-Session summary: 5/5 tasks, score 650, 1.37s
+Session summary: 5/5 tasks, score 650
 ```
