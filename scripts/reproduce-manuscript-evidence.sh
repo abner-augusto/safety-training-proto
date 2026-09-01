@@ -3,6 +3,10 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 output_base="${1:-artifacts/reproduction}"
+# The manuscript evidence is bound to this ref. Everything below runs against a
+# throwaway worktree checked out at this commit, not the current branch, so the
+# asserted figures stay valid as `main` moves on. Override as arg 2.
+evidence_ref="${2:-v1.0.0}"
 run_id="$(date -u +%Y%m%dT%H%M%SZ)"
 output_root="$repo_root/$output_base/$run_id"
 test_project="Tools/SafetyProto.Tests/SafetyProto.Tests.csproj"
@@ -11,7 +15,27 @@ canonical_scenario="Assets/_SafetyProto/Resources/Scenarios/default.json"
 ppe_scenario="Tools/CliHarness/scenarios/ppe_equip.json"
 
 mkdir -p "$output_root"
-cd "$repo_root"
+
+if ! evidence_commit="$(git -C "$repo_root" rev-parse "${evidence_ref}^{commit}" 2>/dev/null)"; then
+    echo "Evidence ref '$evidence_ref' not found. Run 'git fetch --tags', or pass it as arg 2." >&2
+    echo "The pinned figures below only reproduce at that commit." >&2
+    exit 1
+fi
+repo_head="$(git -C "$repo_root" rev-parse HEAD)"
+
+worktree="${TMPDIR:-/tmp}/svr-evidence-${evidence_commit:0:12}"
+cleanup() {
+    git -C "$repo_root" worktree remove --force "$worktree" 2>/dev/null || true
+    [[ -d "$worktree" ]] && rm -rf "$worktree" || true
+}
+trap cleanup EXIT
+
+if [[ -e "$worktree" ]]; then cleanup; fi
+
+echo "Pinned evidence ref: $evidence_ref ($evidence_commit)"
+echo "Repo HEAD:           $repo_head"
+git -C "$repo_root" worktree add --detach "$worktree" "$evidence_commit"
+cd "$worktree"
 
 run_step() {
     local name="$1"
@@ -68,18 +92,11 @@ canonical_output="$output_root/harness-canonical"
 run_step cli-canonical dotnet run --project "$cli_project" -- "$canonical_scenario" "$canonical_output"
 grep -q "Session summary: 9/9 tasks, score 1400" "$output_root/cli-canonical.log"
 
-commit="$(git rev-parse HEAD)"
-if [[ -n "$(git status --porcelain)" ]]; then
-    working_tree="dirty"
-else
-    working_tree="clean"
-fi
-
 cat > "$output_root/summary.md" <<EOF
 # Manuscript evidence reproduction
 
-- Commit: \`$commit\`
-- Working tree: $working_tree
+- Evidence ref: \`$evidence_ref\` (\`$evidence_commit\`)
+- Reproduced from repo HEAD: \`$repo_head\`
 - .NET SDK: \`$(dotnet --version)\`
 - Headless tests: 46/46
 - Integration tests: 8/8
@@ -89,8 +106,5 @@ cat > "$output_root/summary.md" <<EOF
 - Canonical scenario: \`$canonical_scenario\`
 EOF
 
-printf '\nAll reproducible manuscript checks passed.\n'
-if [[ "$working_tree" != "clean" ]]; then
-    printf 'WARNING: The working tree is dirty. Re-run after committing to bind evidence to one commit.\n' >&2
-fi
+printf '\nAll reproducible manuscript checks passed (pinned to %s).\n' "$evidence_ref"
 printf 'Summary: %s\n' "$output_root/summary.md"

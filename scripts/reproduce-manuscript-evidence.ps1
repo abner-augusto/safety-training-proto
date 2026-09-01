@@ -1,5 +1,9 @@
 param(
-    [string]$OutputDirectory = "artifacts/reproduction"
+    [string]$OutputDirectory = "artifacts/reproduction",
+    # The manuscript evidence is bound to this commit. Everything below runs
+    # against a throwaway worktree checked out at this ref, not the current
+    # branch, so the asserted figures stay valid as `main` moves on.
+    [string]$EvidenceRef = "v1.0.0"
 )
 
 $ErrorActionPreference = "Stop"
@@ -13,6 +17,19 @@ $canonicalScenario = "Assets/_SafetyProto/Resources/Scenarios/default.json"
 $ppeScenario = "Tools/CliHarness/scenarios/ppe_equip.json"
 
 New-Item -ItemType Directory -Force -Path $outputRoot | Out-Null
+
+$evidenceCommit = (& git -C $repoRoot rev-parse "$EvidenceRef^{commit}" 2>$null)
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($evidenceCommit)) {
+    throw "Evidence ref '$EvidenceRef' not found. Run 'git fetch --tags', or pass -EvidenceRef <commit>. The pinned figures below only reproduce at that commit."
+}
+$evidenceCommit = $evidenceCommit.Trim()
+$repoHead = (& git -C $repoRoot rev-parse HEAD).Trim()
+
+$worktree = Join-Path ([System.IO.Path]::GetTempPath()) "svr-evidence-$($evidenceCommit.Substring(0, 12))"
+if (Test-Path $worktree) {
+    & git -C $repoRoot worktree remove --force $worktree 2>$null
+    if (Test-Path $worktree) { Remove-Item -Recurse -Force $worktree }
+}
 
 function Invoke-DotNetStep {
     param(
@@ -30,14 +47,19 @@ function Invoke-DotNetStep {
     return ($output -join "`n")
 }
 
-Push-Location $repoRoot
+Write-Host "Pinned evidence ref: $EvidenceRef ($evidenceCommit)" -ForegroundColor Cyan
+Write-Host "Repo HEAD:           $repoHead" -ForegroundColor Cyan
+& git -C $repoRoot worktree add --detach $worktree $evidenceCommit
+if ($LASTEXITCODE -ne 0) { throw "Failed to create evidence worktree at $worktree." }
+
+Push-Location $worktree
 try {
     $tests = Invoke-DotNetStep "headless-tests" @(
         "test", $testProject,
         "--results-directory", (Join-Path $outputRoot "test-results")
     )
     if ($tests -notmatch "Total:\s+46") {
-        throw "Expected 46 headless tests."
+        throw "Expected 46 headless tests at $EvidenceRef."
     }
 
     $integration = Invoke-DotNetStep "integration-tests" @(
@@ -46,7 +68,7 @@ try {
         "--results-directory", (Join-Path $outputRoot "integration-results")
     )
     if ($integration -notmatch "Total:\s+8") {
-        throw "Expected 8 integration tests."
+        throw "Expected 8 integration tests at $EvidenceRef."
     }
 
     $coverageDirectory = Join-Path $outputRoot "coverage"
@@ -90,13 +112,11 @@ try {
         throw "Canonical CLI result did not match 9/9 tasks and 1,400 points."
     }
 
-    $commit = (& git rev-parse HEAD).Trim()
-    $workingTreeState = if (@(& git status --porcelain).Count -eq 0) { "clean" } else { "dirty" }
     $summary = @(
         "# Manuscript evidence reproduction",
         "",
-        "- Commit: ``$commit``",
-        "- Working tree: $workingTreeState",
+        "- Evidence ref: ``$EvidenceRef`` (``$evidenceCommit``)",
+        "- Reproduced from repo HEAD: ``$repoHead``",
         "- .NET SDK: ``$(& dotnet --version)``",
         "- Headless tests: 46/46",
         "- Integration tests: 8/8",
@@ -108,12 +128,11 @@ try {
     $summaryPath = Join-Path $outputRoot "summary.md"
     Set-Content -Path $summaryPath -Value $summary -Encoding utf8
 
-    Write-Host "`nAll reproducible manuscript checks passed." -ForegroundColor Green
-    if ($workingTreeState -ne "clean") {
-        Write-Warning "The working tree is dirty. Re-run after committing to produce release evidence tied to one commit."
-    }
+    Write-Host "`nAll reproducible manuscript checks passed (pinned to $EvidenceRef)." -ForegroundColor Green
     Write-Host "Summary: $summaryPath"
 }
 finally {
     Pop-Location
+    & git -C $repoRoot worktree remove --force $worktree 2>$null
+    if (Test-Path $worktree) { Remove-Item -Recurse -Force $worktree -ErrorAction SilentlyContinue }
 }
