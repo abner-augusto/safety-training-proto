@@ -1,4 +1,4 @@
-using Oculus.Interaction;
+﻿using Oculus.Interaction;
 using Oculus.Interaction.HandGrab;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
@@ -104,6 +104,19 @@ namespace SafetyProto.Runtime.Scaffolding
         [SerializeField] private Color validColor   = new Color(0.2f, 0.85f, 0.35f, 0.45f);
         [SerializeField] private Color invalidColor = new Color(1f,   0.45f, 0.2f,  0.35f);
 
+        // ── Audio Feedback ───────────────────────────────────────
+
+        [Header("Audio Feedback")]
+        [Tooltip("AudioSource used to play 3D spatialized placement/install sounds. Auto-found or created if null.")]
+        [SerializeField] private AudioSource audioSource;
+        [Tooltip("Sound played when the piece is successfully installed and locked.")]
+        [SerializeField] private AudioClip installSound;
+        [Tooltip("Optional hint chime when entering valid install pose.")]
+        [SerializeField] private AudioClip validPoseSound;
+        [Tooltip("Optional sound when released in an invalid pose.")]
+        [SerializeField] private AudioClip invalidReleaseSound;
+        [SerializeField, Range(0f, 1f)] private float installVolume = 1.0f;
+
         // ── Events ───────────────────────────────────────────────
 
         [Header("Events")]
@@ -147,6 +160,9 @@ namespace SafetyProto.Runtime.Scaffolding
             if (returnHome == null)
                 returnHome = GetComponent<ReturnObjectHome>();
 
+            if (audioSource == null)
+                audioSource = GetComponent<AudioSource>();
+
             _colliders = GetComponentsInChildren<Collider>(includeInactive: false);
 
             if (pieceFeedbackRenderer != null)
@@ -185,8 +201,19 @@ namespace SafetyProto.Runtime.Scaffolding
             if (valid != _wasValidPose)
             {
                 _wasValidPose = valid;
-                if (valid) onEnteredValidPose?.Invoke();
-                else       onExitedValidPose?.Invoke();
+                if (valid)
+                {
+                    onEnteredValidPose?.Invoke();
+                    if (validPoseSound != null && _isGrabbed)
+                    {
+                        EnsureAudioSource();
+                        audioSource.PlayOneShot(validPoseSound, 0.4f);
+                    }
+                }
+                else
+                {
+                    onExitedValidPose?.Invoke();
+                }
             }
 
             SetFeedbackColor(_isGrabbed ? (valid ? validColor : invalidColor) : idleColor);
@@ -202,6 +229,11 @@ namespace SafetyProto.Runtime.Scaffolding
             if (!HasEnoughHandsForInstall() || !HasValidInstallPose())
             {
                 onInvalidRelease?.Invoke();
+                if (invalidReleaseSound != null)
+                {
+                    EnsureAudioSource();
+                    audioSource.PlayOneShot(invalidReleaseSound, 0.5f);
+                }
                 return;
             }
 
@@ -284,6 +316,11 @@ namespace SafetyProto.Runtime.Scaffolding
 
             PublishInstalledAction();
             onInstalled?.Invoke();
+            if (installSound != null)
+            {
+                EnsureAudioSource();
+                audioSource.PlayOneShot(installSound, installVolume);
+            }
         }
 
         private bool HasEnoughHandsForInstall()
@@ -467,6 +504,24 @@ namespace SafetyProto.Runtime.Scaffolding
         {
             if (targetPreviewRenderer == null || _isInstalled) return;
             targetPreviewRenderer.enabled = !showTargetPreviewOnlyWhileGrabbed || _isGrabbed;
+        }
+
+        private void EnsureAudioSource()
+        {
+            if (audioSource == null)
+            {
+                audioSource = GetComponent<AudioSource>();
+                if (audioSource == null)
+                {
+                    audioSource = gameObject.AddComponent<AudioSource>();
+                    audioSource.spatialBlend = 1f;
+                    audioSource.spatialize = true;
+                    audioSource.playOnAwake = false;
+                    audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
+                    audioSource.minDistance = 0.5f;
+                    audioSource.maxDistance = 10f;
+                }
+            }
         }
 
         private string GetConfiguredActionId()

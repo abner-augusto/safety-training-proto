@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using Oculus.Interaction;
 using Oculus.Interaction.HandGrab;
 using SafetyProto.Core;
@@ -110,6 +110,15 @@ namespace SafetyProto.Runtime.PPE
         [Header("Action Integration")]
         [Tooltip("ActionId emitted when the lanyard locks to an anchor.")]
         [SerializeField, ActionId] private string connectActionId = "connect_harness";
+
+        [Header("Audio Feedback")]
+        [Tooltip("AudioSource used for 3D spatialized lanyard lock and retract sounds. Auto-found or added if null.")]
+        [SerializeField] private AudioSource audioSource;
+        [Tooltip("Sound played when the lanyard locks to an anchor point.")]
+        [SerializeField] private AudioClip lockSound;
+        [Tooltip("Sound played when the lanyard retracts back to harness.")]
+        [SerializeField] private AudioClip retractSound;
+        [SerializeField, Range(0f, 1f)] private float audioVolume = 0.9f;
 
         [Header("Events")]
         [Tooltip("Fired when the lanyard locks to an anchor. Bool = isCorrectAnchor.")]
@@ -420,6 +429,8 @@ namespace SafetyProto.Runtime.PPE
             // Snap gate closed
             FireTrigger(TriggerOpenClose);
 
+            PlayLockAudio();
+
             // Notify listeners
             onLanyardLocked?.Invoke(anchor.isCorrectAnchor);
 
@@ -518,12 +529,45 @@ namespace SafetyProto.Runtime.PPE
             // Back to idle
             _verletLanyard.enabled = false;
             EnterIdle();
+            PlayRetractAudio();
             onLanyardRetracted?.Invoke();
 
             SafetyLog.Info("VerletLanyard: Retracted back to harness.", this);
         }
 
         // ── Anchor Detection ──────────────────────────────────────
+
+        private void PlayLockAudio()
+        {
+            if (lockSound == null) return;
+            EnsureAudioSource();
+            audioSource.PlayOneShot(lockSound, audioVolume);
+        }
+
+        private void PlayRetractAudio()
+        {
+            if (retractSound == null) return;
+            EnsureAudioSource();
+            audioSource.PlayOneShot(retractSound, audioVolume * 0.8f);
+        }
+
+        private void EnsureAudioSource()
+        {
+            if (audioSource == null)
+            {
+                audioSource = GetComponent<AudioSource>();
+                if (audioSource == null)
+                {
+                    audioSource = gameObject.AddComponent<AudioSource>();
+                    audioSource.spatialBlend = 1f; // 3D HRTF
+                    audioSource.spatialize = true;
+                    audioSource.playOnAwake = false;
+                    audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
+                    audioSource.minDistance = 0.3f;
+                    audioSource.maxDistance = 6f;
+                }
+            }
+        }
 
         private AnchorPoint FindNearestAnchor() => FindNearestAnchor(anchorSearchRadius);
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Oculus.Interaction;
 using SafetyProto.Core.Logging;
 using UnityEngine;
@@ -28,6 +28,13 @@ namespace SafetyProto.Runtime.Interaction
 
         [Tooltip("Raised when the press is released (pointer Unselect).")]
         [SerializeField] private UnityEvent _onReleased = new UnityEvent();
+
+        [Header("Audio Feedback")]
+        [Tooltip("Optional AudioSource on the button. Auto-found or added if null.")]
+        [SerializeField] private AudioSource _audioSource;
+        [Tooltip("Audio clip played when the button is clicked.")]
+        [SerializeField] private AudioClip _clickSound;
+        [SerializeField, Range(0f, 1f)] private float _clickVolume = 0.7f;
 
         /// <summary>Code-side equivalent of <see cref="OnClick"/>, raised on pointer Select.</summary>
         public event Action Clicked;
@@ -80,6 +87,7 @@ namespace SafetyProto.Runtime.Interaction
             switch (evt.Type)
             {
                 case PointerEventType.Select:
+                    PlayClickAudio();
                     _onClick.Invoke();
                     Clicked?.Invoke();
                     break;
@@ -88,6 +96,25 @@ namespace SafetyProto.Runtime.Interaction
                     ReleasedEvent?.Invoke();
                     break;
             }
+        }
+
+        private void PlayClickAudio()
+        {
+            if (_clickSound == null) return;
+            if (_audioSource == null)
+            {
+                _audioSource = GetComponent<AudioSource>();
+                if (_audioSource == null)
+                {
+                    _audioSource = gameObject.AddComponent<AudioSource>();
+                    _audioSource.spatialBlend = 1f;
+                    _audioSource.spatialize = true;
+                    _audioSource.playOnAwake = false;
+                    _audioSource.minDistance = 0.2f;
+                    _audioSource.maxDistance = 4f;
+                }
+            }
+            _audioSource.PlayOneShot(_clickSound, _clickVolume);
         }
     }
 }

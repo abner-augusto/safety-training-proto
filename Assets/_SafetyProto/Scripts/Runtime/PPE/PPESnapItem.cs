@@ -46,6 +46,15 @@ namespace SafetyProto.Runtime.PPE
         [Tooltip("If present, this will be disabled while snapped so it doesn't fight the snap pose. Auto-found if left empty.")]
         [SerializeField] private ReturnObjectHome returnObjectHome;
 
+        [Header("Audio Feedback")]
+        [Tooltip("AudioSource used for 3D spatialized equip/unequip sounds. Auto-found or added if null.")]
+        [SerializeField] private AudioSource audioSource;
+        [Tooltip("Sound played when this PPE item is snapped into a slot.")]
+        [SerializeField] private AudioClip snapSound;
+        [Tooltip("Optional sound played when this PPE item is unsnapped/removed.")]
+        [SerializeField] private AudioClip unsnapSound;
+        [SerializeField, Range(0f, 1f)] private float audioVolume = 0.85f;
+
         // Public so PPESnapSlot can read it
         public PPEType PpeType => _ppeItem.ppeType;
 
@@ -90,6 +99,9 @@ namespace SafetyProto.Runtime.PPE
 
             if (handGrabInteractable == null)
                 handGrabInteractable = GetComponentInChildren<HandGrabInteractable>();
+
+            if (audioSource == null)
+                audioSource = GetComponent<AudioSource>();
         }
 
         private void Start()
@@ -252,6 +264,7 @@ namespace SafetyProto.Runtime.PPE
             if (returnObjectHome != null)
                 returnObjectHome.enabled = false;
 
+            PlaySnapAudio();
             SafetyLog.Info($"PPESnapItem [{name}]: snapped to {slot.name}", this);
         }
 
@@ -263,6 +276,8 @@ namespace SafetyProto.Runtime.PPE
             _currentSlot = null;
             _isSnapped = false;
             SetPhysicsEnabled(true);
+
+            PlayUnsnapAudio();
 
             // If the user is still holding it, keep ReturnObjectHome disabled until released.
             if (returnObjectHome != null && !_isGrabbed)
@@ -366,6 +381,38 @@ namespace SafetyProto.Runtime.PPE
                 _hoveringSlot = null;
 
             slot.OnItemExited(this);
+        }
+
+        private void PlaySnapAudio()
+        {
+            if (snapSound == null) return;
+            EnsureAudioSource();
+            audioSource.PlayOneShot(snapSound, audioVolume);
+        }
+
+        private void PlayUnsnapAudio()
+        {
+            if (unsnapSound == null) return;
+            EnsureAudioSource();
+            audioSource.PlayOneShot(unsnapSound, audioVolume * 0.7f);
+        }
+
+        private void EnsureAudioSource()
+        {
+            if (audioSource == null)
+            {
+                audioSource = GetComponent<AudioSource>();
+                if (audioSource == null)
+                {
+                    audioSource = gameObject.AddComponent<AudioSource>();
+                    audioSource.spatialBlend = 1f; // 3D HRTF
+                    audioSource.spatialize = true;
+                    audioSource.playOnAwake = false;
+                    audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
+                    audioSource.minDistance = 0.3f;
+                    audioSource.maxDistance = 5f;
+                }
+            }
         }
     }
 }
