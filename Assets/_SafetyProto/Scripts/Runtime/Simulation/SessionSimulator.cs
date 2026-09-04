@@ -85,6 +85,7 @@ namespace SafetyProto.Runtime.Simulation
         private bool _inputObserved;
         private Coroutine? _routine;
         private bool _busy;
+        private float _collapseBeatStartTime;
         private readonly SessionSimulationResult _result = new SessionSimulationResult();
 
         private UnityAction<SessionStartedEventArgs>? _onSessionStarted;
@@ -147,12 +148,80 @@ namespace SafetyProto.Runtime.Simulation
             _routine = StartCoroutine(StepCoroutine());
         }
 
+        /// <summary>
+        /// Plays the scaffold collapse on its own, with no session, so the animation can be tuned
+        /// without burning the one-run-per-Play-session budget. Holds black long enough to read the
+        /// beat list, then fades in and restores the scaffold so it can be replayed immediately.
+        /// The restore lives here rather than in Play() to keep the runtime component free of test
+        /// concerns.
+        /// </summary>
+        public void PlayCollapseRehearsal()
+        {
+            if (_busy) return;
+            _busy = true;
+            _routine = StartCoroutine(CollapseRehearsalCoroutine());
+        }
+
+        private IEnumerator CollapseRehearsalCoroutine()
+        {
+            var collapse = FindFirstObjectByType<ScaffoldCollapseSequence>();
+            if (collapse == null)
+            {
+                _result.lastDiagnostic = "ScaffoldCollapseSequence não encontrado na cena ativa.";
+                RefreshSnapshot();
+                _busy = false;
+                _routine = null;
+                yield break;
+            }
+
+            // Deliberately NOT calling Subscribe(): that method wires a whole session's worth of
+            // EventBus listeners and its Unsubscribe() counterpart cancels the inspection gate and
+            // the phase controller. A rehearsal needs exactly one handler, so it manages that one
+            // itself and leaves any in-flight session subscription untouched.
+            ScaffoldCollapseSequence.OnBeat -= OnCollapseBeat;
+            ScaffoldCollapseSequence.OnBeat += OnCollapseBeat;
+
+            _result.consequences.Clear();
+            AddTranscript("Ensaio de colapso iniciado.");
+
+            yield return collapse.Play();
+
+            // Hold the black a beat so the operator can read the beat list before the world returns.
+            yield return new WaitForSeconds(1.5f);
+
+            if (OVRScreenFade.instance != null)
+            {
+                OVRScreenFade.instance.fadeTime = 0.5f;
+                OVRScreenFade.instance.FadeIn();
+                yield return new WaitForSeconds(0.5f);
+            }
+
+            collapse.ResetSession();
+            AddTranscript("Ensaio de colapso concluído — andaime restaurado.");
+            RefreshSnapshot();
+
+            // Leave the handler attached only if a real session already owns it.
+            if (!IsRunning)
+                ScaffoldCollapseSequence.OnBeat -= OnCollapseBeat;
+
+            _busy = false;
+            _routine = null;
+        }
+
         public void Cancel()
         {
             if (_routine != null) StopCoroutine(_routine);
             _routine = null;
             _busy = false;
             _inspectionGate?.CancelSimulationProcessing();
+
+            // Both cancel paths kill the collapse mid-sequence — StopCoroutine here for a
+            // rehearsal, StopAllCoroutines inside the gate for a run, where Play() is a nested
+            // enumerator inside the gate's own coroutine. Neither unwinds the scaffold, so ask the
+            // sequence to do it: otherwise the andaime stays tipped, the rig stays displaced and
+            // the locomotor stays disabled until the scene reloads.
+            FindFirstObjectByType<ScaffoldCollapseSequence>()?.ResetSession();
+
             if (IsRunning)
             {
                 _result.status = SimulationStatus.Cancelled;
@@ -539,6 +608,7 @@ namespace SafetyProto.Runtime.Simulation
             bus.onSafetyError.AddListener(_onSafetyError);
             ConsequenceEvents.OnConsequenceStarted += OnConsequenceStarted;
             ConsequenceEvents.OnConsequenceEnded += OnConsequenceEnded;
+            ScaffoldCollapseSequence.OnBeat += OnCollapseBeat;
         }
 
         private void Unsubscribe()
@@ -565,6 +635,7 @@ namespace SafetyProto.Runtime.Simulation
             }
             ConsequenceEvents.OnConsequenceStarted -= OnConsequenceStarted;
             ConsequenceEvents.OnConsequenceEnded -= OnConsequenceEnded;
+            ScaffoldCollapseSequence.OnBeat -= OnCollapseBeat;
         }
 
         private void OnConsequenceStarted(ConsequenceStartedEventArgs args)
@@ -577,6 +648,21 @@ namespace SafetyProto.Runtime.Simulation
         private void OnConsequenceEnded()
         {
             AddTranscript("ConsequenceEnded");
+        }
+
+        /// <summary>
+        /// Records each collapse beat with its offset from the first one, so the window's transcript
+        /// shows the ordering directly instead of leaving it to be inferred from the Editor log.
+        /// </summary>
+        private void OnCollapseBeat(string beatId)
+        {
+            if (string.Equals(beatId, ScaffoldCollapseSequence.BeatLocked, StringComparison.Ordinal))
+                _collapseBeatStartTime = Time.time;
+
+            float elapsed = Mathf.Max(0f, Time.time - _collapseBeatStartTime);
+            string text = $"collapse:{beatId} @{elapsed:F2}s";
+            _result.consequences.Add(text);
+            AddTranscript(text);
         }
 
         private void AddTranscript(string entry)

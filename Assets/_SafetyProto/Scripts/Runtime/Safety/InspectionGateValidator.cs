@@ -317,6 +317,11 @@ namespace SafetyProto.Runtime.Safety
                 return 0;
             });
 
+            // PlayerFallSimulation ends the run: it leaves the screen black on purpose so the
+            // finish screen can be drawn over the fade. Nothing may follow it, and the trailing
+            // pacing delays would only hold a frozen black screen.
+            bool terminalConsequence = false;
+
             foreach (var (task, mapping) in pendingMappings)
             {
                 if (_simulationCancellationRequested) yield break;
@@ -358,19 +363,22 @@ namespace SafetyProto.Runtime.Safety
                         break;
 
                     case ConsequenceType.PlayerFallSimulation:
-                        // A3: blackout-only mock uses the fade-only path; otherwise keep the controlled fall.
-                        if (mapping.blackoutOnly)
+                        // The collapse animation runs first and returns with the player mid-fall
+                        // under black; blackoutOnly keeps the cheap fade-only path as a fallback
+                        // for scenes with no collapse rig wired.
+                        bool collapsePlayed = false;
+                        if (!mapping.blackoutOnly && fallController != null)
                         {
-                            yield return ExecutePlayerFallSimulation(mapping);
-                            feedbackHandledByConsequence = true;
-                        }
-                        else if (fallController != null)
                             yield return fallController.TriggerControlledFall();
-                        else
-                        {
-                            yield return ExecutePlayerFallSimulation(mapping);
-                            feedbackHandledByConsequence = true;
+                            collapsePlayed = true;
                         }
+
+                        yield return ExecutePlayerFallSimulation(mapping,
+                            alreadyBlack: collapsePlayed,
+                            keepBlackAfterContinue: true);
+                        feedbackHandledByConsequence = true;
+                        terminalConsequence = true;
+
                         SafetyEvents.RaiseCriticalSafetyFailure(new CriticalSafetyFailureEventArgs
                         {
                             Reason = $"Trabalhou desconectado: {mapping.displayName}",
@@ -389,10 +397,12 @@ namespace SafetyProto.Runtime.Safety
                     ShowConsequenceFeedback(mapping.displayName, mapping.feedbackMessage);
                 ConsequenceEvents.RaiseConsequenceEnded();
 
-                yield return new WaitForSeconds(delayBetweenConsequences);
+                if (!terminalConsequence)
+                    yield return new WaitForSeconds(delayBetweenConsequences);
             }
 
-            yield return new WaitForSeconds(delayAfterAllConsequences);
+            if (!terminalConsequence)
+                yield return new WaitForSeconds(delayAfterAllConsequences);
             HideConsequenceFeedback();
 
             // B7: warn-and-continue. The gate no longer ends the session on failure — list the
@@ -499,7 +509,14 @@ namespace SafetyProto.Runtime.Safety
             yield return new WaitForSeconds(1.5f);
         }
 
-        private IEnumerator ExecutePlayerFallSimulation(ConsequenceMapping mapping)
+        /// <summary>
+        /// Fade to black (unless the collapse already got us there), show the consequence popup
+        /// over the black, and wait for "Continuar". With keepBlackAfterContinue the screen stays
+        /// black afterwards: the finish screen's canvas renders in front of the fade rect, so the
+        /// participant reads their report without the collapsed scaffold behind it.
+        /// </summary>
+        private IEnumerator ExecutePlayerFallSimulation(ConsequenceMapping mapping,
+            bool alreadyBlack, bool keepBlackAfterContinue)
         {
             // Keep the world black while the consequence explanation is visible. The popup is an
             // overlay, so the participant can read it without seeing the simulated fall setup.
@@ -509,9 +526,12 @@ namespace SafetyProto.Runtime.Safety
             {
                 _playerFallPreviousFadeTime = OVRScreenFade.instance.fadeTime;
                 _playerFallFadeActive = true;
-                OVRScreenFade.instance.fadeTime = 0.8f;
-                OVRScreenFade.instance.FadeOut();
-                yield return new WaitForSeconds(0.8f);
+                if (!alreadyBlack)
+                {
+                    OVRScreenFade.instance.fadeTime = 0.8f;
+                    OVRScreenFade.instance.FadeOut();
+                    yield return new WaitForSeconds(0.8f);
+                }
 
                 if (!continued && _popupFeedback != null)
                 {
@@ -539,6 +559,14 @@ namespace SafetyProto.Runtime.Safety
                 if (_simulationCancellationRequested)
                 {
                     RestorePlayerFallFadeAfterCancellation();
+                    yield break;
+                }
+
+                if (keepBlackAfterContinue)
+                {
+                    // Terminal consequence: the world stays black and the finish screen is drawn
+                    // over the fade. Clearing the flag stops the cancellation path from fading in.
+                    _playerFallFadeActive = false;
                     yield break;
                 }
 

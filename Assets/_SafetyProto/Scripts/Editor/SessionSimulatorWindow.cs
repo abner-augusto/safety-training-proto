@@ -68,6 +68,18 @@ namespace SafetyProto.Editor
                     if (GUILayout.Button("Cancelar")) _simulator.Cancel();
                     if (GUILayout.Button("Sair do Play Mode")) EditorApplication.isPlaying = false;
                 }
+
+                EditorGUILayout.Space(4);
+                EditorGUILayout.LabelField("Ensaios isolados", EditorStyles.boldLabel);
+                EditorGUILayout.HelpBox(
+                    "Toca a animação sem sessão, para ajustar tempos e curvas. Não consome a " +
+                    "simulação única por Play Mode e restaura o andaime ao final.",
+                    MessageType.None);
+                using (new EditorGUI.DisabledScope(_simulator.IsBusy))
+                {
+                    if (GUILayout.Button("Ensaiar colapso do andaime"))
+                        _simulator.PlayCollapseRehearsal();
+                }
             }
 
             if (!EditorApplication.isPlaying)

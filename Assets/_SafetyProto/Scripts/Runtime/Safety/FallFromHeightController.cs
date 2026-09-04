@@ -33,17 +33,9 @@ namespace SafetyProto.Runtime.Safety
         [Tooltip("Lanyard whose lock/retract state suspends or restores the fall.")]
         [SerializeField] private RetractableLanyardController lanyard;
 
-        [Header("Recenter")]
-        [Tooltip("Where the player lands after a controlled fall (ground level / safe spawn).")]
-        [SerializeField] private Transform safeFallSpawn;
-        [Tooltip("Shared fade -> recenter -> reground sequence and busy guard.")]
-        [SerializeField] private RecenterService recenterService;
-
-        [Header("Fall Timing")]
-        [SerializeField] private float fadeOutDuration = 0.8f;
-        [Tooltip("Seconds held black while the player is dropped/relocated (covers the motion).")]
-        [SerializeField] private float holdBlackDuration = 1.0f;
-        [SerializeField] private float fadeInDuration = 0.5f;
+        [Header("Consequence")]
+        [Tooltip("Scaffold collapse animation played as the fall consequence. Timing lives on that component.")]
+        [SerializeField] private ScaffoldCollapseSequence collapse;
 
         private float _defaultGravityFactor = 1f;
         private bool _fallSuspended;
@@ -116,9 +108,11 @@ namespace SafetyProto.Runtime.Safety
         // ── Consequence: controlled fall ──────────────────────────
 
         /// <summary>
-        /// Plays the controlled fall consequence: restore gravity, fade to black, relocate the
-        /// player to the safe spawn while black, re-ground, fade back in. Skipped when the player
-        /// is correctly anchored. Yield this from the gate's consequence coroutine.
+        /// Plays the fall consequence: restore gravity, then hand off to the scaffold collapse,
+        /// which ends with the player mid-fall under a fully black screen. Deliberately does NOT
+        /// recenter — the consequence is terminal and the caller shows the finish screen over the
+        /// still-black fade (see plans/027-scaffold-collapse-design.md). Skipped when the player is
+        /// correctly anchored. Yield this from the gate's consequence coroutine.
         /// </summary>
         public IEnumerator TriggerControlledFall()
         {
@@ -128,31 +122,16 @@ namespace SafetyProto.Runtime.Safety
                 yield break;
             }
 
-            if (recenterService == null)
+            if (collapse == null)
             {
-                SafetyLog.Error("[FallFromHeightController] recenterService não atribuído — queda controlada abortada.", this);
+                SafetyLog.Error("[FallFromHeightController] collapse não atribuído — queda controlada abortada.", this);
                 yield break;
             }
-
-            if (recenterService.IsBusy) yield break;
 
             // Make sure gravity is active for the drop (the off-tether state).
             RestoreFall();
 
-            var options = new RecenterOptions
-            {
-                FadeOutDuration = fadeOutDuration,
-                HoldBlackDuration = holdBlackDuration,
-                FadeInDuration = fadeInDuration,
-                SuspendPoseBroadcast = false,
-                UseGroundProbe = false,
-                RestoreFadeTime = true,
-                LocomotorHandling = LocomotorMode.EnableMovement,
-            };
-
-            // Under black: relocate the player to the safe spawn (represents having fallen and
-            // being returned to ground) and re-ground via the locomotor.
-            yield return recenterService.RecenterTo(safeFallSpawn, options);
+            yield return collapse.Play();
         }
 
         // ── ISessionResettable ────────────────────────────────────
