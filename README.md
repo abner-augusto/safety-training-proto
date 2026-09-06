@@ -102,7 +102,7 @@ safety-training-proto/
 │   │   └── SafetyTraining.unity
 │   ├── Prefabs/
 │   ├── Resources/             # EventBus.asset, Scenarios/default.json, Actions/actions.json
-│   └── Tests/Editor/          # NUnit edit-mode tests (122 run headless via dotnet test)
+│   └── Tests/Editor/          # NUnit edit-mode tests (140 run headless via dotnet test)
 │
 ├── Tools/
 │   ├── SafetyProto.Shared/    # .NET 10 library, links Core/ + Domain/ source files
