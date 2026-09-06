@@ -220,6 +220,20 @@ namespace SafetyProto.Runtime.Task
         public IReadOnlyList<string> GetCompletionOrderDeviations() =>
             _core?.GetCompletionOrderDeviations() ?? new List<string>();
 
+        public IReadOnlyList<string> GetCompletionOrderDeviations(string groupId) =>
+            _core?.GetCompletionOrderDeviations(groupId) ?? new List<string>();
+
+        public bool IsGroupCompleted(string groupId) => _core?.IsGroupCompleted(groupId) ?? false;
+
+        /// <summary>Group of the loaded scenario with this id, or null.</summary>
+        public ITaskGroup? FindGroup(string groupId)
+        {
+            if (string.IsNullOrWhiteSpace(groupId)) return null;
+            foreach (var group in _runtimeGroups)
+                if (group != null && string.Equals(group.id, groupId, System.StringComparison.Ordinal)) return group;
+            return null;
+        }
+
         public void RegisterOrderViolation(string description) =>
             _core?.RegisterOrderViolation(description);
     }

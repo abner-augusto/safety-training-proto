@@ -367,6 +367,62 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
+        public void GroupThatCompletesNaturally_StopsBeingCurrent_ButIsReportedCompleted()
+        {
+            // Why the Phase 1 advance button needs IsGroupCompleted: the moment the last task of
+            // a group lands, the core publishes GroupCompleted and moves straight on to the next
+            // group. A gate that only asked "is my group the current one?" saw the group that
+            // came after and did nothing — which is why the button worked when a task was
+            // skipped and did nothing when every task was performed.
+            var t1 = _tasks.Task("t1", "action_a");
+            var t2 = _tasks.Task("t2", "action_b");
+            var g1 = _tasks.Group("g1", TaskExecutionModeShared.Sequential, t1);
+            var g2 = _tasks.Group("g2", TaskExecutionModeShared.Sequential, t2);
+
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { g1, g2 });
+            core.Subscribe();
+            core.StartSession();
+
+            _bus.Publish(new TaskEventArgs(t1, new RuntimeSafetyTask(t1) { State = TaskState.CompletedSuccess, CompletionTime = 1f }, TaskPhase.Completed));
+
+            Assert.AreEqual("g2", core.GetCurrentGroup()!.id, "the core advances past a completed group");
+            Assert.IsTrue(core.IsGroupCompleted("g1"));
+            Assert.IsFalse(core.IsGroupCompleted("g2"));
+            Assert.IsFalse(core.IsGroupCompleted("nao_existe"));
+
+            core.Dispose();
+        }
+
+        [Test]
+        public void GetCompletionOrderDeviations_ByGroupId_MeasuresThatGroupAfterItCompleted()
+        {
+            var t1 = _tasks.Task("t1", "action_a");
+            var t2 = _tasks.Task("t2", "action_b");
+            var t3 = _tasks.Task("t3", "action_c");
+            var later = _tasks.Task("later", "action_d");
+            var g1 = _tasks.Group("g1", TaskExecutionModeShared.FreeOrder, t1, t2, t3);
+            var g2 = _tasks.Group("g2", TaskExecutionModeShared.FreeOrder, later);
+
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { g1, g2 });
+            core.Subscribe();
+            core.StartSession();
+
+            // g1 completes in full, out of order (t3 before t2), so it is no longer current.
+            _bus.Publish(new TaskEventArgs(t1, new RuntimeSafetyTask(t1) { State = TaskState.CompletedSuccess, CompletionTime = 1f }, TaskPhase.Completed));
+            _bus.Publish(new TaskEventArgs(t2, new RuntimeSafetyTask(t2) { State = TaskState.CompletedSuccess, CompletionTime = 2f }, TaskPhase.Completed));
+            _bus.Publish(new TaskEventArgs(t3, new RuntimeSafetyTask(t3) { State = TaskState.CompletedSuccess, CompletionTime = 1.5f }, TaskPhase.Completed));
+
+            Assert.AreEqual("g2", core.GetCurrentGroup()!.id);
+            Assert.IsEmpty(core.GetCompletionOrderDeviations(), "the current group has no completions yet");
+
+            var deviations = core.GetCompletionOrderDeviations("g1");
+            Assert.AreEqual(1, deviations.Count);
+            Assert.AreEqual("t3", deviations[0]);
+
+            core.Dispose();
+        }
+
+        [Test]
         public void GetCompletionOrderDeviations_IgnoresPendingAndNotPerformed()
         {
             var t1 = _tasks.Task("t1", "action_a");

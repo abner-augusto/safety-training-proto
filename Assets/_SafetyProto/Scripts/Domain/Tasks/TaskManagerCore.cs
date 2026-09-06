@@ -203,19 +203,31 @@ namespace SafetyProto.Domain.Tasks
         /// precedes it in the JSON is a deviation. Never-completed tasks are ignored
         /// (omissions are reported separately). Empty list = order respected.
         /// </summary>
-        public IReadOnlyList<string> GetCompletionOrderDeviations()
+        public IReadOnlyList<string> GetCompletionOrderDeviations() =>
+            GetCompletionOrderDeviationsFor(GetCurrentGroup());
+
+        /// <summary>
+        /// Same as <see cref="GetCompletionOrderDeviations()"/> but for a named group instead of
+        /// the current one. A group that completes naturally is no longer current the moment its
+        /// last task lands — the core has already moved on — so a gate that judges that group
+        /// (the Phase 1 advance button) has to ask for it by id or it would measure the group
+        /// that came after it.
+        /// </summary>
+        public IReadOnlyList<string> GetCompletionOrderDeviations(string groupId) =>
+            GetCompletionOrderDeviationsFor(FindGroupById(groupId));
+
+        private IReadOnlyList<string> GetCompletionOrderDeviationsFor(ITaskGroup? group)
         {
             var deviations = new List<string>();
-            var currentGroup = GetCurrentGroup();
-            if (currentGroup == null) return deviations;
+            if (group == null) return deviations;
 
             float lastTime = float.MinValue;
-            for (int i = 0; i < currentGroup.tasks.Count; i++)
+            for (int i = 0; i < group.tasks.Count; i++)
             {
                 RuntimeSafetyTask? runtime = null;
                 for (int j = 0; j < _sessionTasks.Count; j++)
                 {
-                    if (ReferenceEquals(_sessionTasks[j].TaskData, currentGroup.tasks[i]))
+                    if (ReferenceEquals(_sessionTasks[j].TaskData, group.tasks[i]))
                     {
                         runtime = _sessionTasks[j];
                         break;
@@ -233,6 +245,32 @@ namespace SafetyProto.Domain.Tasks
                 lastTime = runtime.CompletionTime;
             }
             return deviations;
+        }
+
+        /// <summary>
+        /// True once the group with this id has been closed — naturally (every task reached a
+        /// terminal state) or by a gate. Lets a gate keyed to one group still act after that
+        /// group completed on its own and the core advanced past it.
+        /// </summary>
+        public bool IsGroupCompleted(string groupId)
+        {
+            if (string.IsNullOrWhiteSpace(groupId)) return false;
+            foreach (var group in _completedGroups)
+            {
+                if (group != null && string.Equals(group.id, groupId, StringComparison.Ordinal)) return true;
+            }
+            return false;
+        }
+
+        private ITaskGroup? FindGroupById(string groupId)
+        {
+            if (string.IsNullOrWhiteSpace(groupId)) return null;
+            for (int i = 0; i < _taskGroups.Count; i++)
+            {
+                var group = _taskGroups[i];
+                if (group != null && string.Equals(group.id, groupId, StringComparison.Ordinal)) return group;
+            }
+            return null;
         }
 
         private void InitializeRuntimeTasks()

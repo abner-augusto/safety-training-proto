@@ -3,6 +3,7 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
 using SafetyProto.Domain.Scoring;
+using SafetyProto.Domain.Tasks;
 using SafetyProto.Runtime.Task;
 using UnityEngine;
 using UnityEngine.Events;
@@ -144,6 +145,10 @@ namespace SafetyProto.Runtime
         public void OnAdvanceClicked()
         {
             if (_advanceConsumed) { SafetyLog.Warning("[PhaseController] OnAdvanceClicked ignorado — já consumido.", this); return; }
+            // Simulation arms auto-confirm up front, so a group that self-completes teleports
+            // from OnGroupCompleted before the scripted gate press arrives. Without this the
+            // press would start a second transition on top of the running one.
+            if (_transitionExecuted) { SafetyLog.Info("[PhaseController] Avanço ignorado — transição de fase já iniciada.", this); return; }
             if (SessionModeState.Current != SessionMode.Evaluation && !_simulationAutoConfirm)
             {
                 SafetyLog.Warning($"[PhaseController] OnAdvanceClicked ignorado — modo atual é {SessionModeState.Current}, esperado Evaluation.", this);
@@ -156,7 +161,10 @@ namespace SafetyProto.Runtime
             }
 
             var currentGroup = taskManager.GetCurrentGroup();
-            if (currentGroup == null || !string.Equals(currentGroup.id, targetGroupId, System.StringComparison.Ordinal))
+            var decision = PhaseAdvanceGate.Decide(currentGroup?.id, targetGroupId,
+                taskManager.IsGroupCompleted(targetGroupId));
+
+            if (decision == PhaseAdvanceAction.Ignore)
             {
                 var actualId = currentGroup?.id ?? "(null)";
                 SafetyLog.Info($"[PhaseController] Avanço ignorado — grupo atual é '{actualId}', esperado '{targetGroupId}'.", this);
@@ -166,15 +174,26 @@ namespace SafetyProto.Runtime
             _advanceConsumed = true;
             SetButtonsActive(false);
 
-            ApplyOrderPenaltyIfDeviated(currentGroup.id, currentGroup.groupName);
-            var notPerformed = taskManager.CloseCurrentGroup();
-            SafetyLog.Info(notPerformed.Count == 0
-                ? "[PhaseController] Grupo de EPIs fechado."
-                : $"[PhaseController] Grupo de EPIs fechado com {notPerformed.Count} EPI(s) não equipado(s).", this);
+            // Judged by id, never "whatever group is current": a group that completed naturally
+            // is already behind us here, and measuring the next one would charge the participant
+            // for the wrong tasks.
+            ApplyOrderPenaltyIfDeviated(targetGroupId, taskManager.FindGroup(targetGroupId)?.groupName ?? string.Empty);
+
+            if (decision == PhaseAdvanceAction.CloseThenAdvance)
+            {
+                var notPerformed = taskManager.CloseCurrentGroup();
+                SafetyLog.Info(notPerformed.Count == 0
+                    ? "[PhaseController] Grupo de EPIs fechado."
+                    : $"[PhaseController] Grupo de EPIs fechado com {notPerformed.Count} EPI(s) não equipado(s).", this);
+            }
+            else
+            {
+                SafetyLog.Info("[PhaseController] Grupo de EPIs já concluído — avanço apenas confirma e teleporta.", this);
+            }
 
             if (_simulationAutoConfirm)
             {
-                StartCoroutine(ExecutePhaseTransition());
+                StartTransition();
                 return;
             }
 
@@ -184,18 +203,18 @@ namespace SafetyProto.Runtime
                     () =>
                     {
                         _popupFeedback.Hide();
-                        StartCoroutine(ExecutePhaseTransition());
+                        StartTransition();
                     });
             }
             else
             {
-                StartCoroutine(ExecutePhaseTransition());
+                StartTransition();
             }
         }
 
         private void ApplyOrderPenaltyIfDeviated(string groupId, string groupName)
         {
-            var deviations = taskManager.GetCompletionOrderDeviations();
+            var deviations = taskManager.GetCompletionOrderDeviations(groupId);
             if (deviations.Count == 0) return;
 
             string list = string.Join(", ", deviations);
@@ -224,12 +243,9 @@ namespace SafetyProto.Runtime
                 !string.Equals(args.Group.groupName, triggerGroupName, System.StringComparison.Ordinal))
                 return;
 
-            _transitionExecuted = true;
-            _simulationTransitionCompleted = false;
-
             if (_simulationAutoConfirm)
             {
-                StartCoroutine(ExecutePhaseTransition());
+                StartTransition();
             }
             else if (SessionModeState.Current == SessionMode.Guided)
             {
@@ -239,15 +255,28 @@ namespace SafetyProto.Runtime
                         () =>
                         {
                             _popupFeedback.Hide();
-                            StartCoroutine(ExecutePhaseTransition());
+                            StartTransition();
                         });
                 }
                 else
                 {
-                    StartCoroutine(ExecutePhaseTransition());
+                    StartTransition();
                 }
             }
-            // Evaluation mode: do nothing — player presses the advance button when ready.
+            // Evaluation mode: do nothing — the participant presses the advance button when
+            // ready. The flags stay untouched on purpose: OnAdvanceClicked recognises a group
+            // that already completed on its own, and CurrentAnchor must keep pointing at the
+            // canteiro until the teleport actually runs.
+        }
+
+        /// <summary>Single entry point into the teleport. Flips the anchor to the andaime the
+        /// moment the transition starts, so a recenter issued mid-transition regrounds where the
+        /// participant is going, not where they were.</summary>
+        private void StartTransition()
+        {
+            _transitionExecuted = true;
+            _simulationTransitionCompleted = false;
+            StartCoroutine(ExecutePhaseTransition());
         }
 
         private void SetButtonsActive(bool active)
