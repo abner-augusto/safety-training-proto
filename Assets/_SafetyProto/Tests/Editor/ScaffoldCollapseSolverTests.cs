@@ -60,17 +60,24 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
-        public void TremorOffset_StartsAtZeroAndStaysInsideAmplitude()
+        public void TremorOffset_ActuallyShakes_AndStaysInsideAmplitude()
         {
             var cfg = DefaultConfig();
             Assert.AreEqual(0f, ScaffoldCollapseSolver.TremorOffsetDegrees(0f, 1.2f, cfg), 1e-4f);
 
+            // Bounds alone are satisfied by a tremor that never leaves zero, which would mean
+            // no pre-collapse shake at all. The series has to be shown to move.
+            float peak = 0f;
             for (float t = 0f; t <= 1.2f; t += 0.01f)
             {
                 float offset = ScaffoldCollapseSolver.TremorOffsetDegrees(t, 1.2f, cfg);
                 Assert.LessOrEqual(Mathf.Abs(offset), cfg.TremorAmplitudeDegrees + 1e-4f,
                     $"tremor left its envelope at t={t}");
+                peak = Mathf.Max(peak, Mathf.Abs(offset));
             }
+
+            Assert.Greater(peak, cfg.TremorAmplitudeDegrees * 0.25f,
+                "tremor never moved far from zero — the scaffold is not shaking before it tips");
         }
 
         [Test]
