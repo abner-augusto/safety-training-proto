@@ -79,6 +79,17 @@ namespace SafetyProto.Runtime.Scaffolding
         [Tooltip("Disables non-trigger colliders after install to prevent physics overlap artifacts.")]
         [SerializeField] private bool disableCollidersAfterInstalled = true;
 
+        // ── Refused install ──────────────────────────────────────
+
+        [Header("Instalação Recusada")]
+        [Tooltip("Desfaz a instalação e devolve a peça quando as regras de segurança recusam a " +
+                 "tentativa (ex.: talabarte ainda não ancorado, no modo Guiado). A peça só volta " +
+                 "depois que o popup de aviso é fechado.")]
+        [SerializeField] private bool revertInstallWhenRefused = true;
+        [Tooltip("Rede de segurança: se nenhum popup fechar nesse tempo (s) após a recusa, a peça " +
+                 "volta assim mesmo, para não travar a tarefa. 0 = esperar apenas pelo popup.")]
+        [SerializeField] private float revertFallbackSeconds = 10f;
+
         // ── SDK References ───────────────────────────────────────
 
         [Header("Meta SDK References")]
@@ -124,6 +135,9 @@ namespace SafetyProto.Runtime.Scaffolding
         public UnityEvent onExitedValidPose;
         public UnityEvent onInstalled;
         public UnityEvent onInvalidRelease;
+        [Tooltip("Disparado quando uma instalação já concluída é desfeita porque a tentativa foi " +
+                 "recusada. Use para reverter o que onInstalled tiver acionado.")]
+        public UnityEvent onInstallReverted;
 
         // ── Private state ────────────────────────────────────────
 
@@ -137,6 +151,11 @@ namespace SafetyProto.Runtime.Scaffolding
         private bool _reachedTwoHands;
         private Transform _activeAnchor;
         private Transform _activeSocket;
+
+        private bool _revertPending;
+        private float _revertDeadline;
+        private System.Action<ActionRefusedEventArgs> _onActionRefused;
+        private System.Action<PopupClosedEventArgs> _onPopupClosed;
 
         // ── Public API ───────────────────────────────────────────
 
@@ -179,12 +198,26 @@ namespace SafetyProto.Runtime.Scaffolding
         {
             if (grabbable != null)
                 grabbable.WhenPointerEventRaised += OnPointerEvent;
+
+            var bus = SafetyProto.Core.EventBus.Instance;
+            if (bus == null) return;
+
+            _onActionRefused ??= OnActionRefused;
+            _onPopupClosed ??= OnPopupClosed;
+            bus.Subscribe(_onActionRefused);
+            bus.Subscribe(_onPopupClosed);
         }
 
         private void OnDisable()
         {
             if (grabbable != null)
                 grabbable.WhenPointerEventRaised -= OnPointerEvent;
+
+            var bus = SafetyProto.Core.EventBus.Instance;
+            if (bus == null) return;
+
+            if (_onActionRefused != null) bus.Unsubscribe(_onActionRefused);
+            if (_onPopupClosed != null) bus.Unsubscribe(_onPopupClosed);
         }
 
         private void OnDestroy()
@@ -195,6 +228,12 @@ namespace SafetyProto.Runtime.Scaffolding
 
         private void LateUpdate()
         {
+            if (_revertPending && revertFallbackSeconds > 0f && Time.time >= _revertDeadline)
+            {
+                SafetyLog.Warning($"[ScaffoldPieceInstaller] '{name}' revertido sem confirmação de popup — nenhum aviso foi fechado a tempo.", this);
+                RevertInstall();
+            }
+
             if (_isInstalled) return;
 
             bool valid = HasValidInstallPose();
@@ -240,8 +279,32 @@ namespace SafetyProto.Runtime.Scaffolding
             Install();
         }
 
+        /// <summary>
+        /// Undoes an install the rule engine refused: the piece leaves the socket, becomes
+        /// grabbable again and travels back to its home pose, so the participant can retry it
+        /// after satisfying the precondition (anchoring the lanyard). No-op when the piece is
+        /// not installed.
+        /// </summary>
+        public void RevertInstall()
+        {
+            _revertPending = false;
+            if (!_isInstalled) return;
+
+            ResetInstall();
+
+            if (returnHome != null)
+            {
+                returnHome.enabled = true;
+                returnHome.BeginReturnNow();
+            }
+
+            onInstallReverted?.Invoke();
+            SafetyLog.Info($"[ScaffoldPieceInstaller] '{name}' desinstalado — tentativa recusada pelas regras de segurança.", this);
+        }
+
         public void ResetInstall()
         {
+            _revertPending = false;
             _isInstalled  = false;
             _wasValidPose = false;
             if (disableCollidersAfterInstalled)
@@ -283,6 +346,36 @@ namespace SafetyProto.Runtime.Scaffolding
                     UpdateTargetPreviewVisibility();
                     break;
             }
+        }
+
+        // ── Refused install ──────────────────────────────────────
+
+        /// <summary>
+        /// The rule engine declined the attempt this piece published. The piece is already
+        /// snapped and locked at this point, so it has to come back out — but only after the
+        /// participant has had the warning in front of them, which is why the revert waits for
+        /// the popup to close instead of yanking the piece away mid-sentence.
+        /// </summary>
+        private void OnActionRefused(ActionRefusedEventArgs args)
+        {
+            if (!revertInstallWhenRefused || !_isInstalled || _revertPending) return;
+
+            var mine = GetConfiguredActionId();
+            if (string.IsNullOrEmpty(mine) ||
+                !string.Equals(args.ActionId, mine, System.StringComparison.Ordinal)) return;
+
+            // An empty SourceId means the emitter did not identify itself — accept it rather
+            // than leave the piece stuck.
+            if (!string.IsNullOrEmpty(args.SourceId) &&
+                !string.Equals(args.SourceId, ResolvedSourceId, System.StringComparison.Ordinal)) return;
+
+            _revertPending = true;
+            _revertDeadline = Time.time + revertFallbackSeconds;
+        }
+
+        private void OnPopupClosed(PopupClosedEventArgs _)
+        {
+            if (_revertPending) RevertInstall();
         }
 
         // ── Install logic ────────────────────────────────────────
@@ -457,10 +550,9 @@ namespace SafetyProto.Runtime.Scaffolding
                 return;
             }
 
-            var resolvedSource  = string.IsNullOrWhiteSpace(sourceId) ? gameObject.name : sourceId.Trim();
-            var resolvedContext = string.IsNullOrWhiteSpace(context)  ? null            : context.Trim();
+            var resolvedContext = string.IsNullOrWhiteSpace(context) ? null : context.Trim();
 
-            ActionEvents.PublishActionAttempt(actionId, resolvedSource, resolvedContext, transform.position, interactorId);
+            ActionEvents.PublishActionAttempt(actionId, ResolvedSourceId, resolvedContext, transform.position, interactorId);
             SafetyLog.Info($"[ScaffoldPieceInstaller] '{name}' instalado — ActionAttempt '{actionId}' emitido.", this);
         }
 
@@ -528,6 +620,11 @@ namespace SafetyProto.Runtime.Scaffolding
         {
             return string.IsNullOrWhiteSpace(actionId) ? string.Empty : actionId.Trim();
         }
+
+        /// <summary>Identity this piece stamps on the attempts it publishes, so a refusal can be
+        /// matched back to it even when several pieces share one action id.</summary>
+        private string ResolvedSourceId =>
+            string.IsNullOrWhiteSpace(sourceId) ? gameObject.name : sourceId.Trim();
 
         // ── Editor ───────────────────────────────────────────────
 

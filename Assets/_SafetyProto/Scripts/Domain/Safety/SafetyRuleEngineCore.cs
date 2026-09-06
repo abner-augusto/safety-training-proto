@@ -178,7 +178,7 @@ namespace SafetyProto.Domain.Safety
             if (_activeGroup == null || !TaskExecutionRules.IsEquipTask(task)) return false;
             if (!IsPpeCompliant(task!.requiredPPE)) return false;
 
-            if (!ProcessTaskAttempt(task!, _activeGroup)) return false;
+            if (!ProcessTaskAttempt(task!, _activeGroup, out _)) return false;
 
             // Stop a later PPE event from re-completing the same sequential task before the
             // next OnTaskStarted reassigns the active reference. (FreeOrder is already guarded
@@ -254,9 +254,16 @@ namespace SafetyProto.Domain.Safety
                 }
             }
 
-            if (ProcessTaskAttempt(targetTask, _activeGroup))
+            if (ProcessTaskAttempt(targetTask, _activeGroup, out var refusalCode))
             {
                 ReleaseEquipTasksAfterPrerequisite(targetTask);
+            }
+            else
+            {
+                // The attempt already changed the world (a piece snapped into its socket), so the
+                // emitter needs to hear that it was declined — the violation alone only reaches
+                // the UI.
+                _bus.Publish(new ActionRefusedEventArgs(actionId, args.SourceId, refusalCode));
             }
         }
 
@@ -326,12 +333,16 @@ namespace SafetyProto.Domain.Safety
 
         /// <summary>
         /// Completes <paramref name="task"/> unless its group's precondition blocks it.
-        /// Returns false when the attempt was refused and the task is still pending.
+        /// Returns false when the attempt was refused and the task is still pending;
+        /// <paramref name="refusalCode"/> then carries the violation code that refused it.
         /// </summary>
-        private bool ProcessTaskAttempt(ISafetyTask task, ITaskGroup currentGroup)
+        private bool ProcessTaskAttempt(ISafetyTask task, ITaskGroup currentGroup, out string refusalCode)
         {
+            refusalCode = string.Empty;
+
             if (IsBlockedByPrerequisite(task, currentGroup))
             {
+                refusalCode = "PREREQUISITE_PENDING";
                 RaisePrerequisitePending(task, currentGroup);
 
                 if (_verboseLogging)

@@ -1,3 +1,4 @@
+using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
@@ -59,6 +60,11 @@ namespace SafetyProto.UI
                 SessionEvents.RaiseSessionResumed();
                 _sessionPausedByUs = false;
             }
+
+            // Announced for every close (button, dismiss, auto-close) so gameplay objects can
+            // wait for a warning to have been read. Deliberately not tied to the pause pair —
+            // a transient notice pauses nothing but still closes.
+            EventBus.Instance?.Publish(new PopupClosedEventArgs());
         }
 
         public void Show(PopupData data)

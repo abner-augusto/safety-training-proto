@@ -335,6 +335,41 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
+        public void GuidedMode_PrerequisitePending_PublishesActionRefusedForTheEmitter()
+        {
+            // The refused attempt already changed the world (the piece snapped into its socket),
+            // so the emitter is told it was declined and can put itself back.
+            var refusals = new List<ActionRefusedEventArgs>();
+            _bus.Subscribe<ActionRefusedEventArgs>(args => refusals.Add(args));
+
+            var (group, _, _, _) = BuildPlatformGroup();
+            _bus.Publish(new TaskGroupEventArgs(group, TaskGroupPhase.Started));
+
+            _bus.Publish(new ActionAttemptedEvent("install_guardrail", sourceId: "GuardRailPiece"));
+
+            Assert.AreEqual(1, refusals.Count);
+            Assert.AreEqual("install_guardrail", refusals[0].ActionId);
+            Assert.AreEqual("GuardRailPiece", refusals[0].SourceId);
+            Assert.AreEqual("PREREQUISITE_PENDING", refusals[0].ReasonCode);
+        }
+
+        [Test]
+        public void GuidedMode_AcceptedAction_PublishesNoActionRefused()
+        {
+            var refusals = new List<ActionRefusedEventArgs>();
+            _bus.Subscribe<ActionRefusedEventArgs>(args => refusals.Add(args));
+
+            var (group, _, _, _) = BuildPlatformGroup();
+            _bus.Publish(new TaskGroupEventArgs(group, TaskGroupPhase.Started));
+
+            _bus.Publish(new ActionAttemptedEvent("connect_harness", sourceId: "Lanyard"));
+            _bus.Publish(new ActionAttemptedEvent("install_guardrail", sourceId: "GuardRailPiece"));
+
+            Assert.AreEqual(2, _taskCompletions.Count);
+            CollectionAssert.IsEmpty(refusals);
+        }
+
+        [Test]
         public void GuidedMode_GroupWithoutPrerequisite_IsUnaffected()
         {
             var (group, _, _, _) = BuildPlatformGroup(prerequisiteId: "");
