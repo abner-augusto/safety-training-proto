@@ -50,6 +50,22 @@ namespace SafetyProto.Runtime.Interaction
 
         private bool _subscribed;
 
+        private void Awake()
+        {
+            if (_audioSource == null)
+                _audioSource = GetComponent<AudioSource>();
+
+            // With a clip but no source, PlayClickAudio builds one at play time from the
+            // hard-coded values below, so what an author tuned in the scene is not what plays.
+            if (_audioSource == null && _clickSound != null)
+            {
+                SafetyLog.Warning(
+                    $"DualModeButton [{name}]: tem clipe de clique mas nenhum AudioSource. Um " +
+                    "source será criado em runtime com valores padrão do código (spatialBlend 1, " +
+                    "min 0.2 m, max 4 m), ignorando qualquer ajuste feito na cena.", this);
+            }
+        }
+
         private void OnEnable() => Subscribe();
 
         private void OnDisable() => Unsubscribe();

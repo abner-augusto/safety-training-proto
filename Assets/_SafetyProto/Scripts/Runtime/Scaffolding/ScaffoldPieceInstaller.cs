@@ -183,6 +183,8 @@ namespace SafetyProto.Runtime.Scaffolding
             if (audioSource == null)
                 audioSource = GetComponent<AudioSource>();
 
+            WarnIfAudioRunsOnCodeDefaults();
+
             _colliders = GetComponentsInChildren<Collider>(includeInactive: false);
 
             if (pieceFeedbackRenderer != null)
@@ -599,6 +601,23 @@ namespace SafetyProto.Runtime.Scaffolding
         {
             if (targetPreviewRenderer == null || _isInstalled) return;
             targetPreviewRenderer.enabled = !showTargetPreviewOnlyWhileGrabbed || _isGrabbed;
+        }
+
+        /// <summary>
+        /// A clip with no AudioSource anywhere on the object means EnsureAudioSource will build
+        /// one at play time from the hard-coded values below — so the spatial settings an author
+        /// sees in the scene are not the ones this piece will use. Say so at load, while there
+        /// is still something to fix.
+        /// </summary>
+        private void WarnIfAudioRunsOnCodeDefaults()
+        {
+            if (audioSource != null) return;
+            if (installSound == null && validPoseSound == null && invalidReleaseSound == null) return;
+
+            SafetyLog.Warning(
+                $"[ScaffoldPieceInstaller] '{name}' tem clipe de áudio mas nenhum AudioSource. " +
+                "Um source será criado em runtime com valores padrão do código (spatialBlend 1, " +
+                "min 0.5 m, max 10 m), ignorando qualquer ajuste feito na cena.", this);
         }
 
         private void EnsureAudioSource()

@@ -102,6 +102,16 @@ namespace SafetyProto.Runtime.PPE
 
             if (audioSource == null)
                 audioSource = GetComponent<AudioSource>();
+
+            // With a clip but no source, EnsureAudioSource builds one at play time from the
+            // hard-coded values below, so what an author tuned in the scene is not what plays.
+            if (audioSource == null && (snapSound != null || unsnapSound != null))
+            {
+                SafetyLog.Warning(
+                    $"PPESnapItem [{name}]: tem clipe de áudio mas nenhum AudioSource. Um source " +
+                    "será criado em runtime com valores padrão do código (spatialBlend 1, " +
+                    "min 0.3 m, max 5 m), ignorando qualquer ajuste feito na cena.", this);
+            }
         }
 
         private void Start()
