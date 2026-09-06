@@ -4,6 +4,7 @@ using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
 using SafetyProto.Runtime.Actions;
 using SafetyProto.Runtime.Feedback;
+using SafetyProto.Utils;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -199,13 +200,15 @@ namespace SafetyProto.Runtime.Scaffolding
             if (grabbable != null)
                 grabbable.WhenPointerEventRaised += OnPointerEvent;
 
-            var bus = SafetyProto.Core.EventBus.Instance;
-            if (bus == null) return;
+            // No bus means no protocol: the piece could still snap into its socket but would
+            // never hear a refusal, so it would install and lock with no way back. Disabling is
+            // the honest outcome.
+            if (!this.IsEventBusReady()) return;
 
             _onActionRefused ??= OnActionRefused;
             _onPopupClosed ??= OnPopupClosed;
-            bus.Subscribe(_onActionRefused);
-            bus.Subscribe(_onPopupClosed);
+            SafetyProto.Core.EventBus.Instance.Subscribe(_onActionRefused);
+            SafetyProto.Core.EventBus.Instance.Subscribe(_onPopupClosed);
         }
 
         private void OnDisable()
