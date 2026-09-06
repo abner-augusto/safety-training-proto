@@ -196,22 +196,17 @@ namespace SafetyProto.Domain.Tasks
         }
 
         /// <summary>
-        /// Names of tasks in the CURRENT group whose completion order deviated from
-        /// the authored task order. Compares CompletionTime timestamps of tasks that
-        /// reached a completed state (success or unsafe) against the sequence in
-        /// which the group declares them: a task completed EARLIER than a task that
-        /// precedes it in the JSON is a deviation. Never-completed tasks are ignored
-        /// (omissions are reported separately). Empty list = order respected.
-        /// </summary>
-        public IReadOnlyList<string> GetCompletionOrderDeviations() =>
-            GetCompletionOrderDeviationsFor(GetCurrentGroup());
-
-        /// <summary>
-        /// Same as <see cref="GetCompletionOrderDeviations()"/> but for a named group instead of
-        /// the current one. A group that completes naturally is no longer current the moment its
-        /// last task lands — the core has already moved on — so a gate that judges that group
-        /// (the Phase 1 advance button) has to ask for it by id or it would measure the group
-        /// that came after it.
+        /// Names of tasks in the named group whose completion order deviated from the authored
+        /// task order. Compares CompletionTime timestamps of tasks that reached a completed
+        /// state (success or unsafe) against the sequence in which the group declares them: a
+        /// task completed EARLIER than a task that precedes it in the JSON is a deviation.
+        /// Never-completed tasks are ignored (omissions are reported separately). Empty list =
+        /// order respected.
+        ///
+        /// Always by id, never "the current group": a group that completes naturally is no
+        /// longer current the moment its last task lands — the core has already moved on — so a
+        /// gate that judges that group (the Phase 1 advance button) would otherwise measure the
+        /// group that came after it.
         /// </summary>
         public IReadOnlyList<string> GetCompletionOrderDeviations(string groupId) =>
             GetCompletionOrderDeviationsFor(FindGroupById(groupId));
@@ -262,7 +257,9 @@ namespace SafetyProto.Domain.Tasks
             return false;
         }
 
-        private ITaskGroup? FindGroupById(string groupId)
+        /// <summary>Group of the loaded scenario with this id, or null. The single place that
+        /// resolves a group id, so an adapter never keeps a second copy of the rule.</summary>
+        public ITaskGroup? FindGroupById(string groupId)
         {
             if (string.IsNullOrWhiteSpace(groupId)) return null;
             for (int i = 0; i < _taskGroups.Count; i++)

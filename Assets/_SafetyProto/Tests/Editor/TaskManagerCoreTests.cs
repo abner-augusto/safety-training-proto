@@ -314,54 +314,17 @@ namespace SafetyProto.Tests.Editor
             var t1 = _tasks.Task("t1", "action_a");
             var t2 = _tasks.Task("t2", "action_b");
             var t3 = _tasks.Task("t3", "action_c");
-            var t4 = _tasks.Task("t4", "action_d");
-            var group = _tasks.Group("g1", TaskExecutionModeShared.FreeOrder, t1, t2, t3, t4);
+            var group = _tasks.Group("g1", TaskExecutionModeShared.FreeOrder, t1, t2, t3);
 
             var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
             core.Subscribe();
             core.StartSession();
 
-            // t4 is left NotStarted so the group never completes and stays "current"
-            // for the GetCompletionOrderDeviations() call below.
             _bus.Publish(new TaskEventArgs(t1, new RuntimeSafetyTask(t1) { State = TaskState.CompletedSuccess, CompletionTime = 1f }, TaskPhase.Completed));
             _bus.Publish(new TaskEventArgs(t2, new RuntimeSafetyTask(t2) { State = TaskState.CompletedSuccess, CompletionTime = 2f }, TaskPhase.Completed));
             _bus.Publish(new TaskEventArgs(t3, new RuntimeSafetyTask(t3) { State = TaskState.CompletedSuccess, CompletionTime = 3f }, TaskPhase.Completed));
 
-            var deviations = core.GetCompletionOrderDeviations();
-
-            Assert.IsEmpty(deviations);
-
-            core.Dispose();
-        }
-
-        [Test]
-        public void GetCompletionOrderDeviations_OutOfOrder_NamesTheEarlyTask()
-        {
-            var t1 = _tasks.Task("t1", "action_a");
-            var t2 = _tasks.Task("t2", "action_b");
-            var t3 = _tasks.Task("t3", "action_c");
-            var t4 = _tasks.Task("t4", "action_d");
-            var group = _tasks.Group("g1", TaskExecutionModeShared.FreeOrder, t1, t2, t3, t4);
-
-            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
-            core.Subscribe();
-            core.StartSession();
-
-            // Group order is t1, t2, t3, t4. t3 completes chronologically BEFORE t2
-            // (1s vs 2s), but the algorithm walks tasks in authored group order and
-            // compares each one's CompletionTime against the immediately preceding
-            // group-order task's CompletionTime — so it is t3 (index 2, compared
-            // against t2 at index 1) whose timestamp (1.5) is lower than its
-            // predecessor's (2), not t2 itself. t4 stays pending to keep the group
-            // "current".
-            _bus.Publish(new TaskEventArgs(t1, new RuntimeSafetyTask(t1) { State = TaskState.CompletedSuccess, CompletionTime = 1f }, TaskPhase.Completed));
-            _bus.Publish(new TaskEventArgs(t2, new RuntimeSafetyTask(t2) { State = TaskState.CompletedSuccess, CompletionTime = 2f }, TaskPhase.Completed));
-            _bus.Publish(new TaskEventArgs(t3, new RuntimeSafetyTask(t3) { State = TaskState.CompletedSuccess, CompletionTime = 1.5f }, TaskPhase.Completed));
-
-            var deviations = core.GetCompletionOrderDeviations();
-
-            Assert.AreEqual(1, deviations.Count);
-            Assert.AreEqual("t3", deviations[0]);
+            Assert.IsEmpty(core.GetCompletionOrderDeviations("g1"));
 
             core.Dispose();
         }
@@ -408,12 +371,15 @@ namespace SafetyProto.Tests.Editor
             core.StartSession();
 
             // g1 completes in full, out of order (t3 before t2), so it is no longer current.
+            // The algorithm walks tasks in authored order and compares each one's
+            // CompletionTime against its predecessor's, so the task it names is t3 (index 2,
+            // timestamp 1.5, against t2 at index 1 with 2) — not t2 itself.
             _bus.Publish(new TaskEventArgs(t1, new RuntimeSafetyTask(t1) { State = TaskState.CompletedSuccess, CompletionTime = 1f }, TaskPhase.Completed));
             _bus.Publish(new TaskEventArgs(t2, new RuntimeSafetyTask(t2) { State = TaskState.CompletedSuccess, CompletionTime = 2f }, TaskPhase.Completed));
             _bus.Publish(new TaskEventArgs(t3, new RuntimeSafetyTask(t3) { State = TaskState.CompletedSuccess, CompletionTime = 1.5f }, TaskPhase.Completed));
 
             Assert.AreEqual("g2", core.GetCurrentGroup()!.id);
-            Assert.IsEmpty(core.GetCompletionOrderDeviations(), "the current group has no completions yet");
+            Assert.IsEmpty(core.GetCompletionOrderDeviations("g2"), "g2 has no completions yet");
 
             var deviations = core.GetCompletionOrderDeviations("g1");
             Assert.AreEqual(1, deviations.Count);
@@ -446,10 +412,9 @@ namespace SafetyProto.Tests.Editor
             t2Runtime.State = TaskState.NotPerformed;
             t2Runtime.CompletionTime = 0.5f;
 
-            // t4 stays NotStarted (pending) so the group remains "current".
-            var deviations = core.GetCompletionOrderDeviations();
-
-            Assert.IsEmpty(deviations);
+            // t4 stays NotStarted (pending) — a task with no completion at all must be skipped
+            // rather than read as a deviation.
+            Assert.IsEmpty(core.GetCompletionOrderDeviations("g1"));
 
             core.Dispose();
         }
