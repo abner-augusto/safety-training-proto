@@ -21,7 +21,10 @@ namespace SafetyProto.Tests.Editor
             {
                 new SessionStartedEventArgs(), new SessionPausedEventArgs(), new SessionResumedEventArgs(),
                 new SessionEndedEventArgs(), new SessionCompletedEventArgs(1, 2, 3, 4),
-                new ActionAttemptedEvent("action"), new PPEStateChangedEventArgs(PPEType.Helmet, true),
+                new ActionAttemptedEvent("action"),
+                new ActionRefusedEventArgs("action", "source", "PREREQUISITE_PENDING"),
+                new PopupClosedEventArgs(),
+                new PPEStateChangedEventArgs(PPEType.Helmet, true),
                 new TaskEventArgs(null!), new TaskGroupEventArgs(null), new ScoreChangedEventArgs(1, 1),
                 new SafetyViolationEventArgs(), new CriticalSafetyFailureEventArgs(), new SafetyErrorEventArgs()
             };
@@ -53,6 +56,8 @@ namespace SafetyProto.Tests.Editor
                 SessionEndedEventArgs value => EventMetadata.Stamp(value),
                 SessionCompletedEventArgs value => EventMetadata.Stamp(value),
                 ActionAttemptedEvent value => EventMetadata.Stamp(value),
+                ActionRefusedEventArgs value => EventMetadata.Stamp(value),
+                PopupClosedEventArgs value => EventMetadata.Stamp(value),
                 PPEStateChangedEventArgs value => EventMetadata.Stamp(value),
                 TaskEventArgs value => EventMetadata.Stamp(value),
                 TaskGroupEventArgs value => EventMetadata.Stamp(value),
@@ -71,6 +76,8 @@ namespace SafetyProto.Tests.Editor
                 SessionEndedEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
                 SessionCompletedEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
                 ActionAttemptedEvent value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
+                ActionRefusedEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
+                PopupClosedEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
                 PPEStateChangedEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
                 TaskEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
                 TaskGroupEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
