@@ -148,6 +148,17 @@ stating here are these:
   entries carry stable task and group identifiers (with a human-readable name as
   a fallback), so a session log can be analyzed by id even if display names
   change between scenario revisions.
+- **A refused attempt answers its emitter.** A violation explains a refusal to
+  the participant; it does not tell the object that acted. When the rule engine
+  declines an attempt it also publishes `ActionRefusedEventArgs`, keyed by action
+  id and source id, so an emitter that changed the world optimistically can undo
+  it — a scaffold piece snaps into its socket, then puts itself back when the
+  attempt turns out to be refused for a pending precondition.
+- **The UI announces dismissal, not visibility.** `PopupClosedEventArgs` is
+  published whenever the shared popup panel goes away (button, dismiss, or
+  auto-close). It lets gameplay wait for a warning to have been read before
+  changing the world under the participant, without a dependency from the runtime
+  assembly onto the UI assembly.
 
 ---
 

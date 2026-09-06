@@ -27,6 +27,8 @@ namespace SafetyProto.Core.Events
                 case SessionEndedEventArgs value: StampFields(ref value.SessionId, ref value.PlayerId, ref value.ScenarioId, ref value.TimestampMs); boxed = value; break;
                 case SessionCompletedEventArgs value: StampFields(ref value.SessionId, ref value.PlayerId, ref value.ScenarioId, ref value.TimestampMs); boxed = value; break;
                 case ActionAttemptedEvent value: StampFields(ref value.SessionId, ref value.PlayerId, ref value.ScenarioId, ref value.TimestampMs); boxed = value; break;
+                case ActionRefusedEventArgs value: StampFields(ref value.SessionId, ref value.PlayerId, ref value.ScenarioId, ref value.TimestampMs); boxed = value; break;
+                case PopupClosedEventArgs value: StampFields(ref value.SessionId, ref value.PlayerId, ref value.ScenarioId, ref value.TimestampMs); boxed = value; break;
                 case PPEStateChangedEventArgs value: StampFields(ref value.SessionId, ref value.PlayerId, ref value.ScenarioId, ref value.TimestampMs); boxed = value; break;
                 case TaskEventArgs value: StampFields(ref value.SessionId, ref value.PlayerId, ref value.ScenarioId, ref value.TimestampMs); boxed = value; break;
                 case TaskGroupEventArgs value: StampFields(ref value.SessionId, ref value.PlayerId, ref value.ScenarioId, ref value.TimestampMs); boxed = value; break;

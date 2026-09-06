@@ -132,6 +132,8 @@ All communication between modules is through typed event payloads defined in
 | `ScoreChangedEventArgs`         | `ScoreService`                  | UI, logger                            |
 | `SafetyViolationEventArgs`      | `SafetyRuleEngineCore`          | `SafetyAnalyzer`, logger              |
 | `CriticalSafetyFailureEventArgs`| `SafetyAnalyzer`                | UI, logger                            |
+| `ActionRefusedEventArgs`        | `SafetyRuleEngineCore`          | the emitter of the refused attempt (`ScaffoldPieceInstaller`) |
+| `PopupClosedEventArgs`          | `PopupService`                  | gameplay objects waiting on a warning |
 
 The `Phase` discriminator on `TaskEventArgs` and `TaskGroupEventArgs` is
 essential: it lets a single typed subscriber key carry both lifecycle phases of

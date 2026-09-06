@@ -37,6 +37,8 @@
     <!-- Payloads (Part 3) -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\EventPayloads.cs"              Link="Core\EventPayloads.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Events\ActionAttemptedEvent.cs" Link="Core\Events\ActionAttemptedEvent.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Events\ActionRefusedEventArgs.cs" Link="Core\Events\ActionRefusedEventArgs.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Events\PopupClosedEventArgs.cs" Link="Core\Events\PopupClosedEventArgs.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\RuntimeSafetyTask.cs" Link="Core\RuntimeSafetyTask.cs" />
 
     <!-- Part 4 additions -->
