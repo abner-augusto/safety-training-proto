@@ -351,7 +351,43 @@ Two constraints are worth recording for anyone extending it:
 
 ---
 
-## 13. Cross-cutting: the session-reset lifecycle
+## 13. Audio: one voice for judgement, many for the world
+
+Sound in this project comes from two places on purpose, and the split is worth
+knowing before adding a clip.
+
+**Evaluative feedback has one voice.** Whether the participant just succeeded,
+succeeded unsafely, violated a rule, or triggered a critical failure is
+announced by `AudioFeedbackManager` through a single `AudioSource`, and which of
+those a moment gets is decided by `AudioFeedbackArbiter` in `Domain/Feedback/` —
+pure, time-injected, and therefore testable without an engine. It exists because
+one action routinely raises several feedback events at once: completing a task
+without the required PPE publishes both the violation and the unsafe completion,
+and layering the two clips reads as noise rather than as a verdict. The arbiter
+collapses a frame's requests to the most important one (critical > failure >
+unsafe success > success) and lets a clip already sounding be interrupted only by
+something strictly more important. A dropped request is not replayed later:
+feedback is about what just happened.
+
+**Diegetic sound is local and spatial.** A carabiner latching, a piece seating
+into its socket, a helmet buckling, a button clicking — these are emitted by the
+object that caused them, through its own `AudioSource`, so the participant can
+locate them by ear. They do not pass through the arbiter and are not arbitrated
+against each other: several physical events *should* be audible together, and
+head-relative placement is the point. `AmbienceAudioController` is the same idea
+at scene scale, crossfading a ground bed against a height bed as the participant
+climbs.
+
+The rule of thumb: if a sound is the system's *opinion* about what the
+participant did, it belongs to the arbiter; if it is something that happened in
+the world, it belongs to the object it happened to. Components that play locally
+accept a serialized `AudioSource` and fall back to creating one with code
+defaults — they warn at `Awake` when they take that path, because the spatial
+settings then come from the fallback rather than from the scene.
+
+---
+
+## 14. Cross-cutting: the session-reset lifecycle
 
 Restarting a session must return every stateful system to a clean baseline
 without a scene reload leaking old state. Systems that hold session state
@@ -365,7 +401,7 @@ domain reload.
 
 ---
 
-## 14. What the dependency structure confirms
+## 15. What the dependency structure confirms
 
 Three properties of the architecture are visible directly in how the code
 connects, and they are the empirical form of the claims above:
@@ -384,7 +420,7 @@ connects, and they are the empirical form of the claims above:
 
 ---
 
-## 15. Extension points, at a glance
+## 16. Extension points, at a glance
 
 | To add… | Do this |
 |---|---|
