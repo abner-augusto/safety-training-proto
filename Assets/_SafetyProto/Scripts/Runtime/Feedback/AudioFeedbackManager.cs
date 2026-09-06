@@ -12,10 +12,12 @@ namespace SafetyProto.Runtime.Feedback
     {
         [Header("Audio")]
         [SerializeField] private AudioSource audioSource;
-        [Tooltip("Full success sound (task completed + all required PPE worn).")]
+        [Tooltip("Full success sound (task completed + all required PPE worn) in Guided mode.")]
         [SerializeField] private AudioClip successClip;
-        [Tooltip("Neutral success sound (task action performed, but missing required PPE).")]
+        [Tooltip("Neutral success sound (task action performed, but missing required PPE) in Guided mode.")]
         [SerializeField] private AudioClip unsafeSuccessClip;
+        [Tooltip("Generic task completion sound for Evaluation mode. Falls back to successClip (sucess1.mp3) if unassigned.")]
+        [SerializeField] private AudioClip genericTaskCompleteClip;
         [Tooltip("Safety violation sound.")]
         [SerializeField] private AudioClip failureClip;
         [Tooltip("Critical safety failure / procedure interruption alarm sound.")]
@@ -37,13 +39,23 @@ namespace SafetyProto.Runtime.Feedback
         // so it is captured once and reapplied.
         private float _baseVolume = 1f;
 
+        public AudioClip SuccessClip => successClip;
+        public AudioClip UnsafeSuccessClip => unsafeSuccessClip;
+        public AudioClip GenericTaskCompleteClip => genericTaskCompleteClip != null ? genericTaskCompleteClip : successClip;
+        public AudioClip FailureClip => failureClip;
+        public AudioClip CriticalFailureClip => criticalFailureClip;
+        public AudioFeedbackArbiter Arbiter => _arbiter;
+
         private void Awake()
         {
             audioSource ??= GetComponent<AudioSource>();
-            if (audioSource != null) _baseVolume = audioSource.volume;
+            if (audioSource != null && audioSource.volume > 0f) _baseVolume = audioSource.volume;
         }
 
-        private void OnEnable()
+        private void OnEnable() => SubscribeEvents();
+        private void OnDisable() => UnsubscribeEvents();
+
+        public void SubscribeEvents()
         {
             if (!this.IsEventBusReady())
             {
@@ -56,7 +68,7 @@ namespace SafetyProto.Runtime.Feedback
             EventBus.Instance.onCriticalSafetyFailure.AddListener(OnCriticalFailure);
         }
 
-        private void OnDisable()
+        public void UnsubscribeEvents()
         {
             if (EventBus.Instance != null)
             {
@@ -70,6 +82,14 @@ namespace SafetyProto.Runtime.Feedback
 
         private void OnTaskCompleted(TaskEventArgs args)
         {
+            // In Evaluation mode, play generic task complete feedback regardless of safety or compliance,
+            // avoiding revealing errors to the player before the scenario ends.
+            if (SessionModeState.Current == SessionMode.Evaluation)
+            {
+                _arbiter.Request(AudioFeedbackKind.Success);
+                return;
+            }
+
             // RuntimeTask is null when SafetyRuleEngineCore publishes the completion, so
             // WasPpeCompliant is the authoritative flag for whether the task was safe.
             bool compliant = args.RuntimeTask != null
@@ -90,14 +110,44 @@ namespace SafetyProto.Runtime.Feedback
             }
         }
 
-        private void OnSafetyViolation(SafetyViolationEventArgs _) => _arbiter.Request(AudioFeedbackKind.Failure);
+        private void OnSafetyViolation(SafetyViolationEventArgs _)
+        {
+            // Suppress error audio in Evaluation mode so mistakes are not leaked before scenario ends.
+            if (SessionModeState.Current == SessionMode.Evaluation) return;
+            _arbiter.Request(AudioFeedbackKind.Failure);
+        }
 
-        private void OnCriticalFailure(CriticalSafetyFailureEventArgs _) => _arbiter.Request(AudioFeedbackKind.Critical);
+        private void OnCriticalFailure(CriticalSafetyFailureEventArgs _)
+        {
+            // Suppress error audio in Evaluation mode so mistakes are not leaked before scenario ends.
+            if (SessionModeState.Current == SessionMode.Evaluation) return;
+            _arbiter.Request(AudioFeedbackKind.Critical);
+        }
 
         public void PlaySuccessClip() => _arbiter.Request(AudioFeedbackKind.Success);
-        public void PlayUnsafeSuccessClip() => _arbiter.Request(AudioFeedbackKind.UnsafeSuccess);
-        public void PlayFailureClip() => _arbiter.Request(AudioFeedbackKind.Failure);
-        public void PlayCriticalFailureClip() => _arbiter.Request(AudioFeedbackKind.Critical);
+
+        public void PlayUnsafeSuccessClip()
+        {
+            if (SessionModeState.Current == SessionMode.Evaluation)
+            {
+                _arbiter.Request(AudioFeedbackKind.Success);
+                return;
+            }
+
+            _arbiter.Request(AudioFeedbackKind.UnsafeSuccess);
+        }
+
+        public void PlayFailureClip()
+        {
+            if (SessionModeState.Current == SessionMode.Evaluation) return;
+            _arbiter.Request(AudioFeedbackKind.Failure);
+        }
+
+        public void PlayCriticalFailureClip()
+        {
+            if (SessionModeState.Current == SessionMode.Evaluation) return;
+            _arbiter.Request(AudioFeedbackKind.Critical);
+        }
 
         private void LateUpdate()
         {
@@ -116,23 +166,48 @@ namespace SafetyProto.Runtime.Feedback
             _arbiter.NotifyPlaying(kind, Time.unscaledTime, clip.length);
         }
 
-        private AudioClip ResolveClip(AudioFeedbackKind kind) => kind switch
+        private AudioClip ResolveClip(AudioFeedbackKind kind)
         {
-            AudioFeedbackKind.Success => successClip,
-            AudioFeedbackKind.UnsafeSuccess => unsafeSuccessClip != null ? unsafeSuccessClip : successClip,
-            AudioFeedbackKind.Failure => failureClip,
-            AudioFeedbackKind.Critical => criticalFailureClip != null ? criticalFailureClip : failureClip,
-            _ => null,
-        };
+            if (SessionModeState.Current == SessionMode.Evaluation)
+            {
+                return genericTaskCompleteClip != null ? genericTaskCompleteClip : successClip;
+            }
 
-        private float ResolveVolume(AudioFeedbackKind kind) => kind switch
+            return kind switch
+            {
+                AudioFeedbackKind.Success => successClip,
+                AudioFeedbackKind.UnsafeSuccess => unsafeSuccessClip != null ? unsafeSuccessClip : successClip,
+                AudioFeedbackKind.Failure => failureClip,
+                AudioFeedbackKind.Critical => criticalFailureClip != null ? criticalFailureClip : failureClip,
+                _ => null,
+            };
+        }
+
+        private float ResolveVolume(AudioFeedbackKind kind)
         {
-            AudioFeedbackKind.Success => successVolume,
-            AudioFeedbackKind.UnsafeSuccess => unsafeSuccessVolume,
-            AudioFeedbackKind.Failure => failureVolume,
-            AudioFeedbackKind.Critical => criticalVolume,
-            _ => 1f,
-        };
+            if (SessionModeState.Current == SessionMode.Evaluation)
+            {
+                return successVolume;
+            }
+
+            return kind switch
+            {
+                AudioFeedbackKind.Success => successVolume,
+                AudioFeedbackKind.UnsafeSuccess => unsafeSuccessVolume,
+                AudioFeedbackKind.Failure => failureVolume,
+                AudioFeedbackKind.Critical => criticalVolume,
+                _ => 1f,
+            };
+        }
+
+        public void ConfigureClips(AudioClip success, AudioClip unsafeSuccess, AudioClip failure, AudioClip critical, AudioClip generic = null)
+        {
+            successClip = success;
+            unsafeSuccessClip = unsafeSuccess;
+            failureClip = failure;
+            criticalFailureClip = critical;
+            genericTaskCompleteClip = generic;
+        }
 
         public void ResetSession()
         {
