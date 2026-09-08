@@ -1,4 +1,3 @@
-// Assets/_SafetyProto/Scripts/Domain/Dashboard/DashboardEventRelay.cs
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;

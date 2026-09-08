@@ -68,8 +68,6 @@ namespace SafetyProto.Domain.Scoring
         /// (each task is charged at most once per session).</summary>
         [JsonProperty("gateReductionFactor")] public double GateReductionFactor { get; set; } = 0.5;
 
-        // ── Retired flat keys, read only when "levels" is absent ──────────────────
-
         [JsonProperty("criticalPoints")] public int? LegacyCriticalPoints { get; set; }
         [JsonProperty("moderatePoints")] public int? LegacyModeratePoints { get; set; }
         [JsonProperty("minorPoints")]    public int? LegacyMinorPoints { get; set; }

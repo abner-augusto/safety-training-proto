@@ -31,7 +31,6 @@ public class ComponentFinderWindow : EditorWindow
         DrawSeparator();
         GUILayout.Space(4);
 
-        // --- Script object field (drag & drop) ---
         EditorGUI.BeginChangeCheck();
         _monoScript = (MonoScript)EditorGUILayout.ObjectField(
             new GUIContent("Script", "Drag a MonoScript asset here"),
@@ -39,7 +38,6 @@ public class ComponentFinderWindow : EditorWindow
         if (EditorGUI.EndChangeCheck() && _monoScript != null)
             _typeName = _monoScript.GetClass()?.Name ?? "";
 
-        // --- Manual type-name field ---
         EditorGUI.BeginChangeCheck();
         _typeName = EditorGUILayout.TextField(
             new GUIContent("Component Name", "Type the exact class name, e.g. Rigidbody"),
@@ -49,13 +47,11 @@ public class ComponentFinderWindow : EditorWindow
 
         GUILayout.Space(6);
 
-        // --- Search button ---
         GUI.enabled = !string.IsNullOrWhiteSpace(_typeName);
         if (GUILayout.Button("Search in Scene", GUILayout.Height(28)))
             RunSearch();
         GUI.enabled = true;
 
-        // --- Status / error ---
         if (!string.IsNullOrEmpty(_statusMsg))
         {
             GUILayout.Space(4);
@@ -68,7 +64,6 @@ public class ComponentFinderWindow : EditorWindow
         DrawSeparator();
         GUILayout.Space(4);
 
-        // --- Results header ---
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField(
             $"Results for  \"{_lastSearch}\"  —  {_results.Count} object(s)",
@@ -79,14 +74,12 @@ public class ComponentFinderWindow : EditorWindow
 
         GUILayout.Space(4);
 
-        // --- Column headers ---
         EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
         EditorGUILayout.LabelField("#",    GUILayout.Width(28));
         EditorGUILayout.LabelField("GameObject Name");
         EditorGUILayout.LabelField("Ping", GUILayout.Width(44));
         EditorGUILayout.EndHorizontal();
 
-        // --- Scrollable list ---
         _scrollPos = EditorGUILayout.BeginScrollView(_scrollPos);
 
         for (int i = 0; i < _results.Count; i++)
@@ -110,8 +103,6 @@ public class ComponentFinderWindow : EditorWindow
 
         EditorGUILayout.EndScrollView();
     }
-
-    // -----------------------------------------------------------------------
 
     private void RunSearch()
     {
@@ -151,7 +142,6 @@ public class ComponentFinderWindow : EditorWindow
 
     private static Type ResolveType(string name)
     {
-        // Check all loaded assemblies
         foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
         {
             Type t = assembly.GetType(name, throwOnError: false);

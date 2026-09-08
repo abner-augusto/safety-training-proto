@@ -143,11 +143,9 @@ namespace SafetyProto.Runtime.Safety
 
             CaptureState();
 
-            // ── Beat: locked ──────────────────────────────────────
             RaiseBeat(BeatLocked);
             if (locomotor != null) locomotor.enabled = false;
 
-            // ── Beat: creak ───────────────────────────────────────
             RaiseBeat(BeatCreak);
             StartLoop(scaffoldAudioSource, creakLoopSfx, creakLoopVolume);
 
@@ -161,7 +159,6 @@ namespace SafetyProto.Runtime.Safety
                 yield return null;
             }
 
-            // ── Beat: tear ────────────────────────────────────────
             RaiseBeat(BeatTear);
             PlayOneShot(scaffoldAudioSource, meshTearSfx, meshTearVolume);
             // Cut, not fade. The mesh material does not respond to an alpha ramp, so the tear
@@ -170,7 +167,6 @@ namespace SafetyProto.Runtime.Safety
             if (tearDuration > 0f)
                 yield return new WaitForSeconds(tearDuration);
 
-            // ── Beat: tilt (and, inside it, detach / fall / fade) ──
             RaiseBeat(BeatTilt);
             StopLoop(scaffoldAudioSource);
             PlayOneShot(scaffoldAudioSource, structureCollapseSfx, structureCollapseVolume);
@@ -241,7 +237,6 @@ namespace SafetyProto.Runtime.Safety
                 yield return null;
             }
 
-            // ── Beat: blackout ────────────────────────────────────
             RaiseBeat(BeatBlackout);
             StopLoop(playerAudioSource);
             PlayOneShot(playerAudioSource, impactSfx, impactVolume);
@@ -309,8 +304,6 @@ namespace SafetyProto.Runtime.Safety
             source.loop = false;
             source.clip = null;
         }
-
-        // ── ISessionResettable ────────────────────────────────────
 
         /// <summary>
         /// Returns the scaffold, the mesh, the rig and the locomotor to their pre-collapse state.

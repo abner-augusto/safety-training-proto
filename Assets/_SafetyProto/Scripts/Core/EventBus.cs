@@ -129,7 +129,6 @@ namespace SafetyProto.Core
             }
         }
 
-        // ---------- IEventBus surface ----------
         //
         // Subscribers added via Subscribe<T> are invoked in addition to any UnityEvent
         // bindings. Dispatch is queued (via Enqueue) to preserve frame-boundary semantics
@@ -247,7 +246,6 @@ namespace SafetyProto.Core
         public UnityEvent<CriticalSafetyFailureEventArgs> onCriticalSafetyFailure;
         public UnityEvent<SafetyErrorEventArgs> onSafetyError;
 
-        // --- Methods to Raise Events ---
         public void RaiseSessionStarted(SessionStartedEventArgs args = new SessionStartedEventArgs())
         {
             var payload = args;

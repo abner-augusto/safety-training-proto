@@ -316,7 +316,6 @@ namespace SafetyProto.Networking.Dashboard
             };
             _wsServer.SendToClient(client, "ScoreChanged", scoreDto);
 
-
         }
 
         [Serializable]
@@ -333,7 +332,6 @@ namespace SafetyProto.Networking.Dashboard
             public string requestId;   // echoed back in the ack
         }
 
-        // --- IDashboardHost ---
         bool IDashboardHost.VerboseEvents => verboseEvents;
         ScoringConfig IDashboardHost.Scoring => ResolveScoring();
         IReadOnlyList<ITaskGroup> IDashboardHost.KnownGroups => _knownGroups;

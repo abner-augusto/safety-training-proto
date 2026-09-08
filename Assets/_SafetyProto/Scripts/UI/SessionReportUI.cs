@@ -54,8 +54,6 @@ namespace SafetyProto.UI
         /// message; set once per <see cref="PopulateReport"/> call.</summary>
         private bool _medalCappedByCritical;
 
-        // ──────────────────────────────────────────────────────────
-
         private void OnEnable()
         {
             if (!this.IsEventBusReady()) return;
@@ -86,8 +84,6 @@ namespace SafetyProto.UI
             PopulateReport(args);
         }
 
-        // ──────────────────────────────────────────────────────────
-
         private void PopulateReport(SessionCompletedEventArgs args)
         {
             IReadOnlyList<RuntimeSafetyTask> tasks =
@@ -103,8 +99,6 @@ namespace SafetyProto.UI
             BuildImprovements(tasks);
             PlayAudio(args.totalScore, maxPossibleScore);
         }
-
-        // ── Header ────────────────────────────────────────────────
 
         private void SetupHeader(SessionCompletedEventArgs args, int maxPossibleScore, bool criticalViolation)
         {
@@ -163,13 +157,10 @@ namespace SafetyProto.UI
             return false;
         }
 
-        // ── Task Breakdown ────────────────────────────────────────
-
         private void BuildTaskBreakdown(IReadOnlyList<RuntimeSafetyTask> tasks)
         {
             if (taskListParent == null || taskRowPrefab == null) return;
 
-            // Clear previous rows
             foreach (Transform child in taskListParent)
                 Destroy(child.gameObject);
 
@@ -194,8 +185,6 @@ namespace SafetyProto.UI
             }
         }
 
-        // ── Improvements ──────────────────────────────────────────
-
         private void BuildImprovements(IReadOnlyList<RuntimeSafetyTask> tasks)
         {
             if (improvementListParent == null || improvementRowPrefab == null) return;
@@ -208,7 +197,6 @@ namespace SafetyProto.UI
             if (_medalCappedByCritical)
                 messages.Add("Medalha limitada: houve violação crítica de segurança durante a sessão.");
 
-            // Gate validator failures
             if (gateValidator != null && gateValidator.FailedAttemptCount > 0)
             {
                 int n = gateValidator.FailedAttemptCount;
@@ -282,8 +270,6 @@ namespace SafetyProto.UI
             var rowUI = row.GetComponent<ImprovementRowUI>();
             rowUI?.Setup(message);
         }
-
-        // ── Helpers ───────────────────────────────────────────────
 
         /// <summary>First non-empty candidate, or empty when every candidate is blank.</summary>
         private static string FirstNonEmpty(params string[] candidates)

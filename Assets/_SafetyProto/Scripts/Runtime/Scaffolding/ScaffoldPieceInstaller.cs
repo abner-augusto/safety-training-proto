@@ -25,22 +25,16 @@ namespace SafetyProto.Runtime.Scaffolding
     {
         public enum InstallMode { SingleSocket, TwoSockets }
 
-        // ── Action ───────────────────────────────────────────────
-
         [Header("Action")]
         [SerializeField, ActionId] private string actionId = string.Empty;
         [SerializeField] private string sourceId = string.Empty;
         [SerializeField] private string context = "scaffold_install";
         [SerializeField] private int interactorId;
 
-        // ── Install Mode ─────────────────────────────────────────
-
         [Header("Install Mode")]
         [SerializeField] private InstallMode installMode = InstallMode.SingleSocket;
         [Tooltip("TwoSockets only: requires both hands to be holding at the moment of release.")]
         [SerializeField] private bool requireTwoHandsForTwoSockets = true;
-
-        // ── Anchors & Sockets ────────────────────────────────────
 
         [Header("Piece Anchors")]
         [Tooltip("Anchor on the piece that aligns to Socket A. The only required field for SingleSocket.")]
@@ -56,8 +50,6 @@ namespace SafetyProto.Runtime.Scaffolding
         [Tooltip("When enabled, the piece can be installed even if rotated 180 degrees around the anchor's Y axis. Useful for symmetric pieces like planks or rails.")]
         [SerializeField] private bool allow180Rotation = false;
 
-        // ── Tolerances ───────────────────────────────────────────
-
         [Header("Tolerances")]
         [SerializeField] private float positionTolerance = 0.12f;
         [Tooltip("Max yaw error in degrees (about the vertical axis). Kept TIGHT — a piece rotated " +
@@ -67,8 +59,6 @@ namespace SafetyProto.Runtime.Scaffolding
                  "tilted but correctly-oriented piece still validates; ApplySocketPose snaps it " +
                  "perfectly upright on accept.")]
         [SerializeField] private float tiltTolerance = 35f;
-
-        // ── Snap & Lock ──────────────────────────────────────────
 
         [Header("Snap")]
         [Tooltip("Move into the final installed pose when released within tolerance.")]
@@ -80,8 +70,6 @@ namespace SafetyProto.Runtime.Scaffolding
         [Tooltip("Disables non-trigger colliders after install to prevent physics overlap artifacts.")]
         [SerializeField] private bool disableCollidersAfterInstalled = true;
 
-        // ── Refused install ──────────────────────────────────────
-
         [Header("Instalação Recusada")]
         [Tooltip("Desfaz a instalação e devolve a peça quando as regras de segurança recusam a " +
                  "tentativa (ex.: talabarte ainda não ancorado, no modo Guiado). A peça só volta " +
@@ -91,8 +79,6 @@ namespace SafetyProto.Runtime.Scaffolding
                  "volta assim mesmo, para não travar a tarefa. 0 = esperar apenas pelo popup.")]
         [SerializeField] private float revertFallbackSeconds = 10f;
 
-        // ── SDK References ───────────────────────────────────────
-
         [Header("Meta SDK References")]
         [Tooltip("Grabbable on the object. Auto-found if empty.")]
         [SerializeField] private Grabbable grabbable;
@@ -100,8 +86,6 @@ namespace SafetyProto.Runtime.Scaffolding
         [SerializeField] private HandGrabInteractable handGrabInteractable;
         [Tooltip("ReturnObjectHome on the object. Auto-found if present.")]
         [SerializeField] private ReturnObjectHome returnHome;
-
-        // ── Visual Feedback ──────────────────────────────────────
 
         [Header("Visual Feedback")]
         [Tooltip("Optional renderer on the real piece. Used for local feedback while held.")]
@@ -116,8 +100,6 @@ namespace SafetyProto.Runtime.Scaffolding
         [SerializeField] private Color validColor   = new Color(0.2f, 0.85f, 0.35f, 0.45f);
         [SerializeField] private Color invalidColor = new Color(1f,   0.45f, 0.2f,  0.35f);
 
-        // ── Audio Feedback ───────────────────────────────────────
-
         [Header("Audio Feedback")]
         [Tooltip("AudioSource used to play 3D spatialized placement/install sounds. Auto-found or created if null.")]
         [SerializeField] private AudioSource audioSource;
@@ -129,8 +111,6 @@ namespace SafetyProto.Runtime.Scaffolding
         [SerializeField] private AudioClip invalidReleaseSound;
         [SerializeField, Range(0f, 1f)] private float installVolume = 1.0f;
 
-        // ── Events ───────────────────────────────────────────────
-
         [Header("Events")]
         public UnityEvent onEnteredValidPose;
         public UnityEvent onExitedValidPose;
@@ -139,8 +119,6 @@ namespace SafetyProto.Runtime.Scaffolding
         [Tooltip("Disparado quando uma instalação já concluída é desfeita porque a tentativa foi " +
                  "recusada. Use para reverter o que onInstalled tiver acionado.")]
         public UnityEvent onInstallReverted;
-
-        // ── Private state ────────────────────────────────────────
 
         private Rigidbody  _rigidbody;
         private Collider[] _colliders;
@@ -158,15 +136,11 @@ namespace SafetyProto.Runtime.Scaffolding
         private System.Action<ActionRefusedEventArgs> _onActionRefused;
         private System.Action<PopupClosedEventArgs> _onPopupClosed;
 
-        // ── Public API ───────────────────────────────────────────
-
         public bool IsInstalled        => _isInstalled;
         public bool IsValidInstallPose => HasValidInstallPose();
 
         /// <summary>How many hands are currently holding the piece.</summary>
         public int SelectingHandCount  => grabbable != null ? grabbable.SelectingPointsCount : 0;
-
-        // ── Unity lifecycle ──────────────────────────────────────
 
         private void Awake()
         {
@@ -264,8 +238,6 @@ namespace SafetyProto.Runtime.Scaffolding
             UpdateTargetPreviewVisibility();
         }
 
-        // ── Public methods ───────────────────────────────────────
-
         public void TryInstall()
         {
             if (_isInstalled) return;
@@ -321,8 +293,6 @@ namespace SafetyProto.Runtime.Scaffolding
             UpdateTargetPreviewVisibility();
         }
 
-        // ── Grab events ──────────────────────────────────────────
-
         private void OnPointerEvent(PointerEvent evt)
         {
             switch (evt.Type)
@@ -338,7 +308,6 @@ namespace SafetyProto.Runtime.Scaffolding
 
                 case PointerEventType.Unselect:
                 case PointerEventType.Cancel:
-                    // Update _isGrabbed based on hands still present
                     _isGrabbed = grabbable.SelectingPointsCount > 0;
 
                     // Attempt install only when the last hand releases
@@ -352,8 +321,6 @@ namespace SafetyProto.Runtime.Scaffolding
                     break;
             }
         }
-
-        // ── Refused install ──────────────────────────────────────
 
         /// <summary>
         /// The rule engine declined the attempt this piece published. The piece is already
@@ -382,8 +349,6 @@ namespace SafetyProto.Runtime.Scaffolding
         {
             if (_revertPending) RevertInstall();
         }
-
-        // ── Install logic ────────────────────────────────────────
 
         private void Install()
         {
@@ -544,8 +509,6 @@ namespace SafetyProto.Runtime.Scaffolding
             transform.SetPositionAndRotation(targetRootPos, targetRootRot);
         }
 
-        // ── Helpers ──────────────────────────────────────────────
-
         private void PublishInstalledAction()
         {
             var actionId = GetConfiguredActionId();
@@ -647,8 +610,6 @@ namespace SafetyProto.Runtime.Scaffolding
         /// matched back to it even when several pieces share one action id.</summary>
         private string ResolvedSourceId =>
             string.IsNullOrWhiteSpace(sourceId) ? gameObject.name : sourceId.Trim();
-
-        // ── Editor ───────────────────────────────────────────────
 
 #if UNITY_EDITOR
         private void OnValidate()

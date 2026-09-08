@@ -13,16 +13,11 @@ public class CollectionInstanceArrayEditor : Editor
     SerializedProperty _offset;
     SerializedProperty _relativeOffset;
 
-    // Cached values to detect changes
     int    _prevCount;
     float  _prevOffset;
     int    _prevAxis;          // enum stored as int
     bool   _prevRelative;
     Object _prevPrefab;
-
-    // -----------------------------------------------------------------------
-    // Lifecycle
-    // -----------------------------------------------------------------------
 
     void OnEnable()
     {
@@ -51,17 +46,12 @@ public class CollectionInstanceArrayEditor : Editor
         _relativeOffset.boolValue!= _prevRelative ||
         _sourcePrefab.objectReferenceValue != _prevPrefab;
 
-    // -----------------------------------------------------------------------
-    // Inspector draw
-    // -----------------------------------------------------------------------
-
     public override void OnInspectorGUI()
     {
         serializedObject.Update();
 
         var arr = (CollectionInstanceArray)target;
 
-        // ---- Header -------------------------------------------------------
         GUIStyle headerStyle = new GUIStyle(EditorStyles.boldLabel)
         {
             fontSize  = 13,
@@ -71,14 +61,12 @@ public class CollectionInstanceArrayEditor : Editor
         EditorGUILayout.LabelField("⬛  Collection Instance Array", headerStyle);
         DrawSeparator();
 
-        // ---- Source -------------------------------------------------------
         EditorGUILayout.LabelField("Source", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(_sourcePrefab, new GUIContent("Prefab / Source"));
 
         EditorGUILayout.Space(6);
         DrawSeparator();
 
-        // ---- Array Parameters --------------------------------------------
         EditorGUILayout.LabelField("Array Parameters", EditorStyles.boldLabel);
 
         // Axis — toolbar style (matches Blender expand=True)
@@ -96,17 +84,14 @@ public class CollectionInstanceArrayEditor : Editor
 
         EditorGUILayout.Space(4);
 
-        // Offset
         EditorGUILayout.PropertyField(_offset, new GUIContent("Offset"));
 
-        // Relative offset toggle
         EditorGUILayout.PropertyField(_relativeOffset, new GUIContent("Relative Offset",
             "Multiply offset by the prefab's bounds size on the chosen axis."));
 
         EditorGUILayout.Space(6);
         DrawSeparator();
 
-        // ---- Actions ------------------------------------------------------
         EditorGUILayout.LabelField("Actions", EditorStyles.boldLabel);
 
         EditorGUILayout.BeginHorizontal();
@@ -131,7 +116,6 @@ public class CollectionInstanceArrayEditor : Editor
 
         EditorGUILayout.EndHorizontal();
 
-        // ---- Info ---------------------------------------------------------
         if (arr.instances.Count > 0)
         {
             EditorGUILayout.Space(4);
@@ -147,7 +131,6 @@ public class CollectionInstanceArrayEditor : Editor
 
         EditorGUILayout.Space(4);
 
-        // ---- Apply & auto-rebuild ----------------------------------------
         serializedObject.ApplyModifiedProperties();
 
         // Ensure the list is never null (e.g. after domain reload)
@@ -161,15 +144,10 @@ public class CollectionInstanceArrayEditor : Editor
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Custom Count Control
-    // -----------------------------------------------------------------------
-
     void DrawCountControl()
     {
         Rect fullRect = EditorGUILayout.GetControlRect();
 
-        // Label
         float labelW = EditorGUIUtility.labelWidth;
         Rect  labelR = new Rect(fullRect.x, fullRect.y, labelW, fullRect.height);
         EditorGUI.LabelField(labelR, new GUIContent("Count"));
@@ -192,22 +170,16 @@ public class CollectionInstanceArrayEditor : Editor
 
         float btnX = sliderR.xMax + spacing;
 
-        // ── Minus button ────────────────────────────────────────────────
         Rect minusR = new Rect(btnX, fullRect.y, btnW, fullRect.height);
         if (GUI.Button(minusR, new GUIContent("−", "Decrease count by 1")))
             _count.intValue = Mathf.Max(1, _count.intValue - 1);
 
         btnX += btnW + spacing;
 
-        // ── Plus button ─────────────────────────────────────────────────
         Rect plusR = new Rect(btnX, fullRect.y, btnW, fullRect.height);
         if (GUI.Button(plusR, new GUIContent("+", "Increase count by 1")))
             _count.intValue = Mathf.Min(256, _count.intValue + 1);
     }
-
-    // -----------------------------------------------------------------------
-    // Array build / clear
-    // -----------------------------------------------------------------------
 
     static void RebuildArray(CollectionInstanceArray arr)
     {
@@ -278,10 +250,6 @@ public class CollectionInstanceArrayEditor : Editor
         arr.instances.Clear();
         EditorUtility.SetDirty(arr);
     }
-
-    // -----------------------------------------------------------------------
-    // Helpers
-    // -----------------------------------------------------------------------
 
     static void DrawSeparator()
     {

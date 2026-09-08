@@ -6,7 +6,6 @@ using UnityEngine;
 
 public class TriangleCounterWindow : EditorWindow
 {
-    // --- Results ---
     private int _meshFilterTotal;
     private int _skinnedTotal;
     private int _grandTotal;
@@ -31,11 +30,9 @@ public class TriangleCounterWindow : EditorWindow
         EditorGUILayout.LabelField("Counts tris from MeshFilter and SkinnedMeshRenderer.", EditorStyles.miniLabel);
         GUILayout.Space(6);
 
-        // Top N setting
         _topCount = EditorGUILayout.IntSlider("Top objects to list", _topCount, 5, 50);
         GUILayout.Space(6);
 
-        // Buttons
         EditorGUILayout.BeginHorizontal();
 
         if (GUILayout.Button("Count All", GUILayout.Height(28)))
@@ -53,7 +50,6 @@ public class TriangleCounterWindow : EditorWindow
 
         GUILayout.Space(10);
 
-        // Summary box
         var boxStyle = new GUIStyle(EditorStyles.helpBox);
         EditorGUILayout.BeginVertical(boxStyle);
 
@@ -72,7 +68,6 @@ public class TriangleCounterWindow : EditorWindow
         EditorGUILayout.LabelField($"Top {_topObjects.Count} objects by triangle count:", EditorStyles.boldLabel);
         GUILayout.Space(4);
 
-        // Column headers
         EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
         EditorGUILayout.LabelField("#", GUILayout.Width(24));
         EditorGUILayout.LabelField("Object Name", GUILayout.MinWidth(160));
@@ -80,7 +75,6 @@ public class TriangleCounterWindow : EditorWindow
         EditorGUILayout.LabelField("Triangles", GUILayout.Width(90));
         EditorGUILayout.EndHorizontal();
 
-        // Scrollable list
         _scrollPos = EditorGUILayout.BeginScrollView(_scrollPos);
 
         for (int i = 0; i < _topObjects.Count; i++)

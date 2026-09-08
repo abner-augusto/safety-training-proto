@@ -1,4 +1,3 @@
-// Assets/Editor/SceneDumper.cs
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -22,8 +21,6 @@ public class SceneDumper : EditorWindow
 
     private Dictionary<EntityId, List<RefEdge>> refGraph;
     private Dictionary<EntityId, string> idToName;
-
-    // ── HIERARCHY FILTERS ───────────────────────────────────────────────────
 
     private static readonly string[] SkipNamePatterns = {
         "b_l_", "b_r_",
@@ -57,8 +54,6 @@ public class SceneDumper : EditorWindow
     private static readonly (string left, string right)[] MirroredPairs = {
         ("LeftInteractions",  "RightInteractions"),
     };
-
-    // ── REFERENCE FILTERS ───────────────────────────────────────────────────
 
     // Components whose references are always internal ISDK wiring
     private static readonly string[] SkipRefSourceComponents = {
@@ -154,8 +149,6 @@ public class SceneDumper : EditorWindow
         "MeshFilter",
     };
 
-    // ── STRUCT / ENUM ────────────────────────────────────────────────────────
-
     struct RefEdge
     {
         public string sourceComponent;
@@ -166,8 +159,6 @@ public class SceneDumper : EditorWindow
     }
 
     enum RefTargetKind { GameObject, Component, Asset }
-
-    // ── WINDOW ───────────────────────────────────────────────────────────────
 
     [MenuItem("Tools/Scene Dumper")]
     public static void ShowWindow() => GetWindow<SceneDumper>("Scene Dumper");
@@ -196,8 +187,6 @@ public class SceneDumper : EditorWindow
         if (GUILayout.Button("Dump to File"))      Dump(toClipboard: false);
         if (GUILayout.Button("Copy to Clipboard")) Dump(toClipboard: true);
     }
-
-    // ── ENTRY POINT ──────────────────────────────────────────────────────────
 
     void Dump(bool toClipboard)
     {
@@ -239,8 +228,6 @@ public class SceneDumper : EditorWindow
         foreach (Transform child in go.transform)
             IndexHierarchy(child.gameObject);
     }
-
-    // ── HIERARCHY FILTERS ───────────────────────────────────────────────────
 
     bool ShouldSkipObject(GameObject go)
     {
@@ -300,8 +287,6 @@ public class SceneDumper : EditorWindow
         return true;
     }
 
-    // ── REFERENCE FILTERS ───────────────────────────────────────────────────
-
     bool ShouldSkipRefSource(string componentType) =>
         filterSdkInternals && SkipRefSourceComponents.Contains(componentType);
 
@@ -323,8 +308,6 @@ public class SceneDumper : EditorWindow
 
     bool IsSelfReference(string sourceName, string targetName) =>
         filterSelfRefs && targetName.StartsWith(sourceName + "/");
-
-    // ── MARKDOWN ─────────────────────────────────────────────────────────────
 
     string DumpMarkdown(string sceneName, GameObject[] roots)
     {
@@ -417,8 +400,6 @@ public class SceneDumper : EditorWindow
         }
     }
 
-    // ── JSON ──────────────────────────────────────────────────────────────────
-
     string DumpJSON(string sceneName, GameObject[] roots)
     {
         var sb = new StringBuilder();
@@ -483,7 +464,6 @@ public class SceneDumper : EditorWindow
         }
         sb.AppendLine($"{pad}  ],");
 
-        // Filhos
         sb.AppendLine($"{pad}  \"children\": [");
 
         if (IsMirrorOf(go, out string mirrorNote))
@@ -531,8 +511,6 @@ public class SceneDumper : EditorWindow
         sb.AppendLine("}");
     }
 
-    // ── PIPELINE DE REFERÊNCIAS ──────────────────────────────────────────────
-
     List<(string srcName, RefEdge edge)> BuildFilteredEdges()
     {
         return refGraph
@@ -547,8 +525,6 @@ public class SceneDumper : EditorWindow
             )
             .ToList();
     }
-
-    // ── FIELD / REF EXTRACTION ───────────────────────────────────────────────
 
     (Dictionary<string, string> fields, List<RefEdge> refs) GetFieldsAndRefs(Component c)
     {

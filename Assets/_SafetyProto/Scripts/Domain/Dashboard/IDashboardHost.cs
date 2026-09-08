@@ -1,4 +1,3 @@
-// Assets/_SafetyProto/Scripts/Domain/Dashboard/IDashboardHost.cs
 using System.Collections.Generic;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Domain.Scoring;

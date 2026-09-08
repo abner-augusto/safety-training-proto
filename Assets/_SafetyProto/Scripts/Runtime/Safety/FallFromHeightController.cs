@@ -76,8 +76,6 @@ namespace SafetyProto.Runtime.Safety
             }
         }
 
-        // ── Lanyard-driven suspend/restore ────────────────────────
-
         private void OnLanyardLocked(bool isCorrectAnchor)
         {
             // Only a correct anchor protects the player. A wrong anchor must still let them fall.
@@ -105,8 +103,6 @@ namespace SafetyProto.Runtime.Safety
             SafetyLog.Info("[FallFromHeightController] Queda reativada — jogador desconectado.", this);
         }
 
-        // ── Consequence: controlled fall ──────────────────────────
-
         /// <summary>
         /// Plays the fall consequence: restore gravity, then hand off to the scaffold collapse,
         /// which ends with the player mid-fall under a fully black screen. Deliberately does NOT
@@ -133,8 +129,6 @@ namespace SafetyProto.Runtime.Safety
 
             yield return collapse.Play();
         }
-
-        // ── ISessionResettable ────────────────────────────────────
 
         public void ResetSession()
         {

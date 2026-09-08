@@ -26,7 +26,6 @@ namespace SafetyProto.Runtime.PPE
     [RequireComponent(typeof(LineRenderer))]
     public class VerletLanyard : MonoBehaviour
     {
-        // ── Inspector ─────────────────────────────────────────────
 
         [Header("Anchor Points")]
         [Tooltip("Transform on the player body where the lanyard connects (e.g. harness D-ring on chest/back).")]
@@ -64,8 +63,6 @@ namespace SafetyProto.Runtime.PPE
         [Tooltip("Color of the lanyard rope.")]
         [SerializeField] private Color ropeColor = new Color(1f, 0.55f, 0f); // safety orange
 
-        // ── Runtime ───────────────────────────────────────────────
-
         private struct VerletNode
         {
             public Vector3 Position;
@@ -84,8 +81,6 @@ namespace SafetyProto.Runtime.PPE
         // should still follow a specific transform, e.g. during retracting)
         private bool _useManualEndPosition;
         private Vector3 _manualEndPosition;
-
-        // ── Public API ────────────────────────────────────────────
 
         /// <summary>
         /// Connect or reconnect the free end of the lanyard to a new anchor transform.
@@ -162,8 +157,6 @@ namespace SafetyProto.Runtime.PPE
             }
         }
 
-        // ── Unity Lifecycle ───────────────────────────────────────
-
         private void Awake()
         {
             _lineRenderer = GetComponent<LineRenderer>();
@@ -191,7 +184,6 @@ namespace SafetyProto.Runtime.PPE
 
         private void OnDisable()
         {
-            // Hide rope when disabled
             if (_lineRenderer != null)
             {
                 _lineRenderer.enabled = false;
@@ -245,8 +237,6 @@ namespace SafetyProto.Runtime.PPE
             }
         }
 
-        // ── Initialization ────────────────────────────────────────
-
         private void InitializeNodes()
         {
             _nodes = new VerletNode[nodeCount];
@@ -278,21 +268,17 @@ namespace SafetyProto.Runtime.PPE
             _initialized = true;
         }
 
-        // ── Verlet Integration ────────────────────────────────────
-
         private void ApplyVerletIntegration(float dt)
         {
             float dtSq = dt * dt;
             float dampFactor = 1f - damping;
 
-            // Pin first node to start anchor
             if (startAnchor != null)
             {
                 _nodes[0].Position = startAnchor.position;
                 _nodes[0].PreviousPosition = startAnchor.position;
             }
 
-            // Pin last node to end anchor (if connected)
             if (endAnchor != null)
             {
                 int last = _nodes.Length - 1;
@@ -327,13 +313,10 @@ namespace SafetyProto.Runtime.PPE
             }
         }
 
-        // ── Distance Constraints ──────────────────────────────────
-
         private void ApplyConstraints()
         {
             for (int iter = 0; iter < constraintIterations; iter++)
             {
-                // Forward pass
                 for (int i = 0; i < _nodes.Length - 1; i++)
                 {
                     SolveDistanceConstraint(i, i + 1);
@@ -357,7 +340,6 @@ namespace SafetyProto.Runtime.PPE
             float error = currentLength - _segmentLength;
             Vector3 correction = (delta / currentLength) * error * 0.5f;
 
-            // Determine which nodes are pinned
             bool aPinned = (idxA == 0 && startAnchor != null)
                         || (idxA == _nodes.Length - 1 && IsEndPinned());
             bool bPinned = (idxB == 0 && startAnchor != null)
@@ -404,8 +386,6 @@ namespace SafetyProto.Runtime.PPE
         {
             return endAnchor != null || _useManualEndPosition;
         }
-
-        // ── Visual ────────────────────────────────────────────────
 
         private void ConfigureLineRenderer()
         {
@@ -473,8 +453,6 @@ namespace SafetyProto.Runtime.PPE
             _lineRenderer.SetPositions(_linePositions);
         }
 
-        // ── Gizmos ────────────────────────────────────────────────
-
 #if UNITY_EDITOR
         private void OnDrawGizmos()
         {
@@ -492,7 +470,6 @@ namespace SafetyProto.Runtime.PPE
                 }
             }
 
-            // Draw anchor markers
             if (startAnchor != null)
             {
                 Gizmos.color = Color.green;
@@ -510,7 +487,6 @@ namespace SafetyProto.Runtime.PPE
         {
             if (startAnchor == null) return;
 
-            // Preview rope length as a sphere
             Gizmos.color = new Color(1f, 0.5f, 0f, 0.15f);
             Gizmos.DrawWireSphere(startAnchor.position, ropeLength);
         }

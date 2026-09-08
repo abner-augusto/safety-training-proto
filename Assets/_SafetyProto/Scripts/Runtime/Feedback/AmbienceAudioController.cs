@@ -71,7 +71,6 @@ namespace SafetyProto.Runtime.Feedback
         [Tooltip("Duration in seconds to smoothly fade in ambience on start.")]
         [SerializeField, Range(0f, 5f)] private float fadeInDuration = 1.5f;
 
-        // Current smoothed volume states
         private float _currentGroundVolume;
         private float _currentHeightVolume;
         private float _fadeInMultiplier = 0f;
@@ -114,7 +113,6 @@ namespace SafetyProto.Runtime.Feedback
         {
             if (_isPaused) return;
 
-            // Handle smooth startup fade-in
             if (_fadeInMultiplier < 1f)
             {
                 _fadeInMultiplier = fadeInDuration > 0f
@@ -189,16 +187,13 @@ namespace SafetyProto.Runtime.Feedback
             float elevationRange = Mathf.Max(0.1f, scaffoldDeckElevationY - groundElevationY);
             float elevationFactor = Mathf.Clamp01((playerY - groundElevationY) / elevationRange);
 
-            // Calculate target volumes based on elevation
             float targetGroundVol = Mathf.Lerp(groundMaxVolume, groundMinVolume, elevationFactor);
             float targetHeightVol = Mathf.Lerp(heightMinVolume, heightMaxVolume, elevationFactor);
 
-            // Smooth interpolation
             float step = crossfadeSpeed * Time.deltaTime;
             _currentGroundVolume = Mathf.MoveTowards(_currentGroundVolume, targetGroundVol, step);
             _currentHeightVolume = Mathf.MoveTowards(_currentHeightVolume, targetHeightVol, step);
 
-            // Apply volumes with fade-in and master multiplier
             float effectiveMaster = masterVolume * _fadeInMultiplier;
 
             if (groundAudioSource != null)

@@ -78,8 +78,6 @@ namespace SafetyProto.Runtime.Safety
         [Header("Debug")]
         [SerializeField] private bool verboseLogging = true;
 
-        // ── Public state (read by SessionReportUI) ────────────────
-
         /// <summary>How many times the user tried to start without completing the inspection.</summary>
         public int FailedAttemptCount { get; private set; }
 
@@ -109,8 +107,6 @@ namespace SafetyProto.Runtime.Safety
 
         public bool IsSimulationProcessing => _isProcessing;
 
-        // ── Private ───────────────────────────────────────────────
-
         private bool _isProcessing;
         private bool _showSessionEndPanels;
         private bool _simulationAutoConfirm;
@@ -127,8 +123,6 @@ namespace SafetyProto.Runtime.Safety
 
         private ScoringConfig GateScoring =>
             taskManager != null ? taskManager.Scoring : ScoringConfig.Default;
-
-        // ──────────────────────────────────────────────────────────
 
         private void Start()
         {
@@ -167,7 +161,6 @@ namespace SafetyProto.Runtime.Safety
                 return;
             }
 
-            // Guard: only operates on FreeOrder groups
             if (currentGroup.executionMode != TaskExecutionModeShared.FreeOrder)
             {
                 if (verboseLogging)
@@ -259,8 +252,6 @@ namespace SafetyProto.Runtime.Safety
             }
         }
 
-        // ── Passed ────────────────────────────────────────────────
-
         // B7: all tasks complete → success popup with a manual "Continuar" button that ends the
         // session (and shows the finish screen). No timed auto-dismiss.
         private void ShowSuccessAndEnd(ITaskGroup currentGroup)
@@ -288,8 +279,6 @@ namespace SafetyProto.Runtime.Safety
             else
                 Finish();
         }
-
-        // ── Consequence sequence ──────────────────────────────────
 
         private IEnumerator ExecuteConsequencesSequence(
             List<RuntimeSafetyTask> pendingTasks,
@@ -437,8 +426,6 @@ namespace SafetyProto.Runtime.Safety
                 Continue();
         }
 
-        // ── Evaluation finish ────────────────────────────────────
-
         /// <summary>
         /// Evaluation-mode gate confirm: play consequences only for pending tasks
         /// that have a mapped consequence, then close every open task as not performed.
@@ -486,8 +473,6 @@ namespace SafetyProto.Runtime.Safety
             ActivateSessionEndPanelsIfComplete();
             _isProcessing = false;
         }
-
-        // ── Individual consequence implementations ────────────────
 
         private IEnumerator ExecuteObjectFall(ConsequenceMapping mapping)
         {
@@ -622,8 +607,6 @@ namespace SafetyProto.Runtime.Safety
             if (mapping.consequenceTarget != null)
                 mapping.consequenceTarget.SetActive(false);
         }
-
-        // ── Helpers ───────────────────────────────────────────────
 
         private void PlaySound(AudioClip clip)
         {

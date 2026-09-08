@@ -66,8 +66,6 @@ namespace SafetyProto.UI
             EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
         }
 
-        // ── Group ────────────────────────────────────────────────────────────
-
         private void OnGroupStarted(TaskGroupEventArgs args)
         {
             if (args.Group is not { } group) return;
@@ -82,12 +80,10 @@ namespace SafetyProto.UI
                         : group.objective;
             }
 
-            // Cancel pending removals
             foreach (var kvp in _removalCoroutines)
                 if (kvp.Value != null) StopCoroutine(kvp.Value);
             _removalCoroutines.Clear();
 
-            // Destroy existing entries
             foreach (var go in _taskToGO.Values)
                 if (go != null) Destroy(go);
 
@@ -113,8 +109,6 @@ namespace SafetyProto.UI
             FillWindow();
             UpdateRemainingText();
         }
-
-        // ── Window ───────────────────────────────────────────────────────────
 
         private void FillWindow()
         {
@@ -146,8 +140,6 @@ namespace SafetyProto.UI
             }
         }
 
-        // ── Task events ──────────────────────────────────────────────────────
-
         private void OnTaskStarted(TaskEventArgs args)
         {
             if (args.Task is not { } task) return;
@@ -178,8 +170,6 @@ namespace SafetyProto.UI
             _removalCoroutines[task] = StartCoroutine(RemoveAfterLinger(task));
             UpdateRemainingText();
         }
-
-        // ── Coroutines ───────────────────────────────────────────────────────
 
         private IEnumerator RemoveAfterLinger(ISafetyTask task)
         {
@@ -217,8 +207,6 @@ namespace SafetyProto.UI
 
             t.localScale = to;
         }
-
-        // ── Helpers ──────────────────────────────────────────────────────────
 
         private void UpdateRemainingText()
         {

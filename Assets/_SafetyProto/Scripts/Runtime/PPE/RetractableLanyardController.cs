@@ -32,15 +32,12 @@ namespace SafetyProto.Runtime.PPE
     [RequireComponent(typeof(Rigidbody))]
     public class RetractableLanyardController : MonoBehaviour
     {
-        // ── State ─────────────────────────────────────────────────
 
         public enum LanyardState { Idle, Pulling, Locked, Retracting }
 
         [Header("Current State (read-only)")]
         [SerializeField] private LanyardState state = LanyardState.Idle;
         public LanyardState State => state;
-
-        // ── References ────────────────────────────────────────────
 
         [Header("Anchor References")]
         [Tooltip("Transform on the harness where the lanyard originates (D-ring on back/chest).")]
@@ -127,8 +124,6 @@ namespace SafetyProto.Runtime.PPE
         [Tooltip("Fired when the lanyard returns to idle.")]
         public UnityEvent onLanyardRetracted;
 
-        // ── Private ───────────────────────────────────────────────
-
         private VerletLanyard _verletLanyard;
         private Rigidbody _rb;
         private LineRenderer _lineRenderer;
@@ -144,8 +139,6 @@ namespace SafetyProto.Runtime.PPE
         // Reusable buffer for OverlapSphere (no alloc per frame)
         private readonly Collider[] _overlapBuffer = new Collider[16];
 
-        // ── Unity Lifecycle ───────────────────────────────────────
-
         private void Awake()
         {
             _rb = GetComponent<Rigidbody>();
@@ -155,7 +148,6 @@ namespace SafetyProto.Runtime.PPE
             if (handGrabInteractable == null)
                 handGrabInteractable = GetComponentInChildren<HandGrabInteractable>();
 
-            // Ensure VerletLanyard exists
             _verletLanyard = GetComponent<VerletLanyard>();
             if (_verletLanyard == null)
                 _verletLanyard = gameObject.AddComponent<VerletLanyard>();
@@ -173,7 +165,6 @@ namespace SafetyProto.Runtime.PPE
                 harnessAttachPoint = transform.parent;
             }
 
-            // Subscribe to grab events
             if (grabbable != null)
                 grabbable.WhenPointerEventRaised += OnPointerEvent;
             else if (handGrabInteractable != null)
@@ -181,7 +172,6 @@ namespace SafetyProto.Runtime.PPE
             else
                 SafetyLog.Error("RetractableLanyardController: No Grabbable or HandGrabInteractable found!", this);
 
-            // Start in idle
             EnterIdle();
         }
 
@@ -221,7 +211,6 @@ namespace SafetyProto.Runtime.PPE
 
             if (idleFollowSpeed <= 0f)
             {
-                // Instant snap
                 transform.SetPositionAndRotation(targetPos, targetRot);
             }
             else
@@ -231,8 +220,6 @@ namespace SafetyProto.Runtime.PPE
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, t);
             }
         }
-
-        // ── Grab Detection ────────────────────────────────────────
 
         private void OnPointerEvent(PointerEvent evt)
         {
@@ -253,13 +240,10 @@ namespace SafetyProto.Runtime.PPE
                 OnReleased();
         }
 
-        // ── State Transitions ─────────────────────────────────────
-
         private void OnGrabbed()
         {
             _isGrabbed = true;
 
-            // Cancel any ongoing retract
             if (_retractCoroutine != null)
             {
                 StopCoroutine(_retractCoroutine);
@@ -281,7 +265,6 @@ namespace SafetyProto.Runtime.PPE
 
             if (state != LanyardState.Pulling) return;
 
-            // Search for a nearby AnchorPoint
             AnchorPoint anchor = FindNearestAnchor();
 
             if (anchor != null)
@@ -294,16 +277,12 @@ namespace SafetyProto.Runtime.PPE
             }
         }
 
-        // ── IDLE ──────────────────────────────────────────────────
-
         private void EnterIdle()
         {
             state = LanyardState.Idle;
 
-            // Disable Verlet physics
             _verletLanyard.enabled = false;
 
-            // Hide LineRenderer
             if (_lineRenderer != null)
                 _lineRenderer.enabled = false;
 
@@ -331,8 +310,6 @@ namespace SafetyProto.Runtime.PPE
             _lockedAnchor = null;
         }
 
-        // ── PULLING ───────────────────────────────────────────────
-
         private void EnterPulling()
         {
             state = LanyardState.Pulling;
@@ -347,7 +324,6 @@ namespace SafetyProto.Runtime.PPE
             // Disable Verlet (we use a simple 2-point line while pulling)
             _verletLanyard.enabled = false;
 
-            // Enable LineRenderer for the simple stretch visual
             if (_lineRenderer != null)
             {
                 _lineRenderer.enabled = true;
@@ -392,8 +368,6 @@ namespace SafetyProto.Runtime.PPE
                 carabinerAnimator.SetTrigger(hash);
         }
 
-        // ── LOCKED ────────────────────────────────────────────────
-
         private void EnterLocked(AnchorPoint anchor)
         {
             state = LanyardState.Locked;
@@ -417,13 +391,11 @@ namespace SafetyProto.Runtime.PPE
             _rb.angularVelocity = Vector3.zero;
             _rb.isKinematic = true;
 
-            // Configure and enable Verlet rope
             _verletLanyard.SetStartAnchor(harnessAttachPoint);
             _verletLanyard.SetEndAnchor(anchor.AttachTransform);
             _verletLanyard.RopeLength = lockedRopeLength;
             _verletLanyard.enabled = true;
 
-            // Emit action attempt for the task system
             EmitConnectAction(anchor);
 
             // Snap gate closed
@@ -431,7 +403,6 @@ namespace SafetyProto.Runtime.PPE
 
             PlayLockAudio();
 
-            // Notify listeners
             onLanyardLocked?.Invoke(anchor.isCorrectAnchor);
 
             SafetyLog.Info(
@@ -454,8 +425,6 @@ namespace SafetyProto.Runtime.PPE
             SafetyLog.Info("VerletLanyard: Unlocked from anchor.", this);
         }
 
-        // ── RETRACTING ────────────────────────────────────────────
-
         private void EnterRetracting()
         {
             state = LanyardState.Retracting;
@@ -470,7 +439,6 @@ namespace SafetyProto.Runtime.PPE
             _rb.isKinematic = false;
             _rb.useGravity = true;
 
-            // Hide simple line and enable Verlet rope physics
             if (_lineRenderer != null)
                 _lineRenderer.positionCount = 0;
 
@@ -526,7 +494,6 @@ namespace SafetyProto.Runtime.PPE
 
             _retractCoroutine = null;
 
-            // Back to idle
             _verletLanyard.enabled = false;
             EnterIdle();
             PlayRetractAudio();
@@ -534,8 +501,6 @@ namespace SafetyProto.Runtime.PPE
 
             SafetyLog.Info("VerletLanyard: Retracted back to harness.", this);
         }
-
-        // ── Anchor Detection ──────────────────────────────────────
 
         private void PlayLockAudio()
         {
@@ -596,8 +561,6 @@ namespace SafetyProto.Runtime.PPE
             return best;
         }
 
-        // ── Action Emission ───────────────────────────────────────
-
         private void EmitConnectAction(AnchorPoint anchor)
         {
             if (EventBus.Instance == null) return;
@@ -619,8 +582,6 @@ namespace SafetyProto.Runtime.PPE
                 context: context,
                 position: anchor.AttachPosition);
         }
-
-        // ── Public API ────────────────────────────────────────────
 
         /// <summary>
         /// Force-disconnect and return to idle. Useful for session reset.
@@ -647,16 +608,12 @@ namespace SafetyProto.Runtime.PPE
         /// </summary>
         public bool IsLockedCorrectly => IsLocked && _lockedAnchor != null && _lockedAnchor.isCorrectAnchor;
 
-        // ── Gizmos ────────────────────────────────────────────────
-
 #if UNITY_EDITOR
         private void OnDrawGizmosSelected()
         {
-            // Show anchor search radius
             Gizmos.color = new Color(0f, 1f, 0.5f, 0.25f);
             Gizmos.DrawWireSphere(transform.position, anchorSearchRadius);
 
-            // Show follow target (harness D-ring)
             if (harnessAttachPoint != null)
             {
                 Vector3 idleWorld = harnessAttachPoint.TransformPoint(idlePositionOffset);
