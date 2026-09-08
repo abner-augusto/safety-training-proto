@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using SafetyProto.Core.Logging;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.XR;
 
 namespace SafetyProto.Runtime
@@ -11,9 +12,9 @@ namespace SafetyProto.Runtime
     /// can only be set at runtime (there is no URP asset render-scale to edit, and the
     /// Meta XR Foveation OpenXR feature exposes no static level field).
     ///
-    /// Diagnosed from on-device OVR Metrics (25/06/2026): the app is GPU/fill-rate bound,
-    /// ~40 fps on a 72 Hz display, with the eye buffer supersampling up to render_scale 160%
-    /// (2688x2816/eye) and foveation reported as level 0 (off). This caps the eye-texture
+    /// Baseline from plan 036's on-device F3 profiling (2026-09-07): the app holds
+    /// ~68 fps at ~83% dynamic render scale, GPU/fill-rate bound, with fixed foveated
+    /// rendering reported as level 3 (foveation_mode: 0). This caps the eye-texture
     /// resolution and turns foveation on.
     ///
     /// Place this on a bootstrap GameObject in the scene. Values are tunable in the Inspector;
@@ -38,12 +39,19 @@ namespace SafetyProto.Runtime
                  "Big win for fill-rate-bound scenes.")]
         [SerializeField] private bool enableFoveatedRendering = true;
 
-        [Tooltip("Foveation strength, 0 = off .. 1 = highest. ~0.66 (High) is a good default.")]
+        [Tooltip("Foveation strength, 0 = off .. 1 = highest. ~0.66 (High) is a good default. " +
+                 "On-device this maps to the OVR Metrics integer levels; 0.66 reported as level 3 " +
+                 "in every plan 036 run.")]
         [Range(0f, 1f)]
         [SerializeField] private float foveationLevel = 0.66f;
 
-        [Tooltip("Let the runtime raise/lower the foveation level dynamically with GPU load.")]
-        [SerializeField] private bool dynamicFoveation = true;
+        [Tooltip("Permits eye-tracked (gaze-contingent) foveated rendering on devices that support " +
+                 "it, by setting XRDisplaySubsystem.FoveatedRenderingFlags.GazeAllowed. This is not " +
+                 "a load-adaptive control and does not change foveation strength (see " +
+                 "foveationLevel). No effect on Quest 3, which has no eye tracking; all plan 036 " +
+                 "runs report foveation_mode: 0 (fixed) regardless of this flag.")]
+        [FormerlySerializedAs("dynamicFoveation")]
+        [SerializeField] private bool allowGazeFoveation = true;
 
         [Header("Hand debug visuals")]
         [Tooltip("Disable the Meta Interaction SDK HandSphereMap debug spheres (one Standard-shader " +
@@ -149,7 +157,7 @@ namespace SafetyProto.Runtime
                     continue;
 
                 display.foveatedRenderingLevel = foveationLevel;
-                display.foveatedRenderingFlags = dynamicFoveation
+                display.foveatedRenderingFlags = allowGazeFoveation
                     ? XRDisplaySubsystem.FoveatedRenderingFlags.GazeAllowed
                     : XRDisplaySubsystem.FoveatedRenderingFlags.None;
                 appliedAny = true;
@@ -158,7 +166,7 @@ namespace SafetyProto.Runtime
             if (appliedAny)
             {
                 SafetyLog.Info(
-                    $"[XrPerformanceBootstrap] Foveation aplicada: nível={foveationLevel:0.00}, dinâmica={dynamicFoveation}.",
+                    $"[XrPerformanceBootstrap] Foveation aplicada: nível={foveationLevel:0.00}, gazeAllowed={allowGazeFoveation}.",
                     this);
             }
 
