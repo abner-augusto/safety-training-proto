@@ -43639,7 +43639,7 @@ MonoBehaviour:
   rectTransform: {fileID: 1539269352}
   maxTextureSize: 2048
   manualRedraw: 0
-  renderInterval: 1
+  renderInterval: 4
   renderIntervalFrameOffset: 0
   superSample: 0
   layer: 5
@@ -65660,8 +65660,8 @@ MonoBehaviour:
   rectTransform: {fileID: 6142811650165555935}
   maxTextureSize: 2048
   manualRedraw: 0
-  renderInterval: 1
-  renderIntervalFrameOffset: 0
+  renderInterval: 4
+  renderIntervalFrameOffset: 2
   superSample: 0
   layer: 5
   opacity: 2
