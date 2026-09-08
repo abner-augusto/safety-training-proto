@@ -64194,6 +64194,7 @@ MonoBehaviour:
   audioSource: {fileID: 4074721717754174963}
   successClip: {fileID: 8300000, guid: aae0d70301f72004ab01fc641dc2c424, type: 3}
   unsafeSuccessClip: {fileID: 8300000, guid: 6f95755d99749b64db8a196c796d83de, type: 3}
+  genericTaskCompleteClip: {fileID: 0}
   failureClip: {fileID: 8300000, guid: 024e466a60868d14e98a07db0cfeaa17, type: 3}
   criticalFailureClip: {fileID: 8300000, guid: 561735b04f280384199fb4a5beb5137c, type: 3}
   successVolume: 0.6
@@ -67285,7 +67286,7 @@ MonoBehaviour:
   fixedRenderViewportScale: 0.9
   enableFoveatedRendering: 1
   foveationLevel: 0.66
-  dynamicFoveation: 1
+  allowGazeFoveation: 1
   hideHandDebugSpheres: 1
 --- !u!114 &7322035375745015846
 MonoBehaviour:
