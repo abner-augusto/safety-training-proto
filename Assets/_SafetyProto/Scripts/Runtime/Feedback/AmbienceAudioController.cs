@@ -215,17 +215,17 @@ namespace SafetyProto.Runtime.Feedback
         private void OnSessionPaused(SessionPausedEventArgs _)
         {
             _isPaused = true;
-            groundAudioSource?.Pause();
-            heightAudioSource?.Pause();
-            generatorAudioSource?.Pause();
+            if (groundAudioSource != null) groundAudioSource.Pause();
+            if (heightAudioSource != null) heightAudioSource.Pause();
+            if (generatorAudioSource != null) generatorAudioSource.Pause();
         }
 
         private void OnSessionResumed(SessionResumedEventArgs _)
         {
             _isPaused = false;
-            groundAudioSource?.UnPause();
-            heightAudioSource?.UnPause();
-            generatorAudioSource?.UnPause();
+            if (groundAudioSource != null) groundAudioSource.UnPause();
+            if (heightAudioSource != null) heightAudioSource.UnPause();
+            if (generatorAudioSource != null) generatorAudioSource.UnPause();
         }
 
         public void ResetSession()
@@ -247,7 +247,7 @@ namespace SafetyProto.Runtime.Feedback
                 heightAudioSource.volume = 0f;
             }
 
-            generatorAudioSource?.Stop();
+            if (generatorAudioSource != null) generatorAudioSource.Stop();
             StartAmbiencePlayback();
         }
 
