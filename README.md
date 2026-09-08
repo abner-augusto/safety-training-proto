@@ -268,7 +268,8 @@ Headless coverage by concern:
   `SessionIntegrationTests` (8 full domain-stack scenarios via scripted drivers
   and stubs), `SessionLogSummaryTests`.
 - Risk model — `RiskAssessmentTests` (severity × probability → risk level).
-- PPE protocol — `PPEManagerEventProtocolTests` (delivery through `FakeEventBus`).
+- Test-bus contract — `FakeEventBusContractTests` (publish/subscribe delivery of the
+  shared `FakeEventBus` the other fixtures depend on).
 - Scenario/action data — `ScenarioCompatibilityTests`, `ScriptStepDefTests`.
 - Dashboard DTOs and relay — `DashboardDtoMapperTests`, `DashboardEventRelayTests`,
   `OutgoingMessageBufferTests`, `EventMetadataTests`.
