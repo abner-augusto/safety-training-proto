@@ -84,13 +84,12 @@ namespace SafetyProto.Tests.Editor
 
             var solution = PlayerRecenter.Solve(rigPosition, headPosition, headYaw: 0f, target, targetYaw: 0f);
 
-            // Rig floor lands exactly at the target's Y (feet on deck)...
+            // Rig floor lands exactly at the target's Y (feet on deck). RecenterSolution carries
+            // no head-position output — the head keeping its height above the rig floor is a
+            // consequence of the transform hierarchy in the end-to-end Recenter() case below, not
+            // something Solve() itself decides, so there is nothing further to assert about a
+            // "head Y" here without inventing arithmetic Solve never produced.
             Assert.AreEqual(target.y, solution.RigPosition.y, Epsilon);
-
-            // ...but the head is not forced to target.y — it keeps its height above the rig floor.
-            float headHeightAboveRig = headPosition.y - rigPosition.y;
-            float expectedHeadY = solution.RigPosition.y + headHeightAboveRig;
-            Assert.AreNotEqual(target.y, expectedHeadY);
         }
 
         [Test]

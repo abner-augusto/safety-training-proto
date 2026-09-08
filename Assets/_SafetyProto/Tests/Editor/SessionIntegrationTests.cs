@@ -16,7 +16,7 @@ namespace SafetyProto.Tests.Editor
     /// End-to-end integration battery for the engine-independent domain stack. Unlike the
     /// existing *Core unit tests (which exercise one component with the rest hand-fed), each case
     /// here wires the FULL stack — <c>TaskManagerCore + ScoreService + SafetyRuleEngineCore +
-    /// ScoreRuleEngineCore + SessionLoggerCore</c> — through ONE real in-process
+    /// ScoreRuleEngineCore</c> — through ONE real in-process
     /// <c>FakeEventBus</c> and drives it the way a player would, asserting the emergent behavior
     /// of the components talking to each other.
     ///
@@ -203,44 +203,59 @@ namespace SafetyProto.Tests.Editor
         }
 
         // ── Case 5: Group dependency gating ──────────────────────────────────────────────────
-        // Group 2 declares Group 1 as a required predecessor. Group 1 starts first; a Group-2
-        // action attempted before Group 1 completes is blocked (Group 2 is not yet active), and
-        // Group 2 only starts once Group 1 finishes.
+        // TaskManagerCore.StartNextGroup walks the group list forward and never revisits a
+        // skipped index (TaskManagerCore.cs:292-311). Group 2 depends on Group 3, which comes
+        // AFTER it in list order and so cannot possibly have completed by the time Group 2's
+        // turn arrives — Group 2 is therefore skipped forever and Group 3 starts instead. That
+        // arrangement is deliberate: with the groups in dependency-satisfying order (as an
+        // earlier version of this test had them), the dependency check contributes nothing
+        // observable — the plain list order alone would pick the same group next, so deleting
+        // the check would not have failed the test. Putting the depended-on group AFTER its
+        // dependent is what makes "the check ran" and "the check was deleted" diverge.
         [Test]
-        public void GroupDependency_Group2ActionBeforeGroup1Completes_IsBlocked()
+        public void GroupDependency_UnmetDependency_SkipsGroupPermanently()
         {
             var g1Task = _tasks.Task("g1t", "action_g1");
             var group1 = _tasks.Group("group1", TaskExecutionModeShared.Sequential, g1Task);
 
             var g2Task = _tasks.Task("g2t", "action_g2");
             var group2 = _tasks.Group("group2", TaskExecutionModeShared.Sequential, g2Task);
-            group2.requiredGroups = new List<ITaskGroup> { group1 };
 
-            using var h = new SessionTestHarness(new List<ITaskGroup> { group1, group2 });
+            var g3Task = _tasks.Task("g3t", "action_g3");
+            var group3 = _tasks.Group("group3", TaskExecutionModeShared.Sequential, g3Task);
+
+            // Group 2's dependency is Group 3, which is still two-and-then-one steps away from
+            // completing when Group 2's turn comes up.
+            group2.requiredGroups = new List<ITaskGroup> { group3 };
+
+            using var h = new SessionTestHarness(new List<ITaskGroup> { group1, group2, group3 });
             h.StartSession();
 
-            // Group 1 is active; Group 2 has not started.
             Assert.AreEqual("group1", h.TaskManager.GetCurrentGroup()?.groupName);
-
-            // Attempt Group 2's action early → rejected (does not match Group 1's active task),
-            // and Group 2's task stays NotStarted.
-            h.Attempt("action_g2");
-            var violations = h.Bus.EventsOf<SafetyViolationEventArgs>();
-            Assert.AreEqual(1, violations.Count);
-            Assert.AreEqual("WRONG_ACTION", violations[0].ViolationCode);
-            Assert.AreEqual(TaskState.NotStarted, h.SessionTasks[1].State, "Group 2 task must stay blocked.");
-
-            // Group 2 must not have started yet.
-            var startedGroupsBefore = h.Bus.EventsOf<TaskGroupEventArgs>()
-                .Where(g => g.Phase == TaskGroupPhase.Started).Select(g => g.Group?.groupName).ToList();
-            CollectionAssert.DoesNotContain(startedGroupsBefore, "group2");
-
-            // Complete Group 1 → Group 2 unlocks and can now be completed.
             h.Attempt("action_g1");
-            Assert.AreEqual("group2", h.TaskManager.GetCurrentGroup()?.groupName);
-            h.Attempt("action_g2");
-            Assert.IsTrue(h.SessionTasks.All(t => t.State == TaskState.CompletedSuccess));
-            h.Bus.AssertPublishCount<SessionCompletedEventArgs>(1);
+
+            // Group 2's dependency (Group 3) has not completed, so Group 2 is skipped — Group 3
+            // becomes active next, not Group 2. Without the dependency check this would instead
+            // be "group2".
+            Assert.AreEqual("group3", h.TaskManager.GetCurrentGroup()?.groupName,
+                "Group 2's unmet dependency on Group 3 must skip Group 2 and select Group 3 instead.");
+
+            var startedGroups = h.Bus.EventsOf<TaskGroupEventArgs>()
+                .Where(g => g.Phase == TaskGroupPhase.Started).Select(g => g.Group?.groupName).ToList();
+            CollectionAssert.DoesNotContain(startedGroups, "group2");
+
+            h.Attempt("action_g3");
+
+            // Group 2 is never revisited: the session ends with 2 of 3 tasks completed and
+            // Group 2's task permanently NotStarted.
+            Assert.AreEqual(TaskState.CompletedSuccess, h.SessionTasks[0].State);
+            Assert.AreEqual(TaskState.NotStarted, h.SessionTasks[1].State, "Group 2's task must never start.");
+            Assert.AreEqual(TaskState.CompletedSuccess, h.SessionTasks[2].State);
+
+            var summary = h.TaskManager.LastSessionSummary;
+            Assert.IsTrue(summary.HasValue, "Session should end once no runnable group remains.");
+            Assert.AreEqual(3, summary!.Value.totalTasks);
+            Assert.AreEqual(2, summary.Value.tasksCompleted, "Group 2's task must not count as completed.");
         }
 
         // ── Case 6: Timeout path (T1 regression) ─────────────────────────────────────────────

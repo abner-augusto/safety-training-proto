@@ -30,11 +30,18 @@ namespace SafetyProto.Tests.Editor
         {
             _bus.Publish(new SessionStartedEventArgs { SessionId = "S1", PlayerId = "P-1234", TimestampMs = 42L });
 
-            var dto = _host.Last<SessionDto>("SessionStarted");
+            // Assert the actual ORDER on _host.Broadcasts (an ordered log), not Last<T> (which
+            // finds a match anywhere in the log) plus an unordered Count — that combination can
+            // never tell "session broadcast before manifest" apart from "manifest before session".
+            Assert.AreEqual(2, _host.Broadcasts.Count);
+            Assert.AreEqual("SessionStarted", _host.Broadcasts[0].eventType,
+                "SessionStarted must broadcast before the manifest.");
+            Assert.AreEqual("SessionManifest", _host.Broadcasts[1].eventType);
+
+            var dto = (SessionDto)_host.Broadcasts[0].payload;
             Assert.AreEqual("S1", dto.sessionId);
             Assert.AreEqual("P-1234", dto.participantId);
             Assert.AreEqual(42L, dto.timestampMs);
-            Assert.AreEqual(1, _host.Count("SessionManifest"));
         }
 
         [Test]

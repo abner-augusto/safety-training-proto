@@ -90,13 +90,18 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
-        public void EliminatoryThreshold_CoversSubstantialAndAbove()
+        public void EliminatoryThreshold_CoversSubstantialAndAboveOnly()
         {
             // Regression guard: the medal rule used to test equality against the single top
             // tier, so adding a new top tier silently dropped the worst task out of it.
+            // Enumerate every current level explicitly (not a cherry-picked subset), including
+            // one that compares the threshold to itself, so a future tier inserted anywhere in
+            // the order — or a threshold that stops covering its own level — is caught here.
+            Assert.IsFalse(RiskLevel.Trivial >= RiskLevels.EliminatoryThreshold);
+            Assert.IsFalse(RiskLevel.Tolerable >= RiskLevels.EliminatoryThreshold);
+            Assert.IsFalse(RiskLevel.Moderate >= RiskLevels.EliminatoryThreshold);
             Assert.IsTrue(RiskLevel.Substantial >= RiskLevels.EliminatoryThreshold);
             Assert.IsTrue(RiskLevel.Intolerable >= RiskLevels.EliminatoryThreshold);
-            Assert.IsFalse(RiskLevel.Moderate >= RiskLevels.EliminatoryThreshold);
         }
 
         // ── Scoring config ───────────────────────────────────────────────────────
@@ -104,12 +109,18 @@ namespace SafetyProto.Tests.Editor
         [Test]
         public void ScoringConfig_LegacyFlatKeys_PreserveTheOldEconomy()
         {
+            // Values are deliberately different from ScoringConfig's built-in Defaults
+            // (100/150/200 points, 30/50/100 penalty, 0.7/0.5/0.0 unsafeFactor). Using the
+            // default numbers here would let a broken (or entirely deleted) legacy-key
+            // migration pass by accident, since PointsFor/BasePenaltyFor/UnsafeFactorFor would
+            // fall through to those very same defaults regardless of whether the legacy keys
+            // were ever read.
             var load = ScenarioLoader.Parse(@"{
                 ""name"": ""legacy"",
                 ""scoring"": {
-                    ""criticalPoints"": 200, ""moderatePoints"": 150, ""minorPoints"": 100,
-                    ""criticalPenalty"": 100, ""moderatePenalty"": 50, ""minorPenalty"": 30,
-                    ""criticalUnsafeFactor"": 0.0, ""moderateUnsafeFactor"": 0.5, ""minorUnsafeFactor"": 0.7
+                    ""criticalPoints"": 220, ""moderatePoints"": 160, ""minorPoints"": 90,
+                    ""criticalPenalty"": 90, ""moderatePenalty"": 45, ""minorPenalty"": 25,
+                    ""criticalUnsafeFactor"": 0.1, ""moderateUnsafeFactor"": 0.4, ""minorUnsafeFactor"": 0.6
                 },
                 ""groups"": []
             }");
@@ -117,13 +128,19 @@ namespace SafetyProto.Tests.Editor
             Assert.IsTrue(load.Success, load.ErrorSummary);
             var scoring = load.Scenario!.Scoring;
 
-            Assert.AreEqual(100, scoring.PointsFor(RiskLevel.Tolerable), "minor -> tolerable");
-            Assert.AreEqual(150, scoring.PointsFor(RiskLevel.Moderate));
-            Assert.AreEqual(200, scoring.PointsFor(RiskLevel.Substantial), "critical -> substantial");
-            Assert.AreEqual(30, scoring.BasePenaltyFor(RiskLevel.Tolerable));
-            Assert.AreEqual(0.7, scoring.UnsafeFactorFor(RiskLevel.Tolerable));
+            Assert.AreEqual(90, scoring.PointsFor(RiskLevel.Tolerable), "minor -> tolerable");
+            Assert.AreEqual(160, scoring.PointsFor(RiskLevel.Moderate));
+            Assert.AreEqual(220, scoring.PointsFor(RiskLevel.Substantial), "critical -> substantial");
 
-            // Tiers the legacy vocabulary had no word for fall back to the defaults.
+            Assert.AreEqual(25, scoring.BasePenaltyFor(RiskLevel.Tolerable));
+            Assert.AreEqual(45, scoring.BasePenaltyFor(RiskLevel.Moderate));
+            Assert.AreEqual(90, scoring.BasePenaltyFor(RiskLevel.Substantial));
+
+            Assert.AreEqual(0.6, scoring.UnsafeFactorFor(RiskLevel.Tolerable));
+            Assert.AreEqual(0.4, scoring.UnsafeFactorFor(RiskLevel.Moderate));
+            Assert.AreEqual(0.1, scoring.UnsafeFactorFor(RiskLevel.Substantial));
+
+            // Tiers the legacy vocabulary had no word for fall back to the defaults, untouched.
             Assert.AreEqual(50, scoring.PointsFor(RiskLevel.Trivial));
             Assert.AreEqual(250, scoring.PointsFor(RiskLevel.Intolerable));
         }

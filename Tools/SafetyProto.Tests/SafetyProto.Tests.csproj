@@ -62,7 +62,7 @@
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\OutgoingMessageBufferTests.cs"       Link="OutgoingMessageBufferTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\EventMetadataTests.cs"              Link="EventMetadataTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\SafetyRuleEngineDiagnosticTests.cs" Link="SafetyRuleEngineDiagnosticTests.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\PPEManagerEventProtocolTests.cs"    Link="PPEManagerEventProtocolTests.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\FakeEventBusContractTests.cs"       Link="FakeEventBusContractTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\ScriptStepDefTests.cs"              Link="ScriptStepDefTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\ScenarioCompatibilityTests.cs"      Link="ScenarioCompatibilityTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\RiskAssessmentTests.cs"             Link="RiskAssessmentTests.cs" />

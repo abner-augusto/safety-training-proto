@@ -161,9 +161,16 @@ namespace SafetyProto.Tests.Editor
             var solver = new MenuFollowSolver();
             solver.SnapHeight(0f);
 
-            var end = Run(solver, start, cfg,
-                t => (Vector3.zero, Quaternion.Euler(0f, t < 3f ? 40f : 0f, 0f)),
-                6f);
+            // Split into two runs (equivalent to one continuous run — MenuFollowSolver keeps all
+            // its state on the instance and never reads a wall clock) so the "away" leg can be
+            // checked in isolation. Without that intermediate check, a solver that never engages
+            // at all would ALSO end up near forward with IsFollowing false — "never moved" is
+            // indistinguishable from "moved away and came back" if only the final pose is asserted.
+            var awayPose = Run(solver, start, cfg, Vector3.zero, Quaternion.Euler(0f, 40f, 0f), 3f);
+            Assert.Greater(Vector3.Distance(awayPose.Position, start.Position), 0.1f,
+                "Setup check: the menu must actually have moved away before turning back.");
+
+            var end = Run(solver, awayPose, cfg, Vector3.zero, Quaternion.identity, 3f);
 
             // Head is forward again; the menu should have come back near centre and stopped following.
             Assert.Less(Vector3.Angle(Vector3.forward, end.Position), 8f);

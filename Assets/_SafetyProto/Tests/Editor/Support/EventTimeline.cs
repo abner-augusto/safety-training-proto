@@ -12,17 +12,6 @@ namespace SafetyProto.Tests.Editor.Support
     /// </summary>
     public static class EventTimeline
     {
-        /// <summary>Full ordered token stream for every recorded event.</summary>
-        public static List<string> Tokens(this FakeEventBus bus)
-        {
-            var tokens = new List<string>(bus.PublishedEvents.Count);
-            foreach (var (_, payload) in bus.PublishedEvents)
-            {
-                tokens.Add(Describe(payload));
-            }
-            return tokens;
-        }
-
         /// <summary>
         /// Ordered token stream reduced to the session/group milestone events — the stable
         /// "spine" of a run, ignoring the finer PPE/action/score chatter. Handy for asserting

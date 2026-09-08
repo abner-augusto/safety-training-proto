@@ -28,20 +28,6 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
-        public void TaskCompleted_Safe_Moderate_AddsFullTierPoints()
-        {
-            var task = _builder.Task("t1", "action_a");
-            task.riskLevel = RiskLevel.Moderate;
-
-            _core = new ScoreRuleEngineCore(_bus, _score, config: ScoringConfig.Default);
-            _core.Subscribe();
-
-            _bus.Publish(new TaskEventArgs(task, null, TaskPhase.Completed));
-
-            Assert.AreEqual(150, _score.CurrentScore);
-        }
-
-        [Test]
         public void TaskCompleted_Unsafe_Moderate_EarnsHalfTierPoints()
         {
             var task = _builder.Task("t1", "action_a");

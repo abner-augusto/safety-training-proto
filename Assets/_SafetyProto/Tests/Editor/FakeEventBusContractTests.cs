@@ -4,7 +4,13 @@ using SafetyProto.Tests.Editor.Support;
 
 namespace SafetyProto.Tests.Editor
 {
-    public class PPEProtocolParticipationTests
+    // Pins the contract of the FakeEventBus test double itself (delivery, subscription order,
+    // unsubscribe, chronological recording). These cases exercise only the fake, not any
+    // production type — they were previously misnamed PPEManagerEventProtocolTests, which
+    // implied PPEManager coverage that does not exist here. Kept because every other fixture
+    // in this suite depends on the fake behaving correctly; a silent break in it would produce
+    // confusing failures (or false passes) everywhere else instead of a clear signal here.
+    public class FakeEventBusContractTests
     {
         private FakeEventBus _bus = null!;
 

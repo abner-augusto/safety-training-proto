@@ -1,14 +1,12 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
-using System.IO;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Domain.Safety;
 using SafetyProto.Domain.Scenarios;
 using SafetyProto.Domain.Scoring;
-using SafetyProto.Domain.Sessions;
 using SafetyProto.Domain.Tasks;
 
 namespace SafetyProto.Tests.Editor.Support
@@ -16,16 +14,23 @@ namespace SafetyProto.Tests.Editor.Support
     /// <summary>
     /// Wires the FULL engine-independent domain stack — <see cref="TaskManagerCore"/> +
     /// <see cref="ScoreService"/> + <see cref="SafetyRuleEngineCore"/> +
-    /// <see cref="ScoreRuleEngineCore"/> + <see cref="SessionLoggerCore"/> — through one real,
+    /// <see cref="ScoreRuleEngineCore"/> — through one real,
     /// in-process <see cref="FakeEventBus"/>, then drives it end-to-end. The wiring here is a
     /// faithful mirror of the production hosts (Unity's system MonoBehaviours and
     /// <c>Tools/CliHarness/Program.cs</c>): same components, same subscribe order, same
     /// score-change→event bridge. Only the outer shells differ.
     ///
+    /// Deliberately does NOT wire a <see cref="SafetyProto.Domain.Sessions.SessionLoggerCore"/>:
+    /// no integration case here asserts on logging (that is
+    /// <c>SessionLogSummaryTests</c>'s job, with its own harness-free instances), and the logger
+    /// performs real file I/O on <c>SessionCompleted</c> — writing it here would be an unobserved
+    /// side effect on every case in this fixture, to a fixed shared temp path, for nothing any
+    /// assertion reads.
+    ///
     /// ── DRIVER vs STUBS (Reviewer E: "which component drives, which are stubbed?") ──
     ///
-    /// DRIVER  — the test body, via <see cref="WearPpe"/> / <see cref="RemovePpe"/> /
-    ///           <see cref="Attempt"/>. These publish the exact same events a human player
+    /// DRIVER  — the test body, via <see cref="WearPpe"/> / <see cref="Attempt"/>. These
+    ///           publish the exact same events a human player
     ///           would generate through the VR interaction layer (PPE trigger colliders,
     ///           grab/socket actions). This is the same role the CLI harness's
     ///           <c>ScriptedActor</c> plays; the integration test IS the scripted actor.
@@ -36,12 +41,12 @@ namespace SafetyProto.Tests.Editor.Support
     ///           and synchronously (no Unity, no physics, no wall-clock). The PPE "sensor" is
     ///           also stubbed: PPE compliance is judged inside <see cref="SafetyRuleEngineCore"/>
     ///           from the <see cref="PPEStateChangedEventArgs"/> event cache, so the
-    ///           <see cref="WearPpe"/>/<see cref="RemovePpe"/> events ARE the stubbed
+    ///           <see cref="WearPpe"/> events ARE the stubbed
     ///           equivalent of the PPE state callbacks — no separate
     ///           PPE-manager stub object is needed for the rule engine to see compliance state.
     ///
     /// REAL    — everything else (<see cref="TaskManagerCore"/>, <see cref="ScoreService"/>,
-    ///           both rule engines, <see cref="SessionLoggerCore"/>) is the genuine production
+    ///           both rule engines) is the genuine production
     ///           code under test, unmodified. The <c>timer</c> and <c>scheduler</c> are passed
     ///           null (matching <c>Program.cs</c>): with no scheduler and zero inter-task delay
     ///           the orchestration runs synchronously, so the whole session resolves inside the
@@ -58,7 +63,6 @@ namespace SafetyProto.Tests.Editor.Support
         public SafetyRuleEngineCore RuleEngine { get; }
         public ScoreRuleEngineCore ScoreRuleEngine { get; }
         public TaskManagerCore TaskManager { get; }
-        public SessionLoggerCore SessionLogger { get; }
 
         private bool _disposed;
 
@@ -90,16 +94,6 @@ namespace SafetyProto.Tests.Editor.Support
                 delayBetweenTasks: 0f);
             TaskManager.Subscribe();
 
-            // Wired for full-stack fidelity. A no-op serializer + temp dir keep it headless-safe
-            // (no System.Text.Json / JsonUtility dependency, no meaningful file IO to assert on);
-            // its presence proves the whole stack coexists on one bus without error.
-            SessionLogger = new SessionLoggerCore(
-                eventBus: Bus,
-                outputDirectory: Path.Combine(Path.GetTempPath(), "SafetyProtoTests"),
-                serialize: _ => string.Empty,
-                logger: null);
-            SessionLogger.Subscribe();
-
             EventContext.StartSession(
                 sessionId: Guid.NewGuid().ToString(),
                 playerId: participantId,
@@ -120,9 +114,6 @@ namespace SafetyProto.Tests.Editor.Support
 
         /// <summary>DRIVER: player equips a PPE item (stubbed sensor input).</summary>
         public void WearPpe(PPEType ppe) => Bus.Publish(new PPEStateChangedEventArgs(ppe, true));
-
-        /// <summary>DRIVER: player removes a PPE item.</summary>
-        public void RemovePpe(PPEType ppe) => Bus.Publish(new PPEStateChangedEventArgs(ppe, false));
 
         /// <summary>DRIVER: player performs an action (stubbed interaction input).</summary>
         public void Attempt(string actionId) => Bus.Publish(new ActionAttemptedEvent(actionId));
@@ -160,7 +151,6 @@ namespace SafetyProto.Tests.Editor.Support
             _disposed = true;
 
             Score.ScoreChanged -= OnScoreChanged;
-            SessionLogger.Dispose();
             TaskManager.Dispose();
             ScoreRuleEngine.Dispose();
             RuleEngine.Dispose();

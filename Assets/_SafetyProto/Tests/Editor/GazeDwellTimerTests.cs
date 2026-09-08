@@ -84,18 +84,36 @@ namespace SafetyProto.Tests.Editor
         [Test]
         public void DrainRateIsIndependentOfFillLevel()
         {
-            // 2.1s, not 2.0s: forty float additions of 0.05 land just under 2.0, so an exact-length
-            // gaze would leave the dwell one epsilon short of completing.
-            var timer = NewTimer();
-            Tick(timer, gazed: true, seconds: 2.1f);        // full
-            Tick(timer, gazed: false, seconds: Grace + Decay + 0.05f);
-            Assert.AreEqual(GazeDwellState.Completed, timer.State,
-                "A completed dwell latches and never drains.");
+            // Progress drains at a constant per-second rate (1 / decaySeconds), not a rate
+            // proportional to the current fill — the class doc calls this out explicitly.
+            // Comparing the delta lost by two DIFFERENT starting fill levels over the SAME
+            // short drain window is what actually exercises that claim: letting either ring
+            // reach an extreme (Completed, which never drains at all; or fully back to Idle,
+            // i.e. clamped at 0) erases the very difference a rate comparison needs.
+            var full = NewTimer();
+            Tick(full, gazed: true, seconds: 1.9f);          // ~0.95 progress, still Dwelling
+            float fullBefore = full.Progress;
 
             var partial = NewTimer();
-            Tick(partial, gazed: true, seconds: 0.6f);
-            Tick(partial, gazed: false, seconds: Grace + Decay + 0.05f);
-            Assert.AreEqual(0f, partial.Progress, 1e-4f);
+            Tick(partial, gazed: true, seconds: 0.6f);       // ~0.30 progress
+            float partialBefore = partial.Progress;
+
+            Assert.Greater(fullBefore, partialBefore + 0.5f,
+                "Setup check: the two rings must start well apart in fill level.");
+
+            // Grace (0.2s), then a short 0.05s of actual drain — well short of fully draining
+            // either ring, so both remain comparable afterward.
+            const float drainWindow = Grace + 0.05f;
+            Tick(full, gazed: false, seconds: drainWindow);
+            Tick(partial, gazed: false, seconds: drainWindow);
+
+            float fullDelta = fullBefore - full.Progress;
+            float partialDelta = partialBefore - partial.Progress;
+
+            Assert.Greater(fullDelta, 0f, "Setup check: the drain window must actually remove progress.");
+            Assert.AreEqual(fullDelta, partialDelta, 0.05f,
+                "The same drain window must remove the same amount of progress regardless of " +
+                "starting fill.");
         }
 
         [Test]

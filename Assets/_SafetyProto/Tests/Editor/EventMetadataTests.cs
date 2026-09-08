@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using SafetyProto.Core;
@@ -46,47 +45,25 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual(payload, EventMetadata.Stamp(payload));
         }
 
+        /// <summary>
+        /// A single <see cref="EventMetadata.Stamp{T}"/> call with <c>T = object</c> — the
+        /// runtime type patterns inside <c>Stamp</c> match on the boxed value's ACTUAL type
+        /// regardless of the static type parameter, so this does not need (and must not
+        /// maintain) a second copy of the same per-type case list that <c>EventMetadata.cs</c>
+        /// already owns. Reading the four stamped fields back uses reflection instead of a
+        /// second switch for the same reason: every payload type declares public
+        /// SessionId/PlayerId/ScenarioId/TimestampMs fields, but with no shared interface, so
+        /// reflection is the only way to read them generically without re-listing every type.
+        /// </summary>
         private static (string SessionId, string PlayerId, string ScenarioId, long TimestampMs) Stamp(object payload)
         {
-            object stamped = payload switch
-            {
-                SessionStartedEventArgs value => EventMetadata.Stamp(value),
-                SessionPausedEventArgs value => EventMetadata.Stamp(value),
-                SessionResumedEventArgs value => EventMetadata.Stamp(value),
-                SessionEndedEventArgs value => EventMetadata.Stamp(value),
-                SessionCompletedEventArgs value => EventMetadata.Stamp(value),
-                ActionAttemptedEvent value => EventMetadata.Stamp(value),
-                ActionRefusedEventArgs value => EventMetadata.Stamp(value),
-                PopupClosedEventArgs value => EventMetadata.Stamp(value),
-                PPEStateChangedEventArgs value => EventMetadata.Stamp(value),
-                TaskEventArgs value => EventMetadata.Stamp(value),
-                TaskGroupEventArgs value => EventMetadata.Stamp(value),
-                ScoreChangedEventArgs value => EventMetadata.Stamp(value),
-                SafetyViolationEventArgs value => EventMetadata.Stamp(value),
-                CriticalSafetyFailureEventArgs value => EventMetadata.Stamp(value),
-                SafetyErrorEventArgs value => EventMetadata.Stamp(value),
-                _ => throw new ArgumentException()
-            };
+            object stamped = EventMetadata.Stamp(payload)!;
+            var type = stamped.GetType();
 
-            return stamped switch
-            {
-                SessionStartedEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
-                SessionPausedEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
-                SessionResumedEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
-                SessionEndedEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
-                SessionCompletedEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
-                ActionAttemptedEvent value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
-                ActionRefusedEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
-                PopupClosedEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
-                PPEStateChangedEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
-                TaskEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
-                TaskGroupEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
-                ScoreChangedEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
-                SafetyViolationEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
-                CriticalSafetyFailureEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
-                SafetyErrorEventArgs value => (value.SessionId, value.PlayerId, value.ScenarioId, value.TimestampMs),
-                _ => throw new ArgumentException()
-            };
+            string GetString(string field) => (string)type.GetField(field)!.GetValue(stamped)!;
+            long GetTimestamp() => (long)type.GetField("TimestampMs")!.GetValue(stamped)!;
+
+            return (GetString("SessionId"), GetString("PlayerId"), GetString("ScenarioId"), GetTimestamp());
         }
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
@@ -14,11 +15,6 @@ namespace SafetyProto.Tests.Editor
         private FakeEventBus _bus = null!;
         private FakeTaskBuilder _tasks = null!;
         private ScoreService _score = null!;
-        private List<TaskGroupEventArgs> _groupEvents = null!;
-        private List<TaskEventArgs> _taskEvents = null!;
-        private List<SessionCompletedEventArgs> _sessionCompletions = null!;
-        private List<SafetyViolationEventArgs> _violations = null!;
-        private List<SessionEndedEventArgs> _sessionEnded = null!;
 
         [SetUp]
         public void Setup()
@@ -26,18 +22,21 @@ namespace SafetyProto.Tests.Editor
             _bus = new FakeEventBus();
             _tasks = new FakeTaskBuilder();
             _score = new ScoreService();
-            _groupEvents = new List<TaskGroupEventArgs>();
-            _taskEvents = new List<TaskEventArgs>();
-            _sessionCompletions = new List<SessionCompletedEventArgs>();
-            _violations = new List<SafetyViolationEventArgs>();
-            _sessionEnded = new List<SessionEndedEventArgs>();
-
-            _bus.Subscribe<TaskGroupEventArgs>(args => _groupEvents.Add(args));
-            _bus.Subscribe<TaskEventArgs>(args => _taskEvents.Add(args));
-            _bus.Subscribe<SessionCompletedEventArgs>(args => _sessionCompletions.Add(args));
-            _bus.Subscribe<SafetyViolationEventArgs>(args => _violations.Add(args));
-            _bus.Subscribe<SessionEndedEventArgs>(args => _sessionEnded.Add(args));
         }
+
+        // Projected straight from FakeEventBus's own chronological publish log
+        // (Support/FakeEventBus.cs PublishedEvents) instead of five separately-subscribed
+        // lists. Five independent lists can never reveal anything about the order events were
+        // published IN RELATION TO EACH OTHER — only counts within each type — which is exactly
+        // what let a "...ThenTaskStarted" test pass no matter which one actually fired first.
+        private List<TaskGroupEventArgs> _groupEvents => Of<TaskGroupEventArgs>();
+        private List<TaskEventArgs> _taskEvents => Of<TaskEventArgs>();
+        private List<SessionCompletedEventArgs> _sessionCompletions => Of<SessionCompletedEventArgs>();
+        private List<SafetyViolationEventArgs> _violations => Of<SafetyViolationEventArgs>();
+        private List<SessionEndedEventArgs> _sessionEnded => Of<SessionEndedEventArgs>();
+
+        private List<T> Of<T>() =>
+            _bus.PublishedEvents.Where(e => e.payload is T).Select(e => (T)e.payload).ToList();
 
         [Test]
         public void StartSession_WithOneGroupOneTask_PublishesGroupStartedThenTaskStarted()
@@ -49,13 +48,24 @@ namespace SafetyProto.Tests.Editor
             core.Subscribe();
             core.StartSession();
 
-            Assert.AreEqual(1, _groupEvents.Count);
-            Assert.AreEqual(TaskGroupPhase.Started, _groupEvents[0].Phase);
-            Assert.AreEqual("g1", _groupEvents[0].Group!.groupName);
+            // Read the actual cross-type ORDER off the bus's single interleaved publish log —
+            // not two independently-populated per-type lists, which could never prove one event
+            // preceded the other regardless of what order the production code published them in.
+            var lifecycle = _bus.PublishedEvents
+                .Where(e => e.payload is TaskGroupEventArgs || e.payload is TaskEventArgs)
+                .Select(e => e.payload)
+                .ToList();
 
-            Assert.AreEqual(1, _taskEvents.Count);
-            Assert.AreEqual(TaskPhase.Started, _taskEvents[0].Phase);
-            Assert.AreEqual("t1", _taskEvents[0].Task.taskName);
+            Assert.AreEqual(2, lifecycle.Count);
+            Assert.IsInstanceOf<TaskGroupEventArgs>(lifecycle[0], "Group must start before the task.");
+            Assert.IsInstanceOf<TaskEventArgs>(lifecycle[1], "Task must start after the group.");
+
+            var groupStarted = (TaskGroupEventArgs)lifecycle[0];
+            var taskStarted = (TaskEventArgs)lifecycle[1];
+            Assert.AreEqual(TaskGroupPhase.Started, groupStarted.Phase);
+            Assert.AreEqual("g1", groupStarted.Group!.groupName);
+            Assert.AreEqual(TaskPhase.Started, taskStarted.Phase);
+            Assert.AreEqual("t1", taskStarted.Task.taskName);
 
             core.Dispose();
         }

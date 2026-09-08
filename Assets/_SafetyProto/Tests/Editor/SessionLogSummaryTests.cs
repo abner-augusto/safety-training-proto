@@ -105,6 +105,11 @@ namespace SafetyProto.Tests.Editor
             using var logger = new SessionLoggerCore(
                 _bus, _outputDir, SessionLoggerCore.SerializeIndentedOmittingDefaults);
             logger.CompletedLogWritten += (_, _, _) => notifications++;
+            // Without Subscribe(), the SessionStarted publish below never reaches the logger at
+            // all, so the test's own narrative ("a session starts, then gets reset") never
+            // actually happened — the assertions would hold just as well against a logger that
+            // received nothing.
+            logger.Subscribe();
 
             _bus.Publish(new SessionStartedEventArgs { SessionId = "S1", TotalTasks = 1, TimestampMs = 1000L });
             logger.ResetSession();
