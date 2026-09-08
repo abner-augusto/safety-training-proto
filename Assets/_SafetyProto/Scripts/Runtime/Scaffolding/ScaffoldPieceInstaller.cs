@@ -463,7 +463,7 @@ namespace SafetyProto.Runtime.Scaffolding
             return false;
         }
 
-        // B11 — per-axis rotation gate. Decomposes the piece→socket delta into yaw (about the
+        // Per-axis rotation gate. Decomposes the piece→socket delta into yaw (about the
         // vertical axis) and tilt (roll/pitch, i.e. how far the piece's up axis leans off the
         // socket's up axis), and gates each against its own tolerance: yaw tight, tilt loose. So a
         // slightly-leaning-but-correctly-facing piece passes, while a piece spun the wrong way

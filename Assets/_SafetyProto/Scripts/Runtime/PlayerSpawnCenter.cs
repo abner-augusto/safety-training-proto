@@ -6,7 +6,7 @@ using UnityEngine;
 namespace SafetyProto.Runtime
 {
     /// <summary>
-    /// B8 — centers the player on a chosen start point when the session starts, cancelling the
+    /// Centers the player on a chosen start point when the session starts, cancelling the
     /// room-scale offset via <see cref="PlayerRecenter"/> so the head (not the rig origin) lands
     /// over <see cref="startPoint"/>.
     ///

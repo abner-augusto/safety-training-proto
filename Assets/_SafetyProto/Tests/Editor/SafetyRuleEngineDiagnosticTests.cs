@@ -26,15 +26,13 @@ namespace SafetyProto.Tests.Editor
         [Test]
         public void Diagnostic_ActionAfterGroupStarted_PublishesCompletion_NoActiveGroupViolation()
         {
-            // Merges two historical Play-mode diagnostics that each only asserted the ABSENCE of
-            // NO_ACTIVE_GROUP — which passed even if the engine silently did nothing at all (an
-            // empty violations list satisfies "no violation says NO_ACTIVE_GROUP" trivially).
-            // The completion assertion below is what makes the test fail if the engine stops
-            // reacting at all, not only if it reacts with the specific wrong violation code.
+            // The completion assertion is load-bearing: asserting only the ABSENCE of
+            // NO_ACTIVE_GROUP passes even when the engine does nothing at all, because an
+            // empty violations list satisfies it trivially. Do not drop it.
             //
-            // Runs with TWO engine instances subscribed to the same bus — the stronger of the
-            // two original arrangements — to also cover the handler-ordering / Delegate.Combine
-            // bug where one core could receive ActionAttempted before GroupStarted.
+            // Two engine instances share the bus to also cover the handler-ordering /
+            // Delegate.Combine bug where one core could receive ActionAttempted before
+            // GroupStarted.
             var coreA = new SafetyRuleEngineCore(_bus);
             var coreB = new SafetyRuleEngineCore(_bus);
             coreA.Subscribe();
@@ -102,9 +100,8 @@ namespace SafetyProto.Tests.Editor
             // group's Started event already fired can never recover for that group — not even
             // once a later task within the same group starts.
             //
-            // The original version of this test re-published TaskGroupEventArgs AFTER
-            // subscribing, which made the "missed" first publication below irrelevant to the
-            // outcome — it passed regardless of whether this recovery gap exists at all.
+            // Do not re-publish TaskGroupEventArgs after subscribing: that makes the missed
+            // first publication irrelevant and the test passes whether or not the gap exists.
             var task = _tasks.Task("t", "a", PPEType.Helmet);
             var group = _tasks.Group("g", TaskExecutionModeShared.Sequential, task);
 

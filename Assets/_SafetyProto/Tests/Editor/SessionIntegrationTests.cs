@@ -20,7 +20,7 @@ namespace SafetyProto.Tests.Editor
     /// <c>FakeEventBus</c> and drives it the way a player would, asserting the emergent behavior
     /// of the components talking to each other.
     ///
-    /// DRIVER / STUB framing (Reviewer E) is documented in detail on <see cref="SessionTestHarness"/>:
+    /// DRIVER / STUB framing is documented in detail on <see cref="SessionTestHarness"/>:
     ///  • DRIVER = this fixture's method bodies, via the harness's WearPpe/Attempt/ReplayScript —
     ///    the scripted actor standing in for the VR player.
     ///  • STUBS  = FakeEventBus (deterministic in-process stand-in for Unity's deferred EventBus
@@ -40,7 +40,6 @@ namespace SafetyProto.Tests.Editor
             _tasks = new FakeTaskBuilder();
         }
 
-        // ── Case 1: Happy-path parity ────────────────────────────────────────────────────────
         // Loads the canonical Unity/CLI scenario JSON and replays its scripted playthrough.
         // This codifies the previously-manual "does the domain stack match
         // the CLI harness run?" parity check as an automated assertion: identical scenario +
@@ -110,7 +109,6 @@ namespace SafetyProto.Tests.Editor
                 relativePath);
         }
 
-        // ── Case 2: PPE violation ────────────────────────────────────────────────────────────
         // Action performed while a required PPE is missing. Asserts the SafetyViolation fires, the
         // task is recorded as CompletedSuccessButUnsafe, AND the severity-driven unsafe earning
         // (critical tier earns 0% of its points) applies end-to-end.
@@ -147,7 +145,6 @@ namespace SafetyProto.Tests.Editor
                 "Unsafe critical completion must earn nothing end-to-end.");
         }
 
-        // ── Case 3: Sequential ordering ──────────────────────────────────────────────────────
         // In a Sequential group the active task is fixed; attempting the NEXT task's action out of
         // order is rejected as WRONG_ACTION and does not complete anything.
         [Test]
@@ -179,7 +176,6 @@ namespace SafetyProto.Tests.Editor
             h.Bus.AssertPublishCount<SessionCompletedEventArgs>(1);
         }
 
-        // ── Case 4: FreeOrder ────────────────────────────────────────────────────────────────
         // In a FreeOrder group tasks may be completed in ANY order with no violation.
         [Test]
         public void FreeOrder_AnyOrderCompletion_IsAccepted()
@@ -202,16 +198,15 @@ namespace SafetyProto.Tests.Editor
             h.Bus.AssertPublishCount<SessionCompletedEventArgs>(1);
         }
 
-        // ── Case 5: Group dependency gating ──────────────────────────────────────────────────
         // TaskManagerCore.StartNextGroup walks the group list forward and never revisits a
         // skipped index (TaskManagerCore.cs:292-311). Group 2 depends on Group 3, which comes
         // AFTER it in list order and so cannot possibly have completed by the time Group 2's
         // turn arrives — Group 2 is therefore skipped forever and Group 3 starts instead. That
-        // arrangement is deliberate: with the groups in dependency-satisfying order (as an
-        // earlier version of this test had them), the dependency check contributes nothing
-        // observable — the plain list order alone would pick the same group next, so deleting
-        // the check would not have failed the test. Putting the depended-on group AFTER its
-        // dependent is what makes "the check ran" and "the check was deleted" diverge.
+        // arrangement is deliberate: with the groups in dependency-satisfying order the
+        // dependency check contributes nothing observable — the plain list order alone would
+        // pick the same group next, so deleting the check would not fail the test. Putting the
+        // depended-on group AFTER its dependent is what makes "the check ran" and "the check
+        // was deleted" diverge. Do not reorder them.
         [Test]
         public void GroupDependency_UnmetDependency_SkipsGroupPermanently()
         {
@@ -258,7 +253,6 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual(2, summary.Value.tasksCompleted, "Group 2's task must not count as completed.");
         }
 
-        // ── Case 6: Timeout path (T1 regression) ─────────────────────────────────────────────
         // A group timeout is driven through the same domain entry point the Runtime timer bridge
         // uses (TaskManagerCore.HandleGroupTimeout). Before the T1 fix, a group timeout produced
         // NO terminal event; this asserts SessionEnded (and SessionCompleted) now fire.
@@ -290,7 +284,6 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual(2, summary.Value.totalTasks);
         }
 
-        // ── Case 7: Load validation ──────────────────────────────────────────────────────────
         // Invalid scenario JSON must return a failure result WITHOUT throwing. Two flavors:
         // an unknown PPE enum name (semantic validation in SafetyTaskDef.Bind) and malformed
         // JSON (structural). NOTE: unknown ACTION ids are not validated by ScenarioLoader — that

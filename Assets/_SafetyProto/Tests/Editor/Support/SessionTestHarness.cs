@@ -27,7 +27,7 @@ namespace SafetyProto.Tests.Editor.Support
     /// side effect on every case in this fixture, to a fixed shared temp path, for nothing any
     /// assertion reads.
     ///
-    /// ── DRIVER vs STUBS (Reviewer E: "which component drives, which are stubbed?") ──
+    /// DRIVER vs STUBS — which component drives, which are stubbed:
     ///
     /// DRIVER  — the test body, via <see cref="WearPpe"/> / <see cref="Attempt"/>. These
     ///           publish the exact same events a human player
@@ -53,8 +53,8 @@ namespace SafetyProto.Tests.Editor.Support
     ///           call that publishes the triggering event.
     ///
     /// Engine-independent by construction: this file references zero UnityEngine types, so the
-    /// SAME .cs compiles into a standalone .NET test project (the headless path established in
-    /// T3, mirroring <c>SafetyProto.Shared.csproj</c>).
+    /// SAME .cs compiles into a standalone .NET test project, mirroring
+    /// <c>SafetyProto.Shared.csproj</c>.
     /// </summary>
     public sealed class SessionTestHarness : IDisposable
     {

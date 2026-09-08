@@ -252,7 +252,7 @@ namespace SafetyProto.Runtime.Safety
             }
         }
 
-        // B7: all tasks complete → success popup with a manual "Continuar" button that ends the
+        // All tasks complete → success popup with a manual "Continuar" button that ends the
         // session (and shows the finish screen). No timed auto-dismiss.
         private void ShowSuccessAndEnd(ITaskGroup currentGroup)
         {
@@ -394,7 +394,7 @@ namespace SafetyProto.Runtime.Safety
                 yield return new WaitForSeconds(delayAfterAllConsequences);
             HideConsequenceFeedback();
 
-            // B7: warn-and-continue. The gate no longer ends the session on failure — list the
+            // Warn-and-continue. The gate no longer ends the session on failure — list the
             // still-pending tasks and let the player keep going to finish them. _isProcessing is
             // released only when the player presses "Continuar".
             if (onComplete != null)
@@ -403,7 +403,7 @@ namespace SafetyProto.Runtime.Safety
                 ShowPendingWarningAndContinue(pendingTasks);
         }
 
-        // B7: warning popup listing the remaining tasks, with a "Continuar" button that dismisses
+        // Warning popup listing the remaining tasks, with a "Continuar" button that dismisses
         // and lets the player keep playing (no SessionCompleted).
         private void ShowPendingWarningAndContinue(List<RuntimeSafetyTask> pendingTasks)
         {

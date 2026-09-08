@@ -47,8 +47,6 @@ namespace SafetyProto.Tests.Editor
         [TearDown]
         public void ResetSessionMode() => SessionModeState.Reset();
 
-        // ── Evaluation-mode free-order override ──────────────────────────────────
-
         [Test]
         public void EvaluationMode_SequentialGroup_CompletesEquipTasksInAnyOrder()
         {
@@ -179,8 +177,6 @@ namespace SafetyProto.Tests.Editor
             Assert.IsEmpty(_violations);
         }
 
-        // ── Race condition tests ──────────────────────────────────────────────────
-
         [Test]
         public void RaceCondition_PpeZoneExitAfterActionInSameBatch_NoFalseViolation()
         {
@@ -232,8 +228,6 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual(1, _taskCompletions.Count);
             Assert.IsFalse(_taskCompletions[0].WasPpeCompliant);
         }
-
-        // ── Group prerequisite (NR-35: anchor before working) ────────────────────
 
         private const string AnchorAdvice =
             "Conecte o talabarte ao ponto de ancoragem antes de trabalhar.";

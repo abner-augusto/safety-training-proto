@@ -12,7 +12,6 @@ namespace SafetyProto.Tests.Editor
     /// </summary>
     public class RiskAssessmentTests
     {
-        // ── Band boundaries ──────────────────────────────────────────────────────
 
         [TestCase(1, RiskLevel.Trivial)]
         [TestCase(4, RiskLevel.Trivial)]
@@ -69,8 +68,6 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual(RiskLevel.Substantial, risk.Level);
         }
 
-        // ── Vocabulary ───────────────────────────────────────────────────────────
-
         [TestCase("minor", RiskLevel.Tolerable)]
         [TestCase("moderate", RiskLevel.Moderate)]
         [TestCase("critical", RiskLevel.Substantial)]
@@ -103,8 +100,6 @@ namespace SafetyProto.Tests.Editor
             Assert.IsTrue(RiskLevel.Substantial >= RiskLevels.EliminatoryThreshold);
             Assert.IsTrue(RiskLevel.Intolerable >= RiskLevels.EliminatoryThreshold);
         }
-
-        // ── Scoring config ───────────────────────────────────────────────────────
 
         [Test]
         public void ScoringConfig_LegacyFlatKeys_PreserveTheOldEconomy()
@@ -160,8 +155,6 @@ namespace SafetyProto.Tests.Editor
             Assert.IsTrue(load.Success, load.ErrorSummary);
             Assert.AreEqual(999, load.Scenario!.Scoring.PointsFor(RiskLevel.Moderate));
         }
-
-        // ── Task authoring ───────────────────────────────────────────────────────
 
         [Test]
         public void TaskDef_GradedRisk_DerivesLevel()

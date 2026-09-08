@@ -178,8 +178,6 @@ namespace SafetyProto.Tests.Editor
             core.Dispose();
         }
 
-        // ── CloseCurrentGroup ──────────────────────────────────────────────────────
-
         [Test]
         public void CloseCurrentGroup_ClosesPendingAsNotPerformed_AndCompletesGroup()
         {
@@ -315,8 +313,6 @@ namespace SafetyProto.Tests.Editor
 
             core.Dispose();
         }
-
-        // ── GetCompletionOrderDeviations ─────────────────────────────────────────
 
         [Test]
         public void GetCompletionOrderDeviations_InOrder_ReturnsEmpty()
