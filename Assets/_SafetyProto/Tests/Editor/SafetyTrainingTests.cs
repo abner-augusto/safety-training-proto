@@ -1,25 +1,30 @@
 using NUnit.Framework;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
-using SafetyProto.Domain.Scoring;
-using SafetyProto.Runtime.Task;
-using UnityEngine;
 
 namespace SafetyProto.Tests.Editor
 {
+    /// <summary>
+    /// Covers the production <see cref="EventBus"/> ScriptableObject itself — the queue and its
+    /// drain — rather than any system built on top of it.
+    ///
+    /// Unity does not run <c>Awake</c> or <c>OnEnable</c> on a MonoBehaviour added outside Play
+    /// Mode, so an EditMode fixture cannot exercise a host component that wires itself up there
+    /// (<c>ScoreManagerAdapter</c> is the one this fixture used to reach for). Those bridges are
+    /// covered engine-independently by <c>SessionIntegrationTests</c> through
+    /// <c>SessionTestHarness</c>; reaching them through their real MonoBehaviour would need a
+    /// PlayMode fixture, which this project does not have.
+    /// </summary>
     public class SafetyTrainingTests
     {
         private bool _taskCompleted;
         private bool _safetyViolation;
-        private int _score;
-        private GameObject _scoreAdapterHost;
 
         [SetUp]
         public void SetUp()
         {
             _taskCompleted = false;
             _safetyViolation = false;
-            _score = 0;
 
             EventContext.StartSession("test-session", "player", "scene");
         }
@@ -29,15 +34,7 @@ namespace SafetyProto.Tests.Editor
         {
             EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
             EventBus.Instance.onSafetyViolation.RemoveListener(OnSafetyViolation);
-            EventBus.Instance.onScoreChanged.RemoveListener(OnScoreChanged);
             EventBus.Instance.onActionAttempt.RemoveListener(EchoCompletionAndViolation);
-
-            if (_scoreAdapterHost != null)
-            {
-                Object.DestroyImmediate(_scoreAdapterHost);
-                _scoreAdapterHost = null;
-            }
-            ScoreService.DestroyInstance();
 
             EventContext.Clear();
         }
@@ -66,25 +63,6 @@ namespace SafetyProto.Tests.Editor
             Assert.IsTrue(_safetyViolation, "Expected SafetyViolation to be delivered through the queue.");
         }
 
-        /// <summary>
-        /// Goes through the production ScoreManagerAdapter (not a test-written score-to-bus
-        /// lambda), so this proves the real bridge from ScoreService.ScoreChanged to
-        /// ScoreChangedEventArgs on the bus, not just that the bus can dispatch what it is told to.
-        /// </summary>
-        [Test]
-        public void ScoreServiceUpdatesOnScoreChanged()
-        {
-            EventBus.Instance.onScoreChanged.AddListener(OnScoreChanged);
-
-            _scoreAdapterHost = new GameObject("score-adapter");
-            _scoreAdapterHost.AddComponent<ScoreManagerAdapter>();
-
-            ScoreService.Instance.AddPoints(50, "Test points", string.Empty);
-            ProcessEvents();
-
-            Assert.AreEqual(50, _score);
-        }
-
         private void EchoCompletionAndViolation(ActionAttemptedEvent _)
         {
             EventBus.Instance.RaiseTaskCompleted(new TaskEventArgs());
@@ -103,11 +81,6 @@ namespace SafetyProto.Tests.Editor
         private void OnSafetyViolation(SafetyViolationEventArgs _)
         {
             _safetyViolation = true;
-        }
-
-        private void OnScoreChanged(ScoreChangedEventArgs args)
-        {
-            _score = args.TotalScore;
         }
 
         private static void ProcessEvents()

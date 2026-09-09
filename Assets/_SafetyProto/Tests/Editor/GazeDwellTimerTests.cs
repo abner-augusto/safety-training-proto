@@ -102,10 +102,14 @@ namespace SafetyProto.Tests.Editor
                 "Setup check: the two rings must start well apart in fill level.");
 
             // Grace (0.2s), then a short 0.05s of actual drain — well short of fully draining
-            // either ring, so both remain comparable afterward.
+            // either ring, so both remain comparable afterward. The step must be finer than the
+            // 0.05s default: grace is consumed a whole step at a time and its float residue
+            // survives four 0.05s subtractions, which would eat the entire drain window and
+            // leave both deltas at zero.
             const float drainWindow = Grace + 0.05f;
-            Tick(full, gazed: false, seconds: drainWindow);
-            Tick(partial, gazed: false, seconds: drainWindow);
+            const float drainStep = 0.02f;
+            Tick(full, gazed: false, seconds: drainWindow, step: drainStep);
+            Tick(partial, gazed: false, seconds: drainWindow, step: drainStep);
 
             float fullDelta = fullBefore - full.Progress;
             float partialDelta = partialBefore - partial.Progress;
