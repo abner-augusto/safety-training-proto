@@ -115,10 +115,16 @@ through it.
 
 Producers do not hand-stamp metadata. The event facades in `Core/Events/`
 (`SessionEvents`, `ActionEvents`, `PPEEvents`, `ScoreEvents`, `SafetyEvents`,
-`ConsequenceEvents`) expose static `Raise*` methods that stamp every event with
-`SessionId`, `PlayerId`, `ScenarioId`, and a Unix timestamp drawn from
-`EventContext`. A subscriber can therefore correlate any event to a session and
-participant without the producer having to thread that state through.
+`PopupEvents`, `ConsequenceEvents`) expose static `Raise*` methods that stamp
+every event with `SessionId`, `PlayerId`, `ScenarioId`, and a Unix timestamp
+drawn from `EventContext`. A subscriber can therefore correlate any event to a
+session and participant without the producer having to thread that state
+through. Facades are the Unity-side path only — they call `EventBus.Instance`
+directly, so pure domain code cannot use them; a domain producer publishes
+through the `IEventBus` it was constructed with instead, and gets the same
+stamping guarantee from the bus's own dispatch path. See
+[docs/authoring-events.md](docs/authoring-events.md) for the full producer-side
+split.
 
 ### The synchronous consequence channel — a deliberate exception
 
@@ -153,7 +159,13 @@ stating here are these:
   declines an attempt it also publishes `ActionRefusedEventArgs`, keyed by action
   id and source id, so an emitter that changed the world optimistically can undo
   it — a scaffold piece snaps into its socket, then puts itself back when the
-  attempt turns out to be refused for a pending precondition.
+  attempt turns out to be refused for a pending precondition. This invariant now
+  holds on every decline path (`NO_ACTIVE_GROUP`, `WRONG_ACTION`,
+  `PREREQUISITE_PENDING`), funnelled through one `RefuseAttempt` call in
+  `SafetyRuleEngineCore` so the violation and the refusal cannot drift apart.
+  `PPE_MISSING` is deliberately not one of them: it is not a decline — the task
+  still completes as `CompletedSuccessButUnsafe` — so routing it through the
+  funnel would tell an emitter to undo a task that succeeded.
 - **The UI announces dismissal, not visibility.** `PopupClosedEventArgs` is
   published whenever the shared popup panel goes away (button, dismiss, or
   auto-close). It lets gameplay wait for a warning to have been read before
@@ -424,10 +436,11 @@ connects, and they are the empirical form of the claims above:
 
 | To add… | Do this |
 |---|---|
-| A new event | Add a payload struct to `EventPayloads.cs`, a `Raise*` method to the relevant facade in `Core/Events/`, and register the subscription in `EventBus`. |
+| A domain-produced event | Add a payload struct to `EventPayloads.cs` (or a standalone `Core/Events/` file), publish it through the injected `IEventBus` — no facade, no `UnityEvent` field. |
+| A Unity-produced event | Add the payload, then a `Raise*`/`Publish*` method on a `Core/Events/` facade (new or existing) that calls `EventBus.Instance`; register a `UnityEvent` + subscription on `EventBus` if the event needs one. |
 | Domain logic | Place pure C# in `Scripts/Domain/` and add its path to `SafetyProto.Shared.csproj` so it compiles into the harness too. |
 | An action type | Add an `ActionDef` to `Resources/Actions/actions.json`; wire a scene emitter with the same action-id string. |
 | A task | Author an action task (`actionId`) or an equip-set task (`requiredPPE`, empty `actionId`) via the authoring GUI or scenario JSON. |
 | An external participant | Implement `IEventBus` / `IPPEComplianceChecker` and drive the protocol — as the CLI harness does. |
 
-For task-authoring specifics see [docs/authoring-tasks.md](docs/authoring-tasks.md).
+For task-authoring specifics see [docs/authoring-tasks.md](docs/authoring-tasks.md); for event-authoring specifics see [docs/authoring-events.md](docs/authoring-events.md).
