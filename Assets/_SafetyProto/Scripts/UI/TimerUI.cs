@@ -13,8 +13,15 @@ namespace SafetyProto.UI
         [Tooltip("Assign your TimerSystem here (not EventBus).")]
         public TimerSystem timerSystem;
 
+        [Tooltip("Rótulo acima do valor. Alterna entre contagem regressiva e cronômetro.")]
+        [SerializeField] private TextMeshProUGUI timerLabel;
+        [SerializeField] private string countdownLabel = "TEMPO RESTANTE";
+        [SerializeField] private string stopwatchLabel = "TEMPO";
+
         private TextMeshProUGUI _timerText;
         private int _lastDisplayedSecond = -1;
+        private bool _labelApplied;
+        private bool _labelIsStopwatch;
 
         private void Start()
         {
@@ -62,25 +69,41 @@ namespace SafetyProto.UI
             }
         }
 
-        private void UpdateTimeDisplay(float timeRemaining)
+        private void UpdateTimeDisplay(float seconds)
         {
-            if (timeRemaining > 0f)
-            {
-                var totalSeconds = Mathf.FloorToInt(timeRemaining);
-                if (totalSeconds == _lastDisplayedSecond) return;
+            bool countingUp = timerSystem != null && timerSystem.IsCountingUp;
+            ApplyLabel(countingUp);
 
-                _lastDisplayedSecond = totalSeconds;
-                int minutes = totalSeconds / 60;
-                int seconds = totalSeconds % 60;
-                _timerText.text = $"{minutes:00}:{seconds:00}";
-                _timerText.color = Color.white;
-            }
-            else
+            // A group with no time limit reaches zero at the start, not at a missed deadline:
+            // the red "esgotado" state must never fire for it.
+            if (countingUp || seconds > 0f)
             {
-                _lastDisplayedSecond = -1;
-                _timerText.text = "00:00";
-                _timerText.color = Color.red;
+                WriteClock(seconds, Color.white);
+                return;
             }
+
+            _lastDisplayedSecond = -1;
+            _timerText.text = "00:00";
+            _timerText.color = Color.red;
+        }
+
+        private void WriteClock(float seconds, Color color)
+        {
+            var totalSeconds = Mathf.FloorToInt(seconds);
+            if (totalSeconds == _lastDisplayedSecond) return;
+
+            _lastDisplayedSecond = totalSeconds;
+            _timerText.text = $"{totalSeconds / 60:00}:{totalSeconds % 60:00}";
+            _timerText.color = color;
+        }
+
+        private void ApplyLabel(bool countingUp)
+        {
+            if (timerLabel == null || (_labelApplied && _labelIsStopwatch == countingUp)) return;
+
+            _labelApplied = true;
+            _labelIsStopwatch = countingUp;
+            timerLabel.text = countingUp ? stopwatchLabel : countdownLabel;
         }
 
         private void OnTimerCompleted(float elapsedTime)

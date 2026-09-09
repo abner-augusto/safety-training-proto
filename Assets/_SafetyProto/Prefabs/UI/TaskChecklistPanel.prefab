@@ -1106,6 +1106,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.UI.TimerUI
   timerSystem: {fileID: 0}
+  timerLabel: {fileID: 882431056018200534}
+  countdownLabel: TEMPO RESTANTE
+  stopwatchLabel: TEMPO
 --- !u!1 &5404835637105148755
 GameObject:
   m_ObjectHideFlags: 0

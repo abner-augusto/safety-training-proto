@@ -27,6 +27,12 @@ namespace SafetyProto.Runtime.Task
         private float _elapsedTime;
         private float _sessionStartTime = -1f;
         private bool _isPaused;
+        private bool _countingUp;
+
+        /// <summary>Tells consumers how to read <see cref="onTimeUpdated"/>: seconds left when
+        /// false, seconds elapsed in the current group when true. A group with no time limit
+        /// counts up and never times out.</summary>
+        public bool IsCountingUp => _countingUp;
 
         private void Start()
         {
@@ -133,17 +139,20 @@ namespace SafetyProto.Runtime.Task
             _timeRemaining = _timedGroup.timeLimit;
             _elapsedTime = 0f;
             _isPaused = false;
-            if (_timedGroup.timeLimit > 0)
+            _countingUp = _timedGroup.timeLimit <= 0f;
+            _timerCts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
+
+            if (!_countingUp)
             {
-                _timerCts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
                 _ = GroupCountdownRoutine(_timedGroup.timeLimit, _timerCts.Token);
                 onTimeUpdated.Invoke(_timedGroup.timeLimit);
                 SafetyLog.Info($"TimerSystem: Started timer for group '{_timedGroup.groupName}' ({_timedGroup.timeLimit}s).", this);
             }
             else
             {
-                onTimeUpdated.Invoke(0);
-                SafetyLog.Info($"TimerSystem: Group '{_timedGroup.groupName}' has no time limit.", this);
+                _ = GroupStopwatchRoutine(_timerCts.Token);
+                onTimeUpdated.Invoke(0f);
+                SafetyLog.Info($"TimerSystem: Group '{_timedGroup.groupName}' has no time limit — counting up.", this);
             }
         }
 
@@ -196,6 +205,33 @@ namespace SafetyProto.Runtime.Task
             }
         }
 
+        /// <summary>Measures the current group instead of counting down to a deadline. It never
+        /// raises <see cref="onTimerTimeout"/>: there is no limit to miss, so no penalty applies.</summary>
+        private async Awaitable GroupStopwatchRoutine(CancellationToken token)
+        {
+            _timeRemaining = 0f;
+            _elapsedTime = 0f;
+
+            while (!token.IsCancellationRequested)
+            {
+                if (!_isPaused)
+                {
+                    _elapsedTime += Time.deltaTime;
+                    onTimeUpdated.Invoke(_elapsedTime);
+                }
+
+                try
+                {
+                    await Awaitable.NextFrameAsync(token);
+                }
+                catch (OperationCanceledException)
+                {
+                    SafetyLog.Info("[TimerSystem] Stopwatch cancelled cleanly.", this);
+                    return;
+                }
+            }
+        }
+
         public bool IsPaused => _isPaused;
 
         private void PauseTimer(SessionPausedEventArgs _)
@@ -222,6 +258,7 @@ namespace SafetyProto.Runtime.Task
             _timedGroup = null;
             _timeRemaining = 0f;
             _elapsedTime = 0f;
+            _countingUp = false;
             onTimeUpdated.Invoke(0f);
         }
     }
