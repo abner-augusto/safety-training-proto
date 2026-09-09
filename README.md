@@ -432,4 +432,4 @@ examples.
 - Built-in Render Pipeline
 - .NET 10 SDK for the Shared library, CLI harness, and Avalonia authoring app
 - Target device: Meta Quest 3 — Android (min SDK 32, target SDK 34)
-- App version 0.11 (Android versionCode 8)
+- App version 0.12 (Android versionCode 9)
