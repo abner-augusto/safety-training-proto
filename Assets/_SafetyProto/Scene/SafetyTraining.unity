@@ -16373,6 +16373,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 3644954647303740577, guid: 9c9593da544ec4547b99654b2d5fb1ee, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5557768702625461045, guid: 9c9593da544ec4547b99654b2d5fb1ee, type: 3}
       propertyPath: m_IsActive
       value: 1
@@ -41923,7 +41927,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -44374,7 +44378,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -63066,9 +63070,9 @@ Light:
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
     m_Type: 2
-    m_Resolution: 2
+    m_Resolution: 1
     m_CustomResolution: -1
-    m_Strength: 0.693
+    m_Strength: 0.503
     m_Bias: 0.005
     m_NormalBias: 0.2
     m_NearPlane: 0.24
@@ -69169,10 +69173,6 @@ PrefabInstance:
     - target: {fileID: 6751139010063396575, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
       propertyPath: m_Layer
       value: 16
-      objectReference: {fileID: 0}
-    - target: {fileID: 7788857508137199443, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
-      propertyPath: m_RaycastTarget
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8158459594574238811, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
       propertyPath: m_Layer
