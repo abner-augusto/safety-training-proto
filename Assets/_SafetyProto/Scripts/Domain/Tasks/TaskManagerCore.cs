@@ -172,7 +172,7 @@ namespace SafetyProto.Domain.Tasks
 
                     _bus.Publish(new SafetyViolationEventArgs
                     {
-                        ViolationCode = "TASK_NOT_PERFORMED",
+                        ViolationCode = ViolationCodes.TaskNotPerformed,
                         Message = $"Tarefa não realizada: {t.taskName}",
                         TaskId = t.id,
                         GroupId = currentGroup.id,

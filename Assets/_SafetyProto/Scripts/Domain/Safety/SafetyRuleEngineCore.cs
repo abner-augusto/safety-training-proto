@@ -178,7 +178,14 @@ namespace SafetyProto.Domain.Safety
             if (_activeGroup == null || !TaskExecutionRules.IsEquipTask(task)) return false;
             if (!IsPpeCompliant(task!.requiredPPE)) return false;
 
-            if (!ProcessTaskAttempt(task!, _activeGroup, out _)) return false;
+            // Equip-set tasks complete on PPE state, not an action attempt, so there is no
+            // actionId/sourceId to stamp a refusal with — raise the violation directly and
+            // publish no ActionRefusedEventArgs for this path.
+            if (!ProcessTaskAttempt(task!, _activeGroup, out var refusalCode, out var refusalMessage))
+            {
+                RaiseViolation(refusalCode, refusalMessage, task, _activeGroup);
+                return false;
+            }
 
             // Stop a later PPE event from re-completing the same sequential task before the
             // next OnTaskStarted reassigns the active reference. (FreeOrder is already guarded
@@ -202,7 +209,8 @@ namespace SafetyProto.Domain.Safety
 
             if (_activeGroup == null)
             {
-                RaiseViolation("NO_ACTIVE_GROUP", "Ação realizada sem um grupo de tarefas ativo.", null, null);
+                RefuseAttempt(ViolationCodes.NoActiveGroup, "Ação realizada sem um grupo de tarefas ativo.",
+                    null, null, actionId, args.SourceId);
                 return;
             }
 
@@ -221,11 +229,13 @@ namespace SafetyProto.Domain.Safety
 
                 if (!TaskExecutionRules.MatchesAction(_activeSequentialTask, actionId))
                 {
-                    RaiseViolation(
-                        "WRONG_ACTION",
+                    RefuseAttempt(
+                        ViolationCodes.WrongAction,
                         $"A tarefa esperada era '{_activeSequentialTask.taskName}', mas outra ação foi realizada.",
                         _activeSequentialTask,
-                        _activeGroup);
+                        _activeGroup,
+                        actionId,
+                        args.SourceId);
                     return;
                 }
 
@@ -245,25 +255,24 @@ namespace SafetyProto.Domain.Safety
                         return;
                     }
 
-                    RaiseViolation(
-                        "WRONG_ACTION",
+                    RefuseAttempt(
+                        ViolationCodes.WrongAction,
                         $"A ação realizada não corresponde a nenhuma tarefa pendente do grupo '{_activeGroup.groupName}'.",
                         null,
-                        _activeGroup);
+                        _activeGroup,
+                        actionId,
+                        args.SourceId);
                     return;
                 }
             }
 
-            if (ProcessTaskAttempt(targetTask, _activeGroup, out var refusalCode))
+            if (ProcessTaskAttempt(targetTask, _activeGroup, out var refusalCode, out var refusalMessage))
             {
                 ReleaseEquipTasksAfterPrerequisite(targetTask);
             }
             else
             {
-                // The attempt already changed the world (a piece snapped into its socket), so the
-                // emitter needs to hear that it was declined — the violation alone only reaches
-                // the UI.
-                _bus.Publish(new ActionRefusedEventArgs(actionId, args.SourceId, refusalCode));
+                RefuseAttempt(refusalCode, refusalMessage, targetTask, _activeGroup, actionId, args.SourceId);
             }
         }
 
@@ -317,33 +326,40 @@ namespace SafetyProto.Domain.Safety
             group.tasks.FirstOrDefault(t =>
                 string.Equals(t.id, taskId, StringComparison.OrdinalIgnoreCase));
 
-        private void RaisePrerequisitePending(ISafetyTask blockedTask, ITaskGroup group)
+        /// <summary>
+        /// Builds the pt-BR advice shown for a task refused because its group's precondition is
+        /// still pending — the authored <see cref="ITaskGroup.prerequisiteAdvice"/> when the
+        /// scenario supplies one, a generic fallback otherwise.
+        /// </summary>
+        private static string BuildPrerequisitePendingMessage(ITaskGroup group)
         {
             var prerequisite = FindTask(group, group.prerequisiteTaskId);
             var pendingName = prerequisite != null ? prerequisite.taskName : group.prerequisiteTaskId;
 
-            var message = !string.IsNullOrWhiteSpace(group.prerequisiteAdvice)
+            return !string.IsNullOrWhiteSpace(group.prerequisiteAdvice)
                 ? group.prerequisiteAdvice
                 : $"Conclua '{pendingName}' antes de executar as outras tarefas deste grupo.";
-
-            // TaskId is the REFUSED task: the analysis question is what the participant tried
-            // to do before satisfying the precondition.
-            RaiseViolation("PREREQUISITE_PENDING", message, blockedTask, group);
         }
 
         /// <summary>
         /// Completes <paramref name="task"/> unless its group's precondition blocks it.
         /// Returns false when the attempt was refused and the task is still pending;
-        /// <paramref name="refusalCode"/> then carries the violation code that refused it.
+        /// <paramref name="refusalCode"/> and <paramref name="refusalMessage"/> then carry what
+        /// the caller needs to raise the violation and, when it has an action id to correlate
+        /// with, the refusal. This method never raises or publishes for a prerequisite decline —
+        /// that is the caller's job, because only the action-attempt path has an action id and a
+        /// source id to stamp the refusal with; the equip-task sweep has neither.
         /// </summary>
-        private bool ProcessTaskAttempt(ISafetyTask task, ITaskGroup currentGroup, out string refusalCode)
+        private bool ProcessTaskAttempt(ISafetyTask task, ITaskGroup currentGroup, out string refusalCode,
+                                         out string refusalMessage)
         {
             refusalCode = string.Empty;
+            refusalMessage = string.Empty;
 
             if (IsBlockedByPrerequisite(task, currentGroup))
             {
-                refusalCode = "PREREQUISITE_PENDING";
-                RaisePrerequisitePending(task, currentGroup);
+                refusalCode = ViolationCodes.PrerequisitePending;
+                refusalMessage = BuildPrerequisitePendingMessage(currentGroup);
 
                 if (_verboseLogging)
                 {
@@ -359,8 +375,11 @@ namespace SafetyProto.Domain.Safety
 
             if (!compliant)
             {
+                // Not a decline: the task still completes below as CompletedSuccessButUnsafe, so
+                // this goes through RaiseViolation directly rather than RefuseAttempt — routing it
+                // through the funnel would tell the emitter to undo a task that succeeded.
                 RaiseViolation(
-                    "PPE_MISSING",
+                    ViolationCodes.PpeMissing,
                     $"Faltam EPIs obrigatórios para a tarefa '{task.taskName}'.",
                     task,
                     currentGroup);
@@ -440,6 +459,19 @@ namespace SafetyProto.Domain.Safety
                 TaskName = task != null ? task.taskName : string.Empty,
                 GroupName = group != null ? group.groupName : string.Empty
             });
+        }
+
+        /// <summary>
+        /// Declines an attempt: raises the violation that explains it to the participant AND the
+        /// refusal that tells the emitter to undo whatever it did optimistically. The two are one
+        /// act — a decline path that raises only the violation leaves the world showing something
+        /// the system does not believe happened.
+        /// </summary>
+        private void RefuseAttempt(string code, string message, ISafetyTask? task, ITaskGroup? group,
+                                    string actionId, string? sourceId)
+        {
+            RaiseViolation(code, message, task, group);
+            _bus.Publish(new ActionRefusedEventArgs(actionId, sourceId, code));
         }
 
         public void Dispose()

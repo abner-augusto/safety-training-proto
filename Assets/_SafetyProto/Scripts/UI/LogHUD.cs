@@ -211,10 +211,10 @@ namespace SafetyProto.UI
             return code switch
             {
                 "ACTION_ID_MISSING" => "Ação não identificada",
-                "NO_ACTIVE_GROUP" => "Nenhum grupo de tarefas ativo",
-                "WRONG_ACTION" => "Ação incorreta",
-                "PPE_MISSING" => "EPI obrigatório ausente",
-                "TASK_NOT_PERFORMED" => "Tarefa não realizada",
+                ViolationCodes.NoActiveGroup => "Nenhum grupo de tarefas ativo",
+                ViolationCodes.WrongAction => "Ação incorreta",
+                ViolationCodes.PpeMissing => "EPI obrigatório ausente",
+                ViolationCodes.TaskNotPerformed => "Tarefa não realizada",
                 "GATE_FAILED" => "Inspeção não aprovada",
                 _ => $"Violação não identificada ({code})"
             };

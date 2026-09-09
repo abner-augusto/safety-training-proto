@@ -55,6 +55,7 @@
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\SessionIntegrationTests.cs"         Link="SessionIntegrationTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\ScoreRuleEngineCoreTests.cs"        Link="ScoreRuleEngineCoreTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\SafetyRuleEngineCoreTests.cs"       Link="SafetyRuleEngineCoreTests.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\RefusedAttemptTrackerTests.cs"      Link="RefusedAttemptTrackerTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\TaskManagerCoreTests.cs"            Link="TaskManagerCoreTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\TaskExecutionRulesTests.cs"         Link="TaskExecutionRulesTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\PhaseAdvanceGateTests.cs"           Link="PhaseAdvanceGateTests.cs" />

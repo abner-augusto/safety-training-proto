@@ -129,6 +129,66 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
+        public void ActionWithoutActiveGroup_PublishesViolationAndRefusalPair()
+        {
+            var refusals = new List<ActionRefusedEventArgs>();
+            _bus.Subscribe<ActionRefusedEventArgs>(args => refusals.Add(args));
+
+            _bus.Publish(new ActionAttemptedEvent("equip_helmet", sourceId: "Helmet"));
+
+            Assert.AreEqual(1, _violations.Count);
+            Assert.AreEqual("NO_ACTIVE_GROUP", _violations[0].ViolationCode);
+
+            Assert.AreEqual(1, refusals.Count);
+            Assert.AreEqual("equip_helmet", refusals[0].ActionId);
+            Assert.AreEqual("Helmet", refusals[0].SourceId);
+            Assert.AreEqual("NO_ACTIVE_GROUP", refusals[0].ReasonCode);
+        }
+
+        [Test]
+        public void SequentialGroup_WrongAction_PublishesViolationAndRefusalPair()
+        {
+            var refusals = new List<ActionRefusedEventArgs>();
+            _bus.Subscribe<ActionRefusedEventArgs>(args => refusals.Add(args));
+
+            var task = _tasks.Task("ppe_helmet", "equip_helmet", PPEType.Helmet);
+            var group = _tasks.Group("g", TaskExecutionModeShared.Sequential, task);
+
+            _bus.Publish(new TaskGroupEventArgs(group));
+            _bus.Publish(new TaskEventArgs(task));
+            _bus.Publish(new ActionAttemptedEvent("equip_boots", sourceId: "Boots"));
+
+            Assert.AreEqual(1, _violations.Count);
+            Assert.AreEqual("WRONG_ACTION", _violations[0].ViolationCode);
+
+            Assert.AreEqual(1, refusals.Count);
+            Assert.AreEqual("equip_boots", refusals[0].ActionId);
+            Assert.AreEqual("Boots", refusals[0].SourceId);
+            Assert.AreEqual("WRONG_ACTION", refusals[0].ReasonCode);
+        }
+
+        [Test]
+        public void FreeOrderGroup_WrongAction_PublishesViolationAndRefusalPair()
+        {
+            var refusals = new List<ActionRefusedEventArgs>();
+            _bus.Subscribe<ActionRefusedEventArgs>(args => refusals.Add(args));
+
+            var t1 = _tasks.Task("t1", "action_a");
+            var group = _tasks.Group("free", TaskExecutionModeShared.FreeOrder, t1);
+
+            _bus.Publish(new TaskGroupEventArgs(group));
+            _bus.Publish(new ActionAttemptedEvent("action_unknown", sourceId: "Unknown"));
+
+            Assert.AreEqual(1, _violations.Count);
+            Assert.AreEqual("WRONG_ACTION", _violations[0].ViolationCode);
+
+            Assert.AreEqual(1, refusals.Count);
+            Assert.AreEqual("action_unknown", refusals[0].ActionId);
+            Assert.AreEqual("Unknown", refusals[0].SourceId);
+            Assert.AreEqual("WRONG_ACTION", refusals[0].ReasonCode);
+        }
+
+        [Test]
         public void ActionWithMissingPPE_PublishesPpeMissingViolation_AndUnsafeCompletion()
         {
             var task = _tasks.Task("ppe_helmet", "equip_helmet", PPEType.Helmet);
@@ -142,6 +202,34 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual("PPE_MISSING", _violations[0].ViolationCode);
             Assert.AreEqual(1, _taskCompletions.Count);
             Assert.IsFalse(_taskCompletions[0].WasPpeCompliant);
+        }
+
+        /// <summary>
+        /// The negative that guards the funnel: PPE_MISSING is not a decline — the task still
+        /// completes (as CompletedSuccessButUnsafe, mapped from WasPpeCompliant by
+        /// TaskManagerCore) — so it must never publish ActionRefusedEventArgs. This is what stops
+        /// a future contributor from routing an unsafe completion through RefuseAttempt.
+        /// </summary>
+        [Test]
+        public void ActionWithMissingPPE_PublishesNoActionRefused()
+        {
+            var refusals = new List<ActionRefusedEventArgs>();
+            _bus.Subscribe<ActionRefusedEventArgs>(args => refusals.Add(args));
+
+            var task = _tasks.Task("ppe_helmet", "equip_helmet", PPEType.Helmet);
+            var group = _tasks.Group("g", TaskExecutionModeShared.Sequential, task);
+
+            _bus.Publish(new TaskGroupEventArgs(group));
+            _bus.Publish(new TaskEventArgs(task));
+            _bus.Publish(new ActionAttemptedEvent("equip_helmet", sourceId: "Helmet"));
+
+            Assert.AreEqual(1, _violations.Count);
+            Assert.AreEqual("PPE_MISSING", _violations[0].ViolationCode);
+            Assert.AreEqual(1, _taskCompletions.Count);
+            Assert.IsFalse(_taskCompletions[0].WasPpeCompliant,
+                "the task still completes unsafe rather than being refused");
+
+            CollectionAssert.IsEmpty(refusals);
         }
 
         [Test]
@@ -332,7 +420,8 @@ namespace SafetyProto.Tests.Editor
         public void GuidedMode_PrerequisitePending_PublishesActionRefusedForTheEmitter()
         {
             // The refused attempt already changed the world (the piece snapped into its socket),
-            // so the emitter is told it was declined and can put itself back.
+            // so the emitter is told it was declined and can put itself back. Both halves of the
+            // pair must agree on what was refused.
             var refusals = new List<ActionRefusedEventArgs>();
             _bus.Subscribe<ActionRefusedEventArgs>(args => refusals.Add(args));
 
@@ -340,6 +429,9 @@ namespace SafetyProto.Tests.Editor
             _bus.Publish(new TaskGroupEventArgs(group, TaskGroupPhase.Started));
 
             _bus.Publish(new ActionAttemptedEvent("install_guardrail", sourceId: "GuardRailPiece"));
+
+            Assert.AreEqual(1, _violations.Count);
+            Assert.AreEqual("PREREQUISITE_PENDING", _violations[0].ViolationCode);
 
             Assert.AreEqual(1, refusals.Count);
             Assert.AreEqual("install_guardrail", refusals[0].ActionId);
