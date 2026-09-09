@@ -105,6 +105,17 @@ namespace SafetyProto.Runtime.Safety
             _simulationAutoConfirm = false;
         }
 
+        /// <summary>
+        /// Raises the wired session-end panels for a run that reached SessionCompleted without
+        /// passing through this gate. Only the gate holds the panel references, so a simulated
+        /// session has no other way to show the report.
+        /// </summary>
+        public void ShowSessionEndPanelsNow()
+        {
+            _showSessionEndPanels = true;
+            ActivateSessionEndPanelsIfComplete();
+        }
+
         public bool IsSimulationProcessing => _isProcessing;
 
         private bool _isProcessing;

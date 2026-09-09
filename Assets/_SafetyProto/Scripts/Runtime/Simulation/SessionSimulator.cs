@@ -73,6 +73,9 @@ namespace SafetyProto.Runtime.Simulation
         [SerializeField] private float inputTimeoutSeconds = DefaultInputTimeoutSeconds;
         [SerializeField] private float operationTimeoutSeconds = DefaultOperationTimeoutSeconds;
 
+        [Tooltip("Show the session report when the simulated run completes, including runs that never reach the inspection gate.")]
+        [SerializeField] private bool showSessionReportOnCompletion = true;
+
         private TrainingSessionManager? _sessionManager;
         private TaskManager? _taskManager;
         private PhaseController? _phaseController;
@@ -572,6 +575,7 @@ namespace SafetyProto.Runtime.Simulation
                 _sessionCompleted = true;
                 _result.sessionSummary = args;
                 AddTranscript("SessionCompleted");
+                if (showSessionReportOnCompletion) _inspectionGate?.ShowSessionEndPanelsNow();
             };
             _onSessionEnded = _ => AddTranscript("SessionEnded");
             _onGroupStarted = args => AddTranscript("GroupStarted: " + (args.Group?.id ?? "<null>"));
