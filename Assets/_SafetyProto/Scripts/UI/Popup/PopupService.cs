@@ -15,6 +15,11 @@ namespace SafetyProto.UI
 
         private bool _sessionPausedByUs;
 
+        /// <summary>Reason code of the popup currently shown, echoed on close so an emitter
+        /// waiting behind a warning can match it back to its own refusal. Empty for a popup
+        /// opened for anything other than a refusal.</summary>
+        private string _currentReasonCode = string.Empty;
+
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -64,12 +69,17 @@ namespace SafetyProto.UI
             // Announced for every close (button, dismiss, auto-close) so gameplay objects can
             // wait for a warning to have been read. Deliberately not tied to the pause pair —
             // a transient notice pauses nothing but still closes.
-            EventBus.Instance?.Publish(new PopupClosedEventArgs());
+            PopupEvents.RaisePopupClosed(_currentReasonCode);
+            _currentReasonCode = string.Empty;
         }
 
-        public void Show(PopupData data)
+        public void Show(PopupData data) => Show(data, reasonCode: string.Empty);
+
+        public void Show(PopupData data, string reasonCode)
         {
             if (popupPanel == null) return;
+
+            _currentReasonCode = reasonCode ?? string.Empty;
 
             if (!_sessionPausedByUs)
             {
@@ -129,8 +139,9 @@ namespace SafetyProto.UI
         public void ShowWarning(string title, string body)
             => ShowWarning(title, body, 0f);
 
-        public void ShowWarning(string title, string body, float autoCloseSeconds)
-            => Show(new PopupData { type = PopupType.Warning, title = title, body = body, autoCloseSeconds = autoCloseSeconds });
+        public void ShowWarning(string title, string body, float autoCloseSeconds, string reasonCode = "")
+            => Show(new PopupData { type = PopupType.Warning, title = title, body = body, autoCloseSeconds = autoCloseSeconds },
+                    reasonCode);
 
         public void ShowInteractive(string title, string body, string buttonLabel, UnityAction onAction)
         {

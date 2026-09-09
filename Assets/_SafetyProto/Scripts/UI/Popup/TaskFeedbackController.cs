@@ -82,10 +82,11 @@ namespace SafetyProto.UI
         /// </summary>
         private void OnSafetyViolation(SafetyViolationEventArgs args)
         {
-            if (args.ViolationCode != "PREREQUISITE_PENDING") return;
+            if (args.ViolationCode != ViolationCodes.PrerequisitePending) return;
             if (string.IsNullOrWhiteSpace(args.Message)) return;
 
-            PopupService.Instance?.ShowWarning(prerequisiteTitle, args.Message, autoCloseSeconds);
+            PopupService.Instance?.ShowWarning(prerequisiteTitle, args.Message, autoCloseSeconds,
+                ViolationCodes.PrerequisitePending);
         }
 
         private void OnDistractorSnapAttempted(PPEType attempted)

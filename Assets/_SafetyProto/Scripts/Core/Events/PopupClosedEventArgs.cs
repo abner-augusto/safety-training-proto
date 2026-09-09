@@ -16,5 +16,11 @@ namespace SafetyProto.Core.Events
         public string PlayerId;
         public string ScenarioId;
         public long TimestampMs;
+
+        /// <summary>Echoes the violation code that opened the popup (see
+        /// <see cref="ActionRefusedEventArgs.ReasonCode"/>), so a piece waiting behind a warning
+        /// can tell its own refusal apart from an unrelated popup. Empty for popups opened for
+        /// anything else.</summary>
+        public string ReasonCode;
     }
 }
