@@ -11,6 +11,14 @@ namespace SafetyProto.Tests.Editor
     /// <summary>
     /// Covers the report decision: confirming publishes the authored action exactly once, and
     /// cancelling publishes nothing but is still counted as hesitation.
+    ///
+    /// The reporter's reaction to <c>ActionRefusedEventArgs</c> is deliberately absent here. It
+    /// subscribes in <c>OnEnable</c>, which Unity never runs on a MonoBehaviour added outside
+    /// Play Mode, so an EditMode fixture cannot deliver a refusal to it at all — a test that
+    /// tried would either fail or, worse, assert the unchanged state and pass without exercising
+    /// anything. The matching and revert policy it delegates to is covered engine-independently
+    /// by <c>RefusedAttemptTrackerTests</c>; the wiring itself would need a PlayMode fixture,
+    /// which this project does not have.
     /// </summary>
     public class SafetyIssueReporterTests
     {

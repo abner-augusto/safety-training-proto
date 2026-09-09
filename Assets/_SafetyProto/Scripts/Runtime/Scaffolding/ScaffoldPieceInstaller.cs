@@ -1,7 +1,9 @@
 ﻿using Oculus.Interaction;
 using Oculus.Interaction.HandGrab;
+using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Safety;
 using SafetyProto.Runtime.Actions;
 using SafetyProto.Runtime.Feedback;
 using SafetyProto.Utils;
@@ -78,6 +80,11 @@ namespace SafetyProto.Runtime.Scaffolding
         [Tooltip("Rede de segurança: se nenhum popup fechar nesse tempo (s) após a recusa, a peça " +
                  "volta assim mesmo, para não travar a tarefa. 0 = esperar apenas pelo popup.")]
         [SerializeField] private float revertFallbackSeconds = 10f;
+        [Tooltip("Códigos de recusa cujo aviso a peça espera ser fechado antes de voltar. Uma " +
+                 "recusa com código fora desta lista volta imediatamente — é o caso de " +
+                 "WRONG_ACTION, que hoje não abre nenhum popup, então esperar por um travaria a " +
+                 "peça até o tempo limite.")]
+        [SerializeField] private string[] waitForPopupOnCodes = { ViolationCodes.PrerequisitePending };
 
         [Header("Meta SDK References")]
         [Tooltip("Grabbable on the object. Auto-found if empty.")]
@@ -131,8 +138,7 @@ namespace SafetyProto.Runtime.Scaffolding
         private Transform _activeAnchor;
         private Transform _activeSocket;
 
-        private bool _revertPending;
-        private float _revertDeadline;
+        private readonly RefusedAttemptTracker _refusalTracker = new RefusedAttemptTracker();
         private System.Action<ActionRefusedEventArgs> _onActionRefused;
         private System.Action<PopupClosedEventArgs> _onPopupClosed;
 
@@ -207,11 +213,8 @@ namespace SafetyProto.Runtime.Scaffolding
 
         private void LateUpdate()
         {
-            if (_revertPending && revertFallbackSeconds > 0f && Time.time >= _revertDeadline)
-            {
-                SafetyLog.Warning($"[ScaffoldPieceInstaller] '{name}' revertido sem confirmação de popup — nenhum aviso foi fechado a tempo.", this);
+            if (_refusalTracker.TryTakeRevert(Time.time))
                 RevertInstall();
-            }
 
             if (_isInstalled) return;
 
@@ -264,7 +267,7 @@ namespace SafetyProto.Runtime.Scaffolding
         /// </summary>
         public void RevertInstall()
         {
-            _revertPending = false;
+            _refusalTracker.Reset();
             if (!_isInstalled) return;
 
             ResetInstall();
@@ -281,7 +284,7 @@ namespace SafetyProto.Runtime.Scaffolding
 
         public void ResetInstall()
         {
-            _revertPending = false;
+            _refusalTracker.Reset();
             _isInstalled  = false;
             _wasValidPose = false;
             if (disableCollidersAfterInstalled)
@@ -324,30 +327,25 @@ namespace SafetyProto.Runtime.Scaffolding
 
         /// <summary>
         /// The rule engine declined the attempt this piece published. The piece is already
-        /// snapped and locked at this point, so it has to come back out — but only after the
-        /// participant has had the warning in front of them, which is why the revert waits for
-        /// the popup to close instead of yanking the piece away mid-sentence.
+        /// snapped and locked at this point, so it has to come back out. When the refusal's code
+        /// is in <see cref="waitForPopupOnCodes"/> the revert waits for the participant's warning
+        /// to close instead of yanking the piece away mid-sentence; any other code reverts on the
+        /// next <see cref="LateUpdate"/>.
         /// </summary>
         private void OnActionRefused(ActionRefusedEventArgs args)
         {
-            if (!revertInstallWhenRefused || !_isInstalled || _revertPending) return;
+            if (!revertInstallWhenRefused || !_isInstalled) return;
 
-            var mine = GetConfiguredActionId();
-            if (string.IsNullOrEmpty(mine) ||
-                !string.Equals(args.ActionId, mine, System.StringComparison.Ordinal)) return;
+            bool waitForPopup = waitForPopupOnCodes != null &&
+                                 System.Array.IndexOf(waitForPopupOnCodes, args.ReasonCode) >= 0;
 
-            // An empty SourceId means the emitter did not identify itself — accept it rather
-            // than leave the piece stuck.
-            if (!string.IsNullOrEmpty(args.SourceId) &&
-                !string.Equals(args.SourceId, ResolvedSourceId, System.StringComparison.Ordinal)) return;
-
-            _revertPending = true;
-            _revertDeadline = Time.time + revertFallbackSeconds;
+            _refusalTracker.Observe(args.ActionId, args.SourceId, args.ReasonCode,
+                GetConfiguredActionId(), ResolvedSourceId, waitForPopup, Time.time, revertFallbackSeconds);
         }
 
-        private void OnPopupClosed(PopupClosedEventArgs _)
+        private void OnPopupClosed(PopupClosedEventArgs args)
         {
-            if (_revertPending) RevertInstall();
+            _refusalTracker.NotifyPopupClosed(args.ReasonCode);
         }
 
         private void Install()

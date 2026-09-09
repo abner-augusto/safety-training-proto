@@ -2,9 +2,9 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Safety;
 using SafetyProto.Runtime.Feedback;
 using SafetyProto.Runtime.Interaction;
-using SafetyProto.Runtime.Task;
 using UnityEngine;
 
 namespace SafetyProto.Runtime.Safety
@@ -82,11 +82,8 @@ namespace SafetyProto.Runtime.Safety
 
         private bool _confirmationOpen;
 
-        /// <summary>
-        /// Id of the task the last publish targeted, captured just before publishing so the
-        /// PREREQUISITE_PENDING violation (if any) can be matched back to this attempt.
-        /// </summary>
-        private string _pendingTaskId;
+        private readonly RefusedAttemptTracker _refusalTracker = new RefusedAttemptTracker();
+        private System.Action<ActionRefusedEventArgs> _onActionRefused;
 
         private void Awake() => HideButton();
 
@@ -94,14 +91,19 @@ namespace SafetyProto.Runtime.Safety
         {
             if (_dwellTarget != null) _dwellTarget.Completed += HandleDwellCompleted;
             if (_reportButton != null) _reportButton.Clicked += Report;
-            if (EventBus.Instance != null) EventBus.Instance.onSafetyViolation.AddListener(HandleSafetyViolation);
+            if (EventBus.Instance != null)
+            {
+                _onActionRefused ??= HandleActionRefused;
+                EventBus.Instance.Subscribe(_onActionRefused);
+            }
         }
 
         private void OnDisable()
         {
             if (_dwellTarget != null) _dwellTarget.Completed -= HandleDwellCompleted;
             if (_reportButton != null) _reportButton.Clicked -= Report;
-            if (EventBus.Instance != null) EventBus.Instance.onSafetyViolation.RemoveListener(HandleSafetyViolation);
+            if (EventBus.Instance != null && _onActionRefused != null)
+                EventBus.Instance.Unsubscribe(_onActionRefused);
         }
 
         private void HandleDwellCompleted()
@@ -150,10 +152,6 @@ namespace SafetyProto.Runtime.Safety
             if (HasReported) return;
             HasReported = true;
 
-            // Captured before publishing: TaskManager processes the attempt synchronously off the
-            // event queue, but the pending task is still resolvable right up to that point.
-            _pendingTaskId = TaskManager.Instance?.FindPendingTaskByActionId(_actionId)?.id;
-
             ActionEvents.PublishActionAttempt(
                 _actionId,
                 sourceId: name,
@@ -164,23 +162,34 @@ namespace SafetyProto.Runtime.Safety
         }
 
         /// <summary>
-        /// Undoes the optimistic report when TaskManager refuses the attempt because the group's
-        /// safety precondition is still pending (e.g. the lanyard isn't connected yet) — the
-        /// participant sees the warning popup but never actually filed the report, so the button
-        /// must come back for another try.
+        /// Undoes the optimistic report when the rule engine refuses the attempt this reporter
+        /// published (e.g. the group's safety precondition — the lanyard isn't connected yet) —
+        /// the participant sees the warning popup but never actually filed the report, so the
+        /// button must come back for another try. Matched by this reporter's own action id and
+        /// source id (its GameObject name, the same value <see cref="PublishReport"/> stamps),
+        /// so a refusal aimed at a different reporter is ignored. <c>waitForPopup: false</c>
+        /// because reshowing a button has no world state to protect from being yanked out from
+        /// under the warning.
+        ///
+        /// Any reason code undoes the report, not just the pending-prerequisite one this replaced:
+        /// whatever the engine declined the attempt for, the report did not land, so the button
+        /// has to come back. Filtering by code here would strand the button on every decline path
+        /// the filter did not anticipate.
         /// </summary>
-        private void HandleSafetyViolation(SafetyViolationEventArgs args)
+        private void HandleActionRefused(ActionRefusedEventArgs args)
         {
             if (!HasReported) return;
-            if (args.ViolationCode != "PREREQUISITE_PENDING") return;
-            if (!string.IsNullOrEmpty(_pendingTaskId) && args.TaskId != _pendingTaskId) return;
+
+            _refusalTracker.Observe(args.ActionId, args.SourceId, args.ReasonCode,
+                _actionId, name, waitForPopup: false, Time.time, fallbackSeconds: 0f);
+
+            if (!_refusalTracker.TryTakeRevert(Time.time)) return;
 
             HasReported = false;
-            _pendingTaskId = null;
             ShowButton();
 
             SafetyLog.Info(
-                $"[SafetyIssueReporter] Reporte recusado (pré-requisito pendente) em '{name}'; botão reexibido.",
+                $"[SafetyIssueReporter] Reporte recusado ({args.ReasonCode}) em '{name}'; botão reexibido.",
                 this);
         }
 
@@ -189,7 +198,7 @@ namespace SafetyProto.Runtime.Safety
             HasReported = false;
             CancelledReportCount = 0;
             _confirmationOpen = false;
-            _pendingTaskId = null;
+            _refusalTracker.Reset();
             if (_dwellTarget != null) _dwellTarget.ResetDwell();
             HideButton();
         }
