@@ -15,6 +15,15 @@ namespace SafetyProto.Runtime
 {
     public class PhaseController : MonoBehaviour, IRecenterAnchorProvider
     {
+        /// <summary>Pairs an object that exists once in the scene with the pose it must take in
+        /// the andaime phase, so a second instance of it does not have to be authored.</summary>
+        [System.Serializable]
+        public struct PhaseRelocation
+        {
+            public Transform target;
+            public Transform destination;
+        }
+
         [Header("Player")]
         [SerializeField] private Transform playerRig;
         [Tooltip("Pre-transition anchor (Canteiro). Point the same Transform PlayerSpawnCenter.startPoint " +
@@ -31,6 +40,9 @@ namespace SafetyProto.Runtime
         [SerializeField] private GameObject[] objectsToHide;
         [Tooltip("GameObjects a ativar ao entrar no Andaime. Deixe vazio se não usar.")]
         [SerializeField] private GameObject[] objectsToShow;
+        [Tooltip("Objetos movidos para outra pose durante o blackout, para que uma única " +
+                 "instância atenda as duas fases. A pose original volta a cada nova sessão.")]
+        [SerializeField] private PhaseRelocation[] objectsToRelocate;
 
         [Header("Transição")]
         [SerializeField] private float fadeOutDuration = 0.8f;
@@ -75,6 +87,8 @@ namespace SafetyProto.Runtime
         private bool _simulationAutoConfirm;
         private bool _simulationTransitionCompleted;
         private bool _advanceConsumed;
+        private Vector3[] _relocationOriginPositions;
+        private Quaternion[] _relocationOriginRotations;
 
         private UnityAction<SessionStartedEventArgs>? _onSessionStarted;
 
@@ -107,6 +121,7 @@ namespace SafetyProto.Runtime
             }
 
             ValidateReferences();
+            CacheRelocationOrigins();
 
             if (taskManager == null)
                 taskManager = TaskManager.Instance != null ? TaskManager.Instance : FindFirstObjectByType<TaskManager>();
@@ -138,7 +153,55 @@ namespace SafetyProto.Runtime
         {
             _advanceConsumed = false;
             _transitionExecuted = false;
+            RestoreRelocations();
             SetButtonsActive(SessionModeState.Current == SessionMode.Evaluation);
+        }
+
+        private void CacheRelocationOrigins()
+        {
+            int count = objectsToRelocate?.Length ?? 0;
+            _relocationOriginPositions = new Vector3[count];
+            _relocationOriginRotations = new Quaternion[count];
+
+            for (int i = 0; i < count; i++)
+            {
+                var target = objectsToRelocate[i].target;
+                if (target == null)
+                {
+                    SafetyLog.Warning($"[PhaseController] objectsToRelocate[{i}].target vazio — entrada ignorada.", this);
+                    continue;
+                }
+                if (objectsToRelocate[i].destination == null)
+                    SafetyLog.Warning($"[PhaseController] objectsToRelocate[{i}].destination vazio — '{target.name}' não será movido.", this);
+
+                _relocationOriginPositions[i] = target.position;
+                _relocationOriginRotations[i] = target.rotation;
+            }
+        }
+
+        private void ApplyRelocations()
+        {
+            if (objectsToRelocate == null) return;
+
+            foreach (var relocation in objectsToRelocate)
+            {
+                if (relocation.target == null || relocation.destination == null) continue;
+                relocation.target.SetPositionAndRotation(relocation.destination.position,
+                    relocation.destination.rotation);
+            }
+        }
+
+        private void RestoreRelocations()
+        {
+            if (objectsToRelocate == null || _relocationOriginPositions == null) return;
+
+            int count = Mathf.Min(objectsToRelocate.Length, _relocationOriginPositions.Length);
+            for (int i = 0; i < count; i++)
+            {
+                var target = objectsToRelocate[i].target;
+                if (target == null) continue;
+                target.SetPositionAndRotation(_relocationOriginPositions[i], _relocationOriginRotations[i]);
+            }
         }
 
         /// <summary>Wire to the advance button OnClick. Evaluation mode only: applies order penalties, closes the group marking any PPE the participant skipped as not performed, shows popup, then teleports.</summary>
@@ -310,6 +373,7 @@ namespace SafetyProto.Runtime
                         if (obj != null) obj.SetActive(false);
                     foreach (var obj in objectsToShow)
                         if (obj != null) obj.SetActive(true);
+                    ApplyRelocations();
                     if (transitionPanel != null)
                         transitionPanel.SetActive(true);
                 },
