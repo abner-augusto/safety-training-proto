@@ -9934,8 +9934,29 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 6.084551, y: 1.1158069, z: 2.2000124}
-  m_Center: {x: 0.044312835, y: -0.53594506, z: 0.023180902}
+  m_Size: {x: 0.25, y: 1.33, z: 2.2000124}
+  m_Center: {x: 3.23, y: -0.63, z: 0.023180902}
+--- !u!65 &460402564
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 460402562}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 6.0845537, y: 1.1158077, z: 2.2000132}
+  m_Center: {x: 0.044312857, y: -0.5359452, z: 0.023181036}
 --- !u!1 &462822202
 GameObject:
   m_ObjectHideFlags: 0
@@ -16369,6 +16390,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SM_tela_rasgada
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9c9593da544ec4547b99654b2d5fb1ee, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3644954647303740577, guid: 9c9593da544ec4547b99654b2d5fb1ee, type: 3}
       propertyPath: m_IsActive
       value: 1
@@ -16388,41 +16413,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5557768702625461045, guid: 9c9593da544ec4547b99654b2d5fb1ee, type: 3}
       insertIndex: -1
       addedObject: {fileID: 460402563}
-    - targetCorrespondingSourceObject: {fileID: 3644954647303740577, guid: 9c9593da544ec4547b99654b2d5fb1ee, type: 3}
+    - targetCorrespondingSourceObject: {fileID: 5557768702625461045, guid: 9c9593da544ec4547b99654b2d5fb1ee, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 702984428}
+      addedObject: {fileID: 460402564}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9593da544ec4547b99654b2d5fb1ee, type: 3}
 --- !u!4 &702984426 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9c9593da544ec4547b99654b2d5fb1ee, type: 3}
   m_PrefabInstance: {fileID: 702984425}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &702984427 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3644954647303740577, guid: 9c9593da544ec4547b99654b2d5fb1ee, type: 3}
-  m_PrefabInstance: {fileID: 702984425}
-  m_PrefabAsset: {fileID: 0}
---- !u!65 &702984428
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 702984427}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.6085856, y: 0.061906073, z: 0.5941107}
-  m_Center: {x: 2.337041, y: 0.040974956, z: 0.73626614}
 --- !u!4 &705841161 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3545281183868229370, guid: 9f5bad3e31e11de4dbb3ea6e1539d50f, type: 3}
@@ -68330,14 +68329,6 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 1689568591416268101}
-    - target: {fileID: 4837413245987695825, guid: 9e09deb2839a0b14fac915ed03d8658a, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 4837413245987695825, guid: 9e09deb2839a0b14fac915ed03d8658a, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
-      value: 
-      objectReference: {fileID: 0}
     - target: {fileID: 5194695807860379460, guid: 9e09deb2839a0b14fac915ed03d8658a, type: 3}
       propertyPath: audioSource
       value: 
