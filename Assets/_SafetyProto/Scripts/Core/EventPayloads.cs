@@ -250,6 +250,11 @@ namespace SafetyProto.Core
 
         /// <summary>Seconds into the session when the task reached its terminal state.</summary>
         public float CompletionTime;
+
+        /// <summary>Id of the <c>reportOptions</c> choice picked, for a hazard-classification
+        /// task. Empty otherwise. Rides alongside <see cref="State"/> so a session log can
+        /// tell a clean "completed" apart from one that completed on a wrong classification.</summary>
+        public string ReportedOptionId;
     }
 
     [System.Serializable]

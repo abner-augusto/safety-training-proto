@@ -198,6 +198,47 @@
                   <TextBlock Text="Conselho de EPI" Classes="label"/>
                   <TextBox Text="{Binding PpeAdvice}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
                 </StackPanel>
+
+                <StackPanel Spacing="4">
+                  <TextBlock Text="Classificação (popup de reporte) — opcional" Classes="label"/>
+                  <TextBlock Text="Deixe vazio para o reporte de confirmar/cancelar de sempre. Preencha para pedir ao participante que classifique o que encontrou; exatamente uma opção deve ser 'correct'."
+                             TextWrapping="Wrap" Opacity="0.8"/>
+                  <Border Classes="panel" Padding="8">
+                    <StackPanel Spacing="4">
+                      <ItemsControl ItemsSource="{Binding ReportOptions}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate DataType="vm:ReportOptionViewModel">
+                            <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                              <TextBox Text="{Binding Id}" Watermark="id" MinWidth="140"/>
+                              <TextBox Text="{Binding Label}" Watermark="rótulo (pt-BR)" MinWidth="220"/>
+                              <CheckBox Content="Correta" IsChecked="{Binding Correct}"/>
+                              <Button Content="Remover" Click="OnRemoveReportOption"/>
+                            </StackPanel>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                      <Button Content="+ Opção" Click="OnAddReportOption" HorizontalAlignment="Left"/>
+                    </StackPanel>
+                  </Border>
+                  <StackPanel Spacing="2">
+                    <TextBlock Text="Título do popup"/>
+                    <TextBox Text="{Binding ReportPopupTitle}"/>
+                  </StackPanel>
+                  <StackPanel Spacing="2">
+                    <TextBlock Text="Corpo do popup"/>
+                    <TextBox Text="{Binding ReportPopupBody}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
+                  </StackPanel>
+                  <StackPanel Orientation="Horizontal" Spacing="12">
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="Rótulo confirmar"/>
+                      <TextBox Text="{Binding ReportConfirmLabel}" MinWidth="140"/>
+                    </StackPanel>
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="Rótulo cancelar"/>
+                      <TextBox Text="{Binding ReportCancelLabel}" MinWidth="140"/>
+                    </StackPanel>
+                  </StackPanel>
+                </StackPanel>
               </StackPanel>
             </DataTemplate>
 

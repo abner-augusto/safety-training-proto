@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine.Events;
 
 namespace SafetyProto.Core.Interfaces
@@ -23,6 +24,12 @@ namespace SafetyProto.Core.Interfaces
         /// <paramref name="onConfirm"/> runs on confirm, <paramref name="onCancel"/> on cancel/dismiss.</summary>
         void ShowConfirmation(string title, string body, string confirmLabel, string cancelLabel,
                               UnityAction onConfirm, UnityAction onCancel = null);
+
+        /// <summary>Shows a popup offering N labeled choices instead of a binary confirm/cancel
+        /// (e.g. classifying a hazard). Auto-closes on any pick; <paramref name="onChosen"/>
+        /// receives the option the participant selected.</summary>
+        void ShowChoice(string title, string body, IReadOnlyList<IReportOption> options,
+                        UnityAction<IReportOption> onChosen);
 
         void Hide();
     }

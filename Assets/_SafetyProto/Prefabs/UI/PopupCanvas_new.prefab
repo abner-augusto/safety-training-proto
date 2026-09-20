@@ -540,7 +540,7 @@ MonoBehaviour:
   skipButtonRoot: {fileID: 6751139010063396575}
   skipButtonLabel: {fileID: 3776872144871056127}
   inputFieldRoot: {fileID: 0}
-  layoutRoot: {fileID: 1917115605258271978}
+  layoutRoot: {fileID: 2260388966796775858}
   normalColor: {r: 0.16078432, g: 0.23137255, b: 0.27058825, a: 0.8862745}
   warningColor: {r: 0.6039216, g: 0.22745098, b: 0.101960786, a: 0.972549}
   interactiveColor: {r: 0.16078432, g: 0.23137255, b: 0.27058825, a: 0.8862745}

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NUnit.Framework;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
@@ -44,6 +45,8 @@ namespace SafetyProto.Tests.Editor
             public void ShowWarning(string title, string body) { }
             public void ShowTransient(string title, string body, float autoCloseSeconds) { }
             public void ShowInteractive(string title, string body, string buttonLabel, UnityAction onAction) { }
+            public void ShowChoice(string title, string body, IReadOnlyList<IReportOption> options,
+                                    UnityAction<IReportOption> onChosen) { }
             public void Hide() { }
         }
 

@@ -152,7 +152,7 @@
           ],
           "hintText": "Conecte o talabarte ao ponto de ancoragem indicado antes de se expor ao risco e permaneça conectado durante a atividade.",
           "failureAdvice": "Conectar o talabarte ao ponto de ancoragem certificado é a primeira ação ao chegar na plataforma. Trabalhar desconectado é a principal causa de quedas fatais. Quando o elemento de ligação para retenção de queda for um talabarte, ele deve ser integrado com absorvedor de energia (NR-35, item 35.6.9.1.1).",
-          "ppeAdvice": "Você conectou o talabarte, mas estava sem algum EPI obrigatório. Verifique todos os equipamentos ANTES de subir.",
+          "ppeAdvice": "Você conectou o talabarte ao ponto de ancoragem, mas estava sem algum EPI obrigatório. Verifique todos os equipamentos ANTES de subir.",
           "omissionAdvice": "Você trabalhou desconectado do ponto de ancoragem. Trabalhar em altura sem o talabarte conectado é a principal causa de quedas fatais (NR-35, item 35.6.11 'a')."
         },
         {
@@ -197,8 +197,8 @@
         },
         {
           "id": "report_damaged_safety_mesh",
-          "name": "Reportar Irregularidade na Tela Fachadeira",
-          "taskDescription": "Inspecione a tela fachadeira e reporte a irregularidade encontrada.",
+          "name": "Comunicar Irregularidade na Tela Fachadeira",
+          "taskDescription": "Inspecione a tela fachadeira e informe a condição encontrada",
           "actionId": "flag_safety_net",
           "risk": {
             "severity": 4,
@@ -209,9 +209,18 @@
             "Helmet"
           ],
           "hintText": "Verifique a continuidade da tela e seus pontos de fixação. Rasgos, partes soltas ou amarrações rompidas comprometem a proteção.",
-          "failureAdvice": "A tela estava rasgada e com um ponto de amarração rompido. Essa condição compromete a barreira contra a projeção e a queda de materiais e ferramentas, risco que a análise de risco do trabalho em altura deve considerar. A irregularidade deve ser reportada antes da liberação da atividade (NR-18, itens 18.12.15 e 18.12.15.1; NR-35, item 35.5.5.1 'f').",
-          "ppeAdvice": "A inspeção deve ser realizada com os EPIs obrigatórios e com o talabarte conectado durante a exposição ao risco de queda.",
-          "omissionAdvice": "Você não reportou a tela fachadeira danificada. O rasgo compromete a barreira contra projeção de materiais e a irregularidade deve ser comunicada antes da liberação da atividade (NR-18, itens 18.12.15 e 18.12.15.1)."
+          "failureAdvice": "A tela estava rasgada. Essa condição compromete a barreira contra a projeção e a queda de materiais e ferramentas, risco que a análise de risco do trabalho em altura deve considerar. A irregularidade deve ser comunicada antes da liberação do andaime (NR-18, itens 18.12.15 e 18.12.15.1; NR-35, item 35.5.5.1 'f').",
+          "ppeAdvice": "A inspeção deve ser realizada com os EPIs obrigatórios e com o talabarte conectado ao ponto de ancoragem durante a exposição ao risco de queda.",
+          "omissionAdvice": "Você não comunicou a irregularidade da tela fachadeira. O rasgo compromete a barreira contra projeção de materiais e a irregularidade deve ser comunicada antes da liberação do andaime (NR-18, itens 18.12.15 e 18.12.15.1).",
+          "reportOptions": [
+            { "id": "torn_mesh",       "label": "Tela rasgada",         "correct": true  },
+            { "id": "loose_fixing",    "label": "Fixação inadequada",   "correct": false },
+            { "id": "no_irregularity", "label": "Sem irregularidade",   "correct": false }
+          ],
+          "reportPopupTitle": "Comunicar Irregularidade",
+          "reportPopupBody": "Você identificou uma irregularidade na tela fachadeira. Como ela deve ser classificada?",
+          "reportConfirmLabel": "Comunicar",
+          "reportCancelLabel": "Cancelar"
         }
       ],
       "requiredGroups": [

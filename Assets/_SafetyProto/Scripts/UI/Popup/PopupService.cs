@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
@@ -176,6 +177,20 @@ namespace SafetyProto.UI
             // that opens another popup isn't immediately hidden by this one.
             data.onActionPressed.AddListener(() => { Hide(); onConfirm?.Invoke(); });
             data.onSkipPressed.AddListener(() => { Hide(); onCancel?.Invoke(); });
+            Show(data);
+        }
+
+        public void ShowChoice(string title, string body, IReadOnlyList<IReportOption> options,
+                               UnityAction<IReportOption> onChosen)
+        {
+            var data = new PopupData
+            {
+                type = PopupType.Interactive,
+                title = title,
+                body = body,
+                choiceOptions = options,
+                onChoiceSelected = onChosen,
+            };
             Show(data);
         }
     }

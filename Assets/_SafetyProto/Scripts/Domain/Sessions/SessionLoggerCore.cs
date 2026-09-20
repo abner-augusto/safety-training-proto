@@ -48,6 +48,9 @@ namespace SafetyProto.Domain.Sessions
         {
             // ActionAttempt (stable id; the friendly name goes in LogEntry.details)
             public string actionId;
+            // ActionAttempt — free-form context (e.g. "gaze_dwell", or
+            // "gaze_dwell:option=loose_fixing" for a hazard-classification report).
+            public string context;
             // PpeStateChanged
             public string ppeType;
             public bool wearing;
@@ -137,6 +140,10 @@ namespace SafetyProto.Domain.Sessions
             public int riskSeverity;
             public int riskProbability;
             public float completionTime;
+            /// <summary>Id of the <c>reportOptions</c> choice picked, for a hazard-classification
+            /// task. Empty otherwise. Distinguishes a clean "completed" row from one that
+            /// completed on a wrong classification (same outcome token, different option id).</summary>
+            public string reportedOptionId = string.Empty;
         }
 
         [Serializable]
@@ -223,7 +230,7 @@ namespace SafetyProto.Domain.Sessions
                 var friendly = _actionNameResolver?.Invoke(actionId);
                 var details = string.IsNullOrWhiteSpace(friendly) ? actionId : friendly;
                 LogEvent("ActionAttempt", details, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
-                    new LogData { actionId = actionId });
+                    new LogData { actionId = actionId, context = args.Context ?? string.Empty });
             };
             _onPpeStateChanged       = args => LogEvent("PpeStateChanged",   $"EPI={GetPpeLabel(args.PpeType)}, Equipado={(args.IsWearing ? "Sim" : "Não")}", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                 new LogData { ppeType = args.PpeType.ToString(), wearing = args.IsWearing });
@@ -358,7 +365,8 @@ namespace SafetyProto.Domain.Sessions
                     riskLevel = RiskLevels.ToToken(o.Risk.Level),
                     riskSeverity = o.Risk.Severity,
                     riskProbability = o.Risk.Probability,
-                    completionTime = o.CompletionTime
+                    completionTime = o.CompletionTime,
+                    reportedOptionId = o.ReportedOptionId ?? string.Empty
                 });
             }
             return rows;

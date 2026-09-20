@@ -477,7 +477,8 @@ namespace SafetyProto.Domain.Tasks
                     GroupName = group?.groupName ?? string.Empty,
                     State = t.State,
                     Risk = t.TaskData?.risk ?? RiskAssessment.Default,
-                    CompletionTime = t.CompletionTime
+                    CompletionTime = t.CompletionTime,
+                    ReportedOptionId = t.ReportedOptionId
                 };
             }
             return outcomes;

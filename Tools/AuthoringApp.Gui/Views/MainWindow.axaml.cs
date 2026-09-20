@@ -84,6 +84,16 @@ public partial class MainWindow : Window
     private void OnRemoveAction(object? sender, RoutedEventArgs e) => Vm?.RemoveSelectedAction();
     private void OnValidateActionCatalog(object? sender, RoutedEventArgs e) => Vm?.ValidateActionCatalog();
 
+    private void OnAddReportOption(object? sender, RoutedEventArgs e) =>
+        (Vm?.Editor?.SelectedNode as TaskViewModel)?.AddReportOption();
+
+    private void OnRemoveReportOption(object? sender, RoutedEventArgs e)
+    {
+        if ((Vm?.Editor?.SelectedNode as TaskViewModel) is not { } task) return;
+        if ((sender as Control)?.DataContext is ReportOptionViewModel option)
+            task.RemoveReportOption(option);
+    }
+
     private async void OnSave(object? sender, RoutedEventArgs e)
     {
         var path = await PickSaveJsonAsync();

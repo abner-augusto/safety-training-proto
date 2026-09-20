@@ -19,6 +19,13 @@ namespace SafetyProto.Core
 
         public float CompletionTime { get; set; }
 
+        /// <summary>Id of the <c>reportOptions</c> choice the participant picked, for a
+        /// hazard-classification task. Empty for every other task and for a plain
+        /// confirm/cancel report. Set directly on this instance (rather than threaded
+        /// through <c>TaskEventArgs</c>) because the reporter and the task engine share
+        /// this same object via <c>TaskManager.GetSessionTasks()</c>.</summary>
+        public string ReportedOptionId { get; set; } = string.Empty;
+
         public bool IsValid { get; private set; } = true;
         public string InvalidReason { get; private set; } = string.Empty;
 

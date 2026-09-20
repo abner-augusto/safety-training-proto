@@ -1,11 +1,23 @@
 #nullable enable
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
 
 namespace SafetyProto.Domain.Scenarios
 {
+    /// <summary>
+    /// JSON-backed classification choice for a hazard-classification task's report popup
+    /// (<c>"reportOptions": [{ "id": ..., "label": ..., "correct": ... }]</c>).
+    /// </summary>
+    public sealed class ReportOptionDef : IReportOption
+    {
+        [JsonProperty("id")] public string Id { get; set; } = string.Empty;
+        [JsonProperty("label")] public string Label { get; set; } = string.Empty;
+        [JsonProperty("correct")] public bool Correct { get; set; }
+    }
+
     /// <summary>
     /// The two graded axes of a task's risk, as authored. Kept as its own object in the JSON
     /// (<c>"risk": { "severity": 5, "probability": 5 }</c>) so the grades read as a pair and
@@ -82,11 +94,35 @@ namespace SafetyProto.Domain.Scenarios
         [JsonProperty("omissionAdvice")]
         public string omissionAdvice { get; set; } = string.Empty;
 
+        /// <summary>Classification choices for a hazard-classification task. Empty for every
+        /// other task, which keeps the plain confirm/cancel report flow (see
+        /// <see cref="ScenarioLoader"/> for the "exactly one correct option" validation).</summary>
+        [JsonProperty("reportOptions")]
+        public List<ReportOptionDef> ReportOptions { get; set; } = new();
+
+        /// <summary>Report-popup copy, authored alongside <see cref="ReportOptions"/>. Moved
+        /// here from the scene's <c>SafetyIssueReporter</c> inspector fields so the scenario
+        /// stays the single source of participant-facing text.</summary>
+        [JsonProperty("reportPopupTitle")]
+        public string reportPopupTitle { get; set; } = string.Empty;
+
+        [JsonProperty("reportPopupBody")]
+        public string reportPopupBody { get; set; } = string.Empty;
+
+        [JsonProperty("reportConfirmLabel")]
+        public string reportConfirmLabel { get; set; } = string.Empty;
+
+        [JsonProperty("reportCancelLabel")]
+        public string reportCancelLabel { get; set; } = string.Empty;
+
         [JsonIgnore]
         private readonly List<PPEType> _requiredPpe = new();
 
         [JsonIgnore]
         IReadOnlyList<PPEType> ISafetyTask.requiredPPE => _requiredPpe;
+
+        [JsonIgnore]
+        IReadOnlyList<IReportOption> ISafetyTask.reportOptions => ReportOptions;
 
         public string ResolveExpectedActionId() =>
             string.IsNullOrWhiteSpace(ActionId) ? string.Empty : ActionId.Trim();
@@ -142,6 +178,29 @@ namespace SafetyProto.Domain.Scenarios
                     errors.Add(
                         $"Tipo de EPI desconhecido '{name}' na tarefa '{taskName}' (grupo '{groupName}'). " +
                         $"Valores válidos: {valid}");
+                }
+            }
+
+            // Empty is valid (keeps today's plain confirm/cancel report flow); a non-empty
+            // list must resolve to exactly one correct answer for the analysis to score it.
+            if (ReportOptions.Count > 0)
+            {
+                int correctCount = ReportOptions.Count(o => o.Correct);
+                if (correctCount != 1)
+                {
+                    errors.Add(
+                        $"A tarefa '{taskName}' (grupo '{groupName}') deve declarar exatamente uma opção em " +
+                        $"'reportOptions' com \"correct\": true (encontradas: {correctCount}).");
+                }
+
+                foreach (var option in ReportOptions)
+                {
+                    if (string.IsNullOrWhiteSpace(option.Id))
+                    {
+                        errors.Add(
+                            $"Uma opção de 'reportOptions' sem 'id' foi encontrada na tarefa '{taskName}' " +
+                            $"(grupo '{groupName}').");
+                    }
                 }
             }
         }

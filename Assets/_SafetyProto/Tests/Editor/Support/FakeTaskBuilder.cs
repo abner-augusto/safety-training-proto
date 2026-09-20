@@ -58,8 +58,23 @@ namespace SafetyProto.Tests.Editor.Support
 
             public string ExpectedActionId { get; set; } = string.Empty;
 
+            public List<IReportOption> ReportOptions { get; set; } = new List<IReportOption>();
+            public string reportPopupTitle { get; set; } = string.Empty;
+            public string reportPopupBody { get; set; } = string.Empty;
+            public string reportConfirmLabel { get; set; } = string.Empty;
+            public string reportCancelLabel { get; set; } = string.Empty;
+
             IReadOnlyList<PPEType> ISafetyTask.requiredPPE => requiredPPE;
+            IReadOnlyList<IReportOption> ISafetyTask.reportOptions => ReportOptions;
             public string ResolveExpectedActionId() => ExpectedActionId;
+        }
+
+        /// <summary>Minimal <see cref="IReportOption"/> for fixtures.</summary>
+        public sealed class FakeReportOption : IReportOption
+        {
+            public string Id { get; set; } = string.Empty;
+            public string Label { get; set; } = string.Empty;
+            public bool Correct { get; set; }
         }
 
         public sealed class FakeTaskGroup : ITaskGroup

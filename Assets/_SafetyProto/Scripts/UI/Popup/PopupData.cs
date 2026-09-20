@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using SafetyProto.Core.Interfaces;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -37,5 +39,11 @@ namespace SafetyProto.UI
         // Auto-closes the popup after N seconds. 0 = no timeout (stays until manual action).
         // Ignored for PopupType.Interactive (requires a user click).
         public float autoCloseSeconds = 0f;
+
+        // N labeled choices (e.g. hazard classification) instead of the fixed action/skip
+        // buttons. Null/empty means "not a choice popup" — actionButtonRoot/skipButtonRoot
+        // keep governing Show() as before.
+        public IReadOnlyList<IReportOption> choiceOptions;
+        public UnityAction<IReportOption> onChoiceSelected;
     }
 }

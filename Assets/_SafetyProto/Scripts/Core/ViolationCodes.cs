@@ -13,5 +13,10 @@ namespace SafetyProto.Core
         public const string PrerequisitePending = "PREREQUISITE_PENDING";
         public const string PpeMissing = "PPE_MISSING";
         public const string TaskNotPerformed = "TASK_NOT_PERFORMED";
+
+        /// <summary>Participant chose an incorrect classification option on a hazard-report
+        /// popup (e.g. "report_damaged_safety_mesh"). The task still completes — this only
+        /// charges the tier's base penalty (ScoringConfig.BasePenaltyFor).</summary>
+        public const string HazardMisclassified = "HAZARD_MISCLASSIFIED";
     }
 }

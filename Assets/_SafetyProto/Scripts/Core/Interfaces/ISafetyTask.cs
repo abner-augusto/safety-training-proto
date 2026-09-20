@@ -3,6 +3,18 @@ using System.Collections.Generic;
 namespace SafetyProto.Core.Interfaces
 {
     /// <summary>
+    /// One classification choice offered by a hazard-classification task's report popup
+    /// (e.g. "report_damaged_safety_mesh"). Stable per-option id, not an array index, is
+    /// the analysis key — a reorder in the scenario must not reshape collected data.
+    /// </summary>
+    public interface IReportOption
+    {
+        string Id { get; }
+        string Label { get; }
+        bool Correct { get; }
+    }
+
+    /// <summary>
     /// Engine-independent view of a safety training task.
     /// Implemented by the Unity <c>SafetyTask</c> ScriptableObject and by pure-C#
     /// records used in the CLI harness.
@@ -45,5 +57,19 @@ namespace SafetyProto.Core.Interfaces
         /// <c>SafetyTask.ResolveExpectedActionId()</c>.
         /// </summary>
         string ResolveExpectedActionId();
+
+        /// <summary>
+        /// Classification choices for a hazard-classification task, authored in the
+        /// scenario. Empty for every other task, which keeps the plain confirm/cancel
+        /// report flow unchanged.
+        /// </summary>
+        IReadOnlyList<IReportOption> reportOptions { get; }
+
+        /// <summary>Report-popup copy, authored alongside <see cref="reportOptions"/>.
+        /// Empty when the task has none; a reporter falls back to its own defaults.</summary>
+        string reportPopupTitle { get; }
+        string reportPopupBody { get; }
+        string reportConfirmLabel { get; }
+        string reportCancelLabel { get; }
     }
 }

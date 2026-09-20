@@ -39,6 +39,10 @@ public sealed class TaskViewModel : ViewModelBase
     private string _failureAdvice;
     private string _ppeAdvice;
     private string _omissionAdvice;
+    private string _reportPopupTitle;
+    private string _reportPopupBody;
+    private string _reportConfirmLabel;
+    private string _reportCancelLabel;
 
     public TaskViewModel(SafetyTaskDef def, GroupViewModel group, ScenarioEditorViewModel editor)
     {
@@ -60,10 +64,17 @@ public sealed class TaskViewModel : ViewModelBase
         _failureAdvice = def.failureAdvice;
         _ppeAdvice = def.ppeAdvice;
         _omissionAdvice = def.omissionAdvice;
+        _reportPopupTitle = def.reportPopupTitle;
+        _reportPopupBody = def.reportPopupBody;
+        _reportConfirmLabel = def.reportConfirmLabel;
+        _reportCancelLabel = def.reportCancelLabel;
 
         var selected = new HashSet<string>(def.RequiredPpeNames, System.StringComparer.OrdinalIgnoreCase);
         PpeOptions = new ObservableCollection<PpeToggleViewModel>(
             editor.PpeOptionNames.Select(n => new PpeToggleViewModel(n, selected.Contains(n))));
+
+        ReportOptions = new ObservableCollection<ReportOptionViewModel>(
+            def.ReportOptions.Select(o => new ReportOptionViewModel(o)));
     }
 
     /// <summary>The group this task belongs to (for add/remove and re-parenting).</summary>
@@ -153,6 +164,23 @@ public sealed class TaskViewModel : ViewModelBase
     public string PpeAdvice { get => _ppeAdvice; set => SetField(ref _ppeAdvice, value); }
     public string OmissionAdvice { get => _omissionAdvice; set => SetField(ref _omissionAdvice, value); }
 
+    /// <summary>Classification choices offered by this task's report popup. Empty for every
+    /// task except a hazard-classification one — leaving it empty keeps the plain
+    /// confirm/cancel report flow at runtime.</summary>
+    public ObservableCollection<ReportOptionViewModel> ReportOptions { get; }
+
+    public string ReportPopupTitle { get => _reportPopupTitle; set => SetField(ref _reportPopupTitle, value); }
+    public string ReportPopupBody { get => _reportPopupBody; set => SetField(ref _reportPopupBody, value); }
+    public string ReportConfirmLabel { get => _reportConfirmLabel; set => SetField(ref _reportConfirmLabel, value); }
+    public string ReportCancelLabel { get => _reportCancelLabel; set => SetField(ref _reportCancelLabel, value); }
+
+    public void AddReportOption() => ReportOptions.Add(new ReportOptionViewModel(string.Empty, string.Empty, false));
+
+    public void RemoveReportOption(ReportOptionViewModel option)
+    {
+        if (option != null) ReportOptions.Remove(option);
+    }
+
     /// <summary>Label shown in the tree.</summary>
     public string DisplayName
     {
@@ -176,6 +204,11 @@ public sealed class TaskViewModel : ViewModelBase
         ppeAdvice = _ppeAdvice,
         omissionAdvice = _omissionAdvice,
         RequiredPpeNames = PpeOptions.Where(p => p.IsSelected).Select(p => p.Name).ToList(),
+        ReportOptions = ReportOptions.Select(o => o.ToDef()).ToList(),
+        reportPopupTitle = _reportPopupTitle,
+        reportPopupBody = _reportPopupBody,
+        reportConfirmLabel = _reportConfirmLabel,
+        reportCancelLabel = _reportCancelLabel,
     };
 
     private static RiskGradeOption GradeFor(IReadOnlyList<RiskGradeOption> options, int grade) =>

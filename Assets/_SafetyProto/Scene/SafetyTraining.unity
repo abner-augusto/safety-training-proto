@@ -8290,15 +8290,16 @@ MonoBehaviour:
   _reportButton: {fileID: 246457844}
   _reportButtonRoot: {fileID: 2068033644}
   _popupFeedbackProvider: {fileID: 5455797637335201551}
+  _taskManager: {fileID: 0}
   _audioSource: {fileID: 340938061}
-  _dwellCompletedSound: {fileID: 8300000, guid: c5aca4cf989c2d0468be02031bc53604, type: 3}
+  _dwellCompletedSound: {fileID: 8300000, guid: f460907ea2b3a5d42be84c86dcee77a4, type: 3}
   _hapticManager: {fileID: 7322035375745015846}
   _dwellHapticAmplitude: 0.25
   _dwellHapticDuration: 0.06
-  _popupTitle: Reportar Irregularidade
+  _popupTitle: Comunicar Irregularidade
   _popupBody: "Voc\xEA identificou uma irregularidade na tela fachadeira. Deseja
-    report\xE1-la?"
-  _confirmLabel: Reportar
+    comunic\xE1-la?"
+  _confirmLabel: Comunicar
   _cancelLabel: Cancelar
 --- !u!82 &340938061
 AudioSource:
@@ -48429,7 +48430,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6308249081878237579, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 231.9
+      value: 315
       objectReference: {fileID: 0}
     - target: {fileID: 6308249081878237579, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
       propertyPath: m_LocalPosition.x

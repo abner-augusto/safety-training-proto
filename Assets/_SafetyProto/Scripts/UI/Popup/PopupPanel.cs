@@ -1,4 +1,6 @@
 using System.Collections;
+using System.Collections.Generic;
+using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using TMPro;
 using UnityEngine;
@@ -62,6 +64,10 @@ namespace SafetyProto.UI
         private TMP_InputField _inputField;
         private bool _gateActionOnInput;
 
+        // Clones of actionButtonRoot instantiated per PopupData.choiceOptions. Tracked so the
+        // next Show() (choice or not) can tear them down instead of leaking one set per popup.
+        private readonly List<GameObject> _choiceButtons = new List<GameObject>();
+
         private void Awake()
         {
             _canvasGroup = GetComponent<CanvasGroup>()
@@ -114,22 +120,29 @@ namespace SafetyProto.UI
                     iconImage.sprite = resolvedIcon;
             }
 
+            bool isChoice = data.choiceOptions != null && data.choiceOptions.Count > 0;
             bool isInteractive = data.type == PopupType.Interactive;
+
+            ClearChoiceButtons();
+
             if (actionButtonRoot != null)
-                actionButtonRoot.SetActive(isInteractive);
-            if (isInteractive && actionButtonLabel != null)
+                actionButtonRoot.SetActive(isInteractive && !isChoice);
+            if (isInteractive && !isChoice && actionButtonLabel != null)
                 actionButtonLabel.text = data.actionButtonLabel;
 
             if (closeButtonRoot != null)
                 closeButtonRoot.SetActive(!isInteractive);
 
             if (skipButtonRoot != null)
-                skipButtonRoot.SetActive(data.showSkipButton);
+                skipButtonRoot.SetActive(data.showSkipButton && !isChoice);
 
             if (skipButtonLabel != null)
                 skipButtonLabel.text = string.IsNullOrEmpty(data.skipButtonLabel)
                     ? "Pular"
                     : data.skipButtonLabel;
+
+            if (isChoice)
+                BuildChoiceButtons(data.choiceOptions, data.onChoiceSelected);
 
             if (inputFieldRoot != null)
                 inputFieldRoot.SetActive(data.showInputField);
@@ -187,6 +200,58 @@ namespace SafetyProto.UI
             _currentData?.onActionPressed?.Invoke();
         }
 
+        /// <summary>
+        /// Clones <see cref="actionButtonRoot"/> once per option instead of instantiating
+        /// <c>DualModeButton.prefab</c>: the clone is a plain <c>Button</c> + <c>RayInteractable</c>
+        /// under Background's <c>VerticalLayoutGroup</c>, so it inherits the canvas-wide poke/ray
+        /// interaction (<c>ISDK_PokeCanvasInteraction</c> / <c>ISDK_RayCanvasInteraction</c>) for
+        /// free and grows the panel through the fitter already on Background — no second
+        /// interaction path stacked on the same surface.
+        /// </summary>
+        private void BuildChoiceButtons(IReadOnlyList<IReportOption> options, UnityEngine.Events.UnityAction<IReportOption> onChosen)
+        {
+            if (actionButtonRoot == null)
+            {
+                SafetyLog.Warning("[PopupPanel] actionButtonRoot ausente — não é possível construir os botões de escolha.", this);
+                return;
+            }
+
+            var parent = actionButtonRoot.transform.parent;
+            int insertIndex = actionButtonRoot.transform.GetSiblingIndex() + 1;
+
+            foreach (var option in options)
+            {
+                var clone = Instantiate(actionButtonRoot, parent);
+                clone.name = $"ChoiceButtonRoot_{option.Id}";
+                clone.transform.SetSiblingIndex(insertIndex++);
+                clone.SetActive(true);
+
+                var label = clone.GetComponentInChildren<TextMeshProUGUI>(true);
+                if (label != null) label.text = option.Label;
+
+                var button = clone.GetComponentInChildren<Button>(true);
+                if (button != null)
+                {
+                    var captured = option;
+                    button.onClick.RemoveAllListeners();
+                    button.onClick.AddListener(() =>
+                    {
+                        Hide();
+                        onChosen?.Invoke(captured);
+                    });
+                }
+
+                _choiceButtons.Add(clone);
+            }
+        }
+
+        private void ClearChoiceButtons()
+        {
+            foreach (var go in _choiceButtons)
+                if (go != null) Destroy(go);
+            _choiceButtons.Clear();
+        }
+
         private void OnInputValueChanged(string _) => RefreshActionInteractable();
 
         /// <summary>
@@ -206,6 +271,7 @@ namespace SafetyProto.UI
         {
             if (_inputField != null)
                 _inputField.onValueChanged.RemoveListener(OnInputValueChanged);
+            ClearChoiceButtons();
         }
 
         public void OnCloseButtonPressed()

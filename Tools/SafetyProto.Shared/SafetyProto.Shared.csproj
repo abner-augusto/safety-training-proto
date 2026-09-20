@@ -52,6 +52,7 @@
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\IPPEComplianceChecker.cs" Link="Core\Interfaces\IPPEComplianceChecker.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Safety\SafetyRuleEngineCore.cs"  Link="Domain\Safety\SafetyRuleEngineCore.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Safety\RefusedAttemptTracker.cs" Link="Domain\Safety\RefusedAttemptTracker.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Safety\HazardClassificationPolicy.cs" Link="Domain\Safety\HazardClassificationPolicy.cs" />
 
     <!-- Part 7 additions -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Tasks\TaskManagerCore.cs"        Link="Domain\Tasks\TaskManagerCore.cs" />
