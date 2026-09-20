@@ -41,7 +41,7 @@ namespace SafetyProto.UI
         /// <summary>Fired once the name flow resolves (after session + onboarding start).</summary>
         public UnityEvent onNameEntryFinished;
 
-        private TouchScreenKeyboard _keyboard;
+        private Coroutine _keyboardOpenCoroutine;
         private bool _resolved;
         private bool _active;
 
@@ -50,8 +50,6 @@ namespace SafetyProto.UI
             if (nameField != null)
             {
                 nameField.characterLimit = characterLimit;
-                // Re-open the system keyboard if the field is selected again on device.
-                nameField.onSelect.AddListener(_ => OpenKeyboard());
             }
         }
 
@@ -66,7 +64,7 @@ namespace SafetyProto.UI
             Begin();
         }
 
-        /// <summary>Show the name-entry popup and open the system keyboard.</summary>
+        /// <summary>Show the name-entry popup and focus the editable name field.</summary>
         public void Begin()
         {
             _resolved = false;
@@ -75,12 +73,14 @@ namespace SafetyProto.UI
             if (nameField != null)
             {
                 nameField.text = string.Empty;
-                // On device, drive the field entirely from the system keyboard so TMP doesn't pop
-                // its own; in the Editor keep it editable for physical-keyboard testing.
-                nameField.readOnly = TouchScreenKeyboard.isSupported;
+                // Meta's system keyboard overlay opens when an editable field receives focus.
+                // Keep TMP editable so the overlay can attach to the focused field.
+                nameField.readOnly = false;
+                SafetyLog.Info(
+                    $"[NameEntryController] Campo preparado — plataforma {Application.platform}, " +
+                    $"teclado suportado: {TouchScreenKeyboard.isSupported}.",
+                    this);
             }
-
-            OpenKeyboard();
 
             var data = new PopupData
             {
@@ -99,45 +99,31 @@ namespace SafetyProto.UI
             data.onSkipPressed.AddListener(Skip);
 
             if (popupService != null)
+            {
                 popupService.Show(data);
+                if (_keyboardOpenCoroutine != null)
+                    StopCoroutine(_keyboardOpenCoroutine);
+                _keyboardOpenCoroutine = StartCoroutine(OpenKeyboardAfterPopup());
+            }
             else
                 SafetyLog.Warning("[NameEntryController] popupService não atribuído no Inspector.", this);
         }
 
-        private void Update()
+        private IEnumerator OpenKeyboardAfterPopup()
         {
-            if (!_active || _keyboard == null) return;
+            // PopupPanel activates the canvas and enables raycasts during its fade. Wait one
+            // frame so the input field can become selectable before asking Horizon OS for input.
+            yield return null;
+            _keyboardOpenCoroutine = null;
 
-            if (nameField != null && _keyboard.active)
-                nameField.text = _keyboard.text;
+            if (!_active || nameField == null) yield break;
 
-            switch (_keyboard.status)
-            {
-                case TouchScreenKeyboard.Status.Done:
-                    _keyboard = null;
-                    Confirm();
-                    break;
-                case TouchScreenKeyboard.Status.Canceled:
-                case TouchScreenKeyboard.Status.LostFocus:
-                    _keyboard = null;
-                    break;
-            }
-        }
-
-        /// <summary>Opens the Horizon OS system keyboard (no-op on platforms without one).</summary>
-        public void OpenKeyboard()
-        {
-            if (!_active || !TouchScreenKeyboard.isSupported) return; // Editor/desktop: physical typing.
-
-            string seed = nameField != null ? nameField.text : string.Empty;
-            _keyboard = TouchScreenKeyboard.Open(
-                seed,
-                TouchScreenKeyboardType.Default,
-                autocorrection: false,
-                multiline: false,
-                secure: false,
-                alert: false,
-                textPlaceholder: "Primeiro nome");
+            nameField.Select();
+            nameField.ActivateInputField();
+            SafetyLog.Info(
+                $"[NameEntryController] Campo focado — ativo: {nameField.isActiveAndEnabled}, " +
+                $"interagível: {nameField.interactable}, somente leitura: {nameField.readOnly}.",
+                this);
         }
 
         public void Confirm()
@@ -157,10 +143,10 @@ namespace SafetyProto.UI
             _resolved = true;
             _active = false;
 
-            if (_keyboard != null)
+            if (_keyboardOpenCoroutine != null)
             {
-                _keyboard.active = false;
-                _keyboard = null;
+                StopCoroutine(_keyboardOpenCoroutine);
+                _keyboardOpenCoroutine = null;
             }
 
             ParticipantIdentity.SetParticipant(name);
