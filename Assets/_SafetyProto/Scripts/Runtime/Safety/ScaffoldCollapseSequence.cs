@@ -63,6 +63,8 @@ namespace SafetyProto.Runtime.Safety
         [SerializeField] private float detachAngleDegrees = 30f;
         [Tooltip("Comfort ceiling on how far the camera tilts with the structure. Past this the rig follows translation only.")]
         [SerializeField] private float maxFollowTiltDegrees = 22f;
+        [Tooltip("Additional player translation while riding the deck, in collapsePivot local space. Negative Z is forward for the current scaffold orientation.")]
+        [SerializeField] private Vector3 playerRideOffsetLocal;
         [SerializeField] private float tremorAmplitudeDegrees = 0.5f;
         [SerializeField] private float fallGravity = 9.81f;
         [SerializeField] private float maxFallSpeed = 12f;
@@ -210,7 +212,7 @@ namespace SafetyProto.Runtime.Safety
                     {
                         // Ride the deck: full translation, rotation clamped for comfort.
                         float followTilt = ScaffoldCollapseSolver.FollowTiltDegrees(angle, cfg);
-                        playerRig.position = collapsePivot.TransformPoint(rigPivotLocalPosition);
+                        playerRig.position = collapsePivot.TransformPoint(rigPivotLocalPosition + playerRideOffsetLocal);
                         playerRig.rotation = Quaternion.AngleAxis(followTilt, worldTiltAxis) * _rigStartRotation;
                     }
                     else

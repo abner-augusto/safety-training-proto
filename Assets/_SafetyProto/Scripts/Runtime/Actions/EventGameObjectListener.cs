@@ -22,6 +22,8 @@ namespace SafetyProto.Runtime.Actions
             PpeStateChanged,
             ActionAttempt,
             TasksCompleted,
+            ConsequenceStarted,
+            ConsequenceEnded,
         }
 
         [Header("Configuration")]
@@ -40,6 +42,8 @@ namespace SafetyProto.Runtime.Actions
         private UnityEngine.Events.UnityAction<PPEStateChangedEventArgs>  _onPpeStateChanged;
         private UnityEngine.Events.UnityAction<ActionAttemptedEvent>      _onActionAttempt;
         private UnityEngine.Events.UnityAction<SessionCompletedEventArgs> _onTasksCompleted;
+        private System.Action<ConsequenceStartedEventArgs> _onConsequenceStarted;
+        private System.Action _onConsequenceEnded;
 
         // Back-compat for scenes/prefabs that had a single target field.
         [FormerlySerializedAs("target")]
@@ -132,22 +136,34 @@ namespace SafetyProto.Runtime.Actions
                     _onTasksCompleted = _ => Toggle();
                     EventBus.Instance.onSessionCompleted.AddListener(_onTasksCompleted);
                     break;
+                case EventType.ConsequenceStarted:
+                    _onConsequenceStarted = _ => Toggle();
+                    ConsequenceEvents.OnConsequenceStarted += _onConsequenceStarted;
+                    break;
+                case EventType.ConsequenceEnded:
+                    _onConsequenceEnded = Toggle;
+                    ConsequenceEvents.OnConsequenceEnded += _onConsequenceEnded;
+                    break;
             }
         }
 
         private void OnDestroy()
         {
-            if (EventBus.Instance == null) return;
-            if (_onSessionStarted  != null) EventBus.Instance.onSessionStarted.RemoveListener(_onSessionStarted);
-            if (_onSessionPaused   != null) EventBus.Instance.onSessionPaused.RemoveListener(_onSessionPaused);
-            if (_onSessionResumed  != null) EventBus.Instance.onSessionResumed.RemoveListener(_onSessionResumed);
-            if (_onSessionEnded    != null) EventBus.Instance.onSessionEnded.RemoveListener(_onSessionEnded);
-            if (_onTaskStarted     != null) EventBus.Instance.onTaskStarted.RemoveListener(_onTaskStarted);
-            if (_onTaskCompleted   != null) EventBus.Instance.onTaskCompleted.RemoveListener(_onTaskCompleted);
-            if (_onScoreChanged    != null) EventBus.Instance.onScoreChanged.RemoveListener(_onScoreChanged);
-            if (_onPpeStateChanged != null) EventBus.Instance.onPpeStateChanged.RemoveListener(_onPpeStateChanged);
-            if (_onActionAttempt   != null) EventBus.Instance.onActionAttempt.RemoveListener(_onActionAttempt);
-            if (_onTasksCompleted  != null) EventBus.Instance.onSessionCompleted.RemoveListener(_onTasksCompleted);
+            if (EventBus.Instance != null)
+            {
+                if (_onSessionStarted  != null) EventBus.Instance.onSessionStarted.RemoveListener(_onSessionStarted);
+                if (_onSessionPaused   != null) EventBus.Instance.onSessionPaused.RemoveListener(_onSessionPaused);
+                if (_onSessionResumed  != null) EventBus.Instance.onSessionResumed.RemoveListener(_onSessionResumed);
+                if (_onSessionEnded    != null) EventBus.Instance.onSessionEnded.RemoveListener(_onSessionEnded);
+                if (_onTaskStarted     != null) EventBus.Instance.onTaskStarted.RemoveListener(_onTaskStarted);
+                if (_onTaskCompleted   != null) EventBus.Instance.onTaskCompleted.RemoveListener(_onTaskCompleted);
+                if (_onScoreChanged    != null) EventBus.Instance.onScoreChanged.RemoveListener(_onScoreChanged);
+                if (_onPpeStateChanged != null) EventBus.Instance.onPpeStateChanged.RemoveListener(_onPpeStateChanged);
+                if (_onActionAttempt   != null) EventBus.Instance.onActionAttempt.RemoveListener(_onActionAttempt);
+                if (_onTasksCompleted  != null) EventBus.Instance.onSessionCompleted.RemoveListener(_onTasksCompleted);
+            }
+            if (_onConsequenceStarted != null) ConsequenceEvents.OnConsequenceStarted -= _onConsequenceStarted;
+            if (_onConsequenceEnded != null) ConsequenceEvents.OnConsequenceEnded -= _onConsequenceEnded;
         }
 
         private bool HasAnyTarget()
