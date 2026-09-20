@@ -82,16 +82,47 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
-        public void FinishScreen_KeepsOnlyDetailsAndRestartTargets()
+        public void FinishScreen_KeepsOnlyInteractiveTargets()
         {
-            // No scrollbar handle: the details list is dragged directly with the ray, so the
-            // scroll view's own graphic is the whole scrolling surface.
             AssertRaycastTargets(FinishScreenPath, new[]
             {
                 "MainPanel/FooterActions/DetailsToggleButton",
                 "MainPanel/FooterActions/RestartButton",
+                "DetailsPanel",
                 "DetailsPanel/TaskScrollView",
             });
+        }
+
+        [Test]
+        public void FinishScreen_DetailsPanelForwardsDragToTaskScrollView()
+        {
+            var root = Load(FinishScreenPath);
+            var panel = Find(root, "DetailsPanel");
+            var scrollRect = Find(root, "DetailsPanel/TaskScrollView").GetComponent<ScrollRect>();
+            var dragSurface = panel.GetComponents<MonoBehaviour>()
+                .FirstOrDefault(component => component != null &&
+                    component.GetType().Name == "ScrollRectDragSurface");
+
+            Assert.IsTrue(panel.GetComponent<Image>().raycastTarget,
+                "The details card must receive pointer gestures outside the task viewport.");
+            Assert.IsNotNull(dragSurface,
+                "The details card must forward its drag gestures to the task list.");
+            Assert.AreSame(scrollRect,
+                new SerializedObject(dragSurface).FindProperty("target").objectReferenceValue);
+        }
+
+        [Test]
+        public void FinishScreen_ButtonsDoNotUseLegacy32Sprite()
+        {
+            var root = Load(FinishScreenPath);
+
+            foreach (var button in root.GetComponentsInChildren<Button>(true))
+            {
+                var image = button.GetComponent<Image>();
+                if (image == null || image.sprite == null) continue;
+                Assert.AreNotEqual("32", image.sprite.name,
+                    $"{PathOf(button.transform, root.transform)} still uses the legacy 32 sprite.");
+            }
         }
 
         [Test]
@@ -112,8 +143,8 @@ namespace SafetyProto.Tests.Editor
             var mainPanel = Find(root, "MainPanel").GetComponent<RectTransform>();
             var detailsPanel = Find(root, "DetailsPanel").GetComponent<RectTransform>();
 
-            AssertRectApprox(mainPanel, new Vector2(821f, 583f), new Vector2(-216f, 16f));
-            AssertRectApprox(detailsPanel, new Vector2(418f, 486f), new Vector2(432f, 16f));
+            AssertRectApprox(mainPanel, new Vector2(821f, 590f), new Vector2(-216f, 16f));
+            AssertRectApprox(detailsPanel, new Vector2(418f, 580f), new Vector2(432f, 16f));
 
             Assert.AreEqual(0f, mainPanel.localEulerAngles.y, 0.01f,
                 "The reference layout must not carry an angled panel: one flat surface backs both cards.");
