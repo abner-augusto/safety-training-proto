@@ -37,7 +37,7 @@ namespace SafetyProto.Runtime.Safety
     }
 
     /// <summary>
-    /// Gate placed on the "Iniciar Atividade" button.
+    /// Gate placed on the Finalizar Inspeção e Iniciar Atividade button.
     /// When triggered, checks if all tasks in the current FreeOrder group are complete.
     /// If not, executes visual/physical consequences for each pending task and penalizes the score.
     /// </summary>
@@ -153,7 +153,7 @@ namespace SafetyProto.Runtime.Safety
         }
 
         /// <summary>
-        /// Call this from RayInteractable.WhenSelect on the "Iniciar Atividade" button.
+        /// Call this from RayInteractable.WhenSelect on the Finalizar Inspeção e Iniciar Atividade button.
         /// </summary>
         public void Validate()
         {
@@ -196,8 +196,8 @@ namespace SafetyProto.Runtime.Safety
                 else if (_popupFeedback != null)
                 {
                     _popupFeedback.ShowConfirmation(
-                        "Iniciar Atividade",
-                        "Deseja iniciar a atividade?",
+                        "Finalizar Inspeção e Iniciar Atividade",
+                        "Deseja finalizar a inspeção e iniciar a atividade?",
                         "Iniciar",
                         "Voltar",
                         onConfirm: () => BeginEvaluationFinish(pendingTasks),
@@ -420,7 +420,7 @@ namespace SafetyProto.Runtime.Safety
         {
             string list = string.Join("\n", pendingTasks.Select(t =>
                 "• " + (string.IsNullOrWhiteSpace(t.taskName) ? t.ExpectedActionId : t.taskName)));
-            string body = $"Você ainda não concluiu todas as tarefas de segurança:\n{list}\n\n" +
+            string body = $"Você ainda não concluiu a inspeção — faltam estas tarefas:\n{list}\n\n" +
                           "Conclua as tarefas restantes antes de iniciar a atividade.";
 
             void Continue()
