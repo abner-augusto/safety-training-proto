@@ -23,6 +23,7 @@ namespace SafetyProto.Tests.Editor
                 new ActionAttemptedEvent("action"),
                 new ActionRefusedEventArgs("action", "source", "PREREQUISITE_PENDING"),
                 new PopupClosedEventArgs(),
+                new PopupShownEventArgs(),
                 new PPEStateChangedEventArgs(PPEType.Helmet, true),
                 new TaskEventArgs(null!), new TaskGroupEventArgs(null), new ScoreChangedEventArgs(1, 1),
                 new SafetyViolationEventArgs(), new CriticalSafetyFailureEventArgs(), new SafetyErrorEventArgs()

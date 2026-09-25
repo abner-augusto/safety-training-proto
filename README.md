@@ -134,6 +134,7 @@ All communication between modules is through typed event payloads defined in
 | `CriticalSafetyFailureEventArgs`| `SafetyAnalyzer`                | UI, logger                            |
 | `ActionRefusedEventArgs`        | `SafetyRuleEngineCore`          | the emitter of the refused attempt (`ScaffoldPieceInstaller`) |
 | `PopupClosedEventArgs`          | `PopupService`                  | gameplay objects waiting on a warning |
+| `PopupShownEventArgs`           | `PopupService`                  | popup camera (`FadeHandOverlay`)      |
 
 The `Phase` discriminator on `TaskEventArgs` and `TaskGroupEventArgs` is
 essential: it lets a single typed subscriber key carry both lifecycle phases of

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
+using SafetyProto.Core;
+using SafetyProto.Core.Events;
 using SafetyProto.Runtime.Feedback;
 using UnityEngine;
 
@@ -80,6 +82,42 @@ namespace SafetyProto.Tests.Editor
             _fade.enabled = false;
             UpdateMask();
             AssertPixel(false);
+        }
+
+        [Test]
+        public void PopupVisible_OverlaysHandsWithoutFade()
+        {
+            PublishAndDispatch(new PopupShownEventArgs());
+            UpdateMask();
+            AssertPixel(true);
+        }
+
+        [Test]
+        public void PopupClosed_RestoresWorldOcclusion()
+        {
+            PublishAndDispatch(new PopupShownEventArgs());
+            UpdateMask();
+            AssertPixel(true);
+
+            PublishAndDispatch(new PopupClosedEventArgs());
+            UpdateMask();
+            AssertPixel(false);
+        }
+
+        [Test]
+        public void PopupClosesDuringFade_HandsStayOverlaid()
+        {
+            _fade.SetExplicitFade(1f);
+            PublishAndDispatch(new PopupShownEventArgs());
+            PublishAndDispatch(new PopupClosedEventArgs());
+            UpdateMask();
+            AssertPixel(true);
+        }
+
+        private static void PublishAndDispatch<T>(T payload)
+        {
+            EventBus.Instance.Publish(payload);
+            EventBus.Instance.ProcessEvents(10);
         }
 
         private void UpdateMask()

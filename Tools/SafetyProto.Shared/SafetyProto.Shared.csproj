@@ -40,6 +40,7 @@
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Events\ActionAttemptedEvent.cs" Link="Core\Events\ActionAttemptedEvent.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Events\ActionRefusedEventArgs.cs" Link="Core\Events\ActionRefusedEventArgs.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Events\PopupClosedEventArgs.cs" Link="Core\Events\PopupClosedEventArgs.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Events\PopupShownEventArgs.cs" Link="Core\Events\PopupShownEventArgs.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\RuntimeSafetyTask.cs" Link="Core\RuntimeSafetyTask.cs" />
 
     <!-- Part 4 additions -->

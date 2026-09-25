@@ -166,11 +166,13 @@ stating here are these:
   `PPE_MISSING` is deliberately not one of them: it is not a decline — the task
   still completes as `CompletedSuccessButUnsafe` — so routing it through the
   funnel would tell an emitter to undo a task that succeeded.
-- **The UI announces dismissal, not visibility.** `PopupClosedEventArgs` is
-  published whenever the shared popup panel goes away (button, dismiss, or
-  auto-close). It lets gameplay wait for a warning to have been read before
-  changing the world under the participant, without a dependency from the runtime
-  assembly onto the UI assembly.
+- **The UI announces the panel's visibility, not gameplay state.**
+  `PopupShownEventArgs` / `PopupClosedEventArgs` are published as the shared
+  popup panel appears and goes away (button, dismiss, or auto-close). Gameplay
+  waits for a warning to have been read before changing the world under the
+  participant, and the popup camera keeps the hands in front of the panel while
+  it is up — neither consumer needs a dependency from the runtime assembly onto
+  the UI assembly.
 
 ---
 

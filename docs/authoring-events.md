@@ -51,8 +51,8 @@ them depending on whether it has a dedicated `UnityEvent` field on `EventBus`:
   `onActionAttempt`/`RaiseActionAttempt`) are stamped inside that `RaiseXxx`
   method, via `EventMetadata.StampFields` called directly on the payload's
   four metadata fields, before the payload is queued.
-- **Typed-only payloads** (no dedicated `UnityEvent` — `ActionRefusedEventArgs`
-  and `PopupClosedEventArgs` today) fall through `EventBus.Publish<T>`'s
+- **Typed-only payloads** (no dedicated `UnityEvent` — `ActionRefusedEventArgs`,
+  `PopupClosedEventArgs`, and `PopupShownEventArgs` today) fall through `EventBus.Publish<T>`'s
   `default` branch, which calls `EventMetadata.Stamp(payload)` — a switch over
   the payload's runtime type that does the same four-field stamp and hands
   back the stamped copy — before `DispatchTyped` queues it.

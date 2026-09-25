@@ -42,6 +42,7 @@ namespace SafetyProto.UI
             // Resume the session whenever the panel hides, including the close button,
             // which calls PopupPanel.Hide() directly and never routes through Hide() here.
             popupPanel.Hidden += OnPanelHidden;
+            popupPanel.Shown += OnPanelShown;
 
             if (popupPanel.gameObject.activeSelf)
             {
@@ -53,7 +54,10 @@ namespace SafetyProto.UI
         private void OnDestroy()
         {
             if (popupPanel != null)
+            {
                 popupPanel.Hidden -= OnPanelHidden;
+                popupPanel.Shown -= OnPanelShown;
+            }
 
             if (Instance == this)
                 Instance = null;
@@ -72,6 +76,14 @@ namespace SafetyProto.UI
             // a transient notice pauses nothing but still closes.
             PopupEvents.RaisePopupClosed(_currentReasonCode);
             _currentReasonCode = string.Empty;
+        }
+
+        /// <summary>Mirrors <see cref="OnPanelHidden"/> on the way up, so systems that must not
+        /// reference the UI assembly can bracket the panel's lifetime (hand overlay on the
+        /// popup camera) without watching the session pause it also raises.</summary>
+        private void OnPanelShown()
+        {
+            PopupEvents.RaisePopupShown();
         }
 
         public void Show(PopupData data) => Show(data, reasonCode: string.Empty);
