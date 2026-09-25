@@ -57,6 +57,9 @@ namespace SafetyProto.Runtime.Safety
         private IPopupFeedback _popupFeedback;
 
         [Header("Gate Configuration")]
+        [Tooltip("Temporarily hide gateButtonObjects while the evaluation confirmation is open. Cancel restores only objects that were active.")]
+        [SerializeField] private bool hideGateButtonsWhileConfirming = true;
+
         [Tooltip("Label for the manual-dismiss button on the success / warning popups.")]
         [SerializeField] private string continueButtonLabel = "Continuar";
 
@@ -195,13 +198,24 @@ namespace SafetyProto.Runtime.Safety
                 }
                 else if (_popupFeedback != null)
                 {
+                    var hiddenButtons = hideGateButtonsWhileConfirming && gateButtonObjects != null
+                        ? gateButtonObjects.Where(go => go != null && go.activeSelf).ToArray()
+                        : Array.Empty<GameObject>();
+                    foreach (var go in hiddenButtons)
+                        go.SetActive(false);
+
                     _popupFeedback.ShowConfirmation(
                         "Finalizar Inspeção e Iniciar Atividade",
                         "Deseja finalizar a inspeção e iniciar a atividade?",
                         "Iniciar",
                         "Voltar",
                         onConfirm: () => BeginEvaluationFinish(pendingTasks),
-                        onCancel: () => { _isProcessing = false; });
+                        onCancel: () =>
+                        {
+                            foreach (var go in hiddenButtons)
+                                if (go != null) go.SetActive(true);
+                            _isProcessing = false;
+                        });
                 }
                 else
                 {
