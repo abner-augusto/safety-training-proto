@@ -1,11 +1,40 @@
 param(
     [string]$RuntimeIdentifier = "win-x64",
     [string]$OutputDirectory = "dist/AuthoringApp",
-    [string]$CopyToDirectory
+    [string]$CopyToDirectory,
+    [switch]$Help
 )
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
+
+function Show-Help {
+    @'
+Publish the Avalonia Authoring GUI with dotnet publish.
+
+Usage:
+  scripts/build-authoring.ps1 [options]
+
+Options:
+  -RuntimeIdentifier <rid>   Target runtime identifier (default: win-x64)
+  -OutputDirectory <path>    Publish output directory (default: dist/AuthoringApp)
+  -CopyToDirectory <path>    Also copy the published output here. Default:
+                             $env:SAFETY_AUTHORING_OUTPUT_DIR when set
+  -Help, --help              Show this help and exit
+
+Examples:
+  scripts/build-authoring.ps1
+  scripts/build-authoring.ps1 -RuntimeIdentifier linux-x64
+  scripts/build-authoring.ps1 -CopyToDirectory D:\Apps\Authoring
+'@
+}
+
+# PowerShell binds --help to the first string parameter instead of -Help, so
+# scan the bound values for it.
+if ($Help -or $PSBoundParameters.Values -contains '--help') {
+    Show-Help
+    return
+}
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $projectPath = "Tools/AuthoringApp.Gui"

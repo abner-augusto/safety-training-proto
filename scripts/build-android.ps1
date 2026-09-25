@@ -4,11 +4,47 @@ param(
     [string]$NewVersion,
     [int]$NewVersionCode,
     [int]$PollIntervalSeconds = 15,
-    [int]$MaxPollAttempts = 80
+    [int]$MaxPollAttempts = 80,
+    [switch]$Help
 )
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
+
+function Show-Help {
+    @'
+Build the Android APK for Meta Quest through the connected Unity Editor.
+
+Usage:
+  scripts/build-android.ps1 [options]
+
+Options:
+  -OutputDirectory <path>     Copy the APK here. Default: $env:SAFETY_ANDROID_OUTPUT_DIR
+                              when set, otherwise dist/Builds/Android
+  -BumpVersion                Increment the patch version and the Android version code
+  -NewVersion <x.y.z>         Version to set before building; only used with -BumpVersion
+  -NewVersionCode <int>       Android version code to set; only used with -BumpVersion
+  -PollIntervalSeconds <int>  Seconds between build status polls (default: 15)
+  -MaxPollAttempts <int>      Poll attempts before giving up (default: 80)
+  -Help, --help               Show this help and exit
+
+Examples:
+  scripts/build-android.ps1
+  scripts/build-android.ps1 -BumpVersion
+  scripts/build-android.ps1 -BumpVersion -NewVersion 1.2.0 -NewVersionCode 7
+  scripts/build-android.ps1 -OutputDirectory D:\Builds
+
+Requires a Unity Editor in the 'ready' state ('unity open .' first).
+The APK is copied as SafetyTraining_v<version>.apk.
+'@
+}
+
+# PowerShell binds --help to the first string parameter instead of -Help, so
+# scan the bound values for it.
+if ($Help -or $PSBoundParameters.Values -contains '--help') {
+    Show-Help
+    return
+}
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $relativeApkPath = "Builds/Android/SafetyTraining.apk"
