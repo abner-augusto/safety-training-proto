@@ -2657,8 +2657,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 365f4a90e2abf574f90e02a070a02ef0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Feedback.HandSurfaceContactAudio
-  contactClip: {fileID: 8300000, guid: f077d47a87b1d3f4fa5311108de3492e, type: 3}
-  volume: 0.3
+  contactClip: {fileID: 8300000, guid: c7176bf5ffb787846aebd522f1dbe739, type: 3}
+  volume: 0.075
   releaseDelay: 0.12
   cooldown: 0.2
 --- !u!1 &168535425
@@ -47456,8 +47456,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 365f4a90e2abf574f90e02a070a02ef0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Feedback.HandSurfaceContactAudio
-  contactClip: {fileID: 8300000, guid: f077d47a87b1d3f4fa5311108de3492e, type: 3}
-  volume: 0.3
+  contactClip: {fileID: 8300000, guid: c7176bf5ffb787846aebd522f1dbe739, type: 3}
+  volume: 0.075
   releaseDelay: 0.12
   cooldown: 0.2
 --- !u!1 &1671479565
