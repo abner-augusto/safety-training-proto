@@ -6,9 +6,8 @@ using UnityEngine;
 namespace SafetyProto.Utils
 {
     /// <summary>
-    /// Shows/hides a menu GameObject via a controller button and keeps the session pause state in
-    /// sync: opening the menu raises SessionPaused, closing it raises SessionResumed, so the timer
-    /// and other pause-aware systems stay balanced. Exposes <see cref="CloseMenu"/> so an in-menu
+    /// Shows/hides a menu GameObject via a controller button and holds the session paused while
+    /// the menu is open. Exposes <see cref="CloseMenu"/> so an in-menu
     /// "close" button can dismiss the menu (and resume) without the controller button.
     /// </summary>
     public class PauseMenuController : MonoBehaviour
@@ -32,8 +31,8 @@ namespace SafetyProto.Utils
         }
 
         /// <summary>
-        /// Closes the menu and resumes the session. Wire in-menu "close" buttons to this so the
-        /// SessionPaused raised when the menu opened is balanced by a SessionResumed.
+        /// Closes the menu and releases its pause hold. Wire in-menu "close" buttons to this so
+        /// the hold taken when the menu opened is released.
         /// </summary>
         public void CloseMenu()
         {
@@ -57,9 +56,9 @@ namespace SafetyProto.Utils
                 return;
 
             if (menuVisible)
-                SessionEvents.RaiseSessionPaused();
+                SessionPause.Hold(PauseSource.PauseMenu);
             else
-                SessionEvents.RaiseSessionResumed();
+                SessionPause.Release(PauseSource.PauseMenu);
         }
     }
 }

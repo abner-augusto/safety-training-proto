@@ -7,6 +7,8 @@ using SafetyProto.Runtime.Task;
 using SafetyProto.Utils;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.XR;
+using UnityEngine.XR.OpenXR;
 
 namespace SafetyProto.Runtime.Session
 {
@@ -16,7 +18,10 @@ namespace SafetyProto.Runtime.Session
                  "(e.g. NameEntryController) drives the start after capturing the participant id.")]
         [SerializeField] private bool autoStartOnStart = true;
 
-        private bool _isPaused;
+        private bool _appPaused;
+        private bool _appFocused = true;
+        private bool _xrSessionWasFocused;
+        private bool _focusLost;
         private bool _sessionStarted;
         private bool _sessionEnded;
 
@@ -76,30 +81,64 @@ namespace SafetyProto.Runtime.Session
             SafetyLog.Info($"TrainingSessionManager: Session Started event raised (participante {playerId}).", this);
         }
 
+        private void Update() => RefreshFocusHold();
+
         private void OnApplicationPause(bool pauseStatus)
         {
-            if (pauseStatus && !_isPaused)
-            {
-                _isPaused = true;
-                SessionEvents.RaiseSessionPaused();
-                SafetyLog.Info("TrainingSessionManager: Session Paused event raised.", this);
-            }
+            _appPaused = pauseStatus;
+            RefreshFocusHold();
         }
 
         private void OnApplicationFocus(bool hasFocus)
         {
-            if (hasFocus && _isPaused)
+            _appFocused = hasFocus;
+            RefreshFocusHold();
+        }
+
+        private void RefreshFocusHold()
+        {
+            bool lost = !HasFocus();
+            if (lost == _focusLost)
             {
-                _isPaused = false;
-                SessionEvents.RaiseSessionResumed();
-                SafetyLog.Info("TrainingSessionManager: Session Resumed event raised.", this);
+                return;
             }
-            else if (!hasFocus && !_isPaused)
+            _focusLost = lost;
+
+            if (lost)
             {
-                _isPaused = true;
-                SessionEvents.RaiseSessionPaused();
-                SafetyLog.Info("TrainingSessionManager: Session Paused (due to focus loss) event raised.", this);
+                SessionPause.Hold(PauseSource.ApplicationFocus);
+                SafetyLog.Info("TrainingSessionManager: focus lost, session pause held.", this);
             }
+            else
+            {
+                SessionPause.Release(PauseSource.ApplicationFocus);
+                SafetyLog.Info("TrainingSessionManager: focus regained, session pause released.", this);
+            }
+        }
+
+        /// <summary>
+        /// OpenXR never reports session focus through OnApplicationFocus/OnApplicationPause:
+        /// taking the headset off or opening the system menu leaves the XR session unfocused
+        /// while the app keeps running frames, and the Activity only pauses once the headset
+        /// sleeps. So the XR session state has to be polled alongside the app callbacks.
+        /// </summary>
+        private bool HasFocus()
+        {
+            if (_appPaused || !_appFocused)
+            {
+                return false;
+            }
+
+            if (!XRSettings.isDeviceActive)
+            {
+                return true;
+            }
+
+            // The session reaches FOCUSED only some frames after startup; until it has, not
+            // being focused is not a focus loss.
+            bool xrFocused = OpenXRUtility.IsSessionFocused;
+            _xrSessionWasFocused |= xrFocused;
+            return xrFocused || !_xrSessionWasFocused;
         }
 
         private void OnDestroy()
@@ -121,6 +160,7 @@ namespace SafetyProto.Runtime.Session
 
             ScoreService.DestroyInstance();
             EventContext.Clear();
+            SessionPause.Reset();
         }
     }
 }

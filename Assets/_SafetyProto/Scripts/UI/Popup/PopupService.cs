@@ -14,8 +14,6 @@ namespace SafetyProto.UI
 
         [SerializeField] private PopupPanel popupPanel;
 
-        private bool _sessionPausedByUs;
-
         /// <summary>Reason code of the popup currently shown, echoed on close so an emitter
         /// waiting behind a warning can match it back to its own refusal. Empty for a popup
         /// opened for anything other than a refusal.</summary>
@@ -65,11 +63,8 @@ namespace SafetyProto.UI
 
         private void OnPanelHidden()
         {
-            if (_sessionPausedByUs)
-            {
-                SessionEvents.RaiseSessionResumed();
-                _sessionPausedByUs = false;
-            }
+            // A no-op after a transient notice, which never took the hold.
+            SessionPause.Release(PauseSource.Popup);
 
             // Announced for every close (button, dismiss, auto-close) so gameplay objects can
             // wait for a warning to have been read. Deliberately not tied to the pause pair —
@@ -94,11 +89,7 @@ namespace SafetyProto.UI
 
             _currentReasonCode = reasonCode ?? string.Empty;
 
-            if (!_sessionPausedByUs)
-            {
-                SessionEvents.RaiseSessionPaused();
-                _sessionPausedByUs = true;
-            }
+            SessionPause.Hold(PauseSource.Popup);
 
             popupPanel.Show(data);
         }

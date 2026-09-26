@@ -26,7 +26,6 @@ namespace SafetyProto.Runtime.Task
         private float _timeRemaining;
         private float _elapsedTime;
         private float _sessionStartTime = -1f;
-        private bool _isPaused;
         private bool _countingUp;
 
         /// <summary>Tells consumers how to read <see cref="onTimeUpdated"/>: seconds left when
@@ -63,8 +62,6 @@ namespace SafetyProto.Runtime.Task
             EventBus.Instance.onGroupCompleted.AddListener(OnGroupCompleted);
             EventBus.Instance.onSessionCompleted.AddListener(OnSessionCompleted);
             EventBus.Instance.onTaskStarted.AddListener(OnTaskStartedForFreeOrder);
-            EventBus.Instance.onSessionPaused.AddListener(PauseTimer);
-            EventBus.Instance.onSessionResumed.AddListener(ResumeTimer);
         }
 
         private void OnDestroy()
@@ -76,8 +73,6 @@ namespace SafetyProto.Runtime.Task
                 EventBus.Instance.onGroupCompleted.RemoveListener(OnGroupCompleted);
                 EventBus.Instance.onSessionCompleted.RemoveListener(OnSessionCompleted);
                 EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStartedForFreeOrder);
-                EventBus.Instance.onSessionPaused.RemoveListener(PauseTimer);
-                EventBus.Instance.onSessionResumed.RemoveListener(ResumeTimer);
             }
 
             StopCurrentTimer();
@@ -138,7 +133,6 @@ namespace SafetyProto.Runtime.Task
             _timedGroup = args.Group;
             _timeRemaining = _timedGroup.timeLimit;
             _elapsedTime = 0f;
-            _isPaused = false;
             _countingUp = _timedGroup.timeLimit <= 0f;
             _timerCts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
 
@@ -178,7 +172,7 @@ namespace SafetyProto.Runtime.Task
                     return;
                 }
 
-                if (!_isPaused)
+                if (!SessionPause.IsPaused)
                 {
                     _timeRemaining -= Time.deltaTime;
                     _elapsedTime += Time.deltaTime;
@@ -214,7 +208,7 @@ namespace SafetyProto.Runtime.Task
 
             while (!token.IsCancellationRequested)
             {
-                if (!_isPaused)
+                if (!SessionPause.IsPaused)
                 {
                     _elapsedTime += Time.deltaTime;
                     onTimeUpdated.Invoke(_elapsedTime);
@@ -232,17 +226,7 @@ namespace SafetyProto.Runtime.Task
             }
         }
 
-        public bool IsPaused => _isPaused;
-
-        private void PauseTimer(SessionPausedEventArgs _)
-        {
-            _isPaused = true;
-        }
-
-        private void ResumeTimer(SessionResumedEventArgs _)
-        {
-            _isPaused = false;
-        }
+        public bool IsPaused => SessionPause.IsPaused;
 
         public float GetTimeRemaining() => _timeRemaining;
         public float GetElapsedTime() => _elapsedTime;

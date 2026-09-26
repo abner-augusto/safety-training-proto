@@ -8,7 +8,8 @@
     "Oculus.Interaction",
     "Oculus.Interaction.OVR",
     "Oculus.VR",
-    "Unity.TextMeshPro"
+    "Unity.TextMeshPro",
+    "Unity.XR.OpenXR"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
