@@ -64482,13 +64482,25 @@ PrefabInstance:
       propertyPath: audioSource
       value: 
       objectReference: {fileID: 1936470528}
+    - target: {fileID: 5331889225637225840, guid: 7ba70831d1b548345a0a702c1ae5c3f1, type: 3}
+      propertyPath: damping
+      value: 0.065
+      objectReference: {fileID: 0}
+    - target: {fileID: 5331889225637225840, guid: 7ba70831d1b548345a0a702c1ae5c3f1, type: 3}
+      propertyPath: bendResistance
+      value: 0.0552
+      objectReference: {fileID: 0}
+    - target: {fileID: 5331889225637225840, guid: 7ba70831d1b548345a0a702c1ae5c3f1, type: 3}
+      propertyPath: collisionMask.m_Bits
+      value: 2147745787
+      objectReference: {fileID: 0}
     - target: {fileID: 8606835022182292615, guid: 7ba70831d1b548345a0a702c1ae5c3f1, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.217
       objectReference: {fileID: 0}
     - target: {fileID: 8606835022182292615, guid: 7ba70831d1b548345a0a702c1ae5c3f1, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.115
+      value: 1.1823
       objectReference: {fileID: 0}
     - target: {fileID: 8606835022182292615, guid: 7ba70831d1b548345a0a702c1ae5c3f1, type: 3}
       propertyPath: m_LocalPosition.z

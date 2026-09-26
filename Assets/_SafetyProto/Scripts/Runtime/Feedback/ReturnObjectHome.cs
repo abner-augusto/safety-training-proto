@@ -33,6 +33,9 @@ namespace SafetyProto.Runtime.Feedback
 
         private Coroutine _delayCoroutine;
 
+        /// <summary>Whether the object is currently following its animated return path.</summary>
+        public bool IsReturning => _returning;
+
         private void Awake()
         {
             _grabbable = GetComponent<Grabbable>();

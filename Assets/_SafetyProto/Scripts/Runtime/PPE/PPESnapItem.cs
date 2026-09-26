@@ -65,6 +65,9 @@ namespace SafetyProto.Runtime.PPE
         /// </summary>
         public string AttachmentId => _isSnapped && _currentSlot != null ? _currentSlot.name : string.Empty;
 
+        /// <summary>Whether this item is currently attached to a body slot.</summary>
+        public bool IsSnapped => _isSnapped && _currentSlot != null;
+
 #if UNITY_EDITOR
         // Exposed for editor preview tooling (PPESnapSlot gizmo / inspector).
         public Transform SnapPoseOverride => snapPoseOverride;
