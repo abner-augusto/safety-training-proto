@@ -2641,10 +2641,26 @@ MonoBehaviour:
   - {fileID: 1347353162}
   - {fileID: 1263919353}
   - {fileID: 890595904}
-  fingerRadius: 0.012
-  palmRadius: 0.035
-  maximumOffset: 0.18
+  fingerRadius: 0.004
+  palmRadius: 0.022
+  maximumOffset: 0.22
   returnSpeed: 0.6
+--- !u!114 &167939748
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 167939742}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 365f4a90e2abf574f90e02a070a02ef0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Feedback.HandSurfaceContactAudio
+  contactClip: {fileID: 8300000, guid: f077d47a87b1d3f4fa5311108de3492e, type: 3}
+  volume: 0.3
+  releaseDelay: 0.12
+  cooldown: 0.2
 --- !u!1 &168535425
 GameObject:
   m_ObjectHideFlags: 0
@@ -32845,9 +32861,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6147449420076126351, guid: 0a7d2469f24041c4284c66706f84c45e, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1665915723}
+    - targetCorrespondingSourceObject: {fileID: 6147449420076126351, guid: 0a7d2469f24041c4284c66706f84c45e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1665915726}
     - targetCorrespondingSourceObject: {fileID: 8702425413754196323, guid: 0a7d2469f24041c4284c66706f84c45e, type: 3}
       insertIndex: -1
       addedObject: {fileID: 167939745}
+    - targetCorrespondingSourceObject: {fileID: 8702425413754196323, guid: 0a7d2469f24041c4284c66706f84c45e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 167939748}
   m_SourcePrefab: {fileID: 100100000, guid: 0a7d2469f24041c4284c66706f84c45e, type: 3}
 --- !u!4 &1114476348 stripped
 Transform:
@@ -47418,10 +47440,26 @@ MonoBehaviour:
   - {fileID: 1943384846}
   - {fileID: 35159288}
   - {fileID: 1461626425}
-  fingerRadius: 0.012
-  palmRadius: 0.035
-  maximumOffset: 0.18
+  fingerRadius: 0.004
+  palmRadius: 0.022
+  maximumOffset: 0.22
   returnSpeed: 0.6
+--- !u!114 &1665915726
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1665915720}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 365f4a90e2abf574f90e02a070a02ef0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Feedback.HandSurfaceContactAudio
+  contactClip: {fileID: 8300000, guid: f077d47a87b1d3f4fa5311108de3492e, type: 3}
+  volume: 0.3
+  releaseDelay: 0.12
+  cooldown: 0.2
 --- !u!1 &1671479565
 GameObject:
   m_ObjectHideFlags: 0

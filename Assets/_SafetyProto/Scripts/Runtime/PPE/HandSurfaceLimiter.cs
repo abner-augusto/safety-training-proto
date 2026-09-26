@@ -35,6 +35,11 @@ namespace SafetyProto.Runtime.PPE
         private bool _hasPrevious;
         private bool _released;
         private float _lastUpdateTime;
+        private bool _hasSurfaceContact;
+        private Vector3 _contactPoint;
+
+        /// <summary>Raised on each valid contact update, including sustained contact while sliding.</summary>
+        public event Action<Vector3> WhenSurfaceContact;
 
         private void Awake()
         {
@@ -86,6 +91,7 @@ namespace SafetyProto.Runtime.PPE
             _offset = Vector3.zero;
             _hasPrevious = false;
             _released = false;
+            _hasSurfaceContact = false;
             _lastUpdateTime = Time.unscaledTime;
         }
 
@@ -123,21 +129,21 @@ namespace SafetyProto.Runtime.PPE
                 _released = false;
             }
 
+            bool wasTouching = _hasSurfaceContact;
+            _hasSurfaceContact = false;
             Vector3 correction = Vector3.MoveTowards(_offset, Vector3.zero, returnSpeed * deltaTime);
             if (_hasPrevious)
             {
-                for (int i = 0; i < _points.Length; i++)
+                // A shared offset can push another probe into contact, so revisit all six probes.
+                for (int pass = 0; pass < 3; pass++)
                 {
-                    Vector3 movement = _points[i] + correction - _previous[i];
-                    float distance = movement.magnitude;
-                    if (distance < 0.00001f) continue;
-                    int count = Physics.SphereCastNonAlloc(_previous[i], Radius(i), movement / distance,
-                        _hits, distance, surfaceLayers, QueryTriggerInteraction.Ignore);
-                    float nearest = distance;
-                    for (int h = 0; h < count; h++)
-                        if (IsSurface(_hits[h].collider)) nearest = Mathf.Min(nearest, _hits[h].distance);
-                    if (nearest < distance)
-                        correction += movement / distance * (Mathf.Max(0f, nearest - 0.001f) - distance);
+                    Vector3 before = correction;
+                    for (int i = 0; i < _points.Length; i++)
+                    {
+                        Vector3 target = _points[i] + correction;
+                        correction += SlideProbe(_previous[i], target, Radius(i)) - target;
+                    }
+                    if ((correction - before).sqrMagnitude < 0.0000000001f) break;
                 }
             }
 
@@ -158,7 +164,10 @@ namespace SafetyProto.Runtime.PPE
                         if (Physics.ComputePenetration(_probe, _points[i] + correction, Quaternion.identity,
                             surface, surface.transform.position, surface.transform.rotation,
                             out Vector3 direction, out float depth))
+                        {
+                            RecordContact(_points[i] + correction - direction * _probe.radius);
                             correction += direction * (depth + 0.001f);
+                        }
                     }
                 }
             }
@@ -175,13 +184,53 @@ namespace SafetyProto.Runtime.PPE
             _visual.Root.position = root + correction;
             for (int i = 0; i < _points.Length; i++) _previous[i] = _points[i] + correction;
             _hasPrevious = true;
+            // The solver's clearance must not turn a resting hand into repeated contact entries.
+            if (!_hasSurfaceContact && wasTouching) _hasSurfaceContact = HasOverlap(correction, 0.003f);
+            if (_hasSurfaceContact) WhenSurfaceContact?.Invoke(_contactPoint);
         }
 
-        private bool HasOverlap(Vector3 offset)
+        private void RecordContact(Vector3 point)
+        {
+            if (!_hasSurfaceContact) _contactPoint = point;
+            _hasSurfaceContact = true;
+        }
+
+        private Vector3 SlideProbe(Vector3 position, Vector3 target, float radius)
+        {
+            Vector3 remaining = target - position;
+            for (int iteration = 0; iteration < 4; iteration++)
+            {
+                float distance = remaining.magnitude;
+                if (distance < 0.00001f) break;
+                Vector3 direction = remaining / distance;
+                int count = Physics.SphereCastNonAlloc(position, radius, direction,
+                    _hits, distance, surfaceLayers, QueryTriggerInteraction.Ignore);
+                int nearest = -1;
+                for (int h = 0; h < count; h++)
+                {
+                    if (!IsSurface(_hits[h].collider) || Vector3.Dot(direction, _hits[h].normal) >= 0f)
+                        continue;
+                    if (nearest < 0 || _hits[h].distance < _hits[nearest].distance) nearest = h;
+                }
+                if (nearest < 0) return position + remaining;
+
+                RaycastHit hit = _hits[nearest];
+                RecordContact(hit.point);
+                Vector3 advance = direction * Mathf.Max(0f, hit.distance - 0.001f);
+                position += advance;
+                remaining -= advance;
+                remaining -= hit.normal * Mathf.Min(0f, Vector3.Dot(remaining, hit.normal));
+            }
+
+            // Keep the last swept position if the contact budget is exhausted.
+            return position;
+        }
+
+        private bool HasOverlap(Vector3 offset, float padding = 0f)
         {
             for (int i = 0; i < _points.Length; i++)
             {
-                int count = Physics.OverlapSphereNonAlloc(_points[i] + offset, Radius(i), _overlaps,
+                int count = Physics.OverlapSphereNonAlloc(_points[i] + offset, Radius(i) + padding, _overlaps,
                     surfaceLayers, QueryTriggerInteraction.Ignore);
                 for (int h = 0; h < count; h++)
                     if (IsSurface(_overlaps[h])) return true;
