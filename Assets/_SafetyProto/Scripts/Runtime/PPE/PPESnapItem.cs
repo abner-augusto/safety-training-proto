@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Oculus.Interaction;
 using Oculus.Interaction.HandGrab;
 using SafetyProto.Core;
@@ -85,6 +86,7 @@ namespace SafetyProto.Runtime.PPE
         private bool _isGrabbed;
         private bool _isSnapped;
         private bool _grabDisabled;
+        private readonly List<Behaviour> _disabledGrabBehaviours = new List<Behaviour>();
 
         // Cached pose of snapPoseOverride in this root's local space, used to keep a stable offset while following a slot.
         private bool _useSnapPoseOverride;
@@ -176,16 +178,29 @@ namespace SafetyProto.Runtime.PPE
 
         public void SetGrabEnabled(bool enabled)
         {
+            if (_grabDisabled == !enabled) return;
             _grabDisabled = !enabled;
 
-            if (handGrabInteractable != null)
-                handGrabInteractable.enabled = enabled;
+            if (enabled)
+            {
+                foreach (var behaviour in _disabledGrabBehaviours)
+                    if (behaviour != null) behaviour.enabled = true;
+                _disabledGrabBehaviours.Clear();
+                return;
+            }
 
-            if (_grabbable != null)
-                _grabbable.enabled = enabled;
-
-            if (!enabled && _isGrabbed)
-                ForceRelease();
+            // Each authored hand pose can have its own interactable. Nested equipment
+            // with a separate rigidbody (such as the lanyard tip) must remain usable.
+            _isGrabbed = false;
+            foreach (var behaviour in GetComponentsInChildren<MonoBehaviour>(true))
+            {
+                if (!(behaviour is HandGrabInteractable || behaviour is GrabInteractable
+                    || behaviour is DistanceHandGrabInteractable || behaviour is DistanceGrabInteractable
+                    || behaviour is Grabbable)) continue;
+                if (behaviour.GetComponentInParent<Rigidbody>(true) != _rigidbody || !behaviour.enabled) continue;
+                _disabledGrabBehaviours.Add(behaviour);
+                behaviour.enabled = false;
+            }
         }
 
         private void ForceRelease()
@@ -221,6 +236,7 @@ namespace SafetyProto.Runtime.PPE
 
         private void OnReleased()
         {
+            if (_grabDisabled) return;
             if (_isSnapped) return;
 
             PPESnapSlot slot = FindSlotToSnap();
@@ -304,10 +320,8 @@ namespace SafetyProto.Runtime.PPE
         {
             if (!_isSnapped || _currentSlot == null) return;
 
-            if (_isGrabbed)
+            if (_isGrabbed && !_currentSlot.IsLocked)
             {
-                if (_currentSlot.IsLocked) return;
-
                 float dist = Vector3.Distance(transform.position, _currentSlot.transform.position);
                 if (dist >= unsnapDistance)
                 {
