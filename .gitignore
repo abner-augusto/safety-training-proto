@@ -8,6 +8,7 @@
 CLAUDE.md
 AGENTS.md
 .mcp.json
+.ai-memory.toml
 .*/*
 .vsconfig
 before-structure.txt
