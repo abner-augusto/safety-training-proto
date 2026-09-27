@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using Oculus.Interaction;
 using Oculus.Interaction.HandGrab;
 using SafetyProto.Core;
@@ -11,26 +11,11 @@ using UnityEngine.Events;
 namespace SafetyProto.Runtime.PPE
 {
     /// <summary>
-    /// Orchestrates the retractable lanyard interaction for the safety harness.
-    ///
-    /// Lifecycle:
-    ///   1. IDLE       — Lanyard tip is parented to the harness, rope invisible.
-    ///   2. PULLING    — Player grabbed the tip; a lightweight LineRenderer stretches
-    ///                   from the harness D-ring to the hand (no Verlet physics yet).
-    ///   3. LOCKED     — Released near an <see cref="AnchorPoint"/>; Verlet rope spawns
-    ///                   at 1.5 m between harness and anchor. Emits ActionAttempt.
-    ///   4. RETRACTING — Released in open air (no anchor nearby); waits briefly,
-    ///                   then the tip smoothly returns to the harness and re-parents.
-    ///
-    /// Hierarchy setup:
-    ///   HarnessRoot (PPEItem, PPESnapItem — snapped on body)
-    ///     └─ LanyardTip (this script + Grabbable + HandGrabInteractable + Rigidbody)
-    ///          └─ (optional small mesh: carabiner / snap hook visual)
-    ///
-    /// The VerletLanyard component lives on the same GameObject (auto-added if missing).
+    /// Controls grabbing, anchoring and returning the tip to its harness storage slot.
+    /// The rope remains visible between the harness attachment and the tip in every state.
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
-    public class RetractableLanyardController : MonoBehaviour
+    public class RetractableLanyardController : MonoBehaviour, SafetyProto.Core.Interfaces.ISessionResettable
     {
 
         public enum LanyardState { Idle, Pulling, Locked, Retracting }
@@ -43,11 +28,22 @@ namespace SafetyProto.Runtime.PPE
         [Tooltip("Transform on the harness where the lanyard originates (D-ring on back/chest).")]
         [SerializeField] private Transform harnessAttachPoint;
 
+        [SerializeField] private Transform tipRestPoint;
+        [SerializeField] private Transform tipRopeAttachPoint;
+        [SerializeField, Min(0f)] private float idleSlack = 0.3f;
+        [SerializeField, Min(0.01f)] private float ropeLengthSpeed = 2f;
+
+        private Transform RestPoint => tipRestPoint != null ? tipRestPoint : harnessAttachPoint;
+        private Transform RopeEnd => tipRopeAttachPoint != null ? tipRopeAttachPoint : transform;
+        private Vector3 RestPosition => RestPoint.TransformPoint(idlePositionOffset);
+        private Quaternion RestRotation => RestPoint.rotation * Quaternion.Euler(idleRotationOffset);
+        private float RestLength => Vector3.Distance(harnessAttachPoint.position, RestPosition) + idleSlack;
+
         [Header("Idle Follow")]
-        [Tooltip("Local offset from harnessAttachPoint where the tip rests when idle.")]
+        [Tooltip("Local offset from tipRestPoint where the tip rests when idle.")]
         [SerializeField] private Vector3 idlePositionOffset = Vector3.zero;
 
-        [Tooltip("Local rotation offset from harnessAttachPoint when idle.")]
+        [Tooltip("Local rotation offset from tipRestPoint when idle.")]
         [SerializeField] private Vector3 idleRotationOffset = Vector3.zero;
 
         [Tooltip("How fast the tip follows the harness attach point. 0 = instant (snap).")]
@@ -126,7 +122,7 @@ namespace SafetyProto.Runtime.PPE
 
         private VerletLanyard _verletLanyard;
         private Rigidbody _rb;
-        private LineRenderer _lineRenderer;
+        private Vector3 _lastHarnessPosition;
 
         private bool _isGrabbed;
         private bool _nearAnchor;
@@ -152,7 +148,7 @@ namespace SafetyProto.Runtime.PPE
             if (_verletLanyard == null)
                 _verletLanyard = gameObject.AddComponent<VerletLanyard>();
 
-            _lineRenderer = GetComponent<LineRenderer>();
+
         }
 
         private void Start()
@@ -172,7 +168,18 @@ namespace SafetyProto.Runtime.PPE
             else
                 SafetyLog.Error("RetractableLanyardController: No Grabbable or HandGrabInteractable found!", this);
 
+            if (harnessAttachPoint == null || RestPoint == null)
+            {
+                SafetyLog.Error("Lanyard attachment and rest point are required.", this);
+                enabled = false;
+                return;
+            }
+            _verletLanyard.SetStartAnchor(harnessAttachPoint);
+            _verletLanyard.SetEndAnchor(RopeEnd);
+            _verletLanyard.enabled = true;
             EnterIdle();
+            _verletLanyard.ResetSimulation();
+            _lastHarnessPosition = harnessAttachPoint.position;
         }
 
         private void OnDestroy()
@@ -188,26 +195,40 @@ namespace SafetyProto.Runtime.PPE
             switch (state)
             {
                 case LanyardState.Idle:
-                    FollowHarnessAttachPoint();
+                    FollowRestPoint();
                     break;
                 case LanyardState.Pulling:
-                    UpdatePullingVisual();
                     CheckAnchorProximity();
                     break;
+            }
+            if (harnessAttachPoint == null) return;
+            if (Vector3.Distance(_lastHarnessPosition, harnessAttachPoint.position) > 0.75f)
+            {
+                if (state == LanyardState.Idle)
+                    transform.SetPositionAndRotation(RestPosition, RestRotation);
+                _verletLanyard.ResetSimulation();
+            }
+            _lastHarnessPosition = harnessAttachPoint.position;
+            if (state != LanyardState.Locked)
+            {
+                float targetLength = Mathf.Max(RestLength,
+                    Vector3.Distance(harnessAttachPoint.position, RopeEnd.position) + 0.02f);
+                _verletLanyard.RopeLength = Mathf.Max(
+                    Vector3.Distance(harnessAttachPoint.position, RopeEnd.position),
+                    Mathf.MoveTowards(_verletLanyard.RopeLength, targetLength, ropeLengthSpeed * Time.deltaTime));
             }
         }
 
         /// <summary>
-        /// Smoothly follows the harnessAttachPoint transform with the configured offset.
+        /// Smoothly follows the tip storage transform with the configured offset.
         /// Same pattern as PPESnapItem following its PPESnapSlot.
         /// </summary>
-        private void FollowHarnessAttachPoint()
+        private void FollowRestPoint()
         {
             if (harnessAttachPoint == null) return;
 
-            Quaternion offsetRot = Quaternion.Euler(idleRotationOffset);
-            Vector3 targetPos = harnessAttachPoint.TransformPoint(idlePositionOffset);
-            Quaternion targetRot = harnessAttachPoint.rotation * offsetRot;
+            Vector3 targetPos = RestPosition;
+            Quaternion targetRot = RestRotation;
 
             if (idleFollowSpeed <= 0f)
             {
@@ -281,22 +302,15 @@ namespace SafetyProto.Runtime.PPE
         {
             state = LanyardState.Idle;
 
-            _verletLanyard.enabled = false;
-
-            if (_lineRenderer != null)
-                _lineRenderer.enabled = false;
-
-            // Un-parent so the tip lives at scene root — follow logic in LateUpdate
-            // keeps it glued to harnessAttachPoint without inheriting the harness Grabbable chain.
+            // Keep the tip outside the harness Grabbable hierarchy.
             transform.SetParent(null);
 
             // Snap to harness immediately (no lerp pop on first frame)
             if (harnessAttachPoint != null)
             {
-                Quaternion offsetRot = Quaternion.Euler(idleRotationOffset);
-                transform.SetPositionAndRotation(
-                    harnessAttachPoint.TransformPoint(idlePositionOffset),
-                    harnessAttachPoint.rotation * offsetRot);
+                    transform.SetPositionAndRotation(
+                    RestPosition,
+                    RestRotation);
             }
 
             // Kinematic while idle (no physics jitter)
@@ -307,7 +321,12 @@ namespace SafetyProto.Runtime.PPE
             }
             _rb.isKinematic = true;
 
+            _rb.useGravity = false;
+            _isGrabbed = false;
+            _nearAnchor = false;
             _lockedAnchor = null;
+            _verletLanyard.RopeLength = RestLength;
+            FireTrigger(TriggerOpenClose);
         }
 
         private void EnterPulling()
@@ -321,25 +340,7 @@ namespace SafetyProto.Runtime.PPE
             // Enable physics for hand tracking
             _rb.isKinematic = false;
 
-            // Disable Verlet (we use a simple 2-point line while pulling)
-            _verletLanyard.enabled = false;
-
-            if (_lineRenderer != null)
-            {
-                _lineRenderer.enabled = true;
-                _lineRenderer.positionCount = 2;
-            }
-
-            SafetyLog.Info("VerletLanyard: Pulling — player grabbed lanyard tip.", this);
-        }
-
-        private void UpdatePullingVisual()
-        {
-            if (_lineRenderer == null || harnessAttachPoint == null) return;
-
-            // Simple 2-point line: harness → hand (tip position)
-            _lineRenderer.SetPosition(0, harnessAttachPoint.position);
-            _lineRenderer.SetPosition(1, transform.position);
+            _rb.useGravity = false;
         }
 
         private void CheckAnchorProximity()
@@ -373,13 +374,6 @@ namespace SafetyProto.Runtime.PPE
             state = LanyardState.Locked;
             _lockedAnchor = anchor;
 
-            // Disable the simple pulling line — Verlet takes over
-            if (_lineRenderer != null)
-                _lineRenderer.positionCount = 0;
-
-            // Snap tip to the anchor attach point with a FIXED pose (position + rotation).
-            // Snapping rotation too — and optionally parenting — removes the floating /
-            // tilted look that came from keeping the hand's last orientation.
             Transform attach = anchor.AttachTransform;
             Vector3 snapPos = attach.TransformPoint(lockedSnapPositionOffset);
             Quaternion snapRot = attach.rotation * Quaternion.Euler(lockedSnapRotationOffset);
@@ -392,7 +386,7 @@ namespace SafetyProto.Runtime.PPE
             _rb.isKinematic = true;
 
             _verletLanyard.SetStartAnchor(harnessAttachPoint);
-            _verletLanyard.SetEndAnchor(anchor.AttachTransform);
+            _verletLanyard.SetEndAnchor(RopeEnd);
             _verletLanyard.RopeLength = lockedRopeLength;
             _verletLanyard.enabled = true;
 
@@ -417,19 +411,17 @@ namespace SafetyProto.Runtime.PPE
         {
             if (state != LanyardState.Locked) return;
 
-            _verletLanyard.SetEndAnchor(null);
-            _verletLanyard.enabled = false;
             _lockedAnchor = null;
 
             FireTrigger(TriggerCloseOpen);  // gate opens as player pulls tip free
-            SafetyLog.Info("VerletLanyard: Unlocked from anchor.", this);
+            transform.SetParent(null);
+            if (!_isGrabbed) EnterRetracting();
         }
 
         private void EnterRetracting()
         {
             state = LanyardState.Retracting;
 
-            // Keep the pulling line visible briefly, then retract
             _retractCoroutine = StartCoroutine(RetractSequence());
         }
 
@@ -439,19 +431,10 @@ namespace SafetyProto.Runtime.PPE
             _rb.isKinematic = false;
             _rb.useGravity = true;
 
-            if (_lineRenderer != null)
-                _lineRenderer.positionCount = 0;
-
-            _verletLanyard.SetStartAnchor(harnessAttachPoint);
-            _verletLanyard.SetEndAnchor(null);
-            _verletLanyard.enabled = true;
-
             float gravityElapsed = 0f;
             while (gravityElapsed < gravityDuration)
             {
                 gravityElapsed += Time.deltaTime;
-                _verletLanyard.RopeLength = Vector3.Distance(transform.position, harnessAttachPoint.position);
-                _verletLanyard.SetManualEndPosition(transform.position);
                 yield return null;
             }
 
@@ -461,14 +444,11 @@ namespace SafetyProto.Runtime.PPE
             _rb.angularVelocity = Vector3.zero;
             _rb.isKinematic = true;
 
-            float holdRopeLength = _verletLanyard.RopeLength;
 
             // Phase 3: Smoothly retract
             Vector3 startPos = transform.position;
             Quaternion startRot = transform.rotation;
 
-            Quaternion offsetRot = Quaternion.Euler(idleRotationOffset);
-            float targetRopeLength = Vector3.Distance(harnessAttachPoint.TransformPoint(idlePositionOffset), harnessAttachPoint.position);
             float elapsed = 0f;
 
             while (elapsed < retractDuration)
@@ -477,24 +457,21 @@ namespace SafetyProto.Runtime.PPE
                 float t = retractCurve.Evaluate(Mathf.Clamp01(elapsed / retractDuration));
 
                 Vector3 targetPos = harnessAttachPoint != null
-                    ? harnessAttachPoint.TransformPoint(idlePositionOffset)
+                    ? RestPosition
                     : startPos;
                 Quaternion targetRot = harnessAttachPoint != null
-                    ? harnessAttachPoint.rotation * offsetRot
+                    ? RestRotation
                     : startRot;
 
                 transform.position = Vector3.Lerp(startPos, targetPos, t);
                 transform.rotation = Quaternion.Slerp(startRot, targetRot, t);
 
-                _verletLanyard.RopeLength = Mathf.Lerp(holdRopeLength, targetRopeLength, t);
-                _verletLanyard.SetManualEndPosition(transform.position);
 
                 yield return null;
             }
 
             _retractCoroutine = null;
 
-            _verletLanyard.enabled = false;
             EnterIdle();
             PlayRetractAudio();
             onLanyardRetracted?.Invoke();
@@ -594,9 +571,12 @@ namespace SafetyProto.Runtime.PPE
                 _retractCoroutine = null;
             }
 
-            Unlock();
+            if (harnessAttachPoint == null || _rb == null) return;
             EnterIdle();
+            _verletLanyard.ResetSimulation();
         }
+
+        public void ResetSession() => ForceReset();
 
         /// <summary>
         /// Whether the lanyard is currently locked to an anchor.
@@ -616,7 +596,7 @@ namespace SafetyProto.Runtime.PPE
 
             if (harnessAttachPoint != null)
             {
-                Vector3 idleWorld = harnessAttachPoint.TransformPoint(idlePositionOffset);
+                Vector3 idleWorld = RestPosition;
                 Gizmos.color = Color.green;
                 Gizmos.DrawWireSphere(idleWorld, 0.02f);
                 Gizmos.DrawLine(transform.position, idleWorld);

@@ -23,6 +23,7 @@ namespace SafetyProto.Runtime.PPE
     ///   4. Tweak <see cref="ropeLength"/>, <see cref="nodeCount"/>, etc. in the Inspector.
     ///   5. A LineRenderer is auto-added if missing. Set its material/width to taste.
     /// </summary>
+    [DefaultExecutionOrder(100)]
     [RequireComponent(typeof(LineRenderer))]
     public class VerletLanyard : MonoBehaviour
     {
@@ -55,6 +56,14 @@ namespace SafetyProto.Runtime.PPE
 
         [Tooltip("Velocity damping per step (0 = no damping, 1 = frozen).")]
         [SerializeField, Range(0f, 0.1f)] private float damping = 0.02f;
+
+        [Header("Body Avoidance")]
+        [Tooltip("Geometry used as a rope exclusion volume, even when the collider is disabled.")]
+        [SerializeField] private CapsuleCollider bodyCollider;
+        [SerializeField, Min(0f)] private float bodyClearance = 0.005f;
+        [SerializeField] private Vector3 initialBendDirection = Vector3.left;
+        [SerializeField, Min(0f)] private float initialBend = 0.2f;
+        private Vector3 _lastStartPosition;
 
         [Header("Visual")]
         [Tooltip("Width of the LineRenderer. Typical lanyard rope: 0.008 – 0.015 m.")]
@@ -203,6 +212,12 @@ namespace SafetyProto.Runtime.PPE
         {
             if (!_initialized) return;
 
+            if (startAnchor != null)
+            {
+                if (Vector3.Distance(startAnchor.position, _lastStartPosition) > 0.75f)
+                    InitializeNodes();
+                _lastStartPosition = startAnchor.position;
+            }
             float subDt = Time.fixedDeltaTime / substeps;
 
             for (int s = 0; s < substeps; s++)
@@ -215,6 +230,9 @@ namespace SafetyProto.Runtime.PPE
         private void LateUpdate()
         {
             if (!_initialized) return;
+            PinAnchors();
+            // The harness follows its slot in LateUpdate, after the physics tick.
+            for (int i = 0; i < constraintIterations; i++) ApplyBodyConstraints();
             UpdateLineRenderer();
         }
 
@@ -237,16 +255,23 @@ namespace SafetyProto.Runtime.PPE
             }
         }
 
+        /// <summary>Rebuilds the curve without carrying velocity across a reset or teleport.</summary>
+        public void ResetSimulation() => InitializeNodes();
+
         private void InitializeNodes()
         {
-            _nodes = new VerletNode[nodeCount];
-            _linePositions = new Vector3[nodeCount];
+            if (_lineRenderer == null) return;
+            if (_nodes == null || _nodes.Length != nodeCount)
+            {
+                _nodes = new VerletNode[nodeCount];
+                _linePositions = new Vector3[nodeCount];
+            }
             _segmentLength = ropeLength / (nodeCount - 1);
 
             Vector3 startPos = startAnchor != null ? startAnchor.position : transform.position;
             Vector3 endPos = endAnchor != null
                 ? endAnchor.position
-                : startPos + Vector3.down * ropeLength;
+                : _useManualEndPosition ? _manualEndPosition : startPos + Vector3.down * ropeLength;
 
             for (int i = 0; i < nodeCount; i++)
             {
@@ -256,6 +281,9 @@ namespace SafetyProto.Runtime.PPE
                 // Add a slight sag so the rope doesn't start perfectly straight
                 float sag = Mathf.Sin(t * Mathf.PI) * ropeLength * 0.05f;
                 pos.y -= sag;
+                if (bodyCollider != null)
+                    pos += bodyCollider.transform.TransformDirection(initialBendDirection.normalized)
+                        * (Mathf.Sin(t * Mathf.PI) * initialBend);
 
                 _nodes[i] = new VerletNode
                 {
@@ -266,6 +294,10 @@ namespace SafetyProto.Runtime.PPE
 
             _lineRenderer.positionCount = nodeCount;
             _initialized = true;
+            _lastStartPosition = startPos;
+            ApplyBodyConstraints();
+            PinAnchors();
+            UpdateLineRenderer();
         }
 
         private void ApplyVerletIntegration(float dt)
@@ -323,8 +355,39 @@ namespace SafetyProto.Runtime.PPE
                 }
 
                 // Re-pin anchors after each iteration to prevent drift
+                ApplyBodyConstraints();
                 PinAnchors();
             }
+        }
+
+        private void ApplyBodyConstraints()
+        {
+            if (bodyCollider == null) return;
+            CapsuleRopeConstraint.GetWorldCapsule(bodyCollider, out var a, out var b, out float radius);
+            radius += bodyClearance + ropeWidth * 0.5f;
+            Vector3 fallback = bodyCollider.transform.TransformDirection(initialBendDirection);
+            for (int i = 0; i < _nodes.Length - 1; i++)
+            {
+                Vector3 first = _nodes[i].Position;
+                Vector3 second = _nodes[i + 1].Position;
+                bool firstPinned = i == 0 && startAnchor != null;
+                bool secondPinned = i + 1 == _nodes.Length - 1 && IsEndPinned();
+                CapsuleRopeConstraint.ProjectSegment(ref first, ref second,
+                    firstPinned, secondPinned, a, b, radius, fallback);
+                ApplyContact(i, first);
+                ApplyContact(i + 1, second);
+            }
+        }
+
+        private void ApplyContact(int index, Vector3 position)
+        {
+            Vector3 correction = position - _nodes[index].Position;
+            if (correction.sqrMagnitude < 1e-12f) return;
+            Vector3 normal = correction.normalized;
+            Vector3 velocity = _nodes[index].Position - _nodes[index].PreviousPosition;
+            velocity -= normal * Mathf.Min(0f, Vector3.Dot(velocity, normal));
+            _nodes[index].Position = position;
+            _nodes[index].PreviousPosition = position - velocity * 0.9f;
         }
 
         private void SolveDistanceConstraint(int idxA, int idxB)

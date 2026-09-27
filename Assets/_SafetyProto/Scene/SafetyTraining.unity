@@ -25004,6 +25004,11 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1026830568}
   m_Mesh: {fileID: 7325698067764891398, guid: 9b1545b790c85354a9b6449bb3dee586, type: 3}
+--- !u!136 &1027492770 stripped
+CapsuleCollider:
+  m_CorrespondingSourceObject: {fileID: 5976526979466405662, guid: 92ddb6f6d0a6c5d4f9837aa7f9a547af, type: 3}
+  m_PrefabInstance: {fileID: 1550852021807089957}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1034628923
 GameObject:
   m_ObjectHideFlags: 0
@@ -62458,14 +62463,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd9dafada9281f144b6c9330f870ac01, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.VerletLanyard
-  startAnchor: {fileID: 939372834198648423}
-  endAnchor: {fileID: 0}
+  startAnchor: {fileID: 1550852021807089959}
+  endAnchor: {fileID: 8483203612709203741}
   ropeLength: 1.5
   nodeCount: 12
   constraintIterations: 8
   substeps: 2
   gravity: {x: 0, y: -9.81, z: 0}
   damping: 0.02
+  bodyCollider: {fileID: 1027492770}
+  bodyClearance: 0.003
+  initialBendDirection: {x: -1, y: 0, z: 0}
+  initialBend: 0.22
   ropeWidth: 0.006
   ropeColor: {r: 1, g: 0.55, b: 0, a: 1}
 --- !u!23 &1519946332723580007
@@ -62607,6 +62616,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2df4532240349734cbdfbc40e8bd79bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.PPESnapItem
+--- !u!4 &1550852021807089959 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6800899500407927497, guid: 92ddb6f6d0a6c5d4f9837aa7f9a547af, type: 3}
+  m_PrefabInstance: {fileID: 1550852021807089957}
+  m_PrefabAsset: {fileID: 0}
 --- !u!33 &1607051014616343226
 MeshFilter:
   m_ObjectHideFlags: 10
@@ -62646,7 +62660,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.PPE.RetractableLanyardController
   state: 0
-  harnessAttachPoint: {fileID: 939372834198648423}
+  harnessAttachPoint: {fileID: 1550852021807089959}
+  tipRestPoint: {fileID: 939372834198648423}
+  tipRopeAttachPoint: {fileID: 0}
+  idleSlack: 0.3
+  ropeLengthSpeed: 2
   idlePositionOffset: {x: 0, y: 0, z: 0}
   idleRotationOffset: {x: 0, y: 0, z: 0}
   idleFollowSpeed: 0
