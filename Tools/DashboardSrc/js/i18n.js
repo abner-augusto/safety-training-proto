@@ -192,6 +192,7 @@
           GATE_FAILED: 'Inspection not approved',
           WRONG_PPE_SELECTED: 'Incorrect equipment selected', INSPECTION_INCOMPLETE: 'Inspection incomplete',
           ORDER_VIOLATION: 'Recommended order not followed',
+          PPE_OUT_OF_ORDER: 'PPE out of order', HAZARD_MISCLASSIFIED: 'Hazard misclassified',
         },
         pt: {
           ACTION_ID_MISSING: 'Ação não identificada', NO_ACTIVE_GROUP: 'Nenhum grupo de tarefas ativo',
@@ -201,6 +202,7 @@
           GATE_FAILED: 'Inspeção não aprovada',
           WRONG_PPE_SELECTED: 'Equipamento inadequado selecionado', INSPECTION_INCOMPLETE: 'Inspeção incompleta',
           ORDER_VIOLATION: 'Ordem recomendada não seguida',
+          PPE_OUT_OF_ORDER: 'EPI fora de ordem', HAZARD_MISCLASSIFIED: 'Classificação incorreta da irregularidade',
         },
       },
     };
@@ -235,6 +237,8 @@
         WRONG_PPE_SELECTED: /^Selecionou equipamento /,
         INSPECTION_INCOMPLETE: /^Tentou iniciar /,
         ORDER_VIOLATION: /^EPIs equipados /,
+        PPE_OUT_OF_ORDER: /^EPI fora de ordem/,
+        HAZARD_MISCLASSIFIED: /^Classificação incorreta /,
       };
       return portugueseMessages[code]?.test(message) ? message : '';
     }

@@ -24,6 +24,10 @@ namespace SafetyProto.Domain.Tasks
         private readonly HashSet<ITaskGroup> _completedGroups = new HashSet<ITaskGroup>();
         private readonly List<string> _orderViolations = new List<string>();
 
+        /// <summary>"groupId|PPEType" keys already logged as out of order, so a participant who
+        /// retries the same item several times produces one entry, not one per attempt.</summary>
+        private readonly HashSet<string> _reportedOutOfOrderPpe = new HashSet<string>(StringComparer.Ordinal);
+
         private RuntimeSafetyTask? _currentTask;
         private int _currentGroupIndex = -1;
         private int _currentTaskIndex = -1;
@@ -532,11 +536,40 @@ namespace SafetyProto.Domain.Tasks
         /// hint. Returns false for FreeOrder groups, current/prior-step PPE, and types not owned
         /// by any equip task.
         /// </summary>
-        public bool IsPpeAheadOfCurrentStep(PPEType type)
+        public bool IsPpeAheadOfCurrentStep(PPEType type) => FindLaterOwningStep(type) != null;
+
+        /// <summary>
+        /// Logs a <see cref="ViolationCodes.PpeOutOfOrder"/> violation when <paramref name="type"/>
+        /// was offered ahead of its step (see <see cref="IsPpeAheadOfCurrentStep"/>). Recording
+        /// only: the caller has already refused the snap, and no points are charged — whether the
+        /// authored donning order is normative is a content decision, not an engine one. Logs at
+        /// most once per PPE type per group. Returns true when a violation was published.
+        /// </summary>
+        public bool RecordPpeOutOfOrder(PPEType type)
+        {
+            var owningStep = FindLaterOwningStep(type);
+            var group = GetCurrentGroup();
+            if (owningStep == null || group == null || _currentTask == null) return false;
+            if (!_reportedOutOfOrderPpe.Add($"{group.id}|{type}")) return false;
+
+            var current = _currentTask.TaskData;
+            _bus.Publish(new SafetyViolationEventArgs
+            {
+                ViolationCode = ViolationCodes.PpeOutOfOrder,
+                Message = $"EPI fora de ordem: tentou '{owningStep.taskName}' antes de '{current.taskName}'.",
+                TaskId = current.id,
+                GroupId = group.id,
+                TaskName = current.taskName,
+                GroupName = group.groupName
+            });
+            return true;
+        }
+
+        private ISafetyTask? FindLaterOwningStep(PPEType type)
         {
             var group = GetCurrentGroup();
-            if (group == null || TaskExecutionRules.EffectiveMode(group) != TaskExecutionModeShared.Sequential) return false;
-            if (_currentTask == null) return false;
+            if (group == null || TaskExecutionRules.EffectiveMode(group) != TaskExecutionModeShared.Sequential) return null;
+            if (_currentTask == null) return null;
 
             var tasks = group.tasks;
             int activeIdx = -1, owningIdx = -1;
@@ -547,7 +580,7 @@ namespace SafetyProto.Domain.Tasks
                 // The "owning" step is the first task that introduces this PPE type.
                 if (owningIdx < 0 && TaskExecutionRules.IsEquipTask(t) && RequiresPpe(t, type)) owningIdx = i;
             }
-            return activeIdx >= 0 && owningIdx > activeIdx;
+            return activeIdx >= 0 && owningIdx > activeIdx ? tasks[owningIdx] : null;
         }
 
         private static bool RequiresPpe(ISafetyTask task, PPEType type)
@@ -602,6 +635,7 @@ namespace SafetyProto.Domain.Tasks
             _taskDelayCts = null;
             _completedGroups.Clear();
             _orderViolations.Clear();
+            _reportedOutOfOrderPpe.Clear();
             _lastSessionSummary = null;
             _terminal = false;
             _currentGroupIndex = -1;

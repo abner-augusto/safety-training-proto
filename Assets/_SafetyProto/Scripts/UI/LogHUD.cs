@@ -215,6 +215,7 @@ namespace SafetyProto.UI
                 ViolationCodes.WrongAction => "Ação incorreta",
                 ViolationCodes.PpeMissing => "EPI obrigatório ausente",
                 ViolationCodes.TaskNotPerformed => "Tarefa não realizada",
+                ViolationCodes.PpeOutOfOrder => "EPI fora de ordem",
                 "GATE_FAILED" => "Inspeção não aprovada",
                 _ => $"Violação não identificada ({code})"
             };

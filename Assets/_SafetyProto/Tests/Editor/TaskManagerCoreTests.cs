@@ -38,6 +38,83 @@ namespace SafetyProto.Tests.Editor
         private List<T> Of<T>() =>
             _bus.PublishedEvents.Where(e => e.payload is T).Select(e => (T)e.payload).ToList();
 
+        private TaskManagerCore StartPpeSequence(TaskExecutionModeShared mode)
+        {
+            var group = _tasks.Group("ppe", mode,
+                _tasks.Task("equip_boots", string.Empty, PPEType.Boots),
+                _tasks.Task("equip_gloves", string.Empty, PPEType.GloveLeft, PPEType.GloveRight),
+                _tasks.Task("equip_harness", string.Empty, PPEType.Harness));
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
+            core.Subscribe();
+            core.StartSession();
+            return core;
+        }
+
+        [Test]
+        public void RecordPpeOutOfOrder_LaterStepPpe_PublishesOneViolationNamingBothSteps()
+        {
+            var core = StartPpeSequence(TaskExecutionModeShared.Sequential);
+            int scoreBefore = _score.CurrentScore;
+
+            Assert.IsTrue(core.RecordPpeOutOfOrder(PPEType.Harness));
+
+            var v = _violations.Single(x => x.ViolationCode == ViolationCodes.PpeOutOfOrder);
+            Assert.AreEqual("equip_boots", v.TaskId, "The violation is stamped with the step that was due.");
+            StringAssert.Contains("equip_harness", v.Message);
+            StringAssert.Contains("equip_boots", v.Message);
+            Assert.AreEqual(scoreBefore, _score.CurrentScore, "Out-of-order PPE is a log signal, not a penalty.");
+            Assert.IsEmpty(Of<ActionRefusedEventArgs>());
+            core.Dispose();
+        }
+
+        [Test]
+        public void RecordPpeOutOfOrder_SameTypeRetried_LogsOnlyOnce()
+        {
+            var core = StartPpeSequence(TaskExecutionModeShared.Sequential);
+
+            core.RecordPpeOutOfOrder(PPEType.Harness);
+            Assert.IsFalse(core.RecordPpeOutOfOrder(PPEType.Harness));
+            core.RecordPpeOutOfOrder(PPEType.GloveLeft);
+
+            Assert.AreEqual(2, _violations.Count(x => x.ViolationCode == ViolationCodes.PpeOutOfOrder),
+                "One entry per PPE type per group, however many times it is retried.");
+            core.Dispose();
+        }
+
+        [TestCase(PPEType.Boots, Description = "current step")]
+        [TestCase(PPEType.Helmet, Description = "owned by no equip step (a distractor's job)")]
+        public void RecordPpeOutOfOrder_NotAheadOfCurrentStep_PublishesNothing(PPEType type)
+        {
+            var core = StartPpeSequence(TaskExecutionModeShared.Sequential);
+
+            Assert.IsFalse(core.RecordPpeOutOfOrder(type));
+            Assert.IsFalse(_violations.Any(x => x.ViolationCode == ViolationCodes.PpeOutOfOrder));
+            core.Dispose();
+        }
+
+        [Test]
+        public void RecordPpeOutOfOrder_FreeOrderGroup_PublishesNothing()
+        {
+            var core = StartPpeSequence(TaskExecutionModeShared.FreeOrder);
+
+            Assert.IsFalse(core.RecordPpeOutOfOrder(PPEType.Harness));
+            Assert.IsFalse(_violations.Any(x => x.ViolationCode == ViolationCodes.PpeOutOfOrder));
+            core.Dispose();
+        }
+
+        [Test]
+        public void RecordPpeOutOfOrder_AfterResetSession_LogsAgain()
+        {
+            var core = StartPpeSequence(TaskExecutionModeShared.Sequential);
+            core.RecordPpeOutOfOrder(PPEType.Harness);
+
+            core.ResetSession();
+            core.StartSession();
+
+            Assert.IsTrue(core.RecordPpeOutOfOrder(PPEType.Harness));
+            core.Dispose();
+        }
+
         [Test]
         public void StartSession_WithOneGroupOneTask_PublishesGroupStartedThenTaskStarted()
         {

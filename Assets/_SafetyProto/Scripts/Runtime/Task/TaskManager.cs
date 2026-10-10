@@ -212,6 +212,9 @@ namespace SafetyProto.Runtime.Task
         public bool IsPpeAheadOfCurrentStep(PPEType type) =>
             _core?.IsPpeAheadOfCurrentStep(type) ?? false;
 
+        public bool RecordPpeOutOfOrder(PPEType type) =>
+            _core?.RecordPpeOutOfOrder(type) ?? false;
+
         public void ResetSession() => _core?.ResetSession();
 
         public IReadOnlyList<RuntimeSafetyTask> CloseCurrentGroup() =>

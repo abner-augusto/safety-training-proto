@@ -197,6 +197,7 @@ namespace SafetyProto.Runtime.PPE
             if (_taskManager != null && _taskManager.IsPpeAheadOfCurrentStep(item.PpeType))
             {
                 onWrongOrderSnapAttempted?.Invoke(item.PpeType);
+                _taskManager.RecordPpeOutOfOrder(item.PpeType);
                 SafetyLog.Info($"PPESnapSlot [{name}]: '{item.name}' ({item.PpeType}) fora de ordem — snap rejeitado.", this);
                 return false;
             }

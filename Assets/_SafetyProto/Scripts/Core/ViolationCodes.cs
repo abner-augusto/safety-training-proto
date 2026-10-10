@@ -18,5 +18,9 @@ namespace SafetyProto.Core
         /// popup (e.g. "report_damaged_safety_mesh"). The task still completes — this only
         /// charges the tier's base penalty (ScoringConfig.BasePenaltyFor).</summary>
         public const string HazardMisclassified = "HAZARD_MISCLASSIFIED";
+
+        /// <summary>Participant tried to don a PPE item ahead of its step in a Sequential group.
+        /// The slot refuses the snap; this is a log signal only and charges no points.</summary>
+        public const string PpeOutOfOrder = "PPE_OUT_OF_ORDER";
     }
 }
