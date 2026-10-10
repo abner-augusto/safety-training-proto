@@ -118,6 +118,11 @@ try {
         Invoke-UnityEval -Code $code | Out-Null
     }
 
+    # A dirty scene makes the build open a modal "save scene?" dialog that blocks the editor
+    # until someone clicks it, so the polling below times out. Save first.
+    $saved = Invoke-UnityEval -Code 'var dirty = new System.Collections.Generic.List<string>(); for (int i = 0; i < UnityEditor.SceneManagement.EditorSceneManager.sceneCount; i++) { var s = UnityEditor.SceneManagement.EditorSceneManager.GetSceneAt(i); if (s.isDirty) dirty.Add(s.name); } UnityEditor.SceneManagement.EditorSceneManager.SaveOpenScenes(); UnityEditor.AssetDatabase.SaveAssets(); return string.Join(",", dirty);'
+    if ($saved) { Write-Host "  saved dirty scenes: $saved" }
+
     $bundleVersion = Invoke-UnityEval -Code 'return UnityEditor.PlayerSettings.bundleVersion;'
     Write-Host "=== Building Android (version $bundleVersion) ===" -ForegroundColor Cyan
 
