@@ -13,6 +13,12 @@ namespace SafetyProto.UI
         [Tooltip("Ícone customizado para este step. Null = usa o ícone padrão do tipo Interactive.")]
         public Sprite icon;
 
+        [Tooltip("Ilustração no lugar do ícone. Com mais de um quadro, eles alternam em crossfade (ex.: mão aberta → punho fechado).")]
+        public Sprite[] illustrationFrames;
+
+        [Tooltip("Narração tocada quando este step abre. Null = sem narração.")]
+        public AudioClip narration;
+
         [Tooltip("GameObject a destacar quando este step abrir. Null = sem highlight.")]
         public GameObject highlightTarget;
 

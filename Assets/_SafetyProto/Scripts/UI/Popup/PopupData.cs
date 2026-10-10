@@ -16,6 +16,12 @@ namespace SafetyProto.UI
         // Optional — overrides the default icon for this type when non-null
         public Sprite customIcon;
 
+        // Hides the icon row entirely, for popups whose content needs the height (keypad).
+        public bool hideIcon;
+
+        // Larger illustration shown in place of the icon row; several frames crossfade in a loop.
+        public Sprite[] illustrationFrames;
+
         // Interactive only — ignored for other types
         public string actionButtonLabel;
         public UnityEvent onActionPressed;
@@ -35,6 +41,11 @@ namespace SafetyProto.UI
         // When true (and showInputField), the action button is blocked while the text field
         // is empty. The participant must type a name or use "Skip".
         public bool requireInputForAction;
+
+        // When true (and showInputField), the field is read-only and filled from an in-panel
+        // numeric keypad instead of the system keyboard. keypadMaxDigits caps the length.
+        public bool showNumericKeypad;
+        public int keypadMaxDigits = 3;
 
         // Auto-closes the popup after N seconds. 0 = no timeout (stays until manual action).
         // Ignored for PopupType.Interactive (requires a user click).

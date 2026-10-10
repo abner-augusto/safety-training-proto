@@ -14,6 +14,17 @@ namespace SafetyProto.UI
 
         [SerializeField] private PopupPanel popupPanel;
 
+        [System.Serializable]
+        private struct TitleIllustration
+        {
+            public string title;
+            public Sprite[] frames;
+        }
+
+        [Tooltip("Ilustração aplicada a qualquer popup com este título exato, para os avisos " +
+                 "abertos por sistemas que não conhecem sprites (EPI incorreto, ordem incorreta…).")]
+        [SerializeField] private TitleIllustration[] illustrationsByTitle;
+
         /// <summary>Reason code of the popup currently shown, echoed on close so an emitter
         /// waiting behind a warning can match it back to its own refusal. Empty for a popup
         /// opened for anything other than a refusal.</summary>
@@ -91,7 +102,18 @@ namespace SafetyProto.UI
 
             SessionPause.Hold(PauseSource.Popup);
 
+            if (data.illustrationFrames == null || data.illustrationFrames.Length == 0)
+                data.illustrationFrames = FindIllustration(data.title);
+
             popupPanel.Show(data);
+        }
+
+        private Sprite[] FindIllustration(string title)
+        {
+            if (illustrationsByTitle == null || string.IsNullOrEmpty(title)) return null;
+            foreach (var entry in illustrationsByTitle)
+                if (entry.title == title) return entry.frames;
+            return null;
         }
 
         public void Hide()

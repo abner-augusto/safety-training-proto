@@ -9,6 +9,8 @@ namespace SafetyProto.UI
     {
         [SerializeField] private PopupService popupService;
         [SerializeField] private OnboardingStep[] steps;
+        [Tooltip("Plays each step's narration clip. Optional.")]
+        [SerializeField] private NarrationVoice narrationVoice;
         [SerializeField] private bool autoStartOnEnable = true;
         [Tooltip("Frames to wait before showing the first popup, giving OVR time to initialize stereo matrices.")]
         [SerializeField, Min(0)] private int startDelayFrames = 10;
@@ -104,6 +106,7 @@ namespace SafetyProto.UI
                 title = step.title,
                 body = step.body,
                 customIcon = step.icon,
+                illustrationFrames = step.illustrationFrames,
                 actionButtonLabel = step.actionButtonLabel,
                 onActionPressed = new UnityEvent()
             };
@@ -130,10 +133,13 @@ namespace SafetyProto.UI
             }
 
             popupService.Show(data);
+            if (narrationVoice != null) narrationVoice.Play(step.narration);
         }
 
         public void EndSequence()
         {
+            if (narrationVoice != null) narrationVoice.Stop();
+
             if (_activeHighlight != null)
             {
                 HighlightService.Disable(_activeHighlight);

@@ -27,6 +27,20 @@ namespace SafetyProto.UI
         [Tooltip("Root do layout a reconstruir após mudar o conteúdo (geralmente o background ou este próprio RectTransform).")]
         [SerializeField] private RectTransform layoutRoot;
 
+        [Header("Teclado numérico")]
+        [Tooltip("Tamanho de cada tecla do teclado numérico construído sob o campo de texto.")]
+        [SerializeField] private Vector2 keypadCellSize = new Vector2(132f, 72f);
+        [SerializeField] private Vector2 keypadSpacing = new Vector2(12f, 12f);
+        [SerializeField] private string keypadBackspaceLabel = "Apagar";
+        [SerializeField] private string keypadClearLabel = "Limpar";
+
+        [Header("Ilustração")]
+        [Tooltip("Área da ilustração que substitui a faixa do ícone quando PopupData.illustrationFrames é definido.")]
+        [SerializeField] private Vector2 illustrationSize = new Vector2(500f, 280f);
+        [Tooltip("Tempo em que cada quadro fica parado antes do crossfade para o próximo.")]
+        [SerializeField, Min(0.1f)] private float illustrationHoldSeconds = 1.4f;
+        [SerializeField, Min(0.05f)] private float illustrationFadeSeconds = 0.6f;
+
         [Header("Estilos por tipo")]
         [SerializeField] private Color normalColor      = new Color(0.086f, 0.110f, 0.157f, 0.88f);
         [SerializeField] private Color warningColor     = new Color(0.118f, 0.071f, 0.039f, 0.92f);
@@ -68,13 +82,18 @@ namespace SafetyProto.UI
         // next Show() (choice or not) can tear them down instead of leaking one set per popup.
         private readonly List<GameObject> _choiceButtons = new List<GameObject>();
 
+        // Built once on first use and kept; Show() only toggles it.
+        private GameObject _keypadRoot;
+        private int _keypadMaxDigits;
+        private PopupIllustration _illustration;
+
         private void Awake()
         {
             _canvasGroup = GetComponent<CanvasGroup>()
                         ?? gameObject.AddComponent<CanvasGroup>();
 
             if (actionButtonRoot != null)
-                _actionButton = actionButtonRoot.GetComponent<Button>();
+                _actionButton = actionButtonRoot.GetComponentInChildren<Button>(true);
             if (inputFieldRoot != null)
                 _inputField = inputFieldRoot.GetComponentInChildren<TMP_InputField>(true);
             if (_inputField != null)
@@ -109,15 +128,35 @@ namespace SafetyProto.UI
                 };
             }
 
+            bool hasIllustration = data.illustrationFrames != null && data.illustrationFrames.Length > 0;
+
             if (iconImage != null)
             {
                 Sprite resolvedIcon = data.customIcon
                     ?? (data.type == PopupType.Warning ? warningIcon : infoIcon);
 
-                bool showIcon = data.customIcon != null || data.type != PopupType.Normal;
+                bool hideIconRow = data.hideIcon || hasIllustration;
+                bool showIcon = !hideIconRow && (data.customIcon != null || data.type != PopupType.Normal);
                 iconImage.gameObject.SetActive(showIcon);
+
+                // The icon sits inside a fixed-height row (IconBackground); hiding only the
+                // image would leave that empty row taking the height hideIcon is meant to free.
+                var iconRow = iconImage.transform.parent;
+                if (iconRow != null && iconRow != transform && iconRow != layoutRoot)
+                    iconRow.gameObject.SetActive(!hideIconRow);
                 if (showIcon)
                     iconImage.sprite = resolvedIcon;
+            }
+
+            if (hasIllustration)
+            {
+                EnsureIllustration();
+                if (_illustration != null)
+                    _illustration.Play(data.illustrationFrames, illustrationHoldSeconds, illustrationFadeSeconds);
+            }
+            else if (_illustration != null)
+            {
+                _illustration.Stop();
             }
 
             bool isChoice = data.choiceOptions != null && data.choiceOptions.Count > 0;
@@ -146,6 +185,18 @@ namespace SafetyProto.UI
 
             if (inputFieldRoot != null)
                 inputFieldRoot.SetActive(data.showInputField);
+
+            bool useKeypad = data.showInputField && data.showNumericKeypad;
+            if (useKeypad)
+            {
+                EnsureKeypad();
+                _keypadMaxDigits = Mathf.Max(1, data.keypadMaxDigits);
+                // Read-only keeps Horizon OS from opening its own keyboard over the panel;
+                // assigning .text still raises onValueChanged, so the action gate keeps working.
+                if (_inputField != null) _inputField.readOnly = true;
+            }
+            if (_keypadRoot != null)
+                _keypadRoot.SetActive(useKeypad);
 
             // Lock the action button until the participant types a name (or uses Pular/Skip).
             _gateActionOnInput = isInteractive && data.showInputField && data.requireInputForAction;
@@ -250,6 +301,114 @@ namespace SafetyProto.UI
             foreach (var go in _choiceButtons)
                 if (go != null) Destroy(go);
             _choiceButtons.Clear();
+        }
+
+        /// <summary>
+        /// Builds a 3×4 keypad (1–9, backspace, 0, clear) right under the input field, from
+        /// clones of <see cref="actionButtonRoot"/> for the same reason as the choice buttons:
+        /// each clone inherits the canvas-wide poke and ray interaction.
+        /// </summary>
+        private void EnsureKeypad()
+        {
+            if (_keypadRoot != null) return;
+            if (actionButtonRoot == null || inputFieldRoot == null)
+            {
+                SafetyLog.Warning("[PopupPanel] actionButtonRoot ou inputFieldRoot ausente — teclado numérico indisponível.", this);
+                return;
+            }
+
+            var root = new GameObject("NumericKeypad", typeof(RectTransform));
+            root.layer = inputFieldRoot.layer;
+            var rect = (RectTransform)root.transform;
+            rect.SetParent(inputFieldRoot.transform.parent, false);
+            rect.SetSiblingIndex(inputFieldRoot.transform.GetSiblingIndex() + 1);
+
+            var grid = root.AddComponent<GridLayoutGroup>();
+            grid.cellSize = keypadCellSize;
+            grid.spacing = keypadSpacing;
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 3;
+            grid.childAlignment = TextAnchor.MiddleCenter;
+
+            var element = root.AddComponent<LayoutElement>();
+            element.preferredWidth = 3 * keypadCellSize.x + 2 * keypadSpacing.x;
+            element.preferredHeight = 4 * keypadCellSize.y + 3 * keypadSpacing.y;
+
+            for (int digit = 1; digit <= 9; digit++)
+                AddKeypadKey(rect, digit.ToString(), AppendDigit);
+            AddKeypadKey(rect, keypadBackspaceLabel, _ => Backspace());
+            AddKeypadKey(rect, "0", AppendDigit);
+            AddKeypadKey(rect, keypadClearLabel, _ => SetInputText(string.Empty));
+
+            _keypadRoot = root;
+        }
+
+        /// <summary>Builds the illustration row in the icon row's slot, which it replaces while shown.</summary>
+        private void EnsureIllustration()
+        {
+            if (_illustration != null) return;
+            var iconRow = iconImage != null ? iconImage.transform.parent : null;
+            if (iconRow == null || iconRow == transform || iconRow == layoutRoot)
+            {
+                SafetyLog.Warning("[PopupPanel] Faixa do ícone ausente — ilustração indisponível.", this);
+                return;
+            }
+
+            _illustration = PopupIllustration.Create(iconRow.parent, iconRow.GetSiblingIndex() + 1,
+                illustrationSize, iconRow.gameObject.layer);
+        }
+
+        private void AddKeypadKey(RectTransform parent, string label, UnityEngine.Events.UnityAction<string> onPressed)
+        {
+            var key = Instantiate(actionButtonRoot, parent);
+            key.name = $"Key_{label}";
+            key.SetActive(true);
+
+            var text = key.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (text != null) text.text = label;
+
+            var button = key.GetComponentInChildren<Button>(true);
+            if (button == null) return;
+
+            // The grid sizes the clone's root, but the action button's own LayoutElement still
+            // asks for its authored width and would overflow into the neighbouring key.
+            var buttonLayout = button.GetComponent<LayoutElement>();
+            if (buttonLayout != null)
+            {
+                buttonLayout.minWidth = -1f;
+                buttonLayout.preferredWidth = keypadCellSize.x;
+                buttonLayout.minHeight = -1f;
+                buttonLayout.preferredHeight = keypadCellSize.y;
+            }
+
+            // The clone keeps the action button's persistent OnActionButtonPressed call, which
+            // would submit the popup on the first digit. Switch only that call off so the
+            // authored click audio still plays.
+            for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++)
+                if (button.onClick.GetPersistentMethodName(i) == nameof(OnActionButtonPressed))
+                    button.onClick.SetPersistentListenerState(i, UnityEngine.Events.UnityEventCallState.Off);
+
+            // Cloned while the gated action button may be non-interactable.
+            button.interactable = true;
+            button.onClick.AddListener(() => onPressed(label));
+        }
+
+        private void AppendDigit(string digit)
+        {
+            string current = _inputField != null ? _inputField.text : string.Empty;
+            if (current.Length >= _keypadMaxDigits) return;
+            SetInputText(current + digit);
+        }
+
+        private void Backspace()
+        {
+            string current = _inputField != null ? _inputField.text : string.Empty;
+            if (current.Length > 0) SetInputText(current.Substring(0, current.Length - 1));
+        }
+
+        private void SetInputText(string value)
+        {
+            if (_inputField != null) _inputField.text = value;
         }
 
         private void OnInputValueChanged(string _) => RefreshActionInteractable();
