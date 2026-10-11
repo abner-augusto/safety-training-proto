@@ -46,42 +46,16 @@
     <!-- Part 4 additions -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Events\EventContext.cs"        Link="Core\Events\EventContext.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Events\EventMetadata.cs"       Link="Core\Events\EventMetadata.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scoring\ScoreService.cs"               Link="Domain\Scoring\ScoreService.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Sessions\SessionLoggerCore.cs"         Link="Domain\Sessions\SessionLoggerCore.cs" />
 
     <!-- Part 6 additions -->
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Interfaces\IPPEComplianceChecker.cs" Link="Core\Interfaces\IPPEComplianceChecker.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Safety\SafetyRuleEngineCore.cs"  Link="Domain\Safety\SafetyRuleEngineCore.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Safety\RefusedAttemptTracker.cs" Link="Domain\Safety\RefusedAttemptTracker.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Safety\HazardClassificationPolicy.cs" Link="Domain\Safety\HazardClassificationPolicy.cs" />
+  </ItemGroup>
 
-    <!-- Part 7 additions -->
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Tasks\TaskManagerCore.cs"        Link="Domain\Tasks\TaskManagerCore.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Tasks\TaskExecutionRules.cs"    Link="Domain\Tasks\TaskExecutionRules.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Tasks\PhaseAdvanceGate.cs"      Link="Domain\Tasks\PhaseAdvanceGate.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Feedback\AudioFeedbackArbiter.cs" Link="Domain\Feedback\AudioFeedbackArbiter.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scoring\ScoreRuleEngineCore.cs"  Link="Domain\Scoring\ScoreRuleEngineCore.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scoring\ScoringConfig.cs"        Link="Domain\Scoring\ScoringConfig.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scoring\IncidentalChargePolicy.cs" Link="Domain\Scoring\IncidentalChargePolicy.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Dashboard\DashboardDtos.cs"       Link="Domain\Dashboard\DashboardDtos.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Dashboard\DashboardDtoMapper.cs"  Link="Domain\Dashboard\DashboardDtoMapper.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Dashboard\IDashboardHost.cs"       Link="Domain\Dashboard\IDashboardHost.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Dashboard\DashboardEventRelay.cs"  Link="Domain\Dashboard\DashboardEventRelay.cs" />
-
-    <!-- Data refactor: unified scenario model + loader + capability catalog -->
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scenarios\ScriptStepDef.cs"      Link="Domain\Scenarios\ScriptStepDef.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scenarios\SafetyTaskDef.cs"      Link="Domain\Scenarios\SafetyTaskDef.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scenarios\TaskGroupDef.cs"       Link="Domain\Scenarios\TaskGroupDef.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scenarios\ScenarioDef.cs"        Link="Domain\Scenarios\ScenarioDef.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scenarios\ScenarioLoader.cs"     Link="Domain\Scenarios\ScenarioLoader.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scenarios\ScenarioCompatibility.cs" Link="Domain\Scenarios\ScenarioCompatibility.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scenarios\ScenarioValidator.cs"  Link="Domain\Scenarios\ScenarioValidator.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Capabilities\CapabilityCatalog.cs" Link="Domain\Capabilities\CapabilityCatalog.cs" />
-
-    <!-- Data refactor Phase 5: action logical model (JSON) split from presentation (SO) -->
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Actions\ActionDef.cs"             Link="Domain\Actions\ActionDef.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Actions\ActionCatalogDef.cs"      Link="Domain\Actions\ActionCatalogDef.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Actions\ActionCatalogEditor.cs"   Link="Domain\Actions\ActionCatalogEditor.cs" />
-    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Actions\ActionCatalogLoader.cs"   Link="Domain\Actions\ActionCatalogLoader.cs" />
+  <ItemGroup>
+    <!-- Domain.Core.asmdef sets noEngineReferences=true, so everything under Domain/ is
+         engine-free by construction and can be compiled wholesale. Core/ is mixed
+         (ScriptableObjects, UnityEngine facades) and stays an explicit list above. -->
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\**\*.cs"
+             Link="Domain\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>
