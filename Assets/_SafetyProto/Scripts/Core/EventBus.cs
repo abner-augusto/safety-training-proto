@@ -62,13 +62,18 @@ namespace SafetyProto.Core
         }
 
         private const int MaxQueueWarningThreshold = 1000;
+        // Edge-triggered: the report itself enqueues a SafetyError, so a level-triggered check
+        // would add one item per frame to the backlog it is reporting. Re-armed only once the
+        // queue has fully drained.
+        private bool _queueOverflowReported;
 
         public void ProcessEvents(double maxMillis = 2)
         {
             if (_eventQueue.Count == 0) return;
 
-            if (_eventQueue.Count > MaxQueueWarningThreshold)
+            if (_eventQueue.Count > MaxQueueWarningThreshold && !_queueOverflowReported)
             {
+                _queueOverflowReported = true;
                 SafetyLog.Warning($"[EventBus] Queue length high: {_eventQueue.Count} items");
                 SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
                 {
@@ -99,6 +104,7 @@ namespace SafetyProto.Core
                 if (_stopwatch.Elapsed.TotalMilliseconds >= maxMillis) break;
             }
 
+            if (_eventQueue.Count == 0) _queueOverflowReported = false;
             _stopwatch.Stop();
         }
 
@@ -213,11 +219,6 @@ namespace SafetyProto.Core
             });
         }
 
-        private static void StampMetadata(ref string sessionId, ref string playerId, ref string scenarioId, ref long timestampMs)
-        {
-            EventMetadata.StampFields(ref sessionId, ref playerId, ref scenarioId, ref timestampMs);
-        }
-
         [Header("Debug")]
         public bool verboseLogging;
 
@@ -248,40 +249,35 @@ namespace SafetyProto.Core
 
         public void RaiseSessionStarted(SessionStartedEventArgs args = new SessionStartedEventArgs())
         {
-            var payload = args;
-            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            var payload = EventMetadata.Stamp(args);
             EnqueueDispatch(payload, onSessionStarted, "EventBus.onSessionStarted",
                 () => { if (verboseLogging) SafetyLog.Info("[EventBus] SessionStarted"); });
         }
 
         public void RaiseSessionPaused(SessionPausedEventArgs args = new SessionPausedEventArgs())
         {
-            var payload = args;
-            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            var payload = EventMetadata.Stamp(args);
             EnqueueDispatch(payload, onSessionPaused, "EventBus.onSessionPaused",
                 () => { if (verboseLogging) SafetyLog.Info("[EventBus] SessionPaused"); });
         }
 
         public void RaiseSessionResumed(SessionResumedEventArgs args = new SessionResumedEventArgs())
         {
-            var payload = args;
-            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            var payload = EventMetadata.Stamp(args);
             EnqueueDispatch(payload, onSessionResumed, "EventBus.onSessionResumed",
                 () => { if (verboseLogging) SafetyLog.Info("[EventBus] SessionResumed"); });
         }
 
         public void RaiseSessionEnded(SessionEndedEventArgs args = new SessionEndedEventArgs())
         {
-            var payload = args;
-            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            var payload = EventMetadata.Stamp(args);
             EnqueueDispatch(payload, onSessionEnded, "EventBus.onSessionEnded",
                 () => { if (verboseLogging) SafetyLog.Info("[EventBus] SessionEnded"); });
         }
 
         public void RaiseActionAttempt(ActionAttemptedEvent args)
         {
-            var payload = args;
-            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            var payload = EventMetadata.Stamp(args);
             EnqueueDispatch(payload, onActionAttempt, "EventBus.onActionAttempt", () =>
             {
                 if (verboseLogging)
@@ -294,16 +290,14 @@ namespace SafetyProto.Core
 
         public void RaisePpeStateChanged(PPEStateChangedEventArgs args)
         {
-            var payload = args;
-            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            var payload = EventMetadata.Stamp(args);
             EnqueueDispatch(payload, onPpeStateChanged, "EventBus.onPpeStateChanged",
                 () => { if (verboseLogging) SafetyLog.Info($"[EventBus] PPEStateChanged: {payload.PpeType}, Wearing: {payload.IsWearing}"); });
         }
 
         public void RaiseTaskStarted(TaskEventArgs args)
         {
-            var payload = args;
-            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            var payload = EventMetadata.Stamp(args);
             payload.Phase = TaskPhase.Started;
             EnqueueDispatch(payload, onTaskStarted, "EventBus.onTaskStarted",
                 () => { if (verboseLogging && payload.Task != null) SafetyLog.Info($"[EventBus] TaskStarted: {payload.Task.taskName}"); });
@@ -311,8 +305,7 @@ namespace SafetyProto.Core
 
         public void RaiseTaskCompleted(TaskEventArgs args)
         {
-            var payload = args;
-            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            var payload = EventMetadata.Stamp(args);
             payload.Phase = TaskPhase.Completed;
             EnqueueDispatch(payload, onTaskCompleted, "EventBus.onTaskCompleted",
                 () => { if (verboseLogging && payload.Task != null) SafetyLog.Info($"[EventBus] TaskCompleted: {payload.Task.taskName}"); });
@@ -320,16 +313,14 @@ namespace SafetyProto.Core
 
         public void RaiseScoreChanged(ScoreChangedEventArgs args)
         {
-            var payload = args;
-            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            var payload = EventMetadata.Stamp(args);
             EnqueueDispatch(payload, onScoreChanged, "EventBus.onScoreChanged",
                 () => { if (verboseLogging) SafetyLog.Info($"[EventBus] ScoreChanged: Total {payload.TotalScore}, Delta {payload.Delta}"); });
         }
 
         public void RaiseGroupStarted(TaskGroupEventArgs args)
         {
-            var payload = args;
-            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            var payload = EventMetadata.Stamp(args);
             payload.Phase = TaskGroupPhase.Started;
             EnqueueDispatch(payload, onGroupStarted, "EventBus.onGroupStarted",
                 () => { if (verboseLogging && payload.Group != null) SafetyLog.Info($"[EventBus] GroupStarted: {payload.Group.groupName}"); });
@@ -337,8 +328,7 @@ namespace SafetyProto.Core
 
         public void RaiseGroupCompleted(TaskGroupEventArgs args)
         {
-            var payload = args;
-            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            var payload = EventMetadata.Stamp(args);
             payload.Phase = TaskGroupPhase.Completed;
             EnqueueDispatch(payload, onGroupCompleted, "EventBus.onGroupCompleted",
                 () => { if (verboseLogging && payload.Group != null) SafetyLog.Info($"[EventBus] GroupCompleted: {payload.Group.groupName}"); });
@@ -346,32 +336,28 @@ namespace SafetyProto.Core
 
         public void RaiseSessionCompleted(SessionCompletedEventArgs args)
         {
-            var payload = args;
-            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            var payload = EventMetadata.Stamp(args);
             EnqueueDispatch(payload, onSessionCompleted, "EventBus.onSessionCompleted",
                 () => { if (verboseLogging) SafetyLog.Info($"[EventBus] SessionCompleted: {payload.tasksCompleted} tasks, {payload.totalElapsedTime:F2}s, Score: {payload.totalScore}"); });
         }
 
         public void RaiseSafetyViolation(SafetyViolationEventArgs args)
         {
-            var payload = args;
-            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            var payload = EventMetadata.Stamp(args);
             EnqueueDispatch(payload, onSafetyViolation, "EventBus.onSafetyViolation",
                 () => { if (verboseLogging) SafetyLog.Info($"[EventBus] SafetyViolation: {payload.ViolationCode} - {payload.Message}"); });
         }
 
         public void RaiseCriticalSafetyFailure(CriticalSafetyFailureEventArgs args)
         {
-            var payload = args;
-            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            var payload = EventMetadata.Stamp(args);
             EnqueueDispatch(payload, onCriticalSafetyFailure, "EventBus.onCriticalSafetyFailure",
                 () => { if (verboseLogging) SafetyLog.Info($"[EventBus] CriticalSafetyFailure: {payload.Reason} ({payload.ViolationCount} in {payload.WindowSeconds}s)"); });
         }
 
         public void RaiseSafetyError(SafetyErrorEventArgs args)
         {
-            var payload = args;
-            StampMetadata(ref payload.SessionId, ref payload.PlayerId, ref payload.ScenarioId, ref payload.TimestampMs);
+            var payload = EventMetadata.Stamp(args);
             EnqueueDispatch(payload, onSafetyError, "EventBus.onSafetyError",
                 () => { if (verboseLogging) SafetyLog.Info($"[EventBus] SafetyError: {payload.Source} - {payload.Message}"); },
                 raiseSafetyError: false);

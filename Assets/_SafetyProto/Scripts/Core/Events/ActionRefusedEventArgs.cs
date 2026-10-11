@@ -13,12 +13,25 @@ namespace SafetyProto.Core.Events
     /// <see cref="SafetyViolationEventArgs"/>; this event exists for the world state, not the UI.
     /// </summary>
     [Serializable]
-    public struct ActionRefusedEventArgs
+    public struct ActionRefusedEventArgs : IEventPayload
     {
         public string SessionId;
         public string PlayerId;
         public string ScenarioId;
         public long TimestampMs;
+
+        string IEventPayload.SessionId => SessionId;
+        string IEventPayload.PlayerId => PlayerId;
+        string IEventPayload.ScenarioId => ScenarioId;
+        long IEventPayload.TimestampMs => TimestampMs;
+
+        void IEventPayload.SetMetadata(string sessionId, string playerId, string scenarioId, long timestampMs)
+        {
+            SessionId = sessionId;
+            PlayerId = playerId;
+            ScenarioId = scenarioId;
+            TimestampMs = timestampMs;
+        }
 
         /// <summary>Canonical id of the refused action.</summary>
         public string ActionId;

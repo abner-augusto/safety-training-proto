@@ -1,4 +1,5 @@
 #nullable enable
+using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 
 namespace SafetyProto.Core
@@ -16,12 +17,25 @@ namespace SafetyProto.Core
     }
 
     [System.Serializable]
-    public struct PPEStateChangedEventArgs
+    public struct PPEStateChangedEventArgs : IEventPayload
     {
         public string SessionId;
         public string PlayerId;
         public string ScenarioId;
         public long TimestampMs;
+
+        string IEventPayload.SessionId => SessionId;
+        string IEventPayload.PlayerId => PlayerId;
+        string IEventPayload.ScenarioId => ScenarioId;
+        long IEventPayload.TimestampMs => TimestampMs;
+
+        void IEventPayload.SetMetadata(string sessionId, string playerId, string scenarioId, long timestampMs)
+        {
+            SessionId = sessionId;
+            PlayerId = playerId;
+            ScenarioId = scenarioId;
+            TimestampMs = timestampMs;
+        }
 
         public PPEType PpeType;
         public bool IsWearing;
@@ -38,12 +52,25 @@ namespace SafetyProto.Core
     }
 
     [System.Serializable]
-    public struct TaskEventArgs // Used for TaskStarted, TaskCompleted
+    public struct TaskEventArgs : IEventPayload // Used for TaskStarted, TaskCompleted
     {
         public string SessionId;
         public string PlayerId;
         public string ScenarioId;
         public long TimestampMs;
+
+        string IEventPayload.SessionId => SessionId;
+        string IEventPayload.PlayerId => PlayerId;
+        string IEventPayload.ScenarioId => ScenarioId;
+        long IEventPayload.TimestampMs => TimestampMs;
+
+        void IEventPayload.SetMetadata(string sessionId, string playerId, string scenarioId, long timestampMs)
+        {
+            SessionId = sessionId;
+            PlayerId = playerId;
+            ScenarioId = scenarioId;
+            TimestampMs = timestampMs;
+        }
 
         public ISafetyTask Task;
         public RuntimeSafetyTask? RuntimeTask;
@@ -82,12 +109,25 @@ namespace SafetyProto.Core
     }
 
     [System.Serializable]
-    public struct TaskGroupEventArgs
+    public struct TaskGroupEventArgs : IEventPayload
     {
         public string SessionId;
         public string PlayerId;
         public string ScenarioId;
         public long TimestampMs;
+
+        string IEventPayload.SessionId => SessionId;
+        string IEventPayload.PlayerId => PlayerId;
+        string IEventPayload.ScenarioId => ScenarioId;
+        long IEventPayload.TimestampMs => TimestampMs;
+
+        void IEventPayload.SetMetadata(string sessionId, string playerId, string scenarioId, long timestampMs)
+        {
+            SessionId = sessionId;
+            PlayerId = playerId;
+            ScenarioId = scenarioId;
+            TimestampMs = timestampMs;
+        }
 
         public ITaskGroup? Group;
         public TaskGroupPhase Phase;
@@ -114,12 +154,25 @@ namespace SafetyProto.Core
     }
 
     [System.Serializable]
-    public struct ScoreChangedEventArgs
+    public struct ScoreChangedEventArgs : IEventPayload
     {
         public string SessionId;
         public string PlayerId;
         public string ScenarioId;
         public long TimestampMs;
+
+        string IEventPayload.SessionId => SessionId;
+        string IEventPayload.PlayerId => PlayerId;
+        string IEventPayload.ScenarioId => ScenarioId;
+        long IEventPayload.TimestampMs => TimestampMs;
+
+        void IEventPayload.SetMetadata(string sessionId, string playerId, string scenarioId, long timestampMs)
+        {
+            SessionId = sessionId;
+            PlayerId = playerId;
+            ScenarioId = scenarioId;
+            TimestampMs = timestampMs;
+        }
 
         public int TotalScore;
         public int Delta;
@@ -142,12 +195,25 @@ namespace SafetyProto.Core
     }
 
     [System.Serializable]
-    public struct SafetyViolationEventArgs
+    public struct SafetyViolationEventArgs : IEventPayload
     {
         public string SessionId;
         public string PlayerId;
         public string ScenarioId;
         public long TimestampMs;
+
+        string IEventPayload.SessionId => SessionId;
+        string IEventPayload.PlayerId => PlayerId;
+        string IEventPayload.ScenarioId => ScenarioId;
+        long IEventPayload.TimestampMs => TimestampMs;
+
+        void IEventPayload.SetMetadata(string sessionId, string playerId, string scenarioId, long timestampMs)
+        {
+            SessionId = sessionId;
+            PlayerId = playerId;
+            ScenarioId = scenarioId;
+            TimestampMs = timestampMs;
+        }
 
         public string ViolationCode;
         public string Message;
@@ -161,36 +227,77 @@ namespace SafetyProto.Core
     }
 
     [System.Serializable]
-    public struct CriticalSafetyFailureEventArgs
+    public struct CriticalSafetyFailureEventArgs : IEventPayload
     {
         public string SessionId;
         public string PlayerId;
         public string ScenarioId;
         public long TimestampMs;
+
+        string IEventPayload.SessionId => SessionId;
+        string IEventPayload.PlayerId => PlayerId;
+        string IEventPayload.ScenarioId => ScenarioId;
+        long IEventPayload.TimestampMs => TimestampMs;
+
+        void IEventPayload.SetMetadata(string sessionId, string playerId, string scenarioId, long timestampMs)
+        {
+            SessionId = sessionId;
+            PlayerId = playerId;
+            ScenarioId = scenarioId;
+            TimestampMs = timestampMs;
+        }
+
         public int ViolationCount;
         public float WindowSeconds;
         public string Reason;
     }
 
     [System.Serializable]
-    public struct SafetyErrorEventArgs
+    public struct SafetyErrorEventArgs : IEventPayload
     {
         public string SessionId;
         public string PlayerId;
         public string ScenarioId;
         public long TimestampMs;
+
+        string IEventPayload.SessionId => SessionId;
+        string IEventPayload.PlayerId => PlayerId;
+        string IEventPayload.ScenarioId => ScenarioId;
+        long IEventPayload.TimestampMs => TimestampMs;
+
+        void IEventPayload.SetMetadata(string sessionId, string playerId, string scenarioId, long timestampMs)
+        {
+            SessionId = sessionId;
+            PlayerId = playerId;
+            ScenarioId = scenarioId;
+            TimestampMs = timestampMs;
+        }
+
         public string Source;
         public string Message;
         public string Details;
     }
 
     [System.Serializable]
-    public struct SessionCompletedEventArgs
+    public struct SessionCompletedEventArgs : IEventPayload
     {
         public string SessionId;
         public string PlayerId;
         public string ScenarioId;
         public long TimestampMs;
+
+        string IEventPayload.SessionId => SessionId;
+        string IEventPayload.PlayerId => PlayerId;
+        string IEventPayload.ScenarioId => ScenarioId;
+        long IEventPayload.TimestampMs => TimestampMs;
+
+        void IEventPayload.SetMetadata(string sessionId, string playerId, string scenarioId, long timestampMs)
+        {
+            SessionId = sessionId;
+            PlayerId = playerId;
+            ScenarioId = scenarioId;
+            TimestampMs = timestampMs;
+        }
 
         public float totalElapsedTime;
         public int totalScore;
@@ -258,39 +365,91 @@ namespace SafetyProto.Core
     }
 
     [System.Serializable]
-    public struct SessionStartedEventArgs
+    public struct SessionStartedEventArgs : IEventPayload
     {
         public string SessionId;
         public string PlayerId;
         public string ScenarioId;
         public long TimestampMs;
 
+        string IEventPayload.SessionId => SessionId;
+        string IEventPayload.PlayerId => PlayerId;
+        string IEventPayload.ScenarioId => ScenarioId;
+        long IEventPayload.TimestampMs => TimestampMs;
+
+        void IEventPayload.SetMetadata(string sessionId, string playerId, string scenarioId, long timestampMs)
+        {
+            SessionId = sessionId;
+            PlayerId = playerId;
+            ScenarioId = scenarioId;
+            TimestampMs = timestampMs;
+        }
+
         /// <summary>Total number of tasks in the loaded scenario. Lets the session logger report an
         /// accurate denominator even when the session is abandoned before SessionCompleted fires.</summary>
         public int TotalTasks;
     }
     [System.Serializable]
-    public struct SessionPausedEventArgs
+    public struct SessionPausedEventArgs : IEventPayload
     {
         public string SessionId;
         public string PlayerId;
         public string ScenarioId;
         public long TimestampMs;
+
+        string IEventPayload.SessionId => SessionId;
+        string IEventPayload.PlayerId => PlayerId;
+        string IEventPayload.ScenarioId => ScenarioId;
+        long IEventPayload.TimestampMs => TimestampMs;
+
+        void IEventPayload.SetMetadata(string sessionId, string playerId, string scenarioId, long timestampMs)
+        {
+            SessionId = sessionId;
+            PlayerId = playerId;
+            ScenarioId = scenarioId;
+            TimestampMs = timestampMs;
+        }
     }
     [System.Serializable]
-    public struct SessionResumedEventArgs
+    public struct SessionResumedEventArgs : IEventPayload
     {
         public string SessionId;
         public string PlayerId;
         public string ScenarioId;
         public long TimestampMs;
+
+        string IEventPayload.SessionId => SessionId;
+        string IEventPayload.PlayerId => PlayerId;
+        string IEventPayload.ScenarioId => ScenarioId;
+        long IEventPayload.TimestampMs => TimestampMs;
+
+        void IEventPayload.SetMetadata(string sessionId, string playerId, string scenarioId, long timestampMs)
+        {
+            SessionId = sessionId;
+            PlayerId = playerId;
+            ScenarioId = scenarioId;
+            TimestampMs = timestampMs;
+        }
     }
     [System.Serializable]
-    public struct SessionEndedEventArgs
+    public struct SessionEndedEventArgs : IEventPayload
     {
         public string SessionId;
         public string PlayerId;
         public string ScenarioId;
         public long TimestampMs;
+
+        string IEventPayload.SessionId => SessionId;
+        string IEventPayload.PlayerId => PlayerId;
+        string IEventPayload.ScenarioId => ScenarioId;
+        long IEventPayload.TimestampMs => TimestampMs;
+
+        void IEventPayload.SetMetadata(string sessionId, string playerId, string scenarioId, long timestampMs)
+        {
+            SessionId = sessionId;
+            PlayerId = playerId;
+            ScenarioId = scenarioId;
+            TimestampMs = timestampMs;
+        }
     }
 }

@@ -43,27 +43,25 @@ the way `ActionRefusedEventArgs` is.
 
 ## Where stamping actually happens
 
-Two distinct code paths stamp a payload, and a new event only exercises one of
-them depending on whether it has a dedicated `UnityEvent` field on `EventBus`:
+There is one stamping path. Every payload struct implements `IEventPayload`
+explicitly, and `EventMetadata.Stamp` fills the four metadata fields
+(`SessionId`, `PlayerId`, `ScenarioId`, `TimestampMs`) through that interface,
+handing back the stamped copy. Both ways a payload enters the bus call it:
 
 - **Facade events with a dedicated `UnityEvent`** (the ones with a `public
   UnityEvent<T> onXxx` field and a `RaiseXxx` method on `EventBus`, e.g.
-  `onActionAttempt`/`RaiseActionAttempt`) are stamped inside that `RaiseXxx`
-  method, via `EventMetadata.StampFields` called directly on the payload's
-  four metadata fields, before the payload is queued.
+  `onActionAttempt`/`RaiseActionAttempt`) are stamped by
+  `EventMetadata.Stamp` at the top of that `RaiseXxx` method, before the
+  payload is queued.
 - **Typed-only payloads** (no dedicated `UnityEvent` — `ActionRefusedEventArgs`,
   `PopupClosedEventArgs`, and `PopupShownEventArgs` today) fall through `EventBus.Publish<T>`'s
-  `default` branch, which calls `EventMetadata.Stamp(payload)` — a switch over
-  the payload's runtime type that does the same four-field stamp and hands
-  back the stamped copy — before `DispatchTyped` queues it.
+  `default` branch, which calls `EventMetadata.Stamp(payload)` before
+  `DispatchTyped` queues it.
 
-Both paths end up calling the same `EventMetadata.StampFields`, but through two
-different call sites, so a bug in one does not necessarily show up in the
-other. **`EventMetadataTests.AllSupportedPayloadsReceiveTheSameMetadataContract`
-must include your new payload type** so both stamping paths stay covered as the
-payload list grows — the switch inside `EventMetadata.Stamp` is a second
-per-type list, and it silently omits an unlisted type as a no-op rather than
-failing loudly.
+A type that does not implement `IEventPayload` passes through `Stamp`
+unchanged, so forgetting the interface would leave the metadata empty.
+`EventMetadataTests.EveryPayloadStructImplementsIEventPayload` fails for any
+struct that declares `SessionId` without implementing the interface.
 
 ## Adding a new event, step by step
 
@@ -73,8 +71,8 @@ failing loudly.
    four metadata fields (`SessionId`, `PlayerId`, `ScenarioId`, `TimestampMs`)
    and a constructor that defaults them to empty/zero — `EventMetadata` fills
    them in, the producer never should.
-2. Add a `case YourEventArgs value: StampFields(...); boxed = value; break;`
-   line to `EventMetadata.Stamp`.
+2. Implement `IEventPayload` explicitly (copy the block from any existing
+   payload).
 3. Decide whether it needs a dedicated `UnityEvent<T> onXxx` field and
    `RaiseXxx`/`case` entry on `EventBus`, or whether it is fine to travel as a
    typed-only payload through the generic `Publish<T>` default branch (this is
@@ -90,7 +88,10 @@ failing loudly.
    `Core/Events/PopupEvents.cs` is the deliberate counter-example: it references
    `EventBus.Instance` and `UnityEngine.Events`, so the harness cannot compile it
    and should never try.
-6. Add your payload type to `EventMetadataTests`' payload list (see above).
+6. Add the payload to the list in
+   `EventMetadataTests.AllSupportedPayloadsReceiveTheSameMetadataContract`.
+   If step 2 was missed, `EventMetadataTests.EveryPayloadStructImplementsIEventPayload`
+   catches the omission.
 
 ## Subscribing
 
