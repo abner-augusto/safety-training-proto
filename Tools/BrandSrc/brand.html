@@ -1,0 +1,74 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+@font-face { font-family: 'Plex'; font-weight: 400; src: url('fonts/ibm-plex-sans-latin-400-normal.woff2'); }
+@font-face { font-family: 'Plex'; font-weight: 700; src: url('fonts/ibm-plex-sans-latin-700-normal.woff2'); }
+@font-face { font-family: 'PlexMono'; font-weight: 400; src: url('fonts/ibm-plex-mono-latin-400-normal.woff2'); }
+@font-face { font-family: 'PlexMono'; font-weight: 600; src: url('fonts/ibm-plex-mono-latin-600-normal.woff2'); }
+html, body { margin: 0; background: transparent; }
+#stage { display: inline-block; line-height: 0; }
+.banner { container-type: inline-size; width: 1920px; height: 1080px; position: relative; overflow: hidden; font-family: 'Plex', sans-serif; line-height: normal;
+  --p-bg:#0e1217; --p-text:#e8ecf2; --p-muted:#aeb8c6; --p-dim:#7f8b9b; --p-acc:#4d8df0;
+  --p-gf: rgba(77,141,240,0.07); --p-gg: rgba(77,141,240,0.15); --p-line: rgba(148,163,184,0.30); --p-amber:#d99b25; --p-ink:#0a0d11;
+  color: var(--p-text); background-color: var(--p-bg);
+  background-image:
+    linear-gradient(var(--p-gg) 1px, transparent 1px), linear-gradient(90deg, var(--p-gg) 1px, transparent 1px),
+    linear-gradient(var(--p-gf) 1px, transparent 1px), linear-gradient(90deg, var(--p-gf) 1px, transparent 1px);
+  background-size: 5cqw 5cqw, 5cqw 5cqw, 1cqw 1cqw, 1cqw 1cqw; background-position: -1px -1px; }
+.txt { position: absolute; left: 7cqw; top: 15cqw; width: 50cqw; display: grid; gap: 1.6cqw; }
+.brand { display: flex; align-items: center; gap: 1cqw; font-family: 'PlexMono', monospace; font-size: 1.25cqw; letter-spacing: 0.16em; text-transform: uppercase; color: var(--p-dim); }
+.brand svg { width: 2cqw; height: 2cqw; color: var(--p-acc); }
+h3 { margin: 0; font-size: 7.6cqw; line-height: 0.98; font-weight: 700; letter-spacing: -0.035em; }
+.tag { font-size: 2.15cqw; color: var(--p-muted); margin: 0; line-height: 1.3; white-space: nowrap; }
+.rule { width: 9cqw; height: 0.4cqw; background: var(--p-acc); }
+.art { position: absolute; right: 5cqw; top: 3cqw; width: 40cqw; height: 46cqw; object-fit: contain; object-position: right bottom; }
+.carimbo { position: absolute; right: 4cqw; bottom: 3.6cqw; display: grid; grid-template-columns: auto auto auto; border: 1px solid var(--p-line);
+  background: var(--p-bg); font-family: 'PlexMono', monospace; font-size: 0.95cqw; color: var(--p-muted); letter-spacing: 0.06em; }
+.carimbo span { padding: 0.55cqw 1cqw; border-left: 1px solid var(--p-line); white-space: nowrap; }
+.carimbo span:first-child { border-left: 0; }
+.carimbo b { color: var(--p-text); font-weight: 600; }
+.nrs { position: absolute; left: 7cqw; bottom: 4.2cqw; display: flex; gap: 1.1cqw; font-family: 'PlexMono', monospace; font-weight: 600; font-size: 1.75cqw; letter-spacing: 0.06em; }
+.nrs span { border: 2px solid var(--p-line); padding: 0.5cqw 1.3cqw; border-radius: 0.45cqw; color: var(--p-text); }
+.z535 { position: absolute; left: 0; right: 0; bottom: 0; height: 1.1cqw;
+  background: repeating-linear-gradient(-45deg, var(--p-amber) 0 1.1cqw, var(--p-ink) 1.1cqw 2.2cqw); }
+</style>
+<div id="stage"></div>
+<script>
+const P = { bg: "#151b22", fg: "#e8ecf2", acc: "#4d8df0", grid: "rgba(77,141,240,0.16)" };
+const SHIELD = '<path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5l-8-3Z"/>';
+const CHECK = '<path d="m9 12 2 2 4-4"/>';
+
+function gridLines() { let g = ""; for (let i = 9; i < 108; i += 9) g += `<path d="M${i} 0V108M0 ${i}H108"/>`; return g; }
+const bgLayer = () => `<rect width="108" height="108" fill="${P.bg}"/><g stroke="${P.grid}" stroke-width="0.5">${gridLines()}</g>`;
+const fgLayer = () => `<g transform="translate(24 22) scale(2.5)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <g stroke="${P.fg}" stroke-width="1.7">${SHIELD}</g><g stroke="${P.acc}" stroke-width="2">${CHECK}</g></g>`;
+
+/* layer: bg | fg | full; mask: none | squircle | circle */
+function icon(size, layer, mask) {
+  const clip = mask === "squircle" ? `<clipPath id="m"><rect width="108" height="108" rx="24"/></clipPath>`
+             : mask === "circle" ? `<clipPath id="m"><circle cx="54" cy="54" r="54"/></clipPath>` : "";
+  const body = layer === "bg" ? bgLayer() : layer === "fg" ? fgLayer() : bgLayer() + fgLayer();
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="${size}" height="${size}"><defs>${clip}</defs><g ${clip ? 'clip-path="url(#m)"' : ""}>${body}</g></svg>`;
+}
+
+function banner() {
+  return `<div class="banner">
+    <div class="txt">
+      <div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">${SHIELD}${CHECK}</svg> Treinamento em Realidade Virtual</div>
+      <h3>Canteiro Seguro</h3>
+      <div class="rule"></div>
+      <p class="tag">Treinamento de segurança · Trabalho em altura</p>
+    </div>
+    <img class="art" src="art/andaime-linha.png" alt="">
+    <div class="nrs"><span>NR-35</span><span>NR-18</span><span>NR-06</span></div>
+    <div class="carimbo"><span>FOLHA <b>01</b></span><span>ANDAIME FACHADEIRO</span><span>UFC · MDCC · CRAb</span></div>
+    <div class="z535"></div>
+  </div>`;
+}
+
+window.show = (kind, size, layer, mask) => {
+  document.getElementById("stage").innerHTML = kind === "banner" ? banner() : icon(size, layer, mask);
+  const imgs = [...document.querySelectorAll("#stage img")].map(i => i.decode());
+  return Promise.all([document.fonts.ready, ...imgs]).then(() => true);
+};
+</script>
