@@ -10,11 +10,24 @@ namespace SafetyProto.Core.Events
     /// listens to this pair to render the hands above the panel while it is up.
     /// </summary>
     [Serializable]
-    public struct PopupShownEventArgs
+    public struct PopupShownEventArgs : IEventPayload
     {
         public string SessionId;
         public string PlayerId;
         public string ScenarioId;
         public long TimestampMs;
+
+        string IEventPayload.SessionId => SessionId;
+        string IEventPayload.PlayerId => PlayerId;
+        string IEventPayload.ScenarioId => ScenarioId;
+        long IEventPayload.TimestampMs => TimestampMs;
+
+        void IEventPayload.SetMetadata(string sessionId, string playerId, string scenarioId, long timestampMs)
+        {
+            SessionId = sessionId;
+            PlayerId = playerId;
+            ScenarioId = scenarioId;
+            TimestampMs = timestampMs;
+        }
     }
 }

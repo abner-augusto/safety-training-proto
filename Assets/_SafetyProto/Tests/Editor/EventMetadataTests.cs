@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
@@ -13,6 +15,12 @@ namespace SafetyProto.Tests.Editor
         [TearDown]
         public void TearDown() => EventContext.Clear();
 
+        /// <summary>
+        /// Stamps every payload through a single <see cref="EventMetadata.Stamp{T}"/> call with
+        /// <c>T = object</c> and reads the fields back through <see cref="IEventPayload"/>: the
+        /// interface is the contract, so the test needs no per-type list of its own beyond the
+        /// payload instances.
+        /// </summary>
         [Test]
         public void AllSupportedPayloadsReceiveTheSameMetadataContract()
         {
@@ -31,7 +39,7 @@ namespace SafetyProto.Tests.Editor
 
             foreach (var payload in payloads)
             {
-                var stamped = Stamp(payload);
+                var stamped = (IEventPayload)EventMetadata.Stamp(payload)!;
                 Assert.AreEqual("S1", stamped.SessionId, payload.GetType().Name);
                 Assert.AreEqual("P1", stamped.PlayerId, payload.GetType().Name);
                 Assert.AreEqual("SC1", stamped.ScenarioId, payload.GetType().Name);
@@ -46,25 +54,36 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual(payload, EventMetadata.Stamp(payload));
         }
 
-        /// <summary>
-        /// A single <see cref="EventMetadata.Stamp{T}"/> call with <c>T = object</c> — the
-        /// runtime type patterns inside <c>Stamp</c> match on the boxed value's ACTUAL type
-        /// regardless of the static type parameter, so this does not need (and must not
-        /// maintain) a second copy of the same per-type case list that <c>EventMetadata.cs</c>
-        /// already owns. Reading the four stamped fields back uses reflection instead of a
-        /// second switch for the same reason: every payload type declares public
-        /// SessionId/PlayerId/ScenarioId/TimestampMs fields, but with no shared interface, so
-        /// reflection is the only way to read them generically without re-listing every type.
-        /// </summary>
-        private static (string SessionId, string PlayerId, string ScenarioId, long TimestampMs) Stamp(object payload)
+        [Test]
+        public void EveryPayloadStructImplementsIEventPayload()
         {
-            object stamped = EventMetadata.Stamp(payload)!;
-            var type = stamped.GetType();
+            var assembly = typeof(EventMetadata).Assembly;
+            var candidates = assembly.GetTypes()
+                .Where(t => t.IsValueType && !t.IsEnum
+                    && t.GetField("SessionId", BindingFlags.Public | BindingFlags.Instance) != null)
+                .ToList();
 
-            string GetString(string field) => (string)type.GetField(field)!.GetValue(stamped)!;
-            long GetTimestamp() => (long)type.GetField("TimestampMs")!.GetValue(stamped)!;
+            Assert.GreaterOrEqual(candidates.Count, 16);
+            foreach (var t in candidates)
+            {
+                Assert.IsTrue(typeof(IEventPayload).IsAssignableFrom(t),
+                    t.Name + " carries SessionId but does not implement IEventPayload");
+            }
+        }
 
-            return (GetString("SessionId"), GetString("PlayerId"), GetString("ScenarioId"), GetTimestamp());
+        [Test]
+        public void StampReturnsACopyWithAllFourFieldsSet()
+        {
+            var original = new SafetyErrorEventArgs();
+
+            var stamped = EventMetadata.Stamp(original);
+
+            Assert.AreEqual("S1", stamped.SessionId);
+            Assert.AreEqual("P1", stamped.PlayerId);
+            Assert.AreEqual("SC1", stamped.ScenarioId);
+            Assert.Greater(stamped.TimestampMs, 0);
+            Assert.IsNull(original.SessionId);
+            Assert.AreEqual(0L, original.TimestampMs);
         }
     }
 }
