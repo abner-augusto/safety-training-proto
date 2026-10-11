@@ -44,13 +44,17 @@ namespace SafetyProto.Tests.Editor
             _engine.Dispose();
         }
 
-        [TearDown]
-        public void ResetSessionMode() => SessionModeState.Reset();
+        private void UseEvaluationEngine()
+        {
+            _engine.Dispose();
+            _engine = new SafetyRuleEngineCore(_bus, modeSource: () => SessionMode.Evaluation);
+            _engine.Subscribe();
+        }
 
         [Test]
         public void EvaluationMode_SequentialGroup_CompletesEquipTasksInAnyOrder()
         {
-            SessionModeState.Current = SessionMode.Evaluation;
+            UseEvaluationEngine();
 
             var boots = _tasks.Task("Botas", "", PPEType.Boots);
             var gloves = _tasks.Task("Luvas", "", PPEType.GloveLeft, PPEType.GloveRight);
@@ -392,7 +396,7 @@ namespace SafetyProto.Tests.Editor
         {
             // Evaluation has to let the participant work unanchored — the inspection gate's
             // consequences are what measure the omission.
-            SessionModeState.Current = SessionMode.Evaluation;
+            UseEvaluationEngine();
 
             var (group, _, _, _) = BuildPlatformGroup();
             _bus.Publish(new TaskGroupEventArgs(group, TaskGroupPhase.Started));

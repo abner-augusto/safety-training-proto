@@ -11,14 +11,17 @@ namespace SafetyProto.Tests.Editor
         [Test]
         public void EvaluationAlwaysUsesFreeOrder()
         {
-            var previous = SessionModeState.Current;
-            try
-            {
-                SessionModeState.Current = SessionMode.Evaluation;
-                var group = new FakeTaskBuilder().Group("g", TaskExecutionModeShared.Sequential);
-                Assert.AreEqual(TaskExecutionModeShared.FreeOrder, TaskExecutionRules.EffectiveMode(group));
-            }
-            finally { SessionModeState.Current = previous; }
+            var group = new FakeTaskBuilder().Group("g", TaskExecutionModeShared.Sequential);
+            Assert.AreEqual(TaskExecutionModeShared.FreeOrder,
+                TaskExecutionRules.EffectiveMode(group, SessionMode.Evaluation));
+        }
+
+        [Test]
+        public void GuidedKeepsAuthoredMode()
+        {
+            var group = new FakeTaskBuilder().Group("g", TaskExecutionModeShared.Sequential);
+            Assert.AreEqual(TaskExecutionModeShared.Sequential,
+                TaskExecutionRules.EffectiveMode(group, SessionMode.Guided));
         }
 
         [Test]

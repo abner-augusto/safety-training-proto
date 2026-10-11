@@ -66,14 +66,14 @@ namespace SafetyProto.Tests.Editor.Support
 
         private bool _disposed;
 
-        public SessionTestHarness(IReadOnlyList<ITaskGroup> taskGroups, string scenarioName = "TestScenario", string participantId = "P-TEST")
+        public SessionTestHarness(IReadOnlyList<ITaskGroup> taskGroups, string scenarioName = "TestScenario", string participantId = "P-TEST", SessionMode mode = SessionMode.Guided)
         {
             if (taskGroups == null) throw new ArgumentNullException(nameof(taskGroups));
 
             Bus = new FakeEventBus();
             Score = new ScoreService();
 
-            RuleEngine = new SafetyRuleEngineCore(bus: Bus, timer: null, logger: null, verboseLogging: false);
+            RuleEngine = new SafetyRuleEngineCore(bus: Bus, timer: null, logger: null, verboseLogging: false, modeSource: () => mode);
             RuleEngine.Subscribe();
 
             ScoreRuleEngine = new ScoreRuleEngineCore(bus: Bus, scoreService: Score, logger: null);
@@ -91,7 +91,8 @@ namespace SafetyProto.Tests.Editor.Support
                 timer: null,
                 scheduler: null,        // null scheduler + 0 delay ⇒ synchronous orchestration
                 logger: null,
-                delayBetweenTasks: 0f);
+                delayBetweenTasks: 0f,
+                modeSource: () => mode);
             TaskManager.Subscribe();
 
             EventContext.StartSession(
