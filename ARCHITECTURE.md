@@ -146,10 +146,13 @@ The README carries the full producer/consumer table; the design points worth
 stating here are these:
 
 - **Phase discriminators.** `TaskEventArgs` and `TaskGroupEventArgs` carry a
-  `Phase` field (`Started` / `Completed` / `Timeout`) rather than being split
+  `Phase` field (`Started` / `Completed`) rather than being split
   into separate event types. A single typed subscriber key then carries both
   lifecycle phases of the same conceptual event, which avoids delegate-combination
-  collisions between what would otherwise be near-identical payload types.
+  collisions between what would otherwise be near-identical payload types. A
+  group that runs out of time is closed by `TaskManagerCore.HandleGroupTimeout()`,
+  which marks its pending tasks `NotPerformed` — there is no timeout phase on the
+  event.
 - **Violations are identified, not just described.** Safety violations and log
   entries carry stable task and group identifiers (with a human-readable name as
   a fallback), so a session log can be analyzed by id even if display names
@@ -231,7 +234,8 @@ Two task shapes exist:
   `ActionAttemptedEvent`.
 - **Equip-set task** — empty `actionId`, populated `requiredPPE`; completes when
   all listed PPE are worn, in any order, driven by `PPEStateChanged`
-  (`SafetyRuleEngineCore.IsEquipTask`). Used for donning sequences. The PPE
+  (`TaskExecutionRules.IsEquipTask`, shared by the task and safety engines).
+  Used for donning sequences. The PPE
   slot's action mapping must be empty for these, so that putting the item on does
   not raise a `WRONG_ACTION` violation.
 
@@ -255,9 +259,17 @@ No task outcome subtracts points. A task is worth what its risk level grades it
 at; completing it without the required PPE earns a reduced share, and not doing
 it at all earns nothing. The risk weighting therefore does the work a penalty
 tier would: skipping an Intolerable task forfeits more than skipping a Tolerable
-one, without the report having to show a participant a negative number. The only
-subtraction left in the session is the order-deviation charge applied by the
-phase-advance gate.
+one, without the report having to show a participant a negative number.
+
+The subtractions that remain are *incidental charges*: things the participant
+did that no task models. Equipping out of the authored order (caught by the
+phase-advance gate), pressing the inspection gate with tasks still pending,
+snapping a distractor item, and misclassifying a hazard each cost points. They
+are computed in the domain — `IncidentalChargePolicy` in `Domain/Scoring` and
+`HazardClassificationPolicy` in `Domain/Safety` — from the scenario's
+`ScoringConfig` (the incidental tier's base penalty, or the gate charge), so a
+headless run charges exactly what the headset does. The MonoBehaviours only
+decide *when* one of these happened.
 
 ---
 
@@ -303,9 +315,10 @@ artifacts, so a log or a dashboard screenshot never carries a real name.
 `SessionLoggerCore` (pure C#) subscribes to the full protocol, maintains an
 in-memory log, and persists it as JSON when the session completes. It does not
 know how to serialize for a given engine or where to write — those are injected:
-the Unity wrapper supplies `Application.persistentDataPath` and a Unity
-serializer; the harness supplies a file path and `System.Text.Json`. The log
-schema is shared, so a Unity session and a harness session produce
+the Unity wrapper supplies `Application.persistentDataPath`, the harness an
+output directory; both pass `SessionLoggerCore.SerializeIndentedOmittingDefaults`
+(Newtonsoft.Json, defaults omitted) as the serializer, so the two artifacts are
+byte-comparable. The log schema is shared, so a Unity session and a harness session produce
 directly-comparable artifacts. This equivalence is what makes the harness usable
 as an evidence generator: a scripted scenario and a hand-played scenario yield
 logs in the same format.
@@ -342,7 +355,11 @@ progress, score, safety events, and participant pose.
 
 Architecturally the dashboard is a **pure, read-only observer**: it subscribes to
 every event facade, translates each event into a serialization DTO, and pushes it
-over the wire. It never issues commands back into gameplay. This has a telling
+over the wire. Telemetry is one-way. The dashboard does carry one inbound
+channel — an evaluator-issued `Command` envelope (today `recenter_player`),
+acknowledged with `CommandAckDto` — but the bootstrap routes it to handlers
+registered by scene components in the runtime assembly; no command reaches the
+domain, and the event protocol stays publish-only. This has a telling
 consequence in the dependency structure: `EvaluatorDashboardBootstrap` is the
 single articulation point between the gameplay/domain assemblies and the
 networking assembly. Gameplay code never references the network layer and the

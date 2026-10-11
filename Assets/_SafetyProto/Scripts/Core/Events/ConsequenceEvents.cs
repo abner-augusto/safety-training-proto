@@ -4,8 +4,9 @@ using UnityEngine;
 namespace SafetyProto.Core.Events
 {
     /// <summary>
-    /// Minimal consequence type enum in Core to avoid Runtime dependency.
-    /// Mirrors the values in Runtime.Safety.ConsequenceType.
+    /// Kind of scripted consequence a failed inspection gate can play. Lives in Core so the
+    /// synchronous channel below can carry it without the event core depending on Runtime;
+    /// <c>InspectionGateValidator</c> maps scene objects to these values.
     /// </summary>
     public enum ConsequenceType
     {
