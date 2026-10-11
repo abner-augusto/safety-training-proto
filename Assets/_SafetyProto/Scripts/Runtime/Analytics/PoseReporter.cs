@@ -1,9 +1,8 @@
 using System;
-using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using UnityEngine;
 
-namespace SafetyProto.Core
+namespace SafetyProto.Runtime.Analytics
 {
     public class PoseReporter : MonoBehaviour
     {

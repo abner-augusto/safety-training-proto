@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace SafetyProto.Core
+namespace SafetyProto.Runtime.Analytics
 {
     [CreateAssetMenu(fileName = "PoseChannel", menuName = "VRSafetyTraining/PoseChannel", order = 1)]
     public class PoseChannelSO : ScriptableObject

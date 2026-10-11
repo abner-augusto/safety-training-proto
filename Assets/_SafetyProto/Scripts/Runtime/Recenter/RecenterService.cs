@@ -1,8 +1,8 @@
 using System;
 using System.Collections;
 using Oculus.Interaction.Locomotion;
-using SafetyProto.Core;
 using SafetyProto.Core.Logging;
+using SafetyProto.Runtime.Analytics;
 using UnityEngine;
 
 namespace SafetyProto.Runtime

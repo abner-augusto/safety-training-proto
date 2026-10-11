@@ -11,6 +11,7 @@ using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Domain.Dashboard;
 using SafetyProto.Domain.Scoring;
+using SafetyProto.Runtime.Analytics;
 using SafetyProto.Utils;
 using UnityEngine;
 using System.IO;
