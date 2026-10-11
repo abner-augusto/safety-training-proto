@@ -176,4 +176,35 @@ namespace SafetyProto.Domain.Dashboard
         /// <summary>Portuguese, operator-facing. Empty when accepted.</summary>
         public string reason;
     }
+
+    /// <summary>Static scene geometry for the dashboard viewport, sent on every RequestSync.
+    /// Positions and rotations are Unity world space; the dashboard mirrors Z.</summary>
+    [Serializable]
+    public struct SceneLayoutDto
+    {
+        public SceneFloorDto[] floors;
+        public SceneMarkerDto[] markers;
+    }
+
+    /// <summary>Walkable floor rectangle: centre of its top face, X/Z extent, rotation.</summary>
+    [Serializable]
+    public struct SceneFloorDto
+    {
+        public string id;
+        public float px, py, pz;
+        public float sx, sz;
+        public float qx, qy, qz, qw;
+    }
+
+    /// <summary>Oriented box marking where a task happens. State comes from the task, not from here.</summary>
+    [Serializable]
+    public struct SceneMarkerDto
+    {
+        public string id;
+        public string kind;
+        public string taskId;
+        public float px, py, pz;
+        public float sx, sy, sz;
+        public float qx, qy, qz, qw;
+    }
 }
