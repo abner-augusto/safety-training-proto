@@ -7,17 +7,17 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Rubber - navy
+      name: Footbed - white rubber
     second: {fileID: 2100000, guid: 3e2b3e6b29d3ef5459e3327912ef553d, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Sole edge - dark blue
+      name: Sole - blue rubber
     second: {fileID: 2100000, guid: 96d43aadea30ec54681279e281bd1640, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Straps - blue gray
+      name: Straps - blue rubber
     second: {fileID: 2100000, guid: f273a38fd9a894a448afb8759250dcc0, type: 2}
   materials:
     materialImportMode: 2

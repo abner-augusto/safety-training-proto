@@ -7,7 +7,7 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Latex - pale yellow
+      name: Latex - yellow rubber
     second: {fileID: 2100000, guid: 73e46c3dc38ce2b478de983c5721c34c, type: 2}
   materials:
     materialImportMode: 2
