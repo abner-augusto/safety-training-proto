@@ -204,18 +204,7 @@ namespace SafetyProto.Runtime.Safety
                     foreach (var go in hiddenButtons)
                         go.SetActive(false);
 
-                    _popupFeedback.ShowConfirmation(
-                        "Finalizar Inspeção e Iniciar Atividade",
-                        "Deseja finalizar a inspeção e iniciar a atividade?",
-                        "Iniciar",
-                        "Voltar",
-                        onConfirm: () => BeginEvaluationFinish(pendingTasks),
-                        onCancel: () =>
-                        {
-                            foreach (var go in hiddenButtons)
-                                if (go != null) go.SetActive(true);
-                            _isProcessing = false;
-                        });
+                    StartCoroutine(ShowFinishConfirmationNextFrame(pendingTasks, hiddenButtons));
                 }
                 else
                 {
@@ -301,6 +290,32 @@ namespace SafetyProto.Runtime.Safety
                     "Inspeção concluída com sucesso!", continueButtonLabel, Finish);
             else
                 Finish();
+        }
+
+        // The gate canvas and the popup are both OVROverlayCanvas compositor layers. Layer
+        // teardown and setup are queued and flushed at end of frame, so hiding the gate canvas
+        // and resizing the popup overlay in the same frame leaves the popup layer showing stale
+        // gate content for several frames. Keep the two transitions one frame apart, both ways.
+        private IEnumerator ShowFinishConfirmationNextFrame(List<RuntimeSafetyTask> pendingTasks, GameObject[] hiddenButtons)
+        {
+            yield return null;
+
+            _popupFeedback.ShowConfirmation(
+                "Finalizar Inspeção e Iniciar Atividade",
+                "Deseja finalizar a inspeção e iniciar a atividade?",
+                "Iniciar",
+                "Voltar",
+                onConfirm: () => BeginEvaluationFinish(pendingTasks),
+                onCancel: () => StartCoroutine(RestoreGateButtonsNextFrame(hiddenButtons)));
+        }
+
+        private IEnumerator RestoreGateButtonsNextFrame(GameObject[] hiddenButtons)
+        {
+            yield return null;
+
+            foreach (var go in hiddenButtons)
+                if (go != null) go.SetActive(true);
+            _isProcessing = false;
         }
 
         private IEnumerator ExecuteConsequencesSequence(
