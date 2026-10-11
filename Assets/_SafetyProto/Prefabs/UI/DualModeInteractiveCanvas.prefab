@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 7225912760332395731}
   - component: {fileID: 4058303114388581088}
   - component: {fileID: 1993905689117777074}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Panel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -87,7 +87,7 @@ GameObject:
   - component: {fileID: 7124028423035910368}
   - component: {fileID: 7115912455961142823}
   - component: {fileID: 4725921483528517670}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: ISDK_PokeCanvasInteraction
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -309,7 +309,7 @@ GameObject:
   - component: {fileID: 6065505139886967645}
   - component: {fileID: 8027571250305507721}
   - component: {fileID: 1373114081836820708}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Surface
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -403,7 +403,7 @@ GameObject:
   - component: {fileID: 8477579816684507343}
   - component: {fileID: 7556767177532589132}
   - component: {fileID: 2668014191555287682}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: ISDK_RayCanvasInteraction
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -500,7 +500,7 @@ GameObject:
   - component: {fileID: 4970186699295525090}
   - component: {fileID: 8982381884486040020}
   - component: {fileID: 4355547624869079688}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Surface
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -594,7 +594,8 @@ GameObject:
   - component: {fileID: 4947892562953344078}
   - component: {fileID: 2674775286129704402}
   - component: {fileID: 7560676097777074285}
-  m_Layer: 0
+  - component: {fileID: 5462609630554856949}
+  m_Layer: 3
   m_Name: DualModeInteractiveCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -641,6 +642,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -686,3 +688,31 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &5462609630554856949
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8774602304170262593}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee10491ef6d5d1d49a270cf6b09bdc19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Oculus.VR::OVROverlayCanvas
+  _mipmapMode: 0
+  _dynamicResolution: 1
+  _redrawResolutionThreshold: 2147483647
+  rectTransform: {fileID: 6308249081878237579}
+  maxTextureSize: 1024
+  manualRedraw: 0
+  renderInterval: 2
+  renderIntervalFrameOffset: 0
+  superSample: 0
+  layer: 5
+  opacity: 2
+  shape: 0
+  curveRadius: 1
+  overlapMask: 0
+  compositionMode: 1
+  _overlayEnabled: 1
