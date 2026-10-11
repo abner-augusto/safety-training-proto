@@ -83,15 +83,13 @@ failing loudly.
 4. Write the facade method (Unity-side producers only) in the matching
    `Core/Events/*Events.cs` file, or add a new one if the event doesn't belong
    to an existing facade's domain.
-5. **If the payload's file lives under `Domain/` or `Core/` and any domain code
-   publishes or subscribes to it, add it to
-   `Tools/SafetyProto.Shared/SafetyProto.Shared.csproj`** next to its
-   neighbours — otherwise the headless harness silently stops compiling it and
-   `dotnet test` passes while missing the type entirely. Unity-side-only files
-   (the facades themselves, anything under `Scripts/Runtime/` or `Scripts/UI/`)
-   must **not** be added — `Core/Events/PopupEvents.cs` is the deliberate
-   example: it references `EventBus.Instance` and `UnityEngine.Events`, so the
-   harness cannot compile it and should never try.
+5. Files under `Scripts/Domain/` are compiled into the harness automatically
+   (the csproj globs the folder). A **`Core/`** file that domain code needs must
+   still be added to `Tools/SafetyProto.Shared/SafetyProto.Shared.csproj` by
+   hand — and only if it references no `UnityEngine` type;
+   `Core/Events/PopupEvents.cs` is the deliberate counter-example: it references
+   `EventBus.Instance` and `UnityEngine.Events`, so the harness cannot compile it
+   and should never try.
 6. Add your payload type to `EventMetadataTests`' payload list (see above).
 
 ## Subscribing
@@ -123,8 +121,12 @@ audio/visual reaction it already owns.
 
 Every `SafetyViolationEventArgs.ViolationCode` and
 `ActionRefusedEventArgs.ReasonCode` value comes from
-`SafetyProto.Core.ViolationCodes` — a `NO_ACTIVE_GROUP`/`WRONG_ACTION`/
-`PREREQUISITE_PENDING`/`PPE_MISSING`/`TASK_NOT_PERFORMED` constant, not a bare
-string literal at the call site. These values are recorded in session logs and
-compared across scenario revisions, so an existing constant's *value* must
-never change — add a new constant for a new code instead of repurposing one.
+a constant in `SafetyProto.Core.ViolationCodes` (`NO_ACTIVE_GROUP`,
+`WRONG_ACTION`, `PREREQUISITE_PENDING`, `PPE_MISSING`, `TASK_NOT_PERFORMED`,
+`HAZARD_MISCLASSIFIED`, `PPE_OUT_OF_ORDER`, `ACTION_ID_MISSING`,
+`ORDER_VIOLATION`, `GATE_PENALTY`, `GATE_FAILED`, `INSPECTION_INCOMPLETE`,
+`WRONG_PPE_SELECTED`), not a bare string literal at the call site. Score
+reasons passed to `IScoreService.SubtractPoints` use the same constants. These
+values are recorded in session logs and compared across scenario revisions, so
+an existing constant's *value* must never change — add a new constant for a new
+code instead of repurposing one.

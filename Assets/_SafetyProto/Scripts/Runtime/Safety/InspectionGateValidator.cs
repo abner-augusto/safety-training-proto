@@ -241,9 +241,7 @@ namespace SafetyProto.Runtime.Safety
             foreach (var task in pendingTasks)
             {
                 if (task.TaskData == null || !_chargedTaskIds.Add(task.id)) continue;
-                int charge = GateScoring.GateChargeFor(task.TaskData.riskLevel);
-                if (charge > 0)
-                    ScoreService.Instance.SubtractPoints(charge, "GATE_PENALTY", task.id);
+                IncidentalChargePolicy.ChargeGatePenalty(ScoreService.Instance, GateScoring, task.TaskData);
             }
 
             if (SessionModeState.Current == SessionMode.Guided)
@@ -264,7 +262,7 @@ namespace SafetyProto.Runtime.Safety
                 {
                     SafetyEvents.RaiseSafetyViolation(new SafetyViolationEventArgs
                     {
-                        ViolationCode = "GATE_FAILED",
+                        ViolationCode = ViolationCodes.GateFailed,
                         Message = $"Tentou iniciar sem corrigir: {task.taskName}",
                         TaskId = task.id,
                         GroupId = currentGroup.id,
@@ -343,7 +341,7 @@ namespace SafetyProto.Runtime.Safety
                 {
                     SafetyEvents.RaiseSafetyViolation(new SafetyViolationEventArgs
                     {
-                        ViolationCode = mapping != null ? "GATE_FAILED" : "INSPECTION_INCOMPLETE",
+                        ViolationCode = mapping != null ? ViolationCodes.GateFailed : ViolationCodes.InspectionIncomplete,
                         Message = $"Tentou iniciar sem corrigir: {mapping?.displayName ?? task.taskName}",
                         TaskId = task.id,
                         GroupId = currentGroup.id,

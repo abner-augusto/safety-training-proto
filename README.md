@@ -127,7 +127,7 @@ All communication between modules is through typed event payloads defined in
 | `SessionCompletedEventArgs`     | `TaskManagerCore`               | `SessionLoggerCore`, dashboard, UI    |
 | `ActionAttemptedEvent`          | Unity interactors, `ScriptedActor` | `SafetyRuleEngineCore`, logger      |
 | `PPEStateChangedEventArgs`      | `PPEManager`, `HarnessPPEManager`, `ScriptedActor` | `SafetyRuleEngineCore`, logger |
-| `TaskEventArgs` (Phase: Started/Completed/Timeout) | `TaskManagerCore`, `SafetyRuleEngineCore` | `TaskManagerCore`, logger, UI, score |
+| `TaskEventArgs` (Phase: Started/Completed) | `TaskManagerCore`, `SafetyRuleEngineCore` | `TaskManagerCore`, logger, UI, score |
 | `TaskGroupEventArgs` (Phase: Started/Completed) | `TaskManagerCore` | `SafetyRuleEngineCore`, logger, UI |
 | `ScoreChangedEventArgs`         | `ScoreService`                  | UI, logger                            |
 | `SafetyViolationEventArgs`      | `SafetyRuleEngineCore`          | `SafetyAnalyzer`, logger              |
@@ -171,8 +171,9 @@ dotnet run --project Tools/CliHarness -- Assets/_SafetyProto/Resources/Scenarios
 ```
 
 Target framework: `net10.0`. `SafetyProto.Shared` depends on
-`Newtonsoft.Json` 13.0.3; the CLI harness otherwise uses the .NET BCL, including
-`System.Text.Json`. `SafetyProto.Shared`
+`Newtonsoft.Json` 13.0.3, which also serializes the session log in both hosts
+(`SessionLoggerCore.SerializeIndentedOmittingDefaults`); the CLI harness
+otherwise uses only the .NET BCL. `SafetyProto.Shared`
 links source files from `Assets/_SafetyProto/Scripts/` via `<Compile Include>`
 so the same `.cs` files participate in both the Unity compilation and the
 .NET assembly.

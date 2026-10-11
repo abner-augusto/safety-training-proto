@@ -280,23 +280,10 @@ namespace SafetyProto.Runtime
             var deviations = taskManager.GetCompletionOrderDeviations(groupId);
             if (deviations.Count == 0) return;
 
-            string list = string.Join(", ", deviations);
-
-            taskManager.RegisterOrderViolation($"EPIs fora da ordem recomendada: {list}");
-            SafetyEvents.RaiseSafetyViolation(new SafetyViolationEventArgs
-            {
-                ViolationCode = "ORDER_VIOLATION",
-                Message = $"EPIs equipados fora da ordem recomendada: {list}",
-                TaskId = string.Empty,
-                GroupId = groupId,
-                TaskName = string.Empty,
-                GroupName = groupName
-            });
-
-            var scoring = taskManager.Scoring ?? ScoringConfig.Default;
-            int charge = scoring.BasePenaltyFor(RiskLevels.IncidentalChargeTier);
-            if (charge > 0)
-                ScoreService.Instance.SubtractPoints(charge, "ORDER_VIOLATION", string.Empty);
+            taskManager.RegisterOrderViolation($"EPIs fora da ordem recomendada: {string.Join(", ", deviations)}");
+            IncidentalChargePolicy.ChargeOrderDeviation(
+                EventBus.Instance, ScoreService.Instance, taskManager.Scoring ?? ScoringConfig.Default,
+                groupId, groupName, deviations);
         }
 
         private void OnGroupCompleted(TaskGroupEventArgs args)

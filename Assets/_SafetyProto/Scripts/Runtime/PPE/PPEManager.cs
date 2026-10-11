@@ -128,22 +128,10 @@ namespace SafetyProto.Runtime.PPE
         /// </summary>
         public void ReportDistractorAttempt(PPEType ppeType, string itemName)
         {
-            SafetyEvents.RaiseSafetyViolation(new SafetyViolationEventArgs
-            {
-                ViolationCode = "WRONG_PPE_SELECTED",
-                Message = $"Selecionou equipamento inadequado: {GetPpeLabel(ppeType)}",
-                TaskId = string.Empty,
-                GroupId = string.Empty,
-                TaskName = itemName,
-                GroupName = string.Empty
-            });
-
-            if (!_chargedDistractors.Add(itemName)) return;
-
             var scoring = TaskManager.Instance != null ? TaskManager.Instance.Scoring : ScoringConfig.Default;
-            int charge = scoring.BasePenaltyFor(RiskLevels.IncidentalChargeTier);
-            if (charge > 0)
-                ScoreService.Instance.SubtractPoints(charge, "WRONG_PPE_SELECTED", string.Empty);
+            IncidentalChargePolicy.ChargeWrongPpeSelected(
+                EventBus.Instance, ScoreService.Instance, scoring,
+                GetPpeLabel(ppeType), itemName, firstAttemptForItem: _chargedDistractors.Add(itemName));
         }
 
         private static string GetPpeLabel(PPEType ppeType)
