@@ -32,9 +32,10 @@ public static class Program
             string.Equals(a, "--interactive", StringComparison.OrdinalIgnoreCase));
 
         var modeArg = args.FirstOrDefault(a => a.StartsWith("--mode=", StringComparison.OrdinalIgnoreCase));
-        SessionModeState.Current = modeArg != null && modeArg.EndsWith("avaliacao", StringComparison.OrdinalIgnoreCase)
+        var mode = modeArg != null && modeArg.EndsWith("avaliacao", StringComparison.OrdinalIgnoreCase)
             ? SessionMode.Evaluation
             : SessionMode.Guided;
+        SessionModeState.Current = mode;
 
         if (!File.Exists(scenarioPath))
         {
@@ -71,7 +72,8 @@ public static class Program
             bus: bus,
             timer: timer,
             logger: logger,
-            verboseLogging: false);
+            verboseLogging: false,
+            modeSource: () => mode);
         ruleEngine.Subscribe();
 
         var scoreRuleEngine = new ScoreRuleEngineCore(
@@ -91,7 +93,8 @@ public static class Program
             timer: timer,
             scheduler: null,
             logger: logger,
-            delayBetweenTasks: 0f);
+            delayBetweenTasks: 0f,
+            modeSource: () => mode);
         taskManager.Subscribe();
 
         var sessionLogger = new SessionLoggerCore(
@@ -99,7 +102,8 @@ public static class Program
             outputDirectory: outputDir,
             serialize: SessionLoggerCore.SerializeIndentedOmittingDefaults,
             logger: logger,
-            actionNameResolver: BuildActionNameResolver(scenarioPath));
+            actionNameResolver: BuildActionNameResolver(scenarioPath),
+            modeSource: () => mode);
         sessionLogger.Subscribe();
 
         var transcript = new TranscriptRecorder(bus);

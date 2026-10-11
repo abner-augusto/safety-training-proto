@@ -1,3 +1,5 @@
+#nullable enable
+using System;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
@@ -17,11 +19,13 @@ namespace SafetyProto.Domain.Dashboard
     {
         private readonly IEventBus _bus;
         private readonly IDashboardHost _host;
+        private readonly Func<SessionMode> _modeSource;
 
-        public DashboardEventRelay(IEventBus bus, IDashboardHost host)
+        public DashboardEventRelay(IEventBus bus, IDashboardHost host, Func<SessionMode>? modeSource = null)
         {
             _bus = bus;
             _host = host;
+            _modeSource = modeSource ?? (() => SessionModeState.Current);
         }
 
         public void Subscribe()
@@ -63,7 +67,7 @@ namespace SafetyProto.Domain.Dashboard
             var dto = new SessionDto(args.SessionId, _host.ResolveTimestamp(args.TimestampMs))
             {
                 participantId = string.IsNullOrEmpty(args.PlayerId) ? "—" : args.PlayerId,
-                mode = SessionModeState.CurrentName
+                mode = SessionModeState.NameOf(_modeSource())
             };
             _host.Broadcast("SessionStarted", dto);
             _host.Broadcast("SessionManifest", _host.BuildSessionManifest(args.SessionId));

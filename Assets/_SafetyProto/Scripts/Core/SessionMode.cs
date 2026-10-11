@@ -28,8 +28,11 @@ namespace SafetyProto.Core
 
         /// <summary>Log/summary token for the current mode (pt-BR, matches the
         /// research vocabulary: "guiado" / "avaliacao").</summary>
-        public static string CurrentName =>
-            Current == SessionMode.Evaluation ? "avaliacao" : "guiado";
+        public static string CurrentName => NameOf(Current);
+
+        /// <summary>Log/summary token for a mode (pt-BR research vocabulary).</summary>
+        public static string NameOf(SessionMode mode) =>
+            mode == SessionMode.Evaluation ? "avaliacao" : "guiado";
 
         public static void Reset() => Current = SessionMode.Guided;
     }

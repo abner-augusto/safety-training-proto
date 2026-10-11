@@ -97,7 +97,7 @@ namespace SafetyProto.Networking.Dashboard
             var eventBus = EventBus.Instance;
             if (eventBus != null)
             {
-                _relay = new DashboardEventRelay(eventBus, this);
+                _relay = new DashboardEventRelay(eventBus, this, () => SessionModeState.Current);
                 _relay.Subscribe();
             }
             RegisterCommandHandlers();

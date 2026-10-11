@@ -19,6 +19,9 @@ namespace SafetyProto.Domain.Tasks
         private readonly IHarnessLogger? _logger;
         private readonly IReadOnlyList<ITaskGroup> _taskGroups;
         private readonly float _delayBetweenTasks;
+        private readonly Func<SessionMode> _modeSource;
+
+        private SessionMode CurrentMode => _modeSource();
 
         private readonly List<RuntimeSafetyTask> _sessionTasks = new List<RuntimeSafetyTask>();
         private readonly HashSet<ITaskGroup> _completedGroups = new HashSet<ITaskGroup>();
@@ -51,7 +54,8 @@ namespace SafetyProto.Domain.Tasks
             ITimerSource? timer = null,
             IAsyncScheduler? scheduler = null,
             IHarnessLogger? logger = null,
-            float delayBetweenTasks = 0f)
+            float delayBetweenTasks = 0f,
+            Func<SessionMode>? modeSource = null)
         {
             _bus = bus ?? throw new ArgumentNullException(nameof(bus));
             _scoreService = scoreService ?? throw new ArgumentNullException(nameof(scoreService));
@@ -60,6 +64,7 @@ namespace SafetyProto.Domain.Tasks
             _scheduler = scheduler;
             _logger = logger;
             _delayBetweenTasks = delayBetweenTasks;
+            _modeSource = modeSource ?? (() => SessionModeState.Current);
 
             _onTaskLifecycle = HandleTaskLifecycle;
 
@@ -513,7 +518,7 @@ namespace SafetyProto.Domain.Tasks
             var currentGroup = GetCurrentGroup();
             if (currentGroup == null) return null;
 
-            if (TaskExecutionRules.EffectiveMode(currentGroup) == TaskExecutionModeShared.Sequential)
+            if (TaskExecutionRules.EffectiveMode(currentGroup, CurrentMode) == TaskExecutionModeShared.Sequential)
             {
                 return TaskExecutionRules.MatchesAction(_currentTask?.TaskData, normalized) ? _currentTask : null;
             }
@@ -568,7 +573,7 @@ namespace SafetyProto.Domain.Tasks
         private ISafetyTask? FindLaterOwningStep(PPEType type)
         {
             var group = GetCurrentGroup();
-            if (group == null || TaskExecutionRules.EffectiveMode(group) != TaskExecutionModeShared.Sequential) return null;
+            if (group == null || TaskExecutionRules.EffectiveMode(group, CurrentMode) != TaskExecutionModeShared.Sequential) return null;
             if (_currentTask == null) return null;
 
             var tasks = group.tasks;
