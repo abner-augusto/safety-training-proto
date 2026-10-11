@@ -1,5 +1,7 @@
 using System;
+using SafetyProto.Core;
 using SafetyProto.Core.Logging;
+using SafetyProto.Runtime.PPE;
 using UnityEngine;
 
 namespace SafetyProto.Runtime.Analytics
@@ -23,6 +25,7 @@ namespace SafetyProto.Runtime.Analytics
         [SerializeField] private PoseChannelSO poseChannel;
 
         private string[] _cachedPpeIds;
+        private string[] _cachedPpeTypes;
         private string[] _cachedAttachments;
         private IPoseAttachment[] _attachmentSources;
 
@@ -98,6 +101,7 @@ namespace SafetyProto.Runtime.Analytics
                     continue;
 
                 var id = (_cachedPpeIds != null && _cachedPpeIds.Length > i) ? _cachedPpeIds[i] : $"ppe-{i}";
+                var type = (_cachedPpeTypes != null && _cachedPpeTypes.Length > i) ? _cachedPpeTypes[i] : string.Empty;
                 var attachment = GetAttachment(i);
 
                 if (t != null)
@@ -105,6 +109,7 @@ namespace SafetyProto.Runtime.Analytics
                     poses[w++] = new PpeObjectPose
                     {
                         Id = id,
+                        Type = type,
                         Position = useWorldSpace ? t.position : t.localPosition,
                         Rotation = useWorldSpace ? t.rotation : t.localRotation,
                         AttachedTo = attachment
@@ -115,6 +120,7 @@ namespace SafetyProto.Runtime.Analytics
                     poses[w++] = new PpeObjectPose
                     {
                         Id = id,
+                        Type = type,
                         Rotation = Quaternion.identity,
                         AttachedTo = attachment
                     };
@@ -144,12 +150,14 @@ namespace SafetyProto.Runtime.Analytics
             {
                 _cachedAttachments = Array.Empty<string>();
                 _cachedPpeIds = Array.Empty<string>();
+                _cachedPpeTypes = Array.Empty<string>();
                 _attachmentSources = Array.Empty<IPoseAttachment>();
                 return;
             }
 
             _cachedAttachments = new string[ppeObjects.Length];
             _cachedPpeIds = new string[ppeObjects.Length];
+            _cachedPpeTypes = new string[ppeObjects.Length];
             _attachmentSources = new IPoseAttachment[ppeObjects.Length];
 
             bool hasIds = ppeIds != null && ppeIds.Length == ppeObjects.Length;
@@ -161,9 +169,13 @@ namespace SafetyProto.Runtime.Analytics
 
                 if (obj == null)
                 {
+                    _cachedPpeTypes[i] = string.Empty;
                     _cachedAttachments[i] = string.Empty;
                     continue;
                 }
+
+                var item = obj.GetComponentInChildren<PPEItem>(includeInactive: true);
+                _cachedPpeTypes[i] = item != null && item.ppeType != PPEType.None ? item.ppeType.ToString() : string.Empty;
 
                 _attachmentSources[i] = obj.GetComponentInChildren<IPoseAttachment>(includeInactive: true);
 

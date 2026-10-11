@@ -104,6 +104,8 @@ namespace SafetyProto.Networking.Dashboard
 
                 sb.Append("{\"id\":\"");
                 AppendJsonString(sb, ppe.Id ?? string.Empty);
+                sb.Append("\",\"type\":\"");
+                AppendJsonString(sb, ppe.Type ?? string.Empty);
                 sb.Append("\",\"pose\":{");
 
                 sb.Append("\"px\":"); AppendFloat(sb, ppe.Position.x); sb.Append(',');

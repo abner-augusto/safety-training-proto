@@ -26,6 +26,8 @@ namespace SafetyProto.Runtime.Analytics
     public struct PpeObjectPose
     {
         public string Id;
+        /// <summary>PPEType name of the tracked item, or empty when it has no PPEItem.</summary>
+        public string Type;
         public Vector3 Position;
         public Quaternion Rotation;
         public string AttachedTo;
