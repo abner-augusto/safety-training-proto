@@ -66460,14 +66460,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2781388660814576815}
     m_Modifications:
-    - target: {fileID: 3144817169515111244, guid: d2ead1554c4725844913b2a91cb2c96e, type: 3}
-      propertyPath: m_Convex
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3144817169515111244, guid: d2ead1554c4725844913b2a91cb2c96e, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 5041668762627063659, guid: d2ead1554c4725844913b2a91cb2c96e, type: 3}
       propertyPath: m_LocalPosition.x
       value: -1.103
@@ -66512,16 +66504,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: Distractor_FlipFlops
       objectReference: {fileID: 0}
-    - target: {fileID: 8676449036346493231, guid: d2ead1554c4725844913b2a91cb2c96e, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects:
-    - {fileID: 8801317838011223600, guid: d2ead1554c4725844913b2a91cb2c96e, type: 3}
-    - {fileID: 2463801340827284134, guid: d2ead1554c4725844913b2a91cb2c96e, type: 3}
-    - {fileID: 3708496428969324396, guid: d2ead1554c4725844913b2a91cb2c96e, type: 3}
-    - {fileID: 3501020726031205179, guid: d2ead1554c4725844913b2a91cb2c96e, type: 3}
+    m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d2ead1554c4725844913b2a91cb2c96e, type: 3}
