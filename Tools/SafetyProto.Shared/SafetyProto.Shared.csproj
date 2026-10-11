@@ -62,6 +62,7 @@
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Feedback\AudioFeedbackArbiter.cs" Link="Domain\Feedback\AudioFeedbackArbiter.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scoring\ScoreRuleEngineCore.cs"  Link="Domain\Scoring\ScoreRuleEngineCore.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scoring\ScoringConfig.cs"        Link="Domain\Scoring\ScoringConfig.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Scoring\IncidentalChargePolicy.cs" Link="Domain\Scoring\IncidentalChargePolicy.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Dashboard\DashboardDtos.cs"       Link="Domain\Dashboard\DashboardDtos.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Dashboard\DashboardDtoMapper.cs"  Link="Domain\Dashboard\DashboardDtoMapper.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Domain\Dashboard\IDashboardHost.cs"       Link="Domain\Dashboard\IDashboardHost.cs" />
