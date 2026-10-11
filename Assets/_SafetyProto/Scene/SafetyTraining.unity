@@ -5103,6 +5103,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6408ba269602af41ab23dae9d175d85, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Interaction.DualModeButton
+--- !u!23 &246457845 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 9211399921106644049, guid: 33069c731aab6074288e1f1b7bd3e555, type: 3}
+  m_PrefabInstance: {fileID: 246457842}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &246601236
 GameObject:
   m_ObjectHideFlags: 0
@@ -44849,6 +44854,76 @@ Mesh:
       - serializedVersion: 1
         m_IndexStart: 0
         m_IndexCount: 0
+--- !u!1 &1554790566
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1554790567}
+  - component: {fileID: 1554790568}
+  m_Layer: 0
+  m_Name: DashboardSceneLayout
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1554790567
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1554790566}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7322035375745015844}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1554790568
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1554790566}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 020abc0add255f845b1ba9bb11915380, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Networking.Unity::SafetyProto.Networking.Dashboard.DashboardSceneLayout
+  floors:
+  - id: canteiro
+    source: {fileID: 6860585120747648491}
+  - id: andaime
+    source: {fileID: 813916826}
+  markers:
+  - id: guardrail
+    kind: 0
+    taskId: install_guardrail
+    source: {fileID: 705841163}
+    minSize: 0
+  - id: toeboard
+    kind: 1
+    taskId: install_toeboard
+    source: {fileID: 516449505}
+    minSize: 0
+  - id: anchor
+    kind: 2
+    taskId: connect_lanyard
+    source: {fileID: 2132846323}
+    minSize: 0
+  - id: irregularity
+    kind: 3
+    taskId: report_damaged_safety_mesh
+    source: {fileID: 246457845}
+    minSize: 0
 --- !u!114 &1559962355 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5649874818017284986, guid: 0a7d2469f24041c4284c66706f84c45e, type: 3}
@@ -61928,6 +62003,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 393dc330c732b0a4c945bd38b7fa87db, type: 3}
   m_PrefabInstance: {fileID: 2132846321}
   m_PrefabAsset: {fileID: 0}
+--- !u!23 &2132846323 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: 393dc330c732b0a4c945bd38b7fa87db, type: 3}
+  m_PrefabInstance: {fileID: 2132846321}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2136439044
 GameObject:
   m_ObjectHideFlags: 0
@@ -68974,6 +69054,7 @@ Transform:
   - {fileID: 549560264}
   - {fileID: 1733408819}
   - {fileID: 454836258}
+  - {fileID: 1554790567}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7322035375745015845
