@@ -285,7 +285,7 @@ namespace SafetyProto.Runtime
             taskManager.RegisterOrderViolation($"EPIs fora da ordem recomendada: {list}");
             SafetyEvents.RaiseSafetyViolation(new SafetyViolationEventArgs
             {
-                ViolationCode = "ORDER_VIOLATION",
+                ViolationCode = ViolationCodes.OrderViolation,
                 Message = $"EPIs equipados fora da ordem recomendada: {list}",
                 TaskId = string.Empty,
                 GroupId = groupId,
@@ -296,7 +296,7 @@ namespace SafetyProto.Runtime
             var scoring = taskManager.Scoring ?? ScoringConfig.Default;
             int charge = scoring.BasePenaltyFor(RiskLevels.IncidentalChargeTier);
             if (charge > 0)
-                ScoreService.Instance.SubtractPoints(charge, "ORDER_VIOLATION", string.Empty);
+                ScoreService.Instance.SubtractPoints(charge, ViolationCodes.OrderViolation, string.Empty);
         }
 
         private void OnGroupCompleted(TaskGroupEventArgs args)

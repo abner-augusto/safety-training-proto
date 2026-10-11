@@ -201,7 +201,7 @@ namespace SafetyProto.Domain.Safety
             var actionId = args.ActionId;
             if (string.IsNullOrWhiteSpace(actionId))
             {
-                RaiseViolation("ACTION_ID_MISSING", "Tentativa de ação recebida sem identificação válida.", null, null);
+                RaiseViolation(ViolationCodes.ActionIdMissing, "Tentativa de ação recebida sem identificação válida.", null, null);
                 return;
             }
 

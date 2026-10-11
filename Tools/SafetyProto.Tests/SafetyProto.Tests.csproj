@@ -63,6 +63,7 @@
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\AudioFeedbackArbiterTests.cs"       Link="AudioFeedbackArbiterTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\OutgoingMessageBufferTests.cs"       Link="OutgoingMessageBufferTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\EventMetadataTests.cs"              Link="EventMetadataTests.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\ViolationCodesTests.cs"             Link="ViolationCodesTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\SafetyRuleEngineDiagnosticTests.cs" Link="SafetyRuleEngineDiagnosticTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\FakeEventBusContractTests.cs"       Link="FakeEventBusContractTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\ScriptStepDefTests.cs"              Link="ScriptStepDefTests.cs" />

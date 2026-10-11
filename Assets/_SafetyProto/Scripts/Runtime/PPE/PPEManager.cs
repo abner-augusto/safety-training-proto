@@ -130,7 +130,7 @@ namespace SafetyProto.Runtime.PPE
         {
             SafetyEvents.RaiseSafetyViolation(new SafetyViolationEventArgs
             {
-                ViolationCode = "WRONG_PPE_SELECTED",
+                ViolationCode = ViolationCodes.WrongPpeSelected,
                 Message = $"Selecionou equipamento inadequado: {GetPpeLabel(ppeType)}",
                 TaskId = string.Empty,
                 GroupId = string.Empty,
@@ -143,7 +143,7 @@ namespace SafetyProto.Runtime.PPE
             var scoring = TaskManager.Instance != null ? TaskManager.Instance.Scoring : ScoringConfig.Default;
             int charge = scoring.BasePenaltyFor(RiskLevels.IncidentalChargeTier);
             if (charge > 0)
-                ScoreService.Instance.SubtractPoints(charge, "WRONG_PPE_SELECTED", string.Empty);
+                ScoreService.Instance.SubtractPoints(charge, ViolationCodes.WrongPpeSelected, string.Empty);
         }
 
         private static string GetPpeLabel(PPEType ppeType)

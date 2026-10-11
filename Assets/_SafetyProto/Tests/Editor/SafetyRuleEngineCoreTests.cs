@@ -189,6 +189,19 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
+        public void EmptyActionId_RaisesActionIdMissing()
+        {
+            var t1 = _tasks.Task("t1", "action_a");
+            var group = _tasks.Group("free", TaskExecutionModeShared.FreeOrder, t1);
+
+            _bus.Publish(new TaskGroupEventArgs(group, TaskGroupPhase.Started));
+            _bus.Publish(new ActionAttemptedEvent("   "));
+
+            Assert.AreEqual(1, _violations.Count);
+            Assert.AreEqual(ViolationCodes.ActionIdMissing, _violations[0].ViolationCode);
+        }
+
+        [Test]
         public void ActionWithMissingPPE_PublishesPpeMissingViolation_AndUnsafeCompletion()
         {
             var task = _tasks.Task("ppe_helmet", "equip_helmet", PPEType.Helmet);
