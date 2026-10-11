@@ -295,6 +295,11 @@ namespace SafetyProto.Networking.Dashboard
 
         private void HandleRequestSync(EvaluatorWebSocketServer.ClientConnection client)
         {
+            // Scene geometry does not depend on a session: send it even before one starts.
+            var sceneLayout = FindFirstObjectByType<DashboardSceneLayout>();
+            if (sceneLayout != null)
+                _wsServer.SendToClient(client, "SceneLayout", sceneLayout.Build());
+
             var sessionId = EventContext.CurrentSessionId;
             if (string.IsNullOrEmpty(sessionId)) return;
 
