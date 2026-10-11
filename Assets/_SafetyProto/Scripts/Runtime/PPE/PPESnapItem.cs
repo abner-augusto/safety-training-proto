@@ -2,8 +2,8 @@ using System.Collections.Generic;
 using Oculus.Interaction;
 using Oculus.Interaction.HandGrab;
 using SafetyProto.Core;
-using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
+using SafetyProto.Runtime.Analytics;
 using SafetyProto.Runtime.Feedback;
 using UnityEngine;
 

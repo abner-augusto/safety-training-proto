@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
-namespace SafetyProto.Core
+namespace SafetyProto.Runtime
 {
     public class SceneLoader : MonoBehaviour, ISessionResettable
     {

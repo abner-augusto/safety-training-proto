@@ -1,4 +1,4 @@
-namespace SafetyProto.Core
+namespace SafetyProto.Runtime.Analytics
 {
     /// <summary>
     /// Process-wide gate to temporarily suspend the EvaluatorDashboard's high-frequency

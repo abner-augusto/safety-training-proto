@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using System.Text;
-using SafetyProto.Core;
+using SafetyProto.Runtime.Analytics;
 using UnityEngine;
 
 namespace SafetyProto.Networking.Dashboard
