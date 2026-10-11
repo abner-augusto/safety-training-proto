@@ -65,4 +65,7 @@ It can also be run manually via the Unity menu
 ## Out of scope
 
 `vendor/` files under `Resources/Dashboard/` (vendored three.js,
-OrbitControls, fonts) are **not** managed by this sync.
+OrbitControls, fonts, and the `models/ppe.bytes` GLB of PPE silhouettes) are
+**not** managed by this sync. The GLB is built by
+`Assets-3D/Dashboard-PPE/build_dashboard_ppe.py` in the thesis prototype folder
+and copied in by hand; its mesh names must match `PPEType` names.

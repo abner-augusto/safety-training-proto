@@ -8,13 +8,61 @@
     const FRAME_DWELL_MS = 800;  /* time off-frame before the camera moves */
     const FRAME_GLIDE_MS = 600;  /* glide duration */
 
+    /* PPE silhouettes: one mesh per PPEType name, vertices already in viewport space
+       (Unity mesh space with Z mirrored), so each mesh takes the tracked pose as-is.
+       Built by Assets-3D/Dashboard-PPE/build_dashboard_ppe.py in the thesis folder. */
+    const PPE_MODEL_URL = '/vendor/models/ppe.glb';
+    const PPE_EDGE_ANGLE = 35;   /* degrees: crease lines only, not every facet */
+    const PPE_NEAR = 0.35;       /* m: a hand closer than this highlights the PPE */
+
+    /* Reads only what build_dashboard_ppe.py writes: named meshes with a float
+       POSITION accessor and optional indices, no materials, identity node transforms.
+       GLTFLoader would pull in more vendored modules for a 60 KB asset. */
+    function parsePpeGlb(buffer) {
+      const view = new DataView(buffer);
+      if (view.getUint32(0, true) !== 0x46546C67) throw new Error('not a GLB file');
+      let json = null, bin = null;
+      for (let offset = 12; offset < buffer.byteLength;) {
+        const length = view.getUint32(offset, true);
+        const type = view.getUint32(offset + 4, true);
+        const start = offset + 8;
+        if (type === 0x4E4F534A) json = JSON.parse(new TextDecoder().decode(new Uint8Array(buffer, start, length)));
+        else if (type === 0x004E4942) bin = buffer.slice(start, start + length);
+        offset = start + length;
+      }
+      if (!json || !bin) throw new Error('GLB without JSON or BIN chunk');
+
+      const INDEX_TYPES = { 5121: Uint8Array, 5123: Uint16Array, 5125: Uint32Array };
+      const read = (index, Ctor) => {
+        const acc = json.accessors[index];
+        const bv = json.bufferViews[acc.bufferView];
+        const size = acc.type === 'VEC3' ? 3 : 1;
+        return new Ctor(bin, (bv.byteOffset || 0) + (acc.byteOffset || 0), acc.count * size);
+      };
+      const out = {};
+      for (const mesh of json.meshes) {
+        const prim = mesh.primitives[0];
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(read(prim.attributes.POSITION, Float32Array), 3));
+        if (prim.indices !== undefined) {
+          const Ctor = INDEX_TYPES[json.accessors[prim.indices].componentType];
+          geo.setIndex(new THREE.BufferAttribute(read(prim.indices, Ctor), 1));
+        }
+        geo.computeVertexNormals();
+        geo.computeBoundingSphere();
+        out[mesh.name] = geo;
+      }
+      return out;
+    }
+
     /* ================================================================
      * EvaluatorViewport — Three.js scene for the field instrument.
      * Colours come from the CSS tokens (setTheme). The avatar is a skeleton
      * DERIVED from tracking (real head + hands; shoulders/spine/hips are
      * inferred; a plumb line + floor disc instead of invented legs).
      * Render on demand: it only draws when the pose, the camera or the
-     * theme changes, or while an interaction ring is alive.
+     * theme changes, while an interaction ring is alive, or while a
+     * proximity highlight is fading.
      * ============================================================== */
     export class EvaluatorViewport {
       constructor(containerEl) {
@@ -67,15 +115,23 @@
         /* Shared geometries */
         this._geoHead = new THREE.BoxGeometry(0.2, 0.15, 0.25);
         this._geoHand = new THREE.SphereGeometry(0.05, 16, 16);
-        this._geoPPE  = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+        this._geoPPE  = new THREE.BoxGeometry(0.1, 0.1, 0.1);   /* until ppe.glb loads, or unknown type */
+        this._geoPPE.computeBoundingSphere();
         this._geoRing = new THREE.RingGeometry(0.10, 0.125, 32);
+        this._geoHighlight = new THREE.RingGeometry(0.9, 1.0, 48);  /* unit ring, scaled per PPE */
+        this._ppeModels = {};   // PPEType name → { geo, edges }
 
         /* Shared materials — colours assigned in setTheme */
         this._matHead        = new THREE.MeshLambertMaterial();
         this._matHand        = new THREE.MeshLambertMaterial();
-        this._matPPELoose    = new THREE.MeshLambertMaterial();   // pending  = amber
-        this._matPPEAttached = new THREE.MeshLambertMaterial();   // fulfilled = neutral
+        this._matPPELoose    = new THREE.MeshLambertMaterial({ flatShading: true });   // pending  = amber
+        this._matPPEAttached = new THREE.MeshLambertMaterial({ flatShading: true });   // fulfilled = neutral
+        this._matEdgeLoose   = new THREE.LineBasicMaterial();
+        this._matEdgeWorn    = new THREE.LineBasicMaterial();
         this._matRing        = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide });
+        this._matHighlight   = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide, depthWrite: false });
+        this._highlights     = new Map();   // PPE id → ring mesh (own material: opacity varies)
+        this._box = new THREE.Box3();
 
         /* Derived skeleton: spine, shoulders, hips, 2 arms (5 segments) */
         this._skelPos = new Float32Array(5 * 2 * 3);
@@ -139,6 +195,8 @@
         this._onResize = () => this.resize();
         window.addEventListener('resize', this._onResize);
 
+        this._loadPpeModels();
+
         /* Start loop */
         this._animate();
       }
@@ -158,6 +216,10 @@
         this._matHand.color        = tok('--text-muted');
         this._matPPELoose.color    = tok('--orange');
         this._matPPEAttached.color = tok('--ppe-worn');
+        this._matEdgeLoose.color   = tok('--orange').multiplyScalar(0.55);
+        this._matEdgeWorn.color    = tok('--ppe-worn').multiplyScalar(0.6);
+        this._matHighlight.color   = tok('--orange');
+        this._highlights.forEach(ring => ring.material.color.copy(this._matHighlight.color));
         this._matSkel.color        = tok('--text-muted');
         this._matPlumb.color       = tok('--text-dim');
         this._matGaze.color        = tok('--accent');
@@ -198,7 +260,7 @@
           const present = new Set();
           p.ppe.forEach(item => {
             present.add(String(item.id));
-            this._updateObject(item.id, item.pose, 'ppe', item.attachedTo);
+            this._updateObject(item.id, item.pose, 'ppe', item.attachedTo, item.type);
           });
           /* PPE that left the frame left the scene (hideWhenEquipped vanishes on equip):
              without this reaping the mesh would stay frozen at the slot forever. It comes
@@ -243,9 +305,11 @@
       dispose() {
         window.removeEventListener('resize', this._onResize);
         this.clearSession();
-        [this._geoHead, this._geoHand, this._geoPPE, this._geoRing].forEach(g => g.dispose());
-        [this._matHead, this._matHand, this._matPPELoose, this._matPPEAttached,
-         this._matSkel, this._matPlumb, this._matGaze, this._matDisc, this._matRing].forEach(m => m.dispose());
+        [this._geoHead, this._geoHand, this._geoPPE, this._geoRing, this._geoHighlight].forEach(g => g.dispose());
+        Object.values(this._ppeModels).forEach(m => { m.geo.dispose(); m.edges.dispose(); });
+        [this._matHead, this._matHand, this._matPPELoose, this._matPPEAttached, this._matEdgeLoose,
+         this._matEdgeWorn, this._matSkel, this._matPlumb, this._matGaze, this._matDisc, this._matRing,
+         this._matHighlight].forEach(m => m.dispose());
         this._labels.forEach(ld => ld.el.remove());
         this._labels.clear();
         this._renderer.dispose();
@@ -253,7 +317,7 @@
 
       /* ── Private helpers ──────────────────────────────────────── */
 
-      _updateObject(id, pose, type, attachedTo = '') {
+      _updateObject(id, pose, type, attachedTo = '', ppeType = '') {
         let obj = type === 'ppe' ? this._objects.ppe[id] : this._objects[id];
         if (!obj) obj = this._createObject(id, type);
 
@@ -267,9 +331,15 @@
         if (type === 'ppe') {
           /* semantics, not identity: loose = pending obligation (amber);
              worn = fulfilled obligation (neutral, shrunk) */
-          if (attachedTo) { obj.material = this._matPPEAttached; obj.scale.setScalar(0.8); }
-          else            { obj.material = this._matPPELoose;    obj.scale.setScalar(1); }
-          obj.userData.worn = !!attachedTo;
+          const worn = !!attachedTo;
+          obj.userData.worn = worn;
+          if (obj.userData.ppeType !== ppeType) {
+            obj.userData.ppeType = ppeType;
+            this._applyPpeGeometry(obj);
+          }
+          obj.material = worn ? this._matPPEAttached : this._matPPELoose;
+          obj.scale.setScalar(worn ? 0.8 : 1);
+          if (obj.userData.edges) obj.userData.edges.material = worn ? this._matEdgeWorn : this._matEdgeLoose;
         }
       }
 
@@ -412,14 +482,52 @@
         this._postureValue.classList.toggle('low', low);
       }
 
+      /* A missing or broken ppe.glb leaves the cubes in place; the viewport stays usable. */
+      _loadPpeModels() {
+        fetch(PPE_MODEL_URL)
+          .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.arrayBuffer();
+          })
+          .then(buffer => {
+            for (const [name, geo] of Object.entries(parsePpeGlb(buffer))) {
+              this._ppeModels[name] = { geo, edges: new THREE.EdgesGeometry(geo, PPE_EDGE_ANGLE) };
+            }
+            Object.values(this._objects.ppe).forEach(mesh => this._applyPpeGeometry(mesh));
+            this._dirty = true;
+          })
+          .catch(err => console.warn('[viewport] PPE models unavailable, drawing cubes:', err));
+      }
+
+      _applyPpeGeometry(mesh) {
+        const model = this._ppeModels[mesh.userData.ppeType];
+        mesh.geometry = model ? model.geo : this._geoPPE;
+        let edges = mesh.userData.edges;
+        if (model) {
+          if (!edges) {
+            edges = new THREE.LineSegments(model.edges, this._matEdgeLoose);
+            mesh.add(edges);
+            mesh.userData.edges = edges;
+          }
+          edges.geometry = model.edges;
+          edges.material = mesh.userData.worn ? this._matEdgeWorn : this._matEdgeLoose;
+        } else if (edges) {
+          mesh.remove(edges);
+          mesh.userData.edges = null;
+        }
+        this._dirty = true;
+      }
+
       /* PPE geometry and material are shared across the meshes — remove from the scene
-         and drop the label, never dispose of them. */
+         and drop the label, never dispose of them. Highlight rings own their material. */
       _removePpe(id) {
         const mesh = this._objects.ppe[id];
         if (!mesh) return;
         this._scene.remove(mesh);
         const ld = this._labels.get(mesh);
         if (ld) { ld.el.remove(); this._labels.delete(mesh); }
+        const ring = this._highlights.get(id);
+        if (ring) { this._scene.remove(ring); ring.material.dispose(); this._highlights.delete(id); }
         delete this._objects.ppe[id];
         this._dirty = true;
       }
@@ -462,12 +570,13 @@
         else                      mesh = new THREE.Mesh(this._geoPPE, this._matPPELoose);
 
         this._scene.add(mesh);
-        if (type === 'ppe') this._objects.ppe[id] = mesh;
+        if (type === 'ppe') { this._objects.ppe[id] = mesh; mesh.userData.id = id; }
         else                this._objects[id] = mesh;
 
         /* Labels only for PPE — the head and hands are already legible from their
-           shape/legend; the label stays dark until a hand comes near */
-        if (type === 'ppe') this._labels.set(mesh, this._createLabel(id.toUpperCase(), 0.14));
+           shape/legend; the label stays dark until a hand comes near. The offset is a
+           gap above the mesh's world bounding box, which differs per PPE model. */
+        if (type === 'ppe') this._labels.set(mesh, this._createLabel(id.toUpperCase(), 0.04));
 
         return mesh;
       }
@@ -498,34 +607,82 @@
         this._controls.update();                     /* damping fires 'change' → _dirty */
         const hasFx = this._interactions.length > 0;
         if (hasFx) this._updateInteractions();
-        if (!this._dirty && !hasFx && !following) return;   /* render on demand */
+        const highlighting = this._stepHighlights();
+        if (!this._dirty && !hasFx && !following && !highlighting) return;   /* render on demand */
         this._dirty = false;
         this._updateLabels();
         this._renderer.render(this._scene, this._camera);
       }
 
-      _updateLabels() {
-        /* A label only "lights up" for the loose PPE NEAREST to a hand (within range) —
-           with clustered objects, lighting every one inside a radius would clutter the
-           scene; worn PPE stays dark even with a hand right next to it */
-        const NEAR = 0.35; /* m */
-        const nearMeshes = new Set();
+      /* Proximity highlight. Each hand lights only the loose PPE NEAREST to it within
+         PPE_NEAR — with clustered objects, lighting every one inside a radius would clutter
+         the scene; worn PPE never lights. Distance is measured to the mesh's bounding box,
+         so a hand at the end of a harness strap counts as near. The level eases per frame
+         because hand poses arrive at only 10 Hz; returns true while any level is moving. */
+      _stepHighlights() {
+        const now = performance.now();
+        const dt = Math.min((now - (this._hlLast ?? now)) / 1000, 0.05);
+        this._hlLast = now;
+
+        const targets = new Map();
         for (const hand of [this._objects.leftHand, this._objects.rightHand]) {
           if (!hand) continue;
-          let best = null, bestD = NEAR;
-          this._labels.forEach((ld, obj) => {
-            if (obj.userData.worn) return;
-            const d = hand.position.distanceTo(obj.position);
+          let best = null, bestD = PPE_NEAR;
+          for (const obj of Object.values(this._objects.ppe)) {
+            if (obj.userData.worn) continue;
+            const d = this._box.setFromObject(obj).distanceToPoint(hand.position);
             if (d < bestD) { bestD = d; best = obj; }
-          });
-          if (best) nearMeshes.add(best);
+          }
+          if (best) targets.set(best, Math.max(targets.get(best) ?? 0, 1 - bestD / PPE_NEAR));
         }
+
+        let moving = false;
+        for (const obj of Object.values(this._objects.ppe)) {
+          const target = targets.get(obj) ?? 0;
+          const level = obj.userData.hl ?? 0;
+          let next = level + (target - level) * Math.min(1, dt * 10);
+          if (Math.abs(target - next) < 0.003) next = target;
+          if (next !== level) moving = true;
+          obj.userData.hl = next;
+          obj.userData.hlTarget = target;
+        }
+        return moving;
+      }
+
+      /* Billboard ring that fades in and grows as the hand closes in. */
+      _placeHighlight(id, obj) {
+        const level = obj.userData.hl ?? 0;
+        let ring = this._highlights.get(id);
+        if (level <= 0) {
+          if (ring) ring.visible = false;
+          return;
+        }
+        if (!ring) {
+          ring = new THREE.Mesh(this._geoHighlight, this._matHighlight.clone());
+          ring.renderOrder = 1;
+          this._scene.add(ring);
+          this._highlights.set(id, ring);
+        }
+        const e = level * level * (3 - 2 * level);   /* smoothstep */
+        const sphere = obj.geometry.boundingSphere;
+        const radius = THREE.MathUtils.clamp(sphere.radius * obj.scale.x, 0.07, 0.32);
+        ring.position.copy(sphere.center).applyMatrix4(obj.matrixWorld);
+        ring.scale.setScalar(radius * (0.6 + 0.55 * e));
+        ring.material.opacity = 0.9 * e;
+        ring.lookAt(this._camera.position);
+        ring.visible = true;
+      }
+
+      _updateLabels() {
         const visible = [];
         this._labels.forEach((ld, obj) => {
           if (!obj?.position) return;
-          ld.el.classList.toggle('near', nearMeshes.has(obj));
-          const wp = obj.position.clone();
-          wp.y += ld.yOffset;
+          this._box.setFromObject(obj);   /* also refreshes matrixWorld for the ring */
+          this._placeHighlight(obj.userData.id, obj);
+          const level = obj.userData.hl ?? 0;
+          ld.el.classList.toggle('near', (obj.userData.hlTarget ?? 0) > 0);
+          ld.el.style.opacity = (0.18 + 0.82 * level * level * (3 - 2 * level)).toFixed(3);
+          const wp = new THREE.Vector3(obj.position.x, this._box.max.y + ld.yOffset, obj.position.z);
           const sp = this._projectLabel(ld, wp);
           if (sp.visible) visible.push({ el: ld.el, x: sp.x, y: sp.y });
         });
