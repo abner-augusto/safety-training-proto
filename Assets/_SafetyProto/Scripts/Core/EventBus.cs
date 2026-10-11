@@ -62,13 +62,18 @@ namespace SafetyProto.Core
         }
 
         private const int MaxQueueWarningThreshold = 1000;
+        // Edge-triggered: the report itself enqueues a SafetyError, so a level-triggered check
+        // would add one item per frame to the backlog it is reporting. Re-armed only once the
+        // queue has fully drained.
+        private bool _queueOverflowReported;
 
         public void ProcessEvents(double maxMillis = 2)
         {
             if (_eventQueue.Count == 0) return;
 
-            if (_eventQueue.Count > MaxQueueWarningThreshold)
+            if (_eventQueue.Count > MaxQueueWarningThreshold && !_queueOverflowReported)
             {
+                _queueOverflowReported = true;
                 SafetyLog.Warning($"[EventBus] Queue length high: {_eventQueue.Count} items");
                 SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs
                 {
@@ -99,6 +104,7 @@ namespace SafetyProto.Core
                 if (_stopwatch.Elapsed.TotalMilliseconds >= maxMillis) break;
             }
 
+            if (_eventQueue.Count == 0) _queueOverflowReported = false;
             _stopwatch.Stop();
         }
 
