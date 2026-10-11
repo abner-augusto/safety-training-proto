@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5732684351446141361}
   - component: {fileID: 5968568777583901049}
   - component: {fileID: 1649949211446751676}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Icon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -88,7 +88,7 @@ GameObject:
   - component: {fileID: 5466282741669890271}
   - component: {fileID: 6624240608485875892}
   - component: {fileID: 4461902704938285132}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Surface
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -182,10 +182,9 @@ GameObject:
   - component: {fileID: 2282466818561796237}
   - component: {fileID: 6282001566521229294}
   - component: {fileID: 5926436845336645027}
-  - component: {fileID: 6963362454471002167}
   - component: {fileID: 6946151349931411619}
   - component: {fileID: 5637893464776139580}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -318,27 +317,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &6963362454471002167
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 592723590782666175}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bb86ba9d4c5126e48bfef9b0c9550e9d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Oculus.Interaction::Oculus.Interaction.RayInteractable
-  _interactorFilters: []
-  _maxInteractors: -1
-  _maxSelectingInteractors: -1
-  _data: {fileID: 0}
-  _pointableElement: {fileID: 5086019701539624184}
-  _surface: {fileID: 7062559051320779503}
-  _selectSurface: {fileID: 0}
-  _movementProvider: {fileID: 0}
-  _tiebreakerScore: 0
 --- !u!114 &6946151349931411619
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -385,7 +363,7 @@ GameObject:
   - component: {fileID: 3935771437597047055}
   - component: {fileID: 3821348145604937623}
   - component: {fileID: 2226480179472828671}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -541,6 +519,13 @@ MonoBehaviour:
   skipButtonLabel: {fileID: 3776872144871056127}
   inputFieldRoot: {fileID: 0}
   layoutRoot: {fileID: 2260388966796775858}
+  keypadCellSize: {x: 132, y: 72}
+  keypadSpacing: {x: 12, y: 12}
+  keypadBackspaceLabel: Apagar
+  keypadClearLabel: Limpar
+  illustrationSize: {x: 500, y: 280}
+  illustrationHoldSeconds: 1.4
+  illustrationFadeSeconds: 0.6
   normalColor: {r: 0.16078432, g: 0.23137255, b: 0.27058825, a: 0.8862745}
   warningColor: {r: 0.6039216, g: 0.22745098, b: 0.101960786, a: 0.972549}
   interactiveColor: {r: 0.16078432, g: 0.23137255, b: 0.27058825, a: 0.8862745}
@@ -594,7 +579,7 @@ GameObject:
   - component: {fileID: 562227628570614680}
   - component: {fileID: 1138719193266038420}
   - component: {fileID: 6472528248299608799}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: TitleText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -732,7 +717,7 @@ GameObject:
   - component: {fileID: 1568933736979073389}
   - component: {fileID: 4290570258057553174}
   - component: {fileID: 7591060375011371414}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: BtnCloseShadow
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -829,7 +814,7 @@ GameObject:
   - component: {fileID: 4191450984187046752}
   - component: {fileID: 7322568363232712541}
   - component: {fileID: 6306586638738582425}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: ActionButtonRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -922,7 +907,7 @@ GameObject:
   - component: {fileID: 5850683595051350645}
   - component: {fileID: 455925966210132087}
   - component: {fileID: 8383350252854593102}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: 'BtnActionLabel '
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1077,7 +1062,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5482829982550596615}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Audio
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1115,7 +1100,7 @@ GameObject:
   - component: {fileID: 3140082311163242098}
   - component: {fileID: 5801657093585341821}
   - component: {fileID: 7953511031258811244}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: CloseSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1191,7 +1176,7 @@ GameObject:
   - component: {fileID: 2620549283427581107}
   - component: {fileID: 3776872144871056127}
   - component: {fileID: 2984973286622322585}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: 'BtnActionLabel '
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1349,7 +1334,7 @@ GameObject:
   - component: {fileID: 8542258633303508994}
   - component: {fileID: 4085890549714315531}
   - component: {fileID: 131847583958201165}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: ISDK_PokeCanvasInteraction
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1570,7 +1555,7 @@ GameObject:
   - component: {fileID: 5838069204923784039}
   - component: {fileID: 5086019701539624184}
   - component: {fileID: 5220308355266708096}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: ISDK_RayCanvasInteraction
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1666,8 +1651,7 @@ GameObject:
   - component: {fileID: 3142639039324169313}
   - component: {fileID: 8316505386823176467}
   - component: {fileID: 7371250533029172170}
-  - component: {fileID: 78928124728020687}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: BtnClose
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1800,27 +1784,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &78928124728020687
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4874595902687190674}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bb86ba9d4c5126e48bfef9b0c9550e9d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Oculus.Interaction::Oculus.Interaction.RayInteractable
-  _interactorFilters: []
-  _maxInteractors: -1
-  _maxSelectingInteractors: -1
-  _data: {fileID: 0}
-  _pointableElement: {fileID: 5086019701539624184}
-  _surface: {fileID: 7062559051320779503}
-  _selectSurface: {fileID: 0}
-  _movementProvider: {fileID: 0}
-  _tiebreakerScore: 0
 --- !u!1 &5285363572419268963
 GameObject:
   m_ObjectHideFlags: 0
@@ -1833,10 +1796,9 @@ GameObject:
   - component: {fileID: 4666076994547970367}
   - component: {fileID: 4370066884994144963}
   - component: {fileID: 7866795976382731089}
-  - component: {fileID: 4337906062573650899}
   - component: {fileID: 2765168312801611567}
   - component: {fileID: 3645027124897568897}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1969,27 +1931,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &4337906062573650899
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5285363572419268963}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bb86ba9d4c5126e48bfef9b0c9550e9d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Oculus.Interaction::Oculus.Interaction.RayInteractable
-  _interactorFilters: []
-  _maxInteractors: -1
-  _maxSelectingInteractors: -1
-  _data: {fileID: 0}
-  _pointableElement: {fileID: 5086019701539624184}
-  _surface: {fileID: 7062559051320779503}
-  _selectSurface: {fileID: 0}
-  _movementProvider: {fileID: 0}
-  _tiebreakerScore: 0
 --- !u!114 &2765168312801611567
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2037,7 +1978,7 @@ GameObject:
   - component: {fileID: 5639902059510963689}
   - component: {fileID: 8775051579009975039}
   - component: {fileID: 6132650090303592924}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2172,7 +2113,7 @@ GameObject:
   - component: {fileID: 5949392998436805490}
   - component: {fileID: 4208780293141761490}
   - component: {fileID: 8596060258883116242}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: SkipButtonRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2266,7 +2207,7 @@ GameObject:
   - component: {fileID: 5594914880018487362}
   - component: {fileID: 7960548020186304090}
   - component: {fileID: 355447504817396680}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Surface
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2360,7 +2301,8 @@ GameObject:
   - component: {fileID: 6279392800073542707}
   - component: {fileID: 2910275241951479715}
   - component: {fileID: 4280341072197899821}
-  m_Layer: 0
+  - component: {fileID: 3992221505758115048}
+  m_Layer: 3
   m_Name: Unity Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2454,6 +2396,34 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &3992221505758115048
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8308602538186038713}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee10491ef6d5d1d49a270cf6b09bdc19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Oculus.VR::OVROverlayCanvas
+  _mipmapMode: 0
+  _dynamicResolution: 1
+  _redrawResolutionThreshold: 2147483647
+  rectTransform: {fileID: 1917115605258271978}
+  maxTextureSize: 2048
+  manualRedraw: 0
+  renderInterval: 1
+  renderIntervalFrameOffset: 0
+  superSample: 0
+  layer: 16
+  opacity: 2
+  shape: 0
+  curveRadius: 1
+  overlapMask: 0
+  compositionMode: 1
+  _overlayEnabled: 1
 --- !u!1 &8711920748313808967
 GameObject:
   m_ObjectHideFlags: 0
@@ -2467,7 +2437,7 @@ GameObject:
   - component: {fileID: 3723067674366795261}
   - component: {fileID: 4716895909202009748}
   - component: {fileID: 8234473924364181863}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2577,7 +2547,7 @@ GameObject:
   - component: {fileID: 5989880143926646384}
   - component: {fileID: 7245694305077257671}
   - component: {fileID: 1504382030855912902}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: IconBackground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2674,7 +2644,7 @@ GameObject:
   - component: {fileID: 806163647590272380}
   - component: {fileID: 6337254691173909413}
   - component: {fileID: 3832133888644160195}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: BodyText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2883,7 +2853,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4674537905600659506, guid: 4b2ec9cc45d57c047b74113a934b6887, type: 3}
       propertyPath: m_Layer
-      value: 0
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 7410389675181900697, guid: 4b2ec9cc45d57c047b74113a934b6887, type: 3}
       propertyPath: _audioSource

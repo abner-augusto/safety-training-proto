@@ -223,6 +223,26 @@ namespace SafetyProto.UI
                 _autoCloseCoroutine = StartCoroutine(AutoCloseRoutine(data.autoCloseSeconds));
         }
 
+        private void LateUpdate() => FitInteractionAreaToBackground();
+
+        /// <summary>
+        /// The poke and ray surfaces stretch to the canvas rect, but the content size fitter grows
+        /// only Background, which is stretched inside that rect with a height offset. Grow or shrink
+        /// the canvas by that offset so tall popups (the keypad) stay pokeable and ray-clickable
+        /// all the way to their bottom buttons.
+        /// </summary>
+        private void FitInteractionAreaToBackground()
+        {
+            if (backgroundImage == null) return;
+            var background = backgroundImage.rectTransform;
+            if (background.parent is not RectTransform area) return;
+            if (background.anchorMin.y != 0f || background.anchorMax.y != 1f) return;
+
+            float overflow = background.sizeDelta.y;
+            if (Mathf.Abs(overflow) < 0.5f) return;
+            area.sizeDelta = new Vector2(area.sizeDelta.x, area.sizeDelta.y + overflow);
+        }
+
         public void Hide()
         {
             if (!gameObject.activeSelf) return;
@@ -253,7 +273,7 @@ namespace SafetyProto.UI
 
         /// <summary>
         /// Clones <see cref="actionButtonRoot"/> once per option instead of instantiating
-        /// <c>DualModeButton.prefab</c>: the clone is a plain <c>Button</c> + <c>RayInteractable</c>
+        /// <c>DualModeButton.prefab</c>: the clone is a plain <c>Button</c>
         /// under Background's <c>VerticalLayoutGroup</c>, so it inherits the canvas-wide poke/ray
         /// interaction (<c>ISDK_PokeCanvasInteraction</c> / <c>ISDK_RayCanvasInteraction</c>) for
         /// free and grows the panel through the fitter already on Background — no second
