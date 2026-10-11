@@ -103,15 +103,19 @@
           </div>
         </div>
 
-        <!-- Recenter (evaluator-triggered playspace recenter) -->
+        <!-- Evaluator commands (recenter playspace, reset session) -->
         <div class="section">
           <div class="section-title" style="display:flex; align-items:center;">
             <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-            <span data-i18n="recenterTitle">Reposicionamento</span>
+            <span data-i18n="controlsTitle">Controles do avaliador</span>
           </div>
-          <div class="recenter-control">
-            <button class="report-btn primary" id="btn-recenter" data-i18n="recenterButton">Recentralizar jogador</button>
-            <div class="recenter-status" id="recenter-status" aria-live="polite"></div>
+          <div class="command-control">
+            <button class="report-btn primary command-btn" id="btn-recenter" data-i18n="recenterButton">Recentralizar jogador</button>
+            <div class="command-status" id="recenter-status" aria-live="polite"></div>
+          </div>
+          <div class="command-control">
+            <button class="report-btn secondary command-btn danger" id="btn-reset-session" data-i18n="resetSessionButton">Reiniciar sessão</button>
+            <div class="command-status" id="reset-session-status" aria-live="polite"></div>
           </div>
         </div>
 

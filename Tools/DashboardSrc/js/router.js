@@ -1,6 +1,6 @@
     import { t, actionLabel, ppeLabel, violationLabel, violationMessage } from './i18n.js';
     import { tasks, wornPpe, state, sessionTimer } from './state.js';
-    import { addLog, setScoreUI, renderCluster, renderTasks, resetTaskUI, emptyState, renderReportSection, resolveRecenterAck } from './ui.js';
+    import { addLog, setScoreUI, renderCluster, renderTasks, resetTaskUI, emptyState, renderReportSection, resolveCommandAck } from './ui.js';
     import { saveSessionToHistory } from './history.js';
 
     /* ================================================================
@@ -177,7 +177,7 @@
     on('SafetyError',          p => addLog(`${t('logSafetyError')}: ${t('internalError')}${p.source ? ` · ${t('origin')}: ${p.source}` : ''}`, 'violation'));
 
     /* ── Evaluator commands ── */
-    on('CommandAck', resolveRecenterAck);
+    on('CommandAck', resolveCommandAck);
 
     /* ── Session Log File ── */
     on('SessionLogFile', p => {

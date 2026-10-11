@@ -3,7 +3,7 @@
     import { applyTranslations, toggleLang } from './js/i18n.js';
     import { applyTheme, toggleTheme } from './js/theme.js';
     import { state } from './js/state.js';
-    import { renderTasks, closeReportModal, handleRecenterClick } from './js/ui.js';
+    import { renderTasks, closeReportModal, createCommandControl } from './js/ui.js';
     import { loadHistory, renderHistory, clearHistory, exportAllHistory } from './js/history.js';
     import { route } from './js/router.js';
     import { WsManager } from './js/ws.js';
@@ -120,8 +120,22 @@
     loadHistory();
     renderHistory();
 
-    /* ── Evaluator recenter control ── */
-    document.getElementById('btn-recenter').onclick = () => handleRecenterClick(ws);
+    /* ── Evaluator command controls ── */
+    const commandStatusKeys = {
+      pending: 'commandPending', noConnection: 'commandNoConnection', noResponse: 'commandNoResponse',
+    };
+    const recenterControl = createCommandControl({
+      btnId: 'btn-recenter', statusId: 'recenter-status', command: 'recenter_player',
+      keys: { ...commandStatusKeys, button: 'recenterButton', confirm: 'commandConfirmButton',
+              success: 'recenterSuccess', failed: 'recenterFailed' },
+    });
+    const resetControl = createCommandControl({
+      btnId: 'btn-reset-session', statusId: 'reset-session-status', command: 'reset_session',
+      keys: { ...commandStatusKeys, button: 'resetSessionButton', confirm: 'resetSessionConfirmButton',
+              success: 'resetSessionSuccess', failed: 'resetSessionFailed' },
+    });
+    document.getElementById('btn-recenter').onclick = () => recenterControl.click(ws);
+    document.getElementById('btn-reset-session').onclick = () => resetControl.click(ws);
 
     /* Gancho de teste: permite injetar eventos/poses pelo console do
        navegador quando não há headset (ex.: __spRoute({eventType, payload})). */

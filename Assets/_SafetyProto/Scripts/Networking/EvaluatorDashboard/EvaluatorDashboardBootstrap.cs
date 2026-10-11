@@ -24,7 +24,7 @@ namespace SafetyProto.Networking.Dashboard
     /// Bootstraps the on-device evaluator dashboard servers (HTTP + WebSocket) and event streaming.
     /// Drop this into a boot scene to expose training telemetry over LAN.
     /// </summary>
-    public class EvaluatorDashboardBootstrap : MonoBehaviour, IDashboardHost
+    public class EvaluatorDashboardBootstrap : MonoBehaviour, IDashboardHost, ISessionResettable
     {
         [Header("Networking")]
         public int httpPort = 8080;
