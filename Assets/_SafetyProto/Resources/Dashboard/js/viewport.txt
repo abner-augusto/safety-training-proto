@@ -113,7 +113,9 @@
         this._labels  = new Map();   // mesh → { el, yOffset }
 
         /* Shared geometries */
-        this._geoHead = new THREE.BoxGeometry(0.2, 0.15, 0.25);
+        this._geoSkull = new THREE.SphereGeometry(1, 16, 12);      /* unit sphere, scaled to an ellipsoid */
+        this._geoVisor = new THREE.CapsuleGeometry(0.045, 0.09, 4, 12);  /* lying on X: 18 × 9 cm, Quest-sized */
+        this._geoStrap = new THREE.TorusGeometry(1, 0.1, 6, 24);   /* unit ring, scaled around the skull */
         this._geoHand = new THREE.SphereGeometry(0.05, 16, 16);
         this._geoPPE  = new THREE.BoxGeometry(0.1, 0.1, 0.1);   /* until ppe.glb loads, or unknown type */
         this._geoPPE.computeBoundingSphere();
@@ -122,7 +124,8 @@
         this._ppeModels = {};   // PPEType name → { geo, edges }
 
         /* Shared materials — colours assigned in setTheme */
-        this._matHead        = new THREE.MeshLambertMaterial();
+        this._matHead        = new THREE.MeshLambertMaterial({ flatShading: true });
+        this._matVisor       = new THREE.MeshLambertMaterial({ flatShading: true });
         this._matHand        = new THREE.MeshLambertMaterial();
         this._matPPELoose    = new THREE.MeshLambertMaterial({ flatShading: true });   // pending  = amber
         this._matPPEAttached = new THREE.MeshLambertMaterial({ flatShading: true });   // fulfilled = neutral
@@ -213,6 +216,7 @@
         this._scene.background = bg;
         this._scene.fog = new THREE.Fog(bg, 8, 30);
         this._matHead.color        = tok('--accent');
+        this._matVisor.color       = tok('--accent').multiplyScalar(0.18);
         this._matHand.color        = tok('--text-muted');
         this._matPPELoose.color    = tok('--orange');
         this._matPPEAttached.color = tok('--ppe-worn');
@@ -305,9 +309,10 @@
       dispose() {
         window.removeEventListener('resize', this._onResize);
         this.clearSession();
-        [this._geoHead, this._geoHand, this._geoPPE, this._geoRing, this._geoHighlight].forEach(g => g.dispose());
+        [this._geoSkull, this._geoVisor, this._geoStrap, this._geoHand, this._geoPPE, this._geoRing,
+         this._geoHighlight].forEach(g => g.dispose());
         Object.values(this._ppeModels).forEach(m => { m.geo.dispose(); m.edges.dispose(); });
-        [this._matHead, this._matHand, this._matPPELoose, this._matPPEAttached, this._matEdgeLoose,
+        [this._matHead, this._matVisor, this._matHand, this._matPPELoose, this._matPPEAttached, this._matEdgeLoose,
          this._matEdgeWorn, this._matSkel, this._matPlumb, this._matGaze, this._matDisc, this._matRing,
          this._matHighlight].forEach(m => m.dispose());
         this._labels.forEach(ld => ld.el.remove());
@@ -565,7 +570,7 @@
 
       _createObject(id, type) {
         let mesh;
-        if      (type === 'hmd')  mesh = new THREE.Mesh(this._geoHead, this._matHead);
+        if      (type === 'hmd')  mesh = this._buildHead();
         else if (type === 'hand') mesh = new THREE.Mesh(this._geoHand, this._matHand);
         else                      mesh = new THREE.Mesh(this._geoPPE, this._matPPELoose);
 
@@ -579,6 +584,29 @@
         if (type === 'ppe') this._labels.set(mesh, this._createLabel(id.toUpperCase(), 0.04));
 
         return mesh;
+      }
+
+      /* Abstract head wearing the headset. The tracked HMD pose is the eye point, so the
+         visor sits on it and the skull centre lies behind and above (forward is -Z).
+         Worn helmet and goggles then land on the skull instead of beside a box. */
+      _buildHead() {
+        const head = new THREE.Group();
+
+        const skull = new THREE.Mesh(this._geoSkull, this._matHead);
+        skull.scale.set(0.08, 0.10, 0.11);
+        skull.position.set(0, 0.04, 0.09);
+
+        const visor = new THREE.Mesh(this._geoVisor, this._matVisor);
+        visor.rotation.z = Math.PI / 2;
+        visor.position.set(0, 0, -0.03);
+
+        const strap = new THREE.Mesh(this._geoStrap, this._matVisor);
+        strap.rotation.x = Math.PI / 2;
+        strap.scale.set(0.083, 0.118, 0.083);   /* local Y is world Z after the rotation */
+        strap.position.set(0, 0.01, 0.08);
+
+        head.add(skull, visor, strap);
+        return head;
       }
 
       _createLabel(text, yOffset) {
