@@ -16,6 +16,9 @@ namespace SafetyProto.Domain.Safety
         private readonly ITimerSource? _timer;
         private readonly IHarnessLogger? _logger;
         private readonly bool _verboseLogging;
+        private readonly Func<SessionMode> _modeSource;
+
+        private SessionMode CurrentMode => _modeSource();
 
         private readonly Dictionary<PPEType, bool> _ppeStates = new Dictionary<PPEType, bool>();
         private ITaskGroup? _activeGroup;
@@ -39,12 +42,14 @@ namespace SafetyProto.Domain.Safety
             IEventBus bus,
             ITimerSource? timer = null,
             IHarnessLogger? logger = null,
-            bool verboseLogging = false)
+            bool verboseLogging = false,
+            Func<SessionMode>? modeSource = null)
         {
             _bus = bus ?? throw new ArgumentNullException(nameof(bus));
             _timer = timer;
             _logger = logger;
             _verboseLogging = verboseLogging;
+            _modeSource = modeSource ?? (() => SessionModeState.Current);
 
             _onActionAttempt = HandleActionAttempt;
             _onPpeStateChanged = HandlePpeStateChanged;
@@ -108,7 +113,7 @@ namespace SafetyProto.Domain.Safety
             _activeFreeOrderTasks.Clear();
             _completedTaskIds.Clear();
 
-            if (_activeGroup != null && TaskExecutionRules.EffectiveMode(_activeGroup) == TaskExecutionModeShared.FreeOrder)
+            if (_activeGroup != null && TaskExecutionRules.EffectiveMode(_activeGroup, CurrentMode) == TaskExecutionModeShared.FreeOrder)
             {
                 _activeFreeOrderTasks.AddRange(_activeGroup.tasks);
 
@@ -130,7 +135,7 @@ namespace SafetyProto.Domain.Safety
         {
             if (_activeGroup == null || args.Task == null) return;
 
-            if (TaskExecutionRules.EffectiveMode(_activeGroup) == TaskExecutionModeShared.Sequential)
+            if (TaskExecutionRules.EffectiveMode(_activeGroup, CurrentMode) == TaskExecutionModeShared.Sequential)
             {
                 _activeSequentialTask = args.Task;
 
@@ -157,7 +162,7 @@ namespace SafetyProto.Domain.Safety
             // even inside a Sequential group (e.g. left/right gloves as one "wear gloves" task).
             if (!args.IsWearing || _activeGroup == null) return;
 
-            if (TaskExecutionRules.EffectiveMode(_activeGroup) == TaskExecutionModeShared.Sequential)
+            if (TaskExecutionRules.EffectiveMode(_activeGroup, CurrentMode) == TaskExecutionModeShared.Sequential)
             {
                 TryCompleteEquipTask(_activeSequentialTask);
             }
@@ -216,7 +221,7 @@ namespace SafetyProto.Domain.Safety
 
             ISafetyTask? targetTask = null;
 
-            if (TaskExecutionRules.EffectiveMode(_activeGroup) == TaskExecutionModeShared.Sequential)
+            if (TaskExecutionRules.EffectiveMode(_activeGroup, CurrentMode) == TaskExecutionModeShared.Sequential)
             {
                 if (_activeSequentialTask == null)
                 {
@@ -302,7 +307,7 @@ namespace SafetyProto.Domain.Safety
         /// </remarks>
         private bool IsBlockedByPrerequisite(ISafetyTask task, ITaskGroup group)
         {
-            if (SessionModeState.Current != SessionMode.Guided) return false;
+            if (CurrentMode != SessionMode.Guided) return false;
 
             var prerequisiteId = group.prerequisiteTaskId;
             if (string.IsNullOrWhiteSpace(prerequisiteId)) return false;
@@ -390,7 +395,7 @@ namespace SafetyProto.Domain.Safety
                 _logger?.Info($"SafetyRuleEngineCore: Task '{task.taskName}' completed. PPE compliant={compliant}");
             }
 
-            if (TaskExecutionRules.EffectiveMode(currentGroup) == TaskExecutionModeShared.FreeOrder)
+            if (TaskExecutionRules.EffectiveMode(currentGroup, CurrentMode) == TaskExecutionModeShared.FreeOrder)
             {
                 _activeFreeOrderTasks.Remove(task);
             }
@@ -419,7 +424,7 @@ namespace SafetyProto.Domain.Safety
             if (!string.Equals(completedTask.id, _activeGroup.prerequisiteTaskId,
                     StringComparison.OrdinalIgnoreCase)) return;
 
-            if (TaskExecutionRules.EffectiveMode(_activeGroup) == TaskExecutionModeShared.FreeOrder)
+            if (TaskExecutionRules.EffectiveMode(_activeGroup, CurrentMode) == TaskExecutionModeShared.FreeOrder)
             {
                 for (int i = _activeFreeOrderTasks.Count - 1; i >= 0; i--)
                     TryCompleteEquipTask(_activeFreeOrderTasks[i]);

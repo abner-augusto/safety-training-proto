@@ -94,7 +94,8 @@ namespace SafetyProto.Runtime.Task
                 timer: timerSource,
                 scheduler: scheduler,
                 logger: new SafetyLogAdapter(),
-                delayBetweenTasks: delayBetweenTasks);
+                delayBetweenTasks: delayBetweenTasks,
+                modeSource: () => SessionModeState.Current);
 
             _core.Subscribe();
 

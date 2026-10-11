@@ -42,7 +42,8 @@ namespace SafetyProto.Runtime.Safety
                 bus: eventBus,
                 timer: timerSource,
                 logger: new SafetyLogAdapter(),
-                verboseLogging: verboseLogging);
+                verboseLogging: verboseLogging,
+                modeSource: () => SessionModeState.Current);
 
             _core.Subscribe();
         }

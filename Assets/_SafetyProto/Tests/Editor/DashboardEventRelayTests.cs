@@ -45,6 +45,20 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
+        public void SessionStarted_InjectedEvaluationMode_BroadcastsAvaliacao()
+        {
+            var bus = new FakeEventBus();
+            var host = new FakeDashboardHost();
+            var relay = new DashboardEventRelay(bus, host, () => SessionMode.Evaluation);
+            relay.Subscribe();
+
+            bus.Publish(new SessionStartedEventArgs { SessionId = "S1", PlayerId = "P-1", TimestampMs = 1L });
+
+            Assert.AreEqual("avaliacao", host.Last<SessionDto>("SessionStarted").mode);
+            relay.Unsubscribe();
+        }
+
+        [Test]
         public void SessionStarted_EmptyPlayer_UsesDashPlaceholder()
         {
             _bus.Publish(new SessionStartedEventArgs { SessionId = "S1", PlayerId = "", TimestampMs = 1L });

@@ -165,6 +165,7 @@ namespace SafetyProto.Domain.Sessions
         /// </summary>
         private readonly Func<string, string>? _actionNameResolver;
         private readonly Func<string>? _outputDirectoryResolver;
+        private readonly Func<SessionMode> _modeSource;
         private readonly SemaphoreSlim _writeGate = new SemaphoreSlim(1, 1);
 
         public event Action<string, string, string>? CompletedLogWritten;
@@ -194,10 +195,11 @@ namespace SafetyProto.Domain.Sessions
         private int _totalTasks;
         private string _sessionId = string.Empty;
         private string _playerId = string.Empty;
+        private string _scenarioId = string.Empty;
         private string _mode = string.Empty;
         private bool _completionWriteStarted;
 
-        public SessionLoggerCore(IEventBus eventBus, string outputDirectory, Func<SessionLog, string> serialize, IHarnessLogger? logger = null, Func<string, string>? actionNameResolver = null, Func<string>? outputDirectoryResolver = null)
+        public SessionLoggerCore(IEventBus eventBus, string outputDirectory, Func<SessionLog, string> serialize, IHarnessLogger? logger = null, Func<string, string>? actionNameResolver = null, Func<string>? outputDirectoryResolver = null, Func<SessionMode>? modeSource = null)
         {
             _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
             _outputDirectory = outputDirectory ?? throw new ArgumentNullException(nameof(outputDirectory));
@@ -205,6 +207,7 @@ namespace SafetyProto.Domain.Sessions
             _logger = logger;
             _actionNameResolver = actionNameResolver;
             _outputDirectoryResolver = outputDirectoryResolver;
+            _modeSource = modeSource ?? (() => SessionModeState.Current);
 
             _onSessionStarted        = args =>
             {
@@ -217,9 +220,10 @@ namespace SafetyProto.Domain.Sessions
                 _totalTasks = args.TotalTasks;
                 _sessionId = args.SessionId ?? string.Empty;
                 _playerId = args.PlayerId ?? string.Empty;
-                _mode = SessionModeState.CurrentName;
+                _scenarioId = args.ScenarioId ?? string.Empty;
+                _mode = SessionModeState.NameOf(_modeSource());
                 _completionWriteStarted = false;
-                LogEvent("SessionStarted", string.Empty, _sessionId, _playerId, args.ScenarioId ?? string.Empty, args.TimestampMs);
+                LogEvent("SessionStarted", string.Empty, _sessionId, _playerId, _scenarioId, args.TimestampMs);
             };
             _onSessionPaused         = args => LogEvent("SessionPaused",     string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
             _onSessionResumed        = args => LogEvent("SessionResumed",    string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
@@ -426,6 +430,8 @@ namespace SafetyProto.Domain.Sessions
             _tasksCompletedCount = 0;
             _totalTasks = 0;
             _sessionId = string.Empty;
+            _playerId = string.Empty;
+            _scenarioId = string.Empty;
             _mode = string.Empty;
         }
 
@@ -498,10 +504,10 @@ namespace SafetyProto.Domain.Sessions
             LogEvent(
                 "SessionReset",
                 "A sessão foi reiniciada manualmente.",
-                EventContext.CurrentSessionId ?? string.Empty,
-                EventContext.CurrentPlayerId  ?? string.Empty,
-                EventContext.CurrentScenarioId ?? string.Empty,
-                EventContext.NowUnixMs());
+                _sessionId,
+                _playerId,
+                _scenarioId,
+                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
 
             _ = WriteLogAsync();
             _log.entries.Clear();
