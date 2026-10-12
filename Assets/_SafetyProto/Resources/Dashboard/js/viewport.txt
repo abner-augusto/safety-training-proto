@@ -3,6 +3,7 @@
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { t } from './i18n.js';
     import { SceneLayoutView } from './scene-layout.js';
+    import { followHead } from './layout-math.js';
 
     /* Automatic reframing */
     const FRAME_EDGE = 0.92;   /* NDC: fires just BEFORE the participant clips the edge */
@@ -380,9 +381,9 @@
         const hmd = this._objects.hmd;
         if (!hmd) return;
 
-        if (!this._smooth.head) this._smooth.head = hmd.position.clone();
-        this._smooth.head.lerp(hmd.position, 0.35);
-        const H = this._smooth.head;
+        const s = followHead(this._smooth.head, hmd.position);
+        if (!this._smooth.head) this._smooth.head = new THREE.Vector3();
+        const H = this._smooth.head.set(s.x, s.y, s.z);
 
         /* the damped HMD yaw orients the shoulders */
         const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(hmd.quaternion);

@@ -67,3 +67,18 @@ export function formatMeters(value, lang) {
   const text = (Math.round(Number((value * 100).toFixed(6))) / 100).toFixed(2);
   return `${lang === 'pt' ? text.replace('.', ',') : text} m`;
 }
+
+/* A head that moves farther than this between two 10 Hz frames was teleported, not walked:
+   easing across the gap would sweep the posture chip through every height in between. */
+export const HEAD_SNAP_DISTANCE = 1.5;
+const HEAD_EASE = 0.35;
+
+/** Next smoothed head position: eased towards `next`, or snapped to it after a jump. */
+export function followHead(prev, next, ease = HEAD_EASE, snap = HEAD_SNAP_DISTANCE) {
+  if (!prev || Math.hypot(next.x - prev.x, next.y - prev.y, next.z - prev.z) > snap) {
+    return { x: next.x, y: next.y, z: next.z };
+  }
+  return { x: prev.x + (next.x - prev.x) * ease,
+           y: prev.y + (next.y - prev.y) * ease,
+           z: prev.z + (next.z - prev.z) * ease };
+}

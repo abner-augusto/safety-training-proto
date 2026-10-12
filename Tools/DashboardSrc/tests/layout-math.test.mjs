@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { toThreeFloor, toThreeMarker, floorAt, markerState, formatMeters } from '../js/layout-math.js';
+import { toThreeFloor, toThreeMarker, floorAt, markerState, formatMeters, followHead, HEAD_SNAP_DISTANCE } from '../js/layout-math.js';
 
 const deck = toThreeFloor({ id: 'andaime', px: -2.246, py: 21.728, pz: 12.458, sx: 5.925, sz: 0.902, qx: 0, qy: 0, qz: 0, qw: 1 });
 const yard = toThreeFloor({ id: 'canteiro', px: 0.336, py: 0.05, pz: 0.661, sx: 7.328, sz: 5.178, qx: 0, qy: 0, qz: 0, qw: 1 });
@@ -93,4 +93,24 @@ test('markerState keeps a not-performed task visible and pending', () => {
 test('formatMeters uses the locale decimal separator', () => {
   assert.equal(formatMeters(5.925, 'pt'), '5,93 m');
   assert.equal(formatMeters(0.902, 'en'), '0.90 m');
+});
+
+test('followHead eases small moves towards the new pose', () => {
+  const next = followHead({ x: 0, y: 1.7, z: 0 }, { x: 0.2, y: 1.5, z: 0 });
+  assert.ok(Math.abs(next.x - 0.07) < 1e-9);
+  assert.ok(Math.abs(next.y - 1.63) < 1e-9);
+});
+
+test('followHead snaps straight to a pose beyond the jump threshold (teleport)', () => {
+  const next = followHead({ x: 0, y: 1.7, z: -0.75 }, { x: -1.01, y: 23.38, z: -12.51 });
+  assert.deepEqual(next, { x: -1.01, y: 23.38, z: -12.51 });
+});
+
+test('followHead eases a move just under the threshold', () => {
+  const next = followHead({ x: 0, y: 0, z: 0 }, { x: HEAD_SNAP_DISTANCE - 0.01, y: 0, z: 0 });
+  assert.ok(next.x < HEAD_SNAP_DISTANCE - 0.01);
+});
+
+test('followHead starts at the first pose', () => {
+  assert.deepEqual(followHead(null, { x: 1, y: 2, z: 3 }), { x: 1, y: 2, z: 3 });
 });
