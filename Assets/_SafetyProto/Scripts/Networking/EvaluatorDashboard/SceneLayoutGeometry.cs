@@ -66,6 +66,67 @@ namespace SafetyProto.Networking.Dashboard
             };
         }
 
+        /// <summary>Distance kept from a floor's edge when a stand point is clamped onto it.</summary>
+        public const float StandInset = 0.25f;
+
+        /// <summary>How far outside a floor's rectangle a marker may sit and still be reached from it.</summary>
+        public const float StandReach = 1.5f;
+
+        /// <summary>
+        /// Where a participant stands to work at <paramref name="id"/>: a floor id gives its top-face
+        /// centre; a marker id gives the closest point, inset from the edge, of the highest floor
+        /// not above the marker. <paramref name="lookAt"/> is the marker centre, or the stand point
+        /// itself for a floor (no facing). False for an unknown id or a marker with no floor in reach.
+        /// </summary>
+        public static bool TryGetStandPoint(SceneLayoutDto layout, string id, out Vector3 standPoint, out Vector3 lookAt)
+        {
+            standPoint = lookAt = Vector3.zero;
+            var floors = layout.floors ?? System.Array.Empty<SceneFloorDto>();
+
+            foreach (var floor in floors)
+            {
+                if (floor.id != id) continue;
+                standPoint = lookAt = new Vector3(floor.px, floor.py, floor.pz);
+                return true;
+            }
+
+            foreach (var marker in layout.markers ?? System.Array.Empty<SceneMarkerDto>())
+            {
+                if (marker.id != id) continue;
+                var target = new Vector3(marker.px, marker.py, marker.pz);
+
+                bool found = false;
+                SceneFloorDto best = default;
+                Vector3 bestLocal = default;
+                foreach (var floor in floors)
+                {
+                    // Markers sit on or above their floor; the slack absorbs a spot flush with the deck.
+                    if (floor.py > marker.py + 0.1f) continue;
+                    var local = FloorLocal(floor, target);
+                    if (Mathf.Abs(local.x) > floor.sx / 2f + StandReach || Mathf.Abs(local.z) > floor.sz / 2f + StandReach) continue;
+                    if (found && floor.py <= best.py) continue;
+                    found = true;
+                    best = floor;
+                    bestLocal = local;
+                }
+                if (!found) return false;
+
+                float halfX = Mathf.Max(best.sx / 2f - StandInset, 0f);
+                float halfZ = Mathf.Max(best.sz / 2f - StandInset, 0f);
+                var clamped = new Vector3(Mathf.Clamp(bestLocal.x, -halfX, halfX), 0f, Mathf.Clamp(bestLocal.z, -halfZ, halfZ));
+                standPoint = new Vector3(best.px, best.py, best.pz) + FloorRotation(best) * clamped;
+                lookAt = target;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static Quaternion FloorRotation(SceneFloorDto floor) => new Quaternion(floor.qx, floor.qy, floor.qz, floor.qw);
+
+        private static Vector3 FloorLocal(SceneFloorDto floor, Vector3 world) =>
+            Quaternion.Inverse(FloorRotation(floor)) * (world - new Vector3(floor.px, floor.py, floor.pz));
+
         private static Vector3 WorldSize(Matrix4x4 localToWorld, Vector3 localSize)
         {
             var s = localToWorld.lossyScale;

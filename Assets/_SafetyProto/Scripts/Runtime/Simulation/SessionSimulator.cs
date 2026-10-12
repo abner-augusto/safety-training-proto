@@ -406,12 +406,37 @@ namespace SafetyProto.Runtime.Simulation
                     yield return ExecuteGate(step);
                     break;
 
+                case "move":
+                    yield return ExecuteMove(step, index);
+                    break;
+
                 default:
                     Fail($"Etapa {index + 1}: comando '{step.Kind}' não suportado.");
                     yield break;
             }
 
             RefreshSnapshot();
+        }
+
+        private IEnumerator ExecuteMove(ScriptStepDef step, int index)
+        {
+            if (!SimulatedPlayerMover.TryParsePosture(step.Posture, out var posture))
+            {
+                Fail($"Etapa {index + 1}: postura desconhecida '{step.Posture}'. Use standing ou crouched.");
+                yield break;
+            }
+
+            // A move issued while the phase teleport runs would be undone when the teleport lands.
+            if (_phaseController != null && _phaseController.IsInAndaimePhase)
+            {
+                yield return WaitUntil(() => _phaseController.SimulationTransitionCompleted,
+                    $"Espera da transição de fase excedeu {operationTimeoutSeconds:F0} s antes de mover o jogador.",
+                    operationTimeoutSeconds);
+                if (!IsRunning) yield break;
+            }
+
+            if (!SimulatedPlayerMover.TryMove(step.Target, posture, out var error))
+                Fail($"Etapa {index + 1}: {error}");
         }
 
         private IEnumerator ExecuteGate(ScriptStepDef step)

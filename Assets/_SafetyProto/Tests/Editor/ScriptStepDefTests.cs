@@ -25,5 +25,23 @@ namespace SafetyProto.Tests.Editor
 
             Assert.That(step!.GateTarget, Is.EqualTo("phase1"));
         }
+
+        [Test]
+        public void Move_ReadsTargetAndPosture()
+        {
+            var step = JsonConvert.DeserializeObject<ScriptStepDef>(
+                "{\"kind\":\"move\",\"target\":\"toeboard\",\"posture\":\"crouched\"}");
+
+            Assert.That(step!.Target, Is.EqualTo("toeboard"));
+            Assert.That(step.Posture, Is.EqualTo("crouched"));
+        }
+
+        [Test]
+        public void Move_PostureIsOptional()
+        {
+            var step = JsonConvert.DeserializeObject<ScriptStepDef>("{\"kind\":\"move\",\"target\":\"andaime\"}");
+
+            Assert.That(step!.Posture, Is.Null);
+        }
     }
 }

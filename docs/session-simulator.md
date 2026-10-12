@@ -63,6 +63,7 @@ step has a `kind` and a `delayMs` (clamped to 0–30 s) applied before it runs.
 | `ppe`    | `ppeType`, `isWearing` | Raises `PPEStateChanged` for that PPE. `ppeType` matches the `PPEType` enum (`Boots`, `GloveLeft`, `GloveRight`, `Goggles`, `Helmet`, `Harness`, `Vest`). |
 | `action` | `actionId` | Publishes an action attempt (e.g. `install_guardrail`). Must be a real action id from the scenario. |
 | `gate`   | `gateTarget` (optional) | Presses a real gate. `phase1` advances past the PPE-selection group; `inspection` runs the scaffold inspection gate. |
+| `move`   | `target`, `posture` (optional) | Parks the player rig at a waypoint with its eyes 1.65 m (`standing`, default) or 1.05 m (`crouched`) above the floor. See [Moving the player](#moving-the-player). The CLI harness ignores it. |
 
 `gate` target resolution: an explicit `gateTarget` of `phase1` (`phase`, `fase1`)
 or `inspection` (`final`, `inspecao`) is used as given. An empty target keeps CLI
@@ -73,6 +74,31 @@ unchanged.
 A step that is not equipped/performed before its gate leaves its task pending, and
 the gate closes it as `NotPerformed` in evaluation mode. That omission is how you
 author "the participant forgot X".
+
+### Moving the player
+
+Without a headset the Editor camera sits at the rig's feet, and after the phase
+teleport the Meta character controller falls through the 3 cm scaffold deck. A
+`move` step, or **Mover jogador** in the window (any time in Play Mode, with or
+without a running simulation), puts the player where the dashboard and the
+posture chip can be checked:
+
+```json
+{ "kind": "move", "target": "toeboard", "posture": "crouched", "delayMs": 200 }
+```
+
+- **Targets** are the ids of the scene's `DashboardSceneLayout`: the floors
+  `canteiro` and `andaime` (the player stands at the floor's centre) and the task
+  spots `guardrail`, `toeboard`, `anchor` and `irregularity` (the player stands
+  on the nearest point of the floor under the spot, 0.25 m in from the edge,
+  facing it). An unknown target fails the run and lists the valid ids.
+- **Locomotion is switched off** for the rest of Play Mode on the first move, so
+  the player stays put.
+- **A move waits for a phase teleport in progress** to land first; otherwise
+  the teleport would undo it.
+
+The default scenario script moves to each scaffold spot before its action, and
+crouches for the toeboard.
 
 ### Phase-1 gate and the PPE group
 

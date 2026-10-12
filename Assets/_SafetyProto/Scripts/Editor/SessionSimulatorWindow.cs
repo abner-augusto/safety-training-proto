@@ -16,6 +16,11 @@ namespace SafetyProto.Editor
         private Vector2 _scroll;
         private string _externalScenarioPath = string.Empty;
         private SessionMode _mode = SessionMode.Guided;
+        private static readonly string[] PostureLabels = { "Em pé", "Agachado" };
+        private ISimulationWaypoints? _waypoints;
+        private int _moveTargetIndex;
+        private SimulatedPosture _movePosture = SimulatedPosture.Standing;
+        private string _moveError = string.Empty;
 
         [MenuItem("SafetyProto/Session Simulator")]
         private static void Open() => GetWindow<SessionSimulatorWindow>("Simulador de Sessão");
@@ -80,6 +85,8 @@ namespace SafetyProto.Editor
                     if (GUILayout.Button("Ensaiar colapso do andaime"))
                         _simulator.PlayCollapseRehearsal();
                 }
+
+                DrawMovePlayer();
             }
 
             if (!EditorApplication.isPlaying)
@@ -114,6 +121,41 @@ namespace SafetyProto.Editor
             }
             EditorGUILayout.EndScrollView();
             Repaint();
+        }
+
+        private void DrawMovePlayer()
+        {
+            EditorGUILayout.Space(4);
+            EditorGUILayout.LabelField("Mover jogador", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                "Leva o rig até um piso ou local de tarefa do layout do painel, na altura de olhos " +
+                "da postura. Desliga a locomoção até sair do Play Mode, senão o jogador cai pelo piso.",
+                MessageType.None);
+
+            // The window repaints every frame: look the provider up once, not per repaint.
+            if (_waypoints == null || (_waypoints is Object unityObject && unityObject == null))
+                _waypoints = SimulatedPlayerMover.FindWaypoints();
+            if (_waypoints == null)
+            {
+                EditorGUILayout.HelpBox("Nenhum DashboardSceneLayout na cena.", MessageType.Warning);
+                return;
+            }
+
+            var ids = new string[_waypoints.WaypointIds.Count];
+            for (int i = 0; i < ids.Length; i++) ids[i] = _waypoints.WaypointIds[i];
+            if (ids.Length == 0) return;
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                _moveTargetIndex = EditorGUILayout.Popup(Mathf.Clamp(_moveTargetIndex, 0, ids.Length - 1), ids);
+                _movePosture = EditorGUILayout.Popup((int)_movePosture, PostureLabels) == 1
+                    ? SimulatedPosture.Crouched
+                    : SimulatedPosture.Standing;
+                if (GUILayout.Button("Mover", GUILayout.Width(70)))
+                    SimulatedPlayerMover.TryMove(ids[_moveTargetIndex], _movePosture, out _moveError);
+            }
+            if (!string.IsNullOrEmpty(_moveError))
+                EditorGUILayout.HelpBox(_moveError, MessageType.Error);
         }
 
         private void PrepareForSimulation()

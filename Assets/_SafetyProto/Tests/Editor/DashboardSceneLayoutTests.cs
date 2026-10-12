@@ -48,6 +48,37 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
+        public void Waypoints_ExposeFloorAndMarkerIds_AndResolveStandPoints()
+        {
+            _go.transform.position = new Vector3(0f, 10f, 0f);
+            var box = _go.AddComponent<BoxCollider>();
+            box.size = new Vector3(4f, 0.2f, 1f);
+            var spot = new GameObject("spot");
+            spot.transform.SetParent(_go.transform, false);
+            spot.transform.localPosition = new Vector3(1f, 1f, 2f);   // beyond the 1 m deck depth
+
+            var layout = _go.AddComponent<DashboardSceneLayout>();
+            var so = new UnityEditor.SerializedObject(layout);
+            var floors = so.FindProperty("floors");
+            floors.arraySize = 1;
+            floors.GetArrayElementAtIndex(0).FindPropertyRelative("id").stringValue = "deck";
+            floors.GetArrayElementAtIndex(0).FindPropertyRelative("source").objectReferenceValue = box;
+            var markers = so.FindProperty("markers");
+            markers.arraySize = 1;
+            markers.GetArrayElementAtIndex(0).FindPropertyRelative("id").stringValue = "spot";
+            markers.GetArrayElementAtIndex(0).FindPropertyRelative("source").objectReferenceValue = spot.transform;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            SafetyProto.Runtime.Simulation.ISimulationWaypoints waypoints = layout;
+
+            CollectionAssert.AreEqual(new[] { "deck", "spot" }, waypoints.WaypointIds);
+            Assert.IsTrue(waypoints.TryGetStandPoint("spot", out var stand, out var lookAt));
+            Assert.AreEqual(10.1f, stand.y, 1e-4f);
+            Assert.AreEqual(0.5f - SceneLayoutGeometry.StandInset, stand.z, 1e-4f);
+            Assert.AreEqual(new Vector3(1f, 11f, 2f), lookAt);
+        }
+
+        [Test]
         public void BuildFrom_FloorFromBoxCollider_UsesTopFace()
         {
             _go.transform.position = new Vector3(0f, 10f, 0f);

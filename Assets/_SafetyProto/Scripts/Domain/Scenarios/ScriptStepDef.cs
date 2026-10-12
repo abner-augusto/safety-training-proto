@@ -26,6 +26,15 @@ namespace SafetyProto.Domain.Scenarios
         [JsonProperty("gateTarget")]
         public string? GateTarget { get; set; }
 
+        /// <summary>Waypoint id for a <c>move</c> step (a floor or task-spot id of the dashboard
+        /// scene layout). Only the Unity session simulator acts on it.</summary>
+        [JsonProperty("target")]
+        public string? Target { get; set; }
+
+        /// <summary><c>standing</c> (default) or <c>crouched</c> for a <c>move</c> step.</summary>
+        [JsonProperty("posture")]
+        public string? Posture { get; set; }
+
         [JsonProperty("delayMs")]
         public int DelayMs { get; set; } = 100;
     }

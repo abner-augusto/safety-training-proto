@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using SafetyProto.Core.Logging;
 using SafetyProto.Domain.Dashboard;
+using SafetyProto.Runtime.Simulation;
 using UnityEngine;
 
 namespace SafetyProto.Networking.Dashboard
@@ -20,7 +21,7 @@ namespace SafetyProto.Networking.Dashboard
     /// One per scene; <see cref="EvaluatorDashboardBootstrap"/> looks it up on every
     /// RequestSync because the bootstrap outlives scene reloads and this component does not.
     /// </summary>
-    public class DashboardSceneLayout : MonoBehaviour
+    public class DashboardSceneLayout : MonoBehaviour, ISimulationWaypoints
     {
         /// <summary>Smallest drawn extent per axis when an entry leaves minSize at 0.</summary>
         public const float DefaultMinSize = 0.12f;
@@ -53,6 +54,22 @@ namespace SafetyProto.Networking.Dashboard
 
         /// <summary>The layout DTO, built on first call. Install spots do not move, so it is cached.</summary>
         public SceneLayoutDto Build() => _cached ??= BuildFrom(floors, markers, this);
+
+        /// <summary>Floor ids, then marker ids: the session simulator's move targets.</summary>
+        public IReadOnlyList<string> WaypointIds
+        {
+            get
+            {
+                var layout = Build();
+                var ids = new List<string>();
+                foreach (var floor in layout.floors) ids.Add(floor.id);
+                foreach (var marker in layout.markers) ids.Add(marker.id);
+                return ids;
+            }
+        }
+
+        public bool TryGetStandPoint(string id, out Vector3 standPoint, out Vector3 lookAt) =>
+            SceneLayoutGeometry.TryGetStandPoint(Build(), id, out standPoint, out lookAt);
 
         public static SceneLayoutDto BuildFrom(FloorEntry[] floors, MarkerEntry[] markers, UnityEngine.Object logContext)
         {

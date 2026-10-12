@@ -51,6 +51,10 @@ public sealed class ScriptedActor
                     RunGate(step);
                     break;
 
+                case "move":
+                    // Moves the Unity player rig; the harness has no scene, so there is nothing to do.
+                    break;
+
                 default:
                     System.Console.Error.WriteLine($"[ScriptedActor] Unknown step kind: {step.Kind}");
                     break;
