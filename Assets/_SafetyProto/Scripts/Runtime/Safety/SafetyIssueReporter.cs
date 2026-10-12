@@ -10,6 +10,7 @@ using SafetyProto.Runtime.Feedback;
 using SafetyProto.Runtime.Interaction;
 using SafetyProto.Runtime.Task;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace SafetyProto.Runtime.Safety
 {
@@ -41,7 +42,7 @@ namespace SafetyProto.Runtime.Safety
 
         [Tooltip("Button the participant presses to open the confirmation. Subscribed in code — do " +
                  "not also wire its OnClick to Report(), or the popup opens twice.")]
-        [SerializeField] private DualModeButton _reportButton;
+        [SerializeField] private Button _reportButton;
 
         [Tooltip("Root object switched on when the dwell completes and off once the report is filed. " +
                  "Usually the button's parent, so its visuals and colliders go together.")]
@@ -101,7 +102,7 @@ namespace SafetyProto.Runtime.Safety
         private void OnEnable()
         {
             if (_dwellTarget != null) _dwellTarget.Completed += HandleDwellCompleted;
-            if (_reportButton != null) _reportButton.Clicked += Report;
+            if (_reportButton != null) _reportButton.onClick.AddListener(Report);
             if (EventBus.Instance != null)
             {
                 _onActionRefused ??= HandleActionRefused;
@@ -112,7 +113,7 @@ namespace SafetyProto.Runtime.Safety
         private void OnDisable()
         {
             if (_dwellTarget != null) _dwellTarget.Completed -= HandleDwellCompleted;
-            if (_reportButton != null) _reportButton.Clicked -= Report;
+            if (_reportButton != null) _reportButton.onClick.RemoveListener(Report);
             if (EventBus.Instance != null && _onActionRefused != null)
                 EventBus.Instance.Unsubscribe(_onActionRefused);
         }
