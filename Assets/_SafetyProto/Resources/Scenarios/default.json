@@ -57,39 +57,21 @@
           "omissionAdvice": "Você não calçou a botina de segurança. Em canteiro, pisos com pregos, entulho e quedas de material tornam o calçado de proteção obrigatório (NR-06)."
         },
         {
-          "id": "equip_gloves",
-          "name": "Equipar Luvas",
-          "taskDescription": "Selecione as luvas de raspa de couro e equipe nas duas mãos.",
+          "id": "equip_harness",
+          "name": "Equipar Cinto Paraquedista",
+          "taskDescription": "Selecione o cinto tipo paraquedista e vista corretamente.",
           "actionId": "",
           "risk": {
-            "severity": 2,
+            "severity": 5,
             "probability": 4
           },
           "requiredPPE": [
-            "GloveLeft",
-            "GloveRight"
+            "Harness"
           ],
-          "hintText": "Escolha luvas adequadas ao manuseio de estruturas metálicas e proteja as duas mãos.",
-          "failureAdvice": "Luvas de raspa de couro são obrigatórias para manuseio de estruturas metálicas em altura.",
+          "hintText": "Para retenção de queda, escolha o cinturão de segurança tipo paraquedista; o cinto abdominal não é adequado a esse sistema.",
+          "failureAdvice": "No sistema de retenção de queda, o EPI deve ser o cinturão de segurança tipo paraquedista (NR-35, item 35.6.9). Cintos abdominais não são aceitos para retenção de queda.",
           "ppeAdvice": "",
-          "omissionAdvice": "Você não vestiu as luvas. O manuseio de estruturas metálicas sem proteção expõe as mãos a cortes e esmagamentos (NR-06)."
-        },
-        {
-          "id": "equip_goggles",
-          "name": "Equipar Óculos de Proteção",
-          "taskDescription": "Selecione os óculos de proteção e equipe no rosto.",
-          "actionId": "",
-          "risk": {
-            "severity": 4,
-            "probability": 3
-          },
-          "requiredPPE": [
-            "Goggles"
-          ],
-          "hintText": "Escolha uma proteção ocular adequada contra partículas e respingos.",
-          "failureAdvice": "Os óculos de proteção são equipamentos obrigatórios em ambientes de construção civil.",
-          "ppeAdvice": "",
-          "omissionAdvice": "Você não colocou os óculos de proteção. Partículas e respingos em canteiro causam lesões oculares evitáveis (NR-06)."
+          "omissionAdvice": "Você não vestiu o cinturão tipo paraquedista. Sem ele não existe sistema de retenção de queda — é o EPI central do trabalho em altura (NR-35, item 35.6.9)."
         },
         {
           "id": "equip_helmet",
@@ -109,21 +91,39 @@
           "omissionAdvice": "Você não colocou o capacete com jugular. Para trabalho em altura o capacete deve permanecer preso à cabeça — sem ele, a queda de um objeto pode ser fatal (NR-06 e NR-35)."
         },
         {
-          "id": "equip_harness",
-          "name": "Equipar Cinto Paraquedista",
-          "taskDescription": "Selecione o cinto tipo paraquedista e vista corretamente.",
+          "id": "equip_goggles",
+          "name": "Equipar Óculos de Proteção",
+          "taskDescription": "Selecione os óculos de proteção e equipe no rosto.",
           "actionId": "",
           "risk": {
-            "severity": 5,
+            "severity": 4,
+            "probability": 3
+          },
+          "requiredPPE": [
+            "Goggles"
+          ],
+          "hintText": "Escolha uma proteção ocular adequada contra partículas e respingos.",
+          "failureAdvice": "Os óculos de proteção são equipamentos obrigatórios em ambientes de construção civil.",
+          "ppeAdvice": "",
+          "omissionAdvice": "Você não colocou os óculos de proteção. Partículas e respingos em canteiro causam lesões oculares evitáveis (NR-06)."
+        },
+        {
+          "id": "equip_gloves",
+          "name": "Equipar Luvas",
+          "taskDescription": "Selecione as luvas de raspa de couro e equipe nas duas mãos.",
+          "actionId": "",
+          "risk": {
+            "severity": 2,
             "probability": 4
           },
           "requiredPPE": [
-            "Harness"
+            "GloveLeft",
+            "GloveRight"
           ],
-          "hintText": "Para retenção de queda, escolha o cinturão de segurança tipo paraquedista; o cinto abdominal não é adequado a esse sistema.",
-          "failureAdvice": "No sistema de retenção de queda, o EPI deve ser o cinturão de segurança tipo paraquedista (NR-35, item 35.6.9). Cintos abdominais não são aceitos para retenção de queda.",
+          "hintText": "Escolha luvas adequadas ao manuseio de estruturas metálicas e proteja as duas mãos.",
+          "failureAdvice": "Luvas de raspa de couro são obrigatórias para manuseio de estruturas metálicas em altura.",
           "ppeAdvice": "",
-          "omissionAdvice": "Você não vestiu o cinturão tipo paraquedista. Sem ele não existe sistema de retenção de queda — é o EPI central do trabalho em altura (NR-35, item 35.6.9)."
+          "omissionAdvice": "Você não vestiu as luvas. O manuseio de estruturas metálicas sem proteção expõe as mãos a cortes e esmagamentos (NR-06)."
         }
       ],
       "requiredGroups": []
