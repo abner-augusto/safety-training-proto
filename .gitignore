@@ -163,6 +163,10 @@ TestResults_*.xml
 /Assets/Thirdparty/Ciathyza/Gridbox Prototype Materials/Demo/
 Tests.meta
 
+# Git commit stamped into the player by BuildCommitStamp for the duration of a build
+/Assets/_SafetyProto/Resources/build_commit.txt
+/Assets/_SafetyProto/Resources/build_commit.txt.meta
+
 # TextMesh Pro generated noise
 /[Aa]ssets/TextMesh Pro/Examples*/
 /[Aa]ssets/TextMesh Pro/Fonts/

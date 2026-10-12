@@ -30,7 +30,9 @@ namespace SafetyProto.Utils
                 () => (EventContext.CurrentPlayerId ?? string.Empty).StartsWith("SIM-", StringComparison.OrdinalIgnoreCase)
                     ? Path.Combine(Application.persistentDataPath, "simulations")
                     : Application.persistentDataPath,
-                () => SessionModeState.Current);
+                () => SessionModeState.Current,
+                Application.version,
+                BuildCommit.Current);
             _core.CompletedLogWritten += OnCompletedLogWritten;
             _core.Subscribe();
         }

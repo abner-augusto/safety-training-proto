@@ -109,6 +109,14 @@ namespace SafetyProto.Domain.Sessions
             /// ("P-07"), a random anonymized id when skipped, or "SIM-…" for the simulator.
             /// Empty on logs written before this field existed.</summary>
             public string participantId = string.Empty;
+            /// <summary>App build version the session ran on (Unity <c>Application.version</c>),
+            /// so collected data can be traced to the build that produced it. Empty when the host
+            /// supplies none, and on logs written before this field existed.</summary>
+            public string appVersion = string.Empty;
+            /// <summary>Git commit of the build ("35c7f99", or "35c7f99-dirty" when built with
+            /// uncommitted changes). Tells apart builds that share an <see cref="appVersion"/>.
+            /// Empty when the host supplies none.</summary>
+            public string commit = string.Empty;
             /// <summary>"guiado" | "avaliacao" — captured at SessionStarted so collected
             /// data can be split by mode. Empty on logs written before this field existed.</summary>
             public string mode = string.Empty;
@@ -170,6 +178,8 @@ namespace SafetyProto.Domain.Sessions
         private readonly Func<string, string>? _actionNameResolver;
         private readonly Func<string>? _outputDirectoryResolver;
         private readonly Func<SessionMode> _modeSource;
+        private readonly string _appVersion;
+        private readonly string _commit;
         private readonly SemaphoreSlim _writeGate = new SemaphoreSlim(1, 1);
 
         public event Action<string, string, string>? CompletedLogWritten;
@@ -203,7 +213,7 @@ namespace SafetyProto.Domain.Sessions
         private string _mode = string.Empty;
         private bool _completionWriteStarted;
 
-        public SessionLoggerCore(IEventBus eventBus, string outputDirectory, Func<SessionLog, string> serialize, IHarnessLogger? logger = null, Func<string, string>? actionNameResolver = null, Func<string>? outputDirectoryResolver = null, Func<SessionMode>? modeSource = null)
+        public SessionLoggerCore(IEventBus eventBus, string outputDirectory, Func<SessionLog, string> serialize, IHarnessLogger? logger = null, Func<string, string>? actionNameResolver = null, Func<string>? outputDirectoryResolver = null, Func<SessionMode>? modeSource = null, string? appVersion = null, string? commit = null)
         {
             _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
             _outputDirectory = outputDirectory ?? throw new ArgumentNullException(nameof(outputDirectory));
@@ -212,6 +222,8 @@ namespace SafetyProto.Domain.Sessions
             _actionNameResolver = actionNameResolver;
             _outputDirectoryResolver = outputDirectoryResolver;
             _modeSource = modeSource ?? (() => SessionModeState.Current);
+            _appVersion = appVersion ?? string.Empty;
+            _commit = commit ?? string.Empty;
 
             _onSessionStarted        = args =>
             {
@@ -347,6 +359,8 @@ namespace SafetyProto.Domain.Sessions
             {
                 completed = true,
                 participantId = _playerId,
+                appVersion = _appVersion,
+                commit = _commit,
                 mode = _mode,
                 totalElapsedTime = args.totalElapsedTime,
                 totalScore = args.totalScore,
@@ -444,6 +458,8 @@ namespace SafetyProto.Domain.Sessions
         {
             completed = false,
             participantId = _playerId,
+            appVersion = _appVersion,
+            commit = _commit,
             mode = _mode,
             totalScore = _lastTotalScore,
             tasksCompleted = _tasksCompletedCount,
