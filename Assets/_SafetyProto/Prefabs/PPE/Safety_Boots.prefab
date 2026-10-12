@@ -170,59 +170,6 @@ MonoBehaviour:
   _ghostProvider: {fileID: 0}
   _handGhostProvider: {fileID: 0}
   _ovrOffsetMode: 0
---- !u!1 &519303504980691935
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 107862698847036000}
-  - component: {fileID: 4116321013300009839}
-  m_Layer: 6
-  m_Name: SPColBox_Safety_Boots_09
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &107862698847036000
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 519303504980691935}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.08401934, y: 0.0100247795, z: -0.046309877}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 3075999757557140078}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &4116321013300009839
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 519303504980691935}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.1265686, y: 0.07229605, z: 0.184938}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &845767290205163499
 GameObject:
   m_ObjectHideFlags: 0
@@ -297,6 +244,60 @@ MonoBehaviour:
   _handAligment: 1
   _handGrabPoses:
   - {fileID: 8536127216017282683}
+--- !u!1 &1053215429038436230
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2529505460824271162}
+  - component: {fileID: 8179906704630332326}
+  m_Layer: 6
+  m_Name: UCX_Safety_Boots_R_Toe
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2529505460824271162
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1053215429038436230}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4842723844017717188}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!64 &8179906704630332326
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1053215429038436230}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -2661515470416366299, guid: f90407de77d96844e8c9c666e30f5845, type: 2}
 --- !u!1 &1070839175637431800
 GameObject:
   m_ObjectHideFlags: 0
@@ -595,47 +596,6 @@ MonoBehaviour:
   _useClosestPointAsGrabSource: 0
   _releaseDistance: 0
   _resetGrabOnGrabsUpdated: 1
---- !u!1 &1918742422059785776
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 3075999757557140078}
-  m_Layer: 6
-  m_Name: PrimitiveColliders
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &3075999757557140078
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1918742422059785776}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 4382333273905427434}
-  - {fileID: 6168538659462387064}
-  - {fileID: 7182233378215336767}
-  - {fileID: 201141978401560476}
-  - {fileID: 1099440862894882407}
-  - {fileID: 1259196587805833699}
-  - {fileID: 8212273636008029690}
-  - {fileID: 2978701346276670042}
-  - {fileID: 107862698847036000}
-  - {fileID: 933893884706835224}
-  m_Father: {fileID: 3554470869194058418}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2996420987063533052
 GameObject:
   m_ObjectHideFlags: 0
@@ -935,6 +895,60 @@ Transform:
   - {fileID: 3440940748240561611}
   m_Father: {fileID: 3554470869194058418}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3424539451474551773
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2655009591641760572}
+  - component: {fileID: 4455936799378934725}
+  m_Layer: 6
+  m_Name: UCX_Safety_Boots_L_Instep
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2655009591641760572
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3424539451474551773}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4842723844017717188}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!64 &4455936799378934725
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3424539451474551773}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -2320393785488093891, guid: f90407de77d96844e8c9c666e30f5845, type: 2}
 --- !u!1 &3555588651698650759
 GameObject:
   m_ObjectHideFlags: 0
@@ -966,7 +980,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 3554470869194058418}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &3640566906653827627
+--- !u!1 &3571354218230210734
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -974,37 +988,37 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1099440862894882407}
-  - component: {fileID: 6475936432562745717}
+  - component: {fileID: 2978357076847318211}
+  - component: {fileID: 8465982321407265024}
   m_Layer: 6
-  m_Name: SPColBox_Safety_Boots_05
+  m_Name: UCX_Safety_Boots_L_Shaft
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &1099440862894882407
+--- !u!4 &2978357076847318211
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3640566906653827627}
+  m_GameObject: {fileID: 3571354218230210734}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.08087526, y: 0.1053095, z: -0.033961732}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 3075999757557140078}
+  m_Father: {fileID: 4842723844017717188}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &6475936432562745717
-BoxCollider:
+--- !u!64 &8465982321407265024
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3640566906653827627}
+  m_GameObject: {fileID: 3571354218230210734}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -1016,62 +1030,10 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.09955504, y: 0.12296094, z: 0.16913848}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &3741990534606646442
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2978701346276670042}
-  - component: {fileID: 8513209481397580729}
-  m_Layer: 6
-  m_Name: SPColBox_Safety_Boots_08
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2978701346276670042
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3741990534606646442}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.10058517, y: 0.009968575, z: 0.11072647}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 3075999757557140078}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &8513209481397580729
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3741990534606646442}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.11643846, y: 0.072183624, z: 0.13378134}
-  m_Center: {x: 0, y: 0, z: 0}
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 6114343350356798023, guid: f90407de77d96844e8c9c666e30f5845, type: 2}
 --- !u!1 &4246542398831650664
 GameObject:
   m_ObjectHideFlags: 0
@@ -1242,6 +1204,45 @@ MonoBehaviour:
   _handAligment: 1
   _handGrabPoses:
   - {fileID: 1087974614605515167}
+--- !u!1 &4665871352733593560
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4842723844017717188}
+  m_Layer: 6
+  m_Name: ConvexColliders
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4842723844017717188
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4665871352733593560}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1901195409136101617}
+  - {fileID: 2655009591641760572}
+  - {fileID: 2667811856282391417}
+  - {fileID: 2978357076847318211}
+  - {fileID: 2529505460824271162}
+  - {fileID: 2011292606267104680}
+  - {fileID: 1653565999543612787}
+  - {fileID: 1282222842097143604}
+  m_Father: {fileID: 3554470869194058418}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5017827149711672781
 GameObject:
   m_ObjectHideFlags: 0
@@ -1285,7 +1286,7 @@ Transform:
   - {fileID: 6212608502539371556}
   - {fileID: 7980713831261846927}
   - {fileID: 798048988026461950}
-  - {fileID: 3075999757557140078}
+  - {fileID: 4842723844017717188}
   - {fileID: 3966301601640865797}
   - {fileID: 8692155465702423662}
   - {fileID: 9172648352485351800}
@@ -1578,7 +1579,7 @@ MonoBehaviour:
   snapSound: {fileID: 0}
   unsnapSound: {fileID: 0}
   audioVolume: 0.85
---- !u!1 &5870113683888344889
+--- !u!1 &5435635980468129848
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1586,37 +1587,37 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 201141978401560476}
-  - component: {fileID: 3148033576635066195}
+  - component: {fileID: 1653565999543612787}
+  - component: {fileID: 5637054277979290704}
   m_Layer: 6
-  m_Name: SPColBox_Safety_Boots_04
+  m_Name: UCX_Safety_Boots_R_Heel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &201141978401560476
+--- !u!4 &1653565999543612787
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5870113683888344889}
+  m_GameObject: {fileID: 5435635980468129848}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.08401794, y: 0.0100247795, z: -0.046309877}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 3075999757557140078}
+  m_Father: {fileID: 4842723844017717188}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &3148033576635066195
-BoxCollider:
+--- !u!64 &5637054277979290704
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5870113683888344889}
+  m_GameObject: {fileID: 5435635980468129848}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -1628,9 +1629,10 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.12656854, y: 0.07229605, z: 0.184938}
-  m_Center: {x: 0, y: 0, z: 0}
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -3393144812460938717, guid: f90407de77d96844e8c9c666e30f5845, type: 2}
 --- !u!1 &6069504538553902715
 GameObject:
   m_ObjectHideFlags: 0
@@ -1993,7 +1995,7 @@ MonoBehaviour:
   _handAligment: 1
   _handGrabPoses:
   - {fileID: 6976836768192812248}
---- !u!1 &6525340906121069480
+--- !u!1 &6471747702062251035
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2001,37 +2003,37 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 8212273636008029690}
-  - component: {fileID: 2839193430952522086}
+  - component: {fileID: 1282222842097143604}
+  - component: {fileID: 8736375202197095405}
   m_Layer: 6
-  m_Name: SPColBox_Safety_Boots_07
+  m_Name: UCX_Safety_Boots_R_Shaft
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &8212273636008029690
+--- !u!4 &1282222842097143604
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6525340906121069480}
+  m_GameObject: {fileID: 6471747702062251035}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.08725116, y: -0.044604376, z: -0.045568474}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 3075999757557140078}
+  m_Father: {fileID: 4842723844017717188}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &2839193430952522086
-BoxCollider:
+--- !u!64 &8736375202197095405
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6525340906121069480}
+  m_GameObject: {fileID: 6471747702062251035}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -2043,10 +2045,11 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.12915398, y: 0.04153735, z: 0.1810009}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &6545403082592266903
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 6906679114975273717, guid: f90407de77d96844e8c9c666e30f5845, type: 2}
+--- !u!1 &7377008648198053128
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2054,37 +2057,37 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1259196587805833699}
-  - component: {fileID: 8297661101260129838}
+  - component: {fileID: 2011292606267104680}
+  - component: {fileID: 8240623375426169874}
   m_Layer: 6
-  m_Name: SPColBox_Safety_Boots_06
+  m_Name: UCX_Safety_Boots_R_Instep
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &1259196587805833699
+--- !u!4 &2011292606267104680
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6545403082592266903}
+  m_GameObject: {fileID: 7377008648198053128}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.09809444, y: -0.044922996, z: 0.11061144}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 3075999757557140078}
+  m_Father: {fileID: 4842723844017717188}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &8297661101260129838
-BoxCollider:
+--- !u!64 &8240623375426169874
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6545403082592266903}
+  m_GameObject: {fileID: 7377008648198053128}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -2096,10 +2099,11 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.12382708, y: 0.04179975, z: 0.1297164}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &6738236672451405456
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 2638879838749831091, guid: f90407de77d96844e8c9c666e30f5845, type: 2}
+--- !u!1 &7454319728976103125
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2107,37 +2111,37 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 7182233378215336767}
-  - component: {fileID: 1659656262398505348}
+  - component: {fileID: 1901195409136101617}
+  - component: {fileID: 3289795452304912583}
   m_Layer: 6
-  m_Name: SPColBox_Safety_Boots_03
+  m_Name: UCX_Safety_Boots_L_Toe
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &7182233378215336767
+--- !u!4 &1901195409136101617
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6738236672451405456}
+  m_GameObject: {fileID: 7454319728976103125}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.100583784, y: 0.009968575, z: 0.11072647}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 3075999757557140078}
+  m_Father: {fileID: 4842723844017717188}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &1659656262398505348
-BoxCollider:
+--- !u!64 &3289795452304912583
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6738236672451405456}
+  m_GameObject: {fileID: 7454319728976103125}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -2149,9 +2153,10 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.11643851, y: 0.072183624, z: 0.13378134}
-  m_Center: {x: 0, y: 0, z: 0}
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 4300000, guid: f90407de77d96844e8c9c666e30f5845, type: 2}
 --- !u!1 &7944955958926990146
 GameObject:
   m_ObjectHideFlags: 0
@@ -2183,7 +2188,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 3554470869194058418}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 180}
---- !u!1 &8114966526652683349
+--- !u!1 &8305910134195654165
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2191,37 +2196,37 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 6168538659462387064}
-  - component: {fileID: 9053048583879406437}
+  - component: {fileID: 2667811856282391417}
+  - component: {fileID: 8282256087382829162}
   m_Layer: 6
-  m_Name: SPColBox_Safety_Boots_02
+  m_Name: UCX_Safety_Boots_L_Heel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &6168538659462387064
+--- !u!4 &2667811856282391417
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8114966526652683349}
+  m_GameObject: {fileID: 8305910134195654165}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.08724973, y: -0.044604376, z: -0.045568474}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 3075999757557140078}
+  m_Father: {fileID: 4842723844017717188}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &9053048583879406437
-BoxCollider:
+--- !u!64 &8282256087382829162
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8114966526652683349}
+  m_GameObject: {fileID: 8305910134195654165}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -2233,62 +2238,10 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.12915403, y: 0.04153735, z: 0.1810009}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &8191732733981051038
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4382333273905427434}
-  - component: {fileID: 6387656190483862852}
-  m_Layer: 6
-  m_Name: SPColBox_Safety_Boots_01
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &4382333273905427434
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8191732733981051038}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.09809307, y: -0.044922996, z: 0.11061144}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 3075999757557140078}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &6387656190483862852
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8191732733981051038}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.12382708, y: 0.04179975, z: 0.1297164}
-  m_Center: {x: 0, y: 0, z: 0}
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 5818299108819387478, guid: f90407de77d96844e8c9c666e30f5845, type: 2}
 --- !u!1 &8626136059371709561
 GameObject:
   m_ObjectHideFlags: 0
@@ -2363,59 +2316,6 @@ MonoBehaviour:
   _handAligment: 1
   _handGrabPoses:
   - {fileID: 1551259120198493289}
---- !u!1 &8870574872779896888
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 933893884706835224}
-  - component: {fileID: 7498470763148563119}
-  m_Layer: 6
-  m_Name: SPColBox_Safety_Boots_10
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &933893884706835224
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8870574872779896888}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.08087671, y: 0.1053095, z: -0.033961732}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 3075999757557140078}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &7498470763148563119
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8870574872779896888}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.09955503, y: 0.12296094, z: 0.16913848}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1001 &6903328497289110064
 PrefabInstance:
   m_ObjectHideFlags: 0
