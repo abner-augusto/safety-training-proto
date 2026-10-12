@@ -236,9 +236,13 @@
     { "kind": "ppe", "ppeType": "Helmet",     "isWearing": true, "delayMs": 200 },
     { "kind": "ppe", "ppeType": "Harness",    "isWearing": true, "delayMs": 200 },
 
+    { "kind": "move", "target": "anchor",       "posture": "standing", "delayMs": 200 },
     { "kind": "action", "actionId": "connect_harness",   "delayMs": 200 },
+    { "kind": "move", "target": "guardrail",    "posture": "standing", "delayMs": 200 },
     { "kind": "action", "actionId": "install_guardrail", "delayMs": 200 },
+    { "kind": "move", "target": "toeboard",     "posture": "crouched", "delayMs": 200 },
     { "kind": "action", "actionId": "install_toeboard",  "delayMs": 200 },
+    { "kind": "move", "target": "irregularity", "posture": "standing", "delayMs": 200 },
     { "kind": "action", "actionId": "flag_safety_net",   "delayMs": 200 }
   ]
 }
