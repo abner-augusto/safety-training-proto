@@ -483,12 +483,7 @@ namespace SafetyProto.Domain.Sessions
                 // one. Previously each write minted a new timestamped file, littering the folder with
                 // near-duplicate pairs. A short session-id suffix disambiguates sessions that happen to
                 // start within the same second.
-                var startMs = _sessionStartMs > 0 ? _sessionStartMs : DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                var timestamp = DateTimeOffset.FromUnixTimeMilliseconds(startMs).UtcDateTime.ToString("yyyyMMdd_HHmmss");
-                var idSuffix = string.IsNullOrEmpty(_sessionId)
-                    ? string.Empty
-                    : "_" + _sessionId.Substring(0, Math.Min(8, _sessionId.Length));
-                var fileName = $"session_log_{timestamp}{idSuffix}.json";
+                var fileName = $"session_log_{SessionFileStem.Of(_sessionStartMs, _sessionId)}.json";
                 var path = Path.Combine(outputDirectory, fileName);
 
                 // Synthesize an accurate summary from the events logged so far when the session
