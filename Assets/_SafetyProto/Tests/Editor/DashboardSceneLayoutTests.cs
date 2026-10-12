@@ -28,6 +28,55 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
+        public void BuildFrom_SkipsFloorWithoutArea_AndWarns()
+        {
+            // A bare Transform resolves to a point: no rectangle to stand on.
+            var floors = new[] { new DashboardSceneLayout.FloorEntry { id = "flat", source = _go.transform } };
+
+            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("flat"));
+            var dto = DashboardSceneLayout.BuildFrom(floors, new DashboardSceneLayout.MarkerEntry[0], null);
+
+            Assert.AreEqual(0, dto.floors.Length);
+        }
+
+        [Test]
+        public void BuildFrom_SkinnedRendererWithRootBone_UsesTheRootBoneSpace()
+        {
+            var bone = new GameObject("bone").transform;
+            bone.SetParent(_go.transform, false);
+            bone.localPosition = new Vector3(0f, 5f, 0f);
+            var skinned = _go.AddComponent<SkinnedMeshRenderer>();
+            skinned.rootBone = bone;
+            skinned.localBounds = new Bounds(Vector3.zero, new Vector3(2f, 0.2f, 2f));
+            var floors = new[] { new DashboardSceneLayout.FloorEntry { id = "skinned", source = skinned } };
+
+            var dto = DashboardSceneLayout.BuildFrom(floors, new DashboardSceneLayout.MarkerEntry[0], null);
+
+            Assert.AreEqual(5.1f, dto.floors[0].py, 1e-4f);
+        }
+
+        [Test]
+        public void Start_CapturesTheLayoutBeforeTheSceneMoves()
+        {
+            var box = _go.AddComponent<BoxCollider>();
+            box.size = new Vector3(4f, 0.2f, 1f);
+            var layout = _go.AddComponent<DashboardSceneLayout>();
+            var so = new UnityEditor.SerializedObject(layout);
+            var floors = so.FindProperty("floors");
+            floors.arraySize = 1;
+            floors.GetArrayElementAtIndex(0).FindPropertyRelative("id").stringValue = "deck";
+            floors.GetArrayElementAtIndex(0).FindPropertyRelative("source").objectReferenceValue = box;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            typeof(DashboardSceneLayout).GetMethod("Start",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+                .Invoke(layout, null);
+            _go.transform.rotation = Quaternion.Euler(30f, 0f, 0f);   // the collapse tilts the deck later
+
+            Assert.AreEqual(1f, layout.Build().floors[0].qw, 1e-5f);
+        }
+
+        [Test]
         public void BuildFrom_MarkerWithoutMinSize_UsesDefault()
         {
             var markers = new[]

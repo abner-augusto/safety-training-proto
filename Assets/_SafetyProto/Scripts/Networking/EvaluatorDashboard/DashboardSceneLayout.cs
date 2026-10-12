@@ -52,8 +52,12 @@ namespace SafetyProto.Networking.Dashboard
 
         private SceneLayoutDto? _cached;
 
-        /// <summary>The layout DTO, built on first call. Install spots do not move, so it is cached.</summary>
+        /// <summary>The layout DTO, captured at scene start. Install spots do not move, so it is cached.</summary>
         public SceneLayoutDto Build() => _cached ??= BuildFrom(floors, markers, this);
+
+        // Capture before anything moves: the scaffold collapse tilts the deck, and a dashboard
+        // connecting after it would otherwise cache a tilted floor the yaw-only lookup misreads.
+        private void Start() => Build();
 
         /// <summary>Floor ids, then marker ids: the session simulator's move targets.</summary>
         public IReadOnlyList<string> WaypointIds
@@ -81,7 +85,14 @@ namespace SafetyProto.Networking.Dashboard
                     SafetyLog.Warning($"[DashboardSceneLayout] Floor '{entry.id}' has no source; skipped.", logContext);
                     continue;
                 }
-                floorDtos.Add(SceneLayoutGeometry.Floor(entry.id, entry.source.transform.localToWorldMatrix, bounds));
+                var floor = SceneLayoutGeometry.Floor(entry.id, SceneLayoutGeometry.BoundsToWorld(entry.source), bounds);
+                if (floor.sx < 1e-3f || floor.sz < 1e-3f)
+                {
+                    SafetyLog.Warning($"[DashboardSceneLayout] Floor '{entry.id}' has no area (point or line source); skipped. " +
+                                      "Point it at a Renderer or Collider.", logContext);
+                    continue;
+                }
+                floorDtos.Add(floor);
             }
 
             var markerDtos = new List<SceneMarkerDto>();
@@ -94,7 +105,7 @@ namespace SafetyProto.Networking.Dashboard
                 }
                 var minSize = entry.minSize > 0f ? entry.minSize : DefaultMinSize;
                 markerDtos.Add(SceneLayoutGeometry.Marker(entry.id, entry.kind.ToString(), entry.taskId,
-                    entry.source.transform.localToWorldMatrix, bounds, minSize));
+                    SceneLayoutGeometry.BoundsToWorld(entry.source), bounds, minSize));
             }
 
             return new SceneLayoutDto { floors = floorDtos.ToArray(), markers = markerDtos.ToArray() };

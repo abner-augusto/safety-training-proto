@@ -34,6 +34,13 @@ namespace SafetyProto.Networking.Dashboard
             }
         }
 
+        /// <summary>Matrix that takes <see cref="TryGetLocalBounds"/>'s bounds to world space: a skinned
+        /// renderer's bounds live in its root bone's space, every other source's in its own.</summary>
+        public static Matrix4x4 BoundsToWorld(Component source) =>
+            source is SkinnedMeshRenderer skinned && skinned.rootBone != null
+                ? skinned.rootBone.localToWorldMatrix
+                : source.transform.localToWorldMatrix;
+
         /// <summary>Floor rectangle at the top face of <paramref name="local"/>.</summary>
         public static SceneFloorDto Floor(string id, Matrix4x4 localToWorld, Bounds local)
         {
