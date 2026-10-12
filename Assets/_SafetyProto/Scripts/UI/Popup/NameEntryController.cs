@@ -20,10 +20,9 @@ namespace SafetyProto.UI
     /// <summary>
     /// Pre-session flow: shows an identification popup before onboarding — a numeric keypad for
     /// the study's participant code by default, or the Horizon OS system keyboard for a first
-    /// name. On confirm (or skip) it assigns an anonymized participant id via
-    /// <see cref="ParticipantIdentity"/>, starts the training session, then kicks off onboarding.
-    /// The typed value is stored privately by <see cref="ParticipantIdentity"/> and never leaves
-    /// the device; only the id reaches logs and the dashboard.
+    /// name. A typed participant code becomes the participant id itself (7 → P-07); a first name
+    /// or a skip gets a random anonymized id, with the name kept in the private on-device map.
+    /// Then it starts the training session and kicks off onboarding.
     /// </summary>
     public class NameEntryController : MonoBehaviour
     {
@@ -42,8 +41,9 @@ namespace SafetyProto.UI
         [SerializeField] private string codeTitle = "Código do participante";
         [SerializeField, TextArea(2, 4)]
         private string codeBody = "Digite o número de participante informado pelo pesquisador.";
-        [Tooltip("Prefixo gravado antes do número digitado (7 → P07), para casar com a planilha-chave.")]
         [SerializeField] private string codePlaceholder = "Número";
+        [Tooltip("Prefixo do id do participante, unido ao número por hífen (7 → P-07). O id resultante " +
+                 "identifica a sessão nos logs, no dashboard e no menu.")]
         [SerializeField] private string codePrefix = "P";
         [SerializeField, Min(1)] private int codeMaxDigits = 3;
         [Tooltip("Zeros à esquerda até este número de dígitos (2: 7 → 07).")]
@@ -179,14 +179,17 @@ namespace SafetyProto.UI
             // Require a typed name on confirm — this also gates the keyboard "Done" path.
             // An empty submission is intentional only via Skip (which assigns the anon id).
             if (string.IsNullOrWhiteSpace(name)) return;
-            Finish(inputMode == ParticipantInputMode.NumericKeypad ? FormatCode(name.Trim()) : name);
+            if (inputMode == ParticipantInputMode.NumericKeypad)
+                Finish(() => ParticipantIdentity.SetParticipantCode(FormatCode(name.Trim())));
+            else
+                Finish(() => ParticipantIdentity.SetParticipant(name));
         }
 
-        private string FormatCode(string digits) => codePrefix + digits.PadLeft(codeMinDigits, '0');
+        private string FormatCode(string digits) => $"{codePrefix}-{digits.PadLeft(codeMinDigits, '0')}";
 
-        public void Skip() => Finish(string.Empty);
+        public void Skip() => Finish(() => ParticipantIdentity.SetParticipant(string.Empty));
 
-        private void Finish(string name)
+        private void Finish(System.Action assignIdentity)
         {
             if (_resolved) return;
             _resolved = true;
@@ -198,7 +201,7 @@ namespace SafetyProto.UI
                 _keyboardOpenCoroutine = null;
             }
 
-            ParticipantIdentity.SetParticipant(name);
+            assignIdentity();
             if (narrationVoice != null) narrationVoice.Stop();
 
             popupService?.Hide();

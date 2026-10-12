@@ -105,6 +105,10 @@ namespace SafetyProto.Domain.Sessions
             /// is 0/unknown), so a reset session no longer masquerades as an all-zero completion.
             /// </summary>
             public bool completed;
+            /// <summary>Participant id the session ran under: the code typed at onboarding
+            /// ("P-07"), a random anonymized id when skipped, or "SIM-…" for the simulator.
+            /// Empty on logs written before this field existed.</summary>
+            public string participantId = string.Empty;
             /// <summary>"guiado" | "avaliacao" — captured at SessionStarted so collected
             /// data can be split by mode. Empty on logs written before this field existed.</summary>
             public string mode = string.Empty;
@@ -342,6 +346,7 @@ namespace SafetyProto.Domain.Sessions
             _log.summary = new SessionSummary
             {
                 completed = true,
+                participantId = _playerId,
                 mode = _mode,
                 totalElapsedTime = args.totalElapsedTime,
                 totalScore = args.totalScore,
@@ -438,6 +443,7 @@ namespace SafetyProto.Domain.Sessions
         private SessionSummary BuildFallbackSummary() => new SessionSummary
         {
             completed = false,
+            participantId = _playerId,
             mode = _mode,
             totalScore = _lastTotalScore,
             tasksCompleted = _tasksCompletedCount,

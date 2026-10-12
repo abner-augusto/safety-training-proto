@@ -60,6 +60,19 @@ namespace SafetyProto.Runtime.Session
         }
 
         /// <summary>
+        /// Uses the study's participant code (e.g. "P-07") as the id itself. The code is already
+        /// pseudonymous — the key spreadsheet that resolves it lives with the researcher — so
+        /// nothing is written to the private name map.
+        /// </summary>
+        public static string SetParticipantCode(string code)
+        {
+            CurrentId = (code ?? string.Empty).Trim();
+            CurrentName = string.Empty;
+            SafetyLog.Info($"[ParticipantIdentity] Participante registrado como {CurrentId}.");
+            return CurrentId;
+        }
+
+        /// <summary>
         /// Assigns a synthetic identity without touching the private real-name map.
         /// The SIM- prefix is the MVP contract for excluding simulator data from participant data.
         /// </summary>
