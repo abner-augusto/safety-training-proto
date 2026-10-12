@@ -78,7 +78,9 @@ namespace SafetyProto.UI
             // the red "esgotado" state must never fire for it.
             if (countingUp || seconds > 0f)
             {
-                WriteClock(seconds, Color.white);
+                // A hold taken before the group starts (focus loss, an open popup) would otherwise
+                // show a frozen white clock that reads as "timer never started".
+                WriteClock(seconds, SessionPause.IsPaused ? Color.yellow : Color.white);
                 return;
             }
 
