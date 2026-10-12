@@ -83,10 +83,13 @@ namespace SafetyProto.Core
                 });
             }
 
+            int queueBefore = _eventQueue.Count;
+            int dispatched = 0;
             _stopwatch.Restart();
             while (_eventQueue.Count > 0)
             {
                 var action = _eventQueue.Dequeue();
+                dispatched++;
                 try
                 {
                     action?.Invoke();
@@ -106,7 +109,20 @@ namespace SafetyProto.Core
 
             if (_eventQueue.Count == 0) _queueOverflowReported = false;
             _stopwatch.Stop();
+
+            // The loop also drains events enqueued by listeners during the flush, so dispatched
+            // can exceed queueBefore; anything left means the budget cut the flush short.
+            FlushProbe?.OnFlush(queueBefore, dispatched, _stopwatch.ElapsedTicks, _eventQueue.Count > 0);
         }
+
+        /// <summary>Receives one call per non-empty <see cref="ProcessEvents"/>, for on-device
+        /// timing of the queued dispatch. Null (the default) costs one null check per flush.</summary>
+        public static IEventBusFlushProbe FlushProbe { get; set; }
+
+        // Domain reload is disabled on entering Play Mode; a probe from the previous run would
+        // otherwise outlive its destroyed recorder.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetFlushProbe() => FlushProbe = null;
 
         private void InvokeTyped<T>(T payload, string source)
         {
