@@ -44,9 +44,12 @@ namespace SafetyProto.Utils
             string hash = RunGit(repoRoot, "rev-parse --short HEAD");
             if (string.IsNullOrEmpty(hash)) return string.Empty;
 
-            string status = RunGit(repoRoot, "status --porcelain");
-            return string.IsNullOrEmpty(status) ? hash : hash + "-dirty";
+            return string.IsNullOrEmpty(WorkingTreeChanges(repoRoot)) ? hash : hash + "-dirty";
         }
+
+        /// <summary><c>git status --porcelain</c> output: one line per changed file, empty when
+        /// the working tree is clean.</summary>
+        public static string WorkingTreeChanges(string repoRoot) => RunGit(repoRoot, "status --porcelain");
 
         private static string RunGit(string repoRoot, string arguments)
         {

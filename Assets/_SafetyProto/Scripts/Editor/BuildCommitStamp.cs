@@ -14,7 +14,10 @@ namespace SafetyProto.Editor
     /// </summary>
     internal sealed class BuildCommitStamp : IPreprocessBuildWithReport, IPostprocessBuildWithReport
     {
-        public int callbackOrder => 0;
+        // Run before every other build processor: some (the Meta XR ones among them) rewrite
+        // ProjectSettings and OVRBuildConfig for the duration of the build, which would read
+        // as uncommitted changes.
+        public int callbackOrder => int.MinValue;
 
         public void OnPreprocessBuild(BuildReport report)
         {
@@ -27,6 +30,9 @@ namespace SafetyProto.Editor
 
             if (string.IsNullOrEmpty(commit))
                 Debug.LogWarning("[BuildCommitStamp] git unavailable; the build will not record its commit.");
+            else if (commit.EndsWith("-dirty"))
+                Debug.LogWarning($"[BuildCommitStamp] Build stamped with commit {commit}; uncommitted changes:\n" +
+                                 BuildCommit.WorkingTreeChanges(projectRoot));
             else
                 Debug.Log($"[BuildCommitStamp] Build stamped with commit {commit}.");
         }
