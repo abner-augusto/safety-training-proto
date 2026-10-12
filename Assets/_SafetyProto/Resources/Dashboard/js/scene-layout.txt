@@ -64,19 +64,20 @@ export class SceneLayoutView {
   }
 
   /** project(worldVec3) → { x, y, visible } in container pixels. */
+  /** project(worldVec3) → { x, y, visible } in container pixels. Anchors are precomputed:
+      floors and spots never move, so a frame only projects and skips hidden labels. */
   updateLabels(project) {
     const lang = getLang();
     for (const f of this._floors) {
       for (const l of f.labels) {
         const text = formatMeters(l.value, lang);
         if (l.el.textContent !== text) l.el.textContent = text;
-        this._place(l.el, project(f.group.localToWorld(l.local.clone())), true);
+        this._place(l.el, project(l.world));
       }
     }
     for (const m of this._markers) {
-      this._box.setFromObject(m.group);
-      const top = new THREE.Vector3(m.data.cx, this._box.max.y + 0.06, m.data.cz);
-      this._place(m.label, project(top), m.visible);
+      if (m.visible) this._place(m.label, project(m.labelAnchor));
+      else this._hide(m.label);
     }
   }
 
@@ -87,10 +88,15 @@ export class SceneLayoutView {
     this._root.removeFromParent();
   }
 
-  _place(el, sp, visible) {
-    el.style.display = visible && sp.visible ? 'block' : 'none';
+  _place(el, sp) {
+    if (!sp.visible) { this._hide(el); return; }
+    el.style.display = 'block';
     el.style.left = `${sp.x}px`;
     el.style.top  = `${sp.y}px`;
+  }
+
+  _hide(el) {
+    if (el.style.display !== 'none') el.style.display = 'none';
   }
 
   _label(className) {
@@ -114,8 +120,8 @@ export class SceneLayoutView {
     group.updateMatrixWorld(true);
 
     const labels = [
-      { el: this._label('dim'), local: new THREE.Vector3(0, 0, data.sz / 2), value: data.sx },
-      { el: this._label('dim'), local: new THREE.Vector3(data.sx / 2, 0, 0), value: data.sz },
+      { el: this._label('dim'), world: group.localToWorld(new THREE.Vector3(0, 0, data.sz / 2)), value: data.sx },
+      { el: this._label('dim'), world: group.localToWorld(new THREE.Vector3(data.sx / 2, 0, 0)), value: data.sz },
     ];
     return { data, group, labels };
   }
@@ -131,10 +137,13 @@ export class SceneLayoutView {
     group.add(fill, edges);
     group.visible = false;
     this._root.add(group);
+    group.updateMatrixWorld(true);
+    this._box.setFromObject(group);
+    const labelAnchor = new THREE.Vector3(data.cx, this._box.max.y + 0.06, data.cz);
 
     const label = this._label('spot');
     label.dataset.i18n = LABEL_KEYS[data.kind] ?? 'markerIrregularity';
-    return { data, group, fill, edges, label, visible: false, warned: false };
+    return { data, group, fill, edges, label, labelAnchor, visible: false, warned: false };
   }
 
   _clear() {

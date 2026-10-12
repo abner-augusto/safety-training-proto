@@ -112,6 +112,15 @@
         /* Floors + task spots; built before setTheme, which colours it */
         this._layout = new SceneLayoutView(this._scene, this._labelOverlay);
         this._gridAt = { id: null, x: 0, y: 0, z: 0 };
+        /* Runs for every layout label on every render: reuse one vector and one result. */
+        const projTmp = new THREE.Vector3(), projOut = { x: 0, y: 0, visible: false };
+        this._projectLayoutLabel = p => {
+          projTmp.copy(p).project(this._camera);
+          projOut.x = (projTmp.x * 0.5 + 0.5) * this._container.clientWidth;
+          projOut.y = (projTmp.y * -0.5 + 0.5) * this._container.clientHeight;
+          projOut.visible = projTmp.z <= 1;
+          return projOut;
+        };
 
         /* Object + label pools */
         this._objects = { hmd: null, leftHand: null, rightHand: null, ppe: {} };
@@ -320,6 +329,7 @@
         this._interactions = [];
         this._skel.visible = this._plumb.visible = this._gaze.visible = this._disc.visible = false;
         this._smooth.head = null;
+        this._placeGrid(null);   /* a reset from the deck must not leave the grid 21 m up */
         /* A reset mid-glide must not leave the orbit controls stranded. */
         this._follow.anim = null;
         this._follow.offSince = 0;
@@ -677,12 +687,7 @@
         if (!this._dirty && !hasFx && !following && !highlighting) return;   /* render on demand */
         this._dirty = false;
         this._updateLabels();
-        this._layout.updateLabels(p => {
-          const v = p.clone().project(this._camera);
-          return { x: (v.x * 0.5 + 0.5) * this._container.clientWidth,
-                   y: (v.y * -0.5 + 0.5) * this._container.clientHeight,
-                   visible: v.z <= 1 };
-        });
+        this._layout.updateLabels(this._projectLayoutLabel);
         this._renderer.render(this._scene, this._camera);
       }
 

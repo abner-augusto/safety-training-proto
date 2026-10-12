@@ -114,3 +114,12 @@ test('followHead eases a move just under the threshold', () => {
 test('followHead starts at the first pose', () => {
   assert.deepEqual(followHead(null, { x: 1, y: 2, z: 3 }), { x: 1, y: 2, z: 3 });
 });
+
+test('markerState treats a task without a group as its own group', () => {
+  const m = tasks([
+    { id: 'loose_a', groupName: '', status: 'active' },
+    { id: 'loose_b', groupName: '', status: 'pending' },
+  ]);
+  assert.deepEqual(markerState('loose_b', m), { visible: false, done: false });
+  assert.deepEqual(markerState('loose_a', m), { visible: true, done: false });
+});

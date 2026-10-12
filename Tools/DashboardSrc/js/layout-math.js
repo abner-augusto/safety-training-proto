@@ -54,9 +54,12 @@ export function floorAt(floors, x, z, headY, margin = FLOOR_MARGIN, current = nu
 export function markerState(taskId, tasks) {
   const task = tasks.get(taskId);
   if (!task) return { visible: false, done: false };
-  let started = false;
-  for (const other of tasks.values()) {
-    if (other.groupName === task.groupName && STARTED.has(other.status)) { started = true; break; }
+  /* Ungrouped tasks share groupName '' without being related: only the task itself counts. */
+  let started = STARTED.has(task.status);
+  if (task.groupName) {
+    for (const other of tasks.values()) {
+      if (other.groupName === task.groupName && STARTED.has(other.status)) { started = true; break; }
+    }
   }
   return { visible: started, done: task.status === 'completed' };
 }
