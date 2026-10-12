@@ -1,4 +1,4 @@
-    import { t, actionLabel, ppeLabel, violationLabel, violationMessage } from './i18n.js';
+    import { t, actionLabel, ppeLabel, violationLabel, violationMessage, applyTranslations } from './i18n.js';
     import { tasks, wornPpe, state, sessionTimer } from './state.js';
     import { addLog, setScoreUI, renderCluster, renderTasks, resetTaskUI, emptyState, renderReportSection, resolveCommandAck } from './ui.js';
     import { saveSessionToHistory } from './history.js';
@@ -8,6 +8,7 @@
      * ============================================================== */
     const handlers = {};
     const on = (type, fn) => { handlers[type] = fn; };
+    const refreshMarkers = () => window.__spViewport?.refreshMarkers(tasks);
 
     export function route(envelope) {
       const { eventType, payload } = envelope;
@@ -16,6 +17,12 @@
       if (fn) { try { fn(payload); } catch (e) { console.error(`[handler:${eventType}]`, e); } }
       // PoseFrame handled inline (high frequency — skip addLog)
     }
+
+    on('SceneLayout', p => {
+      window.__spViewport?.setLayout(p);
+      applyTranslations();   /* marker labels take their text from data-i18n */
+      refreshMarkers();
+    });
 
     /* ── Session lifecycle ── */
     on('SessionStarted', p => {
@@ -77,6 +84,7 @@
       });
 
       renderTasks();
+      refreshMarkers();
     });
 
     on('SessionPaused',   () => { sessionTimer.pause();  addLog(t('logSessionPaused')); });
@@ -90,6 +98,7 @@
 
     on('SessionReset', () => {
       tasks.clear();
+      refreshMarkers();
       state.sessionReport = null;
       state.currentScore  = 0;
       state.currentMode = null;
@@ -130,6 +139,7 @@
         status,
       });
       renderTasks();
+      refreshMarkers();
     }
 
     on('TaskStarted',   p => { upsertTask(p, 'active');    addLog(`${t('logStarted')}: ${p.taskName}`); });

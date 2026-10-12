@@ -757,6 +757,8 @@
     .vp-swatch.c-loose  { background: var(--orange); }
     .vp-swatch.c-worn   { background: var(--ppe-worn); }
     .vp-swatch.c-ring   { background: transparent; border: 1.5px solid var(--accent); }
+    .vp-swatch.c-floor  { background: color-mix(in srgb, var(--accent) 22%, transparent); border: 1px solid var(--accent); }
+    .vp-swatch.c-spot   { background: color-mix(in srgb, var(--orange) 25%, transparent); border: 1.5px solid var(--orange); }
 
     /* Chip de postura (abaixo da fileira de FABs, que é fixed/z-200) */
     .vp-chip {
@@ -821,6 +823,11 @@
       border-color: var(--border-strong);
       z-index: 1;
     }
+    /* Layout labels are always legible; PPE labels stay dim until a hand comes near */
+    .vp-label.layout       { opacity: 0.92; }
+    .vp-label.layout.spot  { color: var(--orange); border-color: color-mix(in srgb, var(--orange) 45%, var(--border)); }
+    .vp-label.layout.done  { color: var(--text-muted); border-color: var(--border); }
+    .vp-label.layout.dim   { font-size: 10px; padding: 1px 5px; color: var(--accent); }
 
     #viewport-error {
       position: absolute; inset: 0;

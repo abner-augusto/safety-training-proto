@@ -1,6 +1,7 @@
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { t } from './i18n.js';
+    import { SceneLayoutView } from './scene-layout.js';
 
     /* Automatic reframing */
     const FRAME_EDGE = 0.92;   /* NDC: fires just BEFORE the participant clips the edge */
@@ -106,6 +107,10 @@
           width: '100%', height: '100%', pointerEvents: 'none',
         });
         containerEl.appendChild(this._labelOverlay);
+
+        /* Floors + task spots; built before setTheme, which colours it */
+        this._layout = new SceneLayoutView(this._scene, this._labelOverlay);
+        this._gridAt = { id: null, x: 0, y: 0, z: 0 };
 
         /* Object + label pools */
         this._objects = { hmd: null, leftHand: null, rightHand: null, ppe: {} };
@@ -228,6 +233,7 @@
         this._matGaze.color        = tok('--accent');
         this._matDisc.color        = tok('--accent');
         this._matRing.color        = tok('--accent');
+        this._layout.setTheme(tok);
 
         if (this._grid) {
           this._scene.remove(this._grid);
@@ -239,6 +245,7 @@
         this._grid.material.transparent = true;
         this._grid.material.opacity = isLight ? 0.35 : 0.25;
         this._scene.add(this._grid);
+        this._grid.position.set(this._gridAt.x, this._gridAt.y, this._gridAt.z);
 
         this._dirty = true;
       }
@@ -287,6 +294,23 @@
         this._dirty = true;
       }
 
+      /** Static scene geometry from the SceneLayout event. */
+      setLayout(layout) {
+        this._layout.setLayout(layout);
+        this._dirty = true;
+      }
+
+      /** Redraws on the next frame — for changes outside the scene, such as the language. */
+      invalidate() {
+        this._dirty = true;
+      }
+
+      /** Recolours/shows task spots from the tasks Map (state.js). */
+      refreshMarkers(tasks) {
+        this._layout.refreshMarkers(tasks);
+        this._dirty = true;
+      }
+
       /** Clears PPE, skeleton and interactions — called on SessionReset. */
       clearSession() {
         Object.keys(this._objects.ppe).forEach(id => this._removePpe(id));
@@ -316,6 +340,7 @@
          this._matHighlight].forEach(m => m.dispose());
         this._labels.forEach(ld => ld.el.remove());
         this._labels.clear();
+        this._layout.dispose();
         this._renderer.dispose();
       }
 
@@ -369,7 +394,10 @@
 
         const headY = H.y;
         const shY   = headY - 0.24;
-        const hipY  = Math.max(headY - 0.72, 0.25);
+        const floor = this._layout.floorAt(H.x, H.z, headY);
+        const floorY = floor ? floor.cy : 0;
+        const hipY  = Math.max(headY - 0.72, floorY + 0.25);
+        this._placeGrid(floor);
         const SH = 0.19, HIP = 0.11;
 
         const set = (i, ax, ay, az, bx, by, bz) => {
@@ -393,7 +421,7 @@
         this._skel.visible = true;
 
         this._plumbPos[0] = H.x; this._plumbPos[1] = hipY; this._plumbPos[2] = H.z;
-        this._plumbPos[3] = H.x; this._plumbPos[4] = 0.02; this._plumbPos[5] = H.z;
+        this._plumbPos[3] = H.x; this._plumbPos[4] = floorY + 0.02; this._plumbPos[5] = H.z;
         this._plumb.geometry.attributes.position.needsUpdate = true;
         this._plumb.computeLineDistances();
         this._plumb.visible = true;
@@ -410,10 +438,10 @@
         this._gaze.geometry.attributes.position.needsUpdate = true;
         this._gaze.visible = true;
 
-        this._disc.position.set(H.x, 0.005, H.z);
+        this._disc.position.set(H.x, floorY + 0.005, H.z);
         this._disc.visible = true;
 
-        this._updatePosture(headY);
+        this._updatePosture(headY - floorY);
         this._trackFraming(H);
       }
 
@@ -476,13 +504,23 @@
         return true;
       }
 
-      _updatePosture(headY) {
+      /* The grid follows the floor under the participant; on the ground it stays at the origin. */
+      _placeGrid(floor) {
+        const id = floor?.id ?? null;
+        if (this._gridAt.id === id) return;
+        this._gridAt = floor
+          ? { id, x: floor.cx, y: floor.cy + 0.001, z: floor.cz }
+          : { id: null, x: 0, y: 0, z: 0 };
+        this._grid.position.set(this._gridAt.x, this._gridAt.y, this._gridAt.z);
+      }
+
+      _updatePosture(heightAboveFloor) {
         if (!this._postureChip) return;
         this._postureChip.style.display = 'flex';
         let key = 'postureStanding', low = false;
-        if (headY <= 1.15)      { key = 'postureCrouched'; low = true; }
-        else if (headY <= 1.42) { key = 'postureLowering'; low = true; }
-        this._postureValue.textContent = `${t(key)} · ${headY.toFixed(2)} m`;
+        if (heightAboveFloor <= 1.15)      { key = 'postureCrouched'; low = true; }
+        else if (heightAboveFloor <= 1.42) { key = 'postureLowering'; low = true; }
+        this._postureValue.textContent = `${t(key)} · ${heightAboveFloor.toFixed(2)} m`;
         this._postureValue.classList.toggle('low', low);
       }
 
@@ -638,6 +676,12 @@
         if (!this._dirty && !hasFx && !following && !highlighting) return;   /* render on demand */
         this._dirty = false;
         this._updateLabels();
+        this._layout.updateLabels(p => {
+          const v = p.clone().project(this._camera);
+          return { x: (v.x * 0.5 + 0.5) * this._container.clientWidth,
+                   y: (v.y * -0.5 + 0.5) * this._container.clientHeight,
+                   visible: v.z <= 1 };
+        });
         this._renderer.render(this._scene, this._camera);
       }
 

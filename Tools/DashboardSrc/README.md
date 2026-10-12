@@ -22,6 +22,8 @@ concern lives in its own ES module under `js/`, one file per concern:
 | `js/history.js` | session history persisted in localStorage |
 | `js/router.js` | event router: handler map + `route` |
 | `js/viewport.js` | `EvaluatorViewport` (Three.js instrument scene) |
+| `js/scene-layout.js` | `SceneLayoutView`: walkable floors + task-spot markers (Three.js) |
+| `js/layout-math.js` | pure floor lookup / marker state / formatting (tested by `tests/layout-math.test.mjs`) |
 | `js/resize.js` | `SidebarResizeManager` (drag-to-resize) |
 
 Import specifiers are explicit with the `.js` extension (native ESM has no

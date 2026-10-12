@@ -59,6 +59,7 @@
       // Re-render dynamic UI in new language
       renderTasks();
       renderHistory();
+      window.__spViewport?.invalidate();   /* floor dimension labels are formatted per language at render */
     };
 
     /* ── Theme toggle: escuro (uso vivo) ↔ claro (modo figura) ── */

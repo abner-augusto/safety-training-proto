@@ -1,0 +1,59 @@
+// GENERATED FILE — DO NOT EDIT. Source: Tools/DashboardSrc/js/layout-math.js (menu: SafetyProto → Sync Dashboard Source)
+/* Pure scene-layout logic: no Three.js, no DOM, so node --test can import it. */
+
+/* Lets a participant lean over the 0.90 m scaffold deck edge without the floor
+   snapping back to the ground 21 m below. */
+export const FLOOR_MARGIN = 0.3;
+
+const STARTED = new Set(['active', 'completed', 'not_performed']);
+
+/* Unity is left-handed: mirror Z on positions and conjugate rotations the same way
+   the pose stream does (see EvaluatorViewport._updateObject). */
+export function toThreeFloor(d) {
+  return { id: d.id, cx: d.px, cy: d.py, cz: -d.pz, sx: d.sx, sz: d.sz,
+           qx: -d.qx, qy: -d.qy, qz: d.qz, qw: d.qw };
+}
+
+export function toThreeMarker(d) {
+  return { id: d.id, kind: d.kind, taskId: d.taskId,
+           cx: d.px, cy: d.py, cz: -d.pz, sx: d.sx, sy: d.sy, sz: d.sz,
+           qx: -d.qx, qy: -d.qy, qz: d.qz, qw: d.qw };
+}
+
+/* Floors are yaw-only, so only the Y rotation is undone. */
+function toLocalXZ(f, x, z) {
+  const yaw = 2 * Math.atan2(f.qy, f.qw);
+  const dx = x - f.cx, dz = z - f.cz;
+  const c = Math.cos(yaw), s = Math.sin(yaw);
+  return [dx * c - dz * s, dx * s + dz * c];
+}
+
+/** Highest floor below the head whose (margin-grown) rectangle contains (x, z); null = ground. */
+export function floorAt(floors, x, z, headY, margin = FLOOR_MARGIN) {
+  let best = null;
+  for (const f of floors) {
+    if (f.cy >= headY) continue;
+    const [lx, lz] = toLocalXZ(f, x, z);
+    if (Math.abs(lx) > f.sx / 2 + margin || Math.abs(lz) > f.sz / 2 + margin) continue;
+    if (!best || f.cy > best.cy) best = f;
+  }
+  return best;
+}
+
+/* Visibility comes from the manifest, not from GroupStarted, so a dashboard that
+   connects mid-session still shows the markers. */
+export function markerState(taskId, tasks) {
+  const task = tasks.get(taskId);
+  if (!task) return { visible: false, done: false };
+  let started = false;
+  for (const other of tasks.values()) {
+    if (other.groupName === task.groupName && STARTED.has(other.status)) { started = true; break; }
+  }
+  return { visible: started, done: task.status === 'completed' };
+}
+
+/* toFixed alone rounds 5.925 down (it is 5.92499… in binary): settle the product first. */
+export function formatMeters(value, lang) {
+  const text = (Math.round(Number((value * 100).toFixed(6))) / 100).toFixed(2);
+  return `${lang === 'pt' ? text.replace('.', ',') : text} m`;
+}
