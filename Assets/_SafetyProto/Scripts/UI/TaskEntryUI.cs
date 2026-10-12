@@ -14,8 +14,11 @@ namespace SafetyProto.UI
         [Header("UI References")]
         [SerializeField] private TMP_Text orderText;
         [SerializeField] private TMP_Text nameText;
+        [Tooltip("Disc behind the state icon; tinted with highlightColor while the task is active.")]
         [SerializeField] private Image backgroundImage;
         [SerializeField] private Image stateIcon;
+        [Tooltip("Rounded row background that pulses while the task is active.")]
+        [SerializeField] private Image pillImage;
 
         [Header("State Sprites")]
         [Tooltip("Sprite when task has not yet been started or is in progress.")]
@@ -43,6 +46,31 @@ namespace SafetyProto.UI
         public Color normalColor = new Color(1f, 1f, 1f, 0.2f);
         public Color highlightColor = new Color(0.2f, 0.6f, 1f, 0.5f);
 
+        [Header("Active Pulse")]
+        public Color pillColor = new Color(0.27f, 0.31f, 0.37f, 1f);
+        [Tooltip("Peak of the pulse. Keep it dark enough for the white task name to stay legible.")]
+        public Color pillPulseColor = new Color(0.78f, 0.5f, 0.12f, 1f);
+        [Tooltip("Seconds per pulse cycle. The panel's overlay canvas redraws every few frames, so short periods strobe.")]
+        [SerializeField] private float pulsePeriod = 1.6f;
+
+        private bool _pulsing;
+
+        private void Update()
+        {
+            if (!_pulsing || pillImage == null) return;
+
+            // A shared clock, not a per-row timer, keeps every pulsing row in phase.
+            float wave = 0.5f - 0.5f * Mathf.Cos(Time.time * (2f * Mathf.PI / pulsePeriod));
+            pillImage.color = Color.Lerp(pillColor, pillPulseColor, wave);
+        }
+
+        private void SetPulsing(bool pulsing)
+        {
+            _pulsing = pulsing;
+            if (!pulsing && pillImage != null)
+                pillImage.color = pillColor;
+        }
+
         public void Setup(int order, string taskName)
         {
             if (orderText != null)
@@ -60,6 +88,8 @@ namespace SafetyProto.UI
 
         public void UpdateState(TaskState newState)
         {
+            SetPulsing(newState == TaskState.InProgress);
+
             if (stateIcon == null || backgroundImage == null)
                 return;
 

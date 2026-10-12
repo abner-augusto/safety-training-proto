@@ -35,6 +35,7 @@ namespace SafetyProto.UI
         private Dictionary<ISafetyTask, TaskEntryUI>  _taskToEntry        = new();
         private Dictionary<ISafetyTask, GameObject>   _taskToGO           = new();
         private Dictionary<ISafetyTask, Coroutine>    _removalCoroutines  = new();
+        private ISafetyTask _currentSequentialTask;
         private int _completedVisibleCount = 0;
         private readonly AnimationCurve _scaleCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
@@ -130,6 +131,8 @@ namespace SafetyProto.UI
                 }
 
                 entry.Setup(globalOrder, task.taskName);
+                if (IsActiveTask(task))
+                    entry.UpdateState(TaskState.InProgress);
                 _taskToEntry[task] = entry;
                 _taskToGO[task]    = go;
 
@@ -145,8 +148,19 @@ namespace SafetyProto.UI
             if (args.Task is not { } task) return;
             if (_activeGroup == null || _activeGroup.executionMode != TaskExecutionModeShared.Sequential) return;
 
+            // The started task may still be outside the visible window while the previous one
+            // lingers; FillWindow reads this to highlight it once it scrolls in.
+            _currentSequentialTask = task;
             if (_taskToEntry.TryGetValue(task, out var entry))
                 entry.UpdateState(TaskState.InProgress);
+        }
+
+        private bool IsActiveTask(ISafetyTask task)
+        {
+            if (_activeGroup == null) return false;
+            // FreeOrder tasks can be done in any order, so every pending one is actionable now.
+            return _activeGroup.executionMode == TaskExecutionModeShared.FreeOrder
+                || task == _currentSequentialTask;
         }
 
         private void OnTaskCompleted(TaskEventArgs args)
