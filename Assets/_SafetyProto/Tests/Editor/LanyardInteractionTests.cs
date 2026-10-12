@@ -7,6 +7,13 @@ using UnityEngine;
 
 namespace SafetyProto.Tests.Editor
 {
+    /// <summary>
+    /// Asserts the rendered rope never enters the body capsule, a visual check that belongs to
+    /// the pre-build pass rather than the per-session run: the default run skips it and
+    /// <c>run_tests --include_explicit true</c> brings it back.
+    /// </summary>
+    [Category("Visual")]
+    [Explicit("Rendered-geometry check; run before a build, not per session.")]
     public class LanyardInteractionTests
     {
         private const BindingFlags Private = BindingFlags.NonPublic | BindingFlags.Instance;
