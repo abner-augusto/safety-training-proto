@@ -27,6 +27,17 @@ test('floorAt margin keeps the deck while leaning past its 0.90 m edge', () => {
   assert.equal(floorAt([deck], -1.0, -12.458 - 0.8, 23.3), null);
 });
 
+test('floorAt keeps the current floor while leaning well past the margin', () => {
+  const pastEdge = -12.458 - 0.451 - 0.6;   /* 0.6 m beyond the deck edge */
+  assert.equal(floorAt([deck], -1.0, pastEdge, 23.3), null);
+  assert.equal(floorAt([deck], -1.0, pastEdge, 23.3, undefined, deck)?.id, 'andaime');
+  assert.equal(floorAt([deck], -1.0, pastEdge - 0.3, 23.3, undefined, deck), null);
+});
+
+test('floorAt drops a current floor that is no longer below the head', () => {
+  assert.equal(floorAt([deck], -1.0, -12.5, 21.0, undefined, deck), null);
+});
+
 test('floorAt ignores floors at or above the head', () => {
   assert.equal(floorAt([deck], -1.0, -12.5, 21.0), null);
 });

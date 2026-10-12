@@ -27,13 +27,23 @@ function toLocalXZ(f, x, z) {
   return [dx * c - dz * s, dx * s + dz * c];
 }
 
-/** Highest floor below the head whose (margin-grown) rectangle contains (x, z); null = ground. */
-export function floorAt(floors, x, z, headY, margin = FLOOR_MARGIN) {
+/* The toeboard and the mesh tear sit at the deck edge, so a participant leaning out to
+   reach them must not drop the floor 21 m: once on a floor, keep it over this wider band. */
+export const FLOOR_STICKY_MARGIN = 0.8;
+
+function contains(f, x, z, headY, margin) {
+  if (f.cy >= headY) return false;
+  const [lx, lz] = toLocalXZ(f, x, z);
+  return Math.abs(lx) <= f.sx / 2 + margin && Math.abs(lz) <= f.sz / 2 + margin;
+}
+
+/** Highest floor below the head whose (margin-grown) rectangle contains (x, z); null = ground.
+    `current` is the floor from the previous frame; it is kept within FLOOR_STICKY_MARGIN. */
+export function floorAt(floors, x, z, headY, margin = FLOOR_MARGIN, current = null) {
+  if (current && contains(current, x, z, headY, FLOOR_STICKY_MARGIN)) return current;
   let best = null;
   for (const f of floors) {
-    if (f.cy >= headY) continue;
-    const [lx, lz] = toLocalXZ(f, x, z);
-    if (Math.abs(lx) > f.sx / 2 + margin || Math.abs(lz) > f.sz / 2 + margin) continue;
+    if (!contains(f, x, z, headY, margin)) continue;
     if (!best || f.cy > best.cy) best = f;
   }
   return best;

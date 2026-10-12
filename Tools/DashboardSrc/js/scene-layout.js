@@ -17,6 +17,7 @@ export class SceneLayoutView {
     this._floors = [];    // { data, group, labels: [{ el, local, value }] }
     this._markers = [];   // { data, group, fill, edges, label, visible, warned }
     this._box = new THREE.Box3();
+    this._current = null;   // floor under the participant last frame (sticky lookup)
 
     this._matFloorFill     = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.08, depthWrite: false, side: THREE.DoubleSide });
     this._matFloorEdge     = new THREE.LineBasicMaterial({ transparent: true, opacity: 0.7 });
@@ -57,7 +58,8 @@ export class SceneLayoutView {
   }
 
   floorAt(x, z, headY) {
-    return floorAt(this._floors.map(f => f.data), x, z, headY);
+    this._current = floorAt(this._floors.map(f => f.data), x, z, headY, undefined, this._current);
+    return this._current;
   }
 
   /** project(worldVec3) → { x, y, visible } in container pixels. */
@@ -144,6 +146,7 @@ export class SceneLayoutView {
       m.label.remove();
     }
     this._root.clear();
+    this._current = null;
     this._floors = [];
     this._markers = [];
   }
