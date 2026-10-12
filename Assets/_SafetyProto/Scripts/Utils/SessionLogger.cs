@@ -32,7 +32,10 @@ namespace SafetyProto.Utils
                     : Application.persistentDataPath,
                 () => SessionModeState.Current,
                 Application.version,
-                BuildCommit.Current);
+                BuildCommit.Current,
+                sessionId => EventBusPerfRecorder.Current != null
+                    ? EventBusPerfRecorder.Current.BuildSummary(sessionId)
+                    : null);
             _core.CompletedLogWritten += OnCompletedLogWritten;
             _core.Subscribe();
         }

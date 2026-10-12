@@ -9,6 +9,7 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Metrics;
 
 namespace SafetyProto.Domain.Sessions
 {
@@ -132,6 +133,10 @@ namespace SafetyProto.Domain.Sessions
             /// collected logs instead of requiring a replay of every event stream.
             /// </summary>
             public List<TaskOutcomeEntry>? tasks;
+
+            /// <summary>EventBus flush and frame-time statistics for this session, matching the
+            /// perf CSV of the same file stem. Absent when the host records no perf data.</summary>
+            public PerfSummary? perf;
         }
 
         /// <summary>
@@ -180,6 +185,7 @@ namespace SafetyProto.Domain.Sessions
         private readonly Func<SessionMode> _modeSource;
         private readonly string _appVersion;
         private readonly string _commit;
+        private readonly Func<string, PerfSummary?>? _perfSource;
         private readonly SemaphoreSlim _writeGate = new SemaphoreSlim(1, 1);
 
         public event Action<string, string, string>? CompletedLogWritten;
@@ -213,7 +219,7 @@ namespace SafetyProto.Domain.Sessions
         private string _mode = string.Empty;
         private bool _completionWriteStarted;
 
-        public SessionLoggerCore(IEventBus eventBus, string outputDirectory, Func<SessionLog, string> serialize, IHarnessLogger? logger = null, Func<string, string>? actionNameResolver = null, Func<string>? outputDirectoryResolver = null, Func<SessionMode>? modeSource = null, string? appVersion = null, string? commit = null)
+        public SessionLoggerCore(IEventBus eventBus, string outputDirectory, Func<SessionLog, string> serialize, IHarnessLogger? logger = null, Func<string, string>? actionNameResolver = null, Func<string>? outputDirectoryResolver = null, Func<SessionMode>? modeSource = null, string? appVersion = null, string? commit = null, Func<string, PerfSummary?>? perfSource = null)
         {
             _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
             _outputDirectory = outputDirectory ?? throw new ArgumentNullException(nameof(outputDirectory));
@@ -224,6 +230,7 @@ namespace SafetyProto.Domain.Sessions
             _modeSource = modeSource ?? (() => SessionModeState.Current);
             _appVersion = appVersion ?? string.Empty;
             _commit = commit ?? string.Empty;
+            _perfSource = perfSource;
 
             _onSessionStarted        = args =>
             {
@@ -366,7 +373,8 @@ namespace SafetyProto.Domain.Sessions
                 totalScore = args.totalScore,
                 tasksCompleted = args.tasksCompleted,
                 totalTasks = args.totalTasks,
-                tasks = BuildTaskOutcomes(args.taskOutcomes)
+                tasks = BuildTaskOutcomes(args.taskOutcomes),
+                perf = _perfSource?.Invoke(_sessionId)
             };
 
             _ = WriteLogAsync(notifyCompletion: true);
@@ -464,7 +472,8 @@ namespace SafetyProto.Domain.Sessions
             totalScore = _lastTotalScore,
             tasksCompleted = _tasksCompletedCount,
             totalTasks = _totalTasks, // from SessionStarted; 0 only if that event never carried it
-            totalElapsedTime = _sessionStartMs > 0 ? (_lastEventMs - _sessionStartMs) / 1000f : 0f
+            totalElapsedTime = _sessionStartMs > 0 ? (_lastEventMs - _sessionStartMs) / 1000f : 0f,
+            perf = _perfSource?.Invoke(_sessionId)
         };
 
         public async Task<string?> WriteLogAsync(bool notifyCompletion = false)
