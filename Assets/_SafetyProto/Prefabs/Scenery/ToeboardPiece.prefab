@@ -246,7 +246,7 @@ GameObject:
   - component: {fileID: 4782799892279696617}
   - component: {fileID: 3758374222100583495}
   m_Layer: 14
-  m_Name: ScaffoldPiece
+  m_Name: ToeboardPiece
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

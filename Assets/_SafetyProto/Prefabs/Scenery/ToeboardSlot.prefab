@@ -75,7 +75,7 @@ GameObject:
   - component: {fileID: 5120052319615870282}
   - component: {fileID: 2677798395002559496}
   m_Layer: 18
-  m_Name: ScaffoldSlot
+  m_Name: ToeboardSlot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

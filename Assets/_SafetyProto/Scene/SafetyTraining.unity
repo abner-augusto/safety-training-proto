@@ -62435,7 +62435,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8118593015515686555, guid: e28ec95080945b9458d8acbd4ed5e6cf, type: 3}
       propertyPath: m_Name
-      value: ScaffoldSlot
+      value: ToeboardSlot
       objectReference: {fileID: 0}
     - target: {fileID: 8118593015515686555, guid: e28ec95080945b9458d8acbd4ed5e6cf, type: 3}
       propertyPath: m_IsActive
@@ -68418,7 +68418,7 @@ PrefabInstance:
       objectReference: {fileID: 516449505}
     - target: {fileID: 972425556055995357, guid: b33fea9bbb0248944a1970bd972e51fa, type: 3}
       propertyPath: m_Name
-      value: ScaffoldPiece
+      value: ToeboardPiece
       objectReference: {fileID: 0}
     - target: {fileID: 9037536387948676839, guid: b33fea9bbb0248944a1970bd972e51fa, type: 3}
       propertyPath: m_LocalPosition.x
