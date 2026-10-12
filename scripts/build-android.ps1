@@ -150,7 +150,9 @@ try {
             Write-Host "  (transient poll failure, retrying)"
             continue
         }
-        $inner = $poll.data.result | ConvertFrom-Json
+        # Pipeline < 0.6 returned the status as a JSON string; newer releases return an object.
+        $inner = $poll.data.result
+        if ($inner -is [string]) { $inner = $inner | ConvertFrom-Json }
         if ($inner.status -eq "building") {
             Write-Host "  building... ($($i + 1)/$MaxPollAttempts)"
             continue
