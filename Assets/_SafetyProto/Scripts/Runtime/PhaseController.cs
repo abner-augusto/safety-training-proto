@@ -99,6 +99,10 @@ namespace SafetyProto.Runtime
         /// the transition executes, Andaime after.</summary>
         public Transform CurrentAnchor => _transitionExecuted ? spawnPointAndaime : startPointCanteiro;
 
+        /// <summary>True from the moment the teleport to the andaime starts until the next
+        /// session start.</summary>
+        public bool IsInAndaimePhase => _transitionExecuted;
+
         public void SetSimulationAutoConfirm(bool enabled) => _simulationAutoConfirm = enabled;
 
         public void CancelSimulationTransition()

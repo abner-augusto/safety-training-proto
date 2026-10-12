@@ -244,6 +244,7 @@ GameObject:
   - component: {fileID: 813077568891646507}
   - component: {fileID: 61129249893678211}
   - component: {fileID: 4782799892279696617}
+  - component: {fileID: 3758374222100583495}
   m_Layer: 14
   m_Name: ScaffoldPiece
   m_TagString: Untagged
@@ -305,7 +306,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 19082e65c62adea43b91a04c3d6d4a31, type: 2}
+  - {fileID: 2100000, guid: 42c578837b0caac4eb9231c24fb3ae2e, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -408,6 +409,10 @@ MonoBehaviour:
   lockAfterInstalled: 1
   disableGrabAfterInstalled: 1
   disableCollidersAfterInstalled: 1
+  revertInstallWhenRefused: 1
+  revertFallbackSeconds: 10
+  waitForPopupOnCodes:
+  - PREREQUISITE_PENDING
   grabbable: {fileID: 61129249893678211}
   handGrabInteractable: {fileID: 0}
   returnHome: {fileID: 4782799892279696617}
@@ -418,6 +423,11 @@ MonoBehaviour:
   idleColor: {r: 1, g: 1, b: 1, a: 0.12}
   validColor: {r: 0.2, g: 0.85, b: 0.35, a: 0.45}
   invalidColor: {r: 1, g: 0.45, b: 0.2, a: 0.35}
+  audioSource: {fileID: 0}
+  installSound: {fileID: 0}
+  validPoseSound: {fileID: 0}
+  invalidReleaseSound: {fileID: 0}
+  installVolume: 1
   onEnteredValidPose:
     m_PersistentCalls:
       m_Calls: []
@@ -428,6 +438,9 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   onInvalidRelease:
+    m_PersistentCalls:
+      m_Calls: []
+  onInstallReverted:
     m_PersistentCalls:
       m_Calls: []
 --- !u!114 &61129249893678211
@@ -493,6 +506,25 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &3758374222100583495
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 972425556055995357}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 471c6e5a94f5e72448d311853e16c297, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Scaffolding.ScaffoldPiecePulseHighlight
+  targetRenderers:
+  - {fileID: 5854065291668720547}
+  viewOrigin: {fileID: 0}
+  phaseController: {fileID: 0}
+  viewHalfAngle: 35
+  maxViewDistance: 5
+  fadeDuration: 0.25
 --- !u!1 &1469211817988118093
 GameObject:
   m_ObjectHideFlags: 0
@@ -826,7 +858,6 @@ MonoBehaviour:
   _data: {fileID: 0}
   _pointableElement: {fileID: 61129249893678211}
   _rigidbody: {fileID: 1590841727089927966}
-  _physicsGrabbable: {fileID: 0}
   _resetGrabOnGrabsUpdated: 1
   _scoringModifier:
     _positionRotationWeight: 0.5
@@ -871,7 +902,6 @@ MonoBehaviour:
   _useClosestPointAsGrabSource: 0
   _releaseDistance: 0
   _resetGrabOnGrabsUpdated: 1
-  _physicsGrabbable: {fileID: 0}
 --- !u!1 &7160617650175437724
 GameObject:
   m_ObjectHideFlags: 0
