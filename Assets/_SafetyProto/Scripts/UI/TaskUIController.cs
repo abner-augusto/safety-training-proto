@@ -36,6 +36,7 @@ namespace SafetyProto.UI
         private Dictionary<ISafetyTask, GameObject>   _taskToGO           = new();
         private Dictionary<ISafetyTask, Coroutine>    _removalCoroutines  = new();
         private ISafetyTask _currentSequentialTask;
+        private bool _prerequisitePending;
         private int _completedVisibleCount = 0;
         private readonly AnimationCurve _scaleCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
@@ -95,6 +96,8 @@ namespace SafetyProto.UI
             _groupTasks.Clear();
 
             _activeGroup  = group;
+            _currentSequentialTask = null;
+            _prerequisitePending = !string.IsNullOrWhiteSpace(group.prerequisiteTaskId);
             _groupTasks   = new List<ISafetyTask>(group.tasks);
             _pendingTasks = new List<ISafetyTask>(_groupTasks);
             _completedVisibleCount = 0;
@@ -131,8 +134,7 @@ namespace SafetyProto.UI
                 }
 
                 entry.Setup(globalOrder, task.taskName);
-                if (IsActiveTask(task))
-                    entry.UpdateState(TaskState.InProgress);
+                entry.SetHighlight(HighlightFor(task));
                 _taskToEntry[task] = entry;
                 _taskToGO[task]    = go;
 
@@ -151,21 +153,48 @@ namespace SafetyProto.UI
             // The started task may still be outside the visible window while the previous one
             // lingers; FillWindow reads this to highlight it once it scrolls in.
             _currentSequentialTask = task;
-            if (_taskToEntry.TryGetValue(task, out var entry))
-                entry.UpdateState(TaskState.InProgress);
+            RefreshHighlights();
         }
 
-        private bool IsActiveTask(ISafetyTask task)
+        private TaskHighlight HighlightFor(ISafetyTask task)
         {
-            if (_activeGroup == null) return false;
-            // FreeOrder tasks can be done in any order, so every pending one is actionable now.
-            return _activeGroup.executionMode == TaskExecutionModeShared.FreeOrder
-                || task == _currentSequentialTask;
+            if (_activeGroup == null) return TaskHighlight.None;
+
+            // While the prerequisite is pending every sibling is refused, so only it may draw the eye.
+            if (_prerequisitePending)
+                return IsPrerequisite(task) ? TaskHighlight.Primary : TaskHighlight.None;
+
+            if (_activeGroup.executionMode == TaskExecutionModeShared.Sequential)
+                return task == _currentSequentialTask ? TaskHighlight.Primary : TaskHighlight.None;
+
+            // Every pending free-order task is actionable now; a whole list at full strength
+            // would drown the text, hence the softer pulse.
+            return TaskHighlight.Secondary;
+        }
+
+        private bool IsPrerequisite(ISafetyTask task) =>
+            string.Equals(task.id, _activeGroup.prerequisiteTaskId, System.StringComparison.OrdinalIgnoreCase);
+
+        private void RefreshHighlights()
+        {
+            foreach (var task in _visibleTasks)
+            {
+                if (_removalCoroutines.ContainsKey(task)) continue;
+                if (_taskToEntry.TryGetValue(task, out var entry))
+                    entry.SetHighlight(HighlightFor(task));
+            }
         }
 
         private void OnTaskCompleted(TaskEventArgs args)
         {
             if (args.Task is not { } task) return;
+
+            if (_prerequisitePending && _activeGroup != null && IsPrerequisite(task))
+            {
+                _prerequisitePending = false;
+                RefreshHighlights();
+            }
+
             if (!_visibleTasks.Contains(task)) return;
 
             var state = args.RuntimeTask?.State ?? TaskState.CompletedSuccess;

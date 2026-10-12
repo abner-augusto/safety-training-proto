@@ -5,6 +5,16 @@ using UnityEngine.UI;
 
 namespace SafetyProto.UI
 {
+    /// <summary>How strongly a pending task row calls for attention.</summary>
+    public enum TaskHighlight
+    {
+        None,
+        /// <summary>Available now but not the one to do first: a free-order sibling.</summary>
+        Secondary,
+        /// <summary>The task to do next: the current sequential task or a pending prerequisite.</summary>
+        Primary
+    }
+
     /// <summary>
     /// Represents a single entry in the task list. Shows order number, task name, highlight state, completion icon,
     /// and auxiliary sprites for "failed once" and "PPE missing" statuses.
@@ -50,25 +60,31 @@ namespace SafetyProto.UI
         public Color pillColor = new Color(0.27f, 0.31f, 0.37f, 1f);
         [Tooltip("Peak of the pulse. Keep it dark enough for the white task name to stay legible.")]
         public Color pillPulseColor = new Color(0.78f, 0.5f, 0.12f, 1f);
+        [Tooltip("Peak of the Secondary pulse. Stays close to pillColor so a whole free-order list pulsing does not compete with the text or a Primary row.")]
+        public Color pillSoftPulseColor = new Color(0.4f, 0.37f, 0.32f, 1f);
         [Tooltip("Seconds per pulse cycle. The panel's overlay canvas redraws every few frames, so short periods strobe.")]
         [SerializeField] private float pulsePeriod = 1.6f;
 
-        private bool _pulsing;
+        private TaskHighlight _highlight;
 
         private void Update()
         {
-            if (!_pulsing || pillImage == null) return;
+            if (_highlight == TaskHighlight.None || pillImage == null) return;
 
             // A shared clock, not a per-row timer, keeps every pulsing row in phase.
             float wave = 0.5f - 0.5f * Mathf.Cos(Time.time * (2f * Mathf.PI / pulsePeriod));
-            pillImage.color = Color.Lerp(pillColor, pillPulseColor, wave);
+            var peak = _highlight == TaskHighlight.Primary ? pillPulseColor : pillSoftPulseColor;
+            pillImage.color = Color.Lerp(pillColor, peak, wave);
         }
 
-        private void SetPulsing(bool pulsing)
+        /// <summary>Sets how a pending row pulses; <see cref="UpdateState"/> overrides it.</summary>
+        public void SetHighlight(TaskHighlight highlight)
         {
-            _pulsing = pulsing;
-            if (!pulsing && pillImage != null)
+            _highlight = highlight;
+            if (highlight == TaskHighlight.None && pillImage != null)
                 pillImage.color = pillColor;
+            if (backgroundImage != null)
+                backgroundImage.color = highlight == TaskHighlight.Primary ? highlightColor : normalColor;
         }
 
         public void Setup(int order, string taskName)
@@ -88,7 +104,9 @@ namespace SafetyProto.UI
 
         public void UpdateState(TaskState newState)
         {
-            SetPulsing(newState == TaskState.InProgress);
+            _highlight = newState == TaskState.InProgress ? TaskHighlight.Primary : TaskHighlight.None;
+            if (_highlight == TaskHighlight.None && pillImage != null)
+                pillImage.color = pillColor;
 
             if (stateIcon == null || backgroundImage == null)
                 return;
