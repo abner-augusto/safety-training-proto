@@ -12,7 +12,8 @@
 > command that produces it. Methods favor reproducible tooling (the declared
 > module reference graph, `git`, coverlet) over black-box analyzers.
 >
-> **Repo state.** Computed on branch `main` at commit `db2dc2a`. Commands are
+> **Repo state.** Computed on branch `main` at commit `c2353c8` (2026-10-12;
+> previously `db2dc2a`). Commands are
 > written relative to the repo root and run under Git Bash on Windows unless
 > noted. `S=Assets/_SafetyProto/Scripts` in the command column.
 
@@ -20,18 +21,35 @@
 
 ## Delta since `v1.0.0`
 
-| Indicator | `v1.0.0` | `main` (`db2dc2a`) |
-|---|---:|---:|
-| Total source files (excl. `Editor/`) | 120 | **145** |
-| Total source LoC | 15,170 | **18,915** |
-| Domain Core files | 16 | **23** |
-| Domain Core LoC | 2,172 | **3,465** |
-| Files without textual `UnityEngine` | 43 | **56** |
-| LoC without textual `UnityEngine` | 3,305 | **4,899** |
-| Files importing Meta XR SDK | 17 | **19** |
-| Shared-library linked `.cs` | 31 | **42** |
-| Headless tests (`dotnet test`) | 46 | **122** |
-| Coverage — line / branch (`SafetyProto.Shared`) | 70.3% / 57.3% | **77.6% / 67.3%** |
+| Indicator | `v1.0.0` | `db2dc2a` | `main` (`c2353c8`) |
+|---|---:|---:|---:|
+| Total source files (excl. `Editor/`) | 120 | 145 | **177** |
+| Total source LoC | 15,170 | 18,915 | **24,007** |
+| Domain Core files | 16 | 23 | **28** |
+| Domain Core LoC | 2,172 | 3,465 | **4,040** |
+| Files without textual `UnityEngine` | 43 | 56 | **67** |
+| LoC without textual `UnityEngine` | 3,305 | 4,899 | **5,897** |
+| Files importing Meta XR SDK | 17 | 19 | **28** (Runtime 22, UI 3, Editor 2, Utils 1; Domain/Core 0) |
+| Shared-library compiled `.cs` | 31 | 42 | **52** ¹ |
+| Typed `UnityEvent<T>` channels | 16 | 15 | **15** ² |
+| Event payload types | 13 | 13 | **16** ² |
+| Headless tests (`dotnet test`) | 46 | 122 | **178** (8 integration) |
+| Coverage — line / branch (`SafetyProto.Shared`) | 70.3% / 57.3% | 77.6% / 67.3% | **82.0% / 70.1%** (1845/2251, 708/1010) |
+| CLI, `default.json` | 9/9, 1400 | 9/9, 1500 | **9/9, 1500** |
+
+¹ `SafetyProto.Shared.csproj` now compiles `Domain/**/*.cs` by glob, so counting
+`<Compile Include=` lines (24) undercounts. The figure is the evaluated item list:
+`dotnet msbuild Tools/SafetyProto.Shared/SafetyProto.Shared.csproj -getItem:Compile`
+(52 items, none under `obj/`).
+
+² `onTaskTimeout` left `EventBus.cs` in `7254fd8` (no runtime producer). The
+payloads added since (`ActionRefusedEventArgs`, `PopupShownEventArgs`,
+`PopupClosedEventArgs`) travel through the generic `Publish<T>` path, not a
+dedicated `UnityEvent` channel. Payloads counted with
+`grep -rhoE 'struct \w+(EventArgs|Event)\b' $S --include=*.cs | sort -u`.
+
+Recomputed on 2026-10-12 for the dissertation (Table "Indicadores de qualidade",
+second column). The coupling graph below is unchanged since `db2dc2a`.
 
 The shape is unchanged; the codebase grew (evaluation mode, the risk model, gaze
 interaction, dashboard command routing) and the headless test suite grew with it.
