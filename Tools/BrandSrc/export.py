@@ -16,6 +16,8 @@ out = Path(sys.argv[1]) if len(sys.argv) > 1 else here.parents[1] / "Assets" / "
 A = "Icons/AppIcon/"
 JOBS = [
     ("banner", "Splash/splash_treinamento_seguranca_virtual_1920x1080.png", 0, "", ""),
+    # Not a Unity asset: the README shows it to readers on a light GitHub theme.
+    ("banner", here.parents[1] / "docs" / "images" / "splash-light.png", 0, "light", ""),
     ("icon", A + "Android/app_icon_adaptive_background.png", 1024, "bg", "none"),
     ("icon", A + "Android/app_icon_adaptive_foreground.png", 1024, "fg", "none"),
     ("icon", A + "Android/app_icon_legacy.png", 1024, "full", "squircle"),

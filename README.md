@@ -1,5 +1,10 @@
 # safety-training-proto
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="Assets/_SafetyProto/Art/Splash/splash_treinamento_seguranca_virtual_1920x1080.png">
+  <img src="docs/images/splash-light.png" alt="Canteiro Seguro: virtual reality safety training for work at height (NR-35, NR-18, NR-06)" width="100%">
+</picture>
+
 Modular VR training system for construction workers on Meta Quest 3, targeting
 compliance with Brazilian occupational safety standards NR-1, NR-18, and NR-35.
 Built in Unity 6 with Meta XR SDK, the Built-in Render Pipeline, and an event-driven architecture that

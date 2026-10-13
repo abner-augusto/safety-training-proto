@@ -15,6 +15,9 @@ html, body { margin: 0; background: transparent; }
     linear-gradient(var(--p-gg) 1px, transparent 1px), linear-gradient(90deg, var(--p-gg) 1px, transparent 1px),
     linear-gradient(var(--p-gf) 1px, transparent 1px), linear-gradient(90deg, var(--p-gf) 1px, transparent 1px);
   background-size: 5cqw 5cqw, 5cqw 5cqw, 1cqw 1cqw, 1cqw 1cqw; background-position: -1px -1px; }
+/* The evaluator dashboard's light theme; README readers on a light GitHub theme get this one. */
+.banner.light { --p-bg:#e9edf3; --p-text:#17222e; --p-muted:#46566a; --p-dim:#6b7a8d; --p-acc:#2264c4;
+  --p-gf: rgba(34,100,196,0.06); --p-gg: rgba(34,100,196,0.13); --p-line: rgba(23,34,46,0.34); --p-ink:#17222e; }
 .txt { position: absolute; left: 7cqw; top: 15cqw; width: 50cqw; display: grid; gap: 1.6cqw; }
 .brand { display: flex; align-items: center; gap: 1cqw; font-family: 'PlexMono', monospace; font-size: 1.25cqw; letter-spacing: 0.16em; text-transform: uppercase; color: var(--p-dim); }
 .brand svg { width: 2cqw; height: 2cqw; color: var(--p-acc); }
@@ -51,15 +54,16 @@ function icon(size, layer, mask) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="${size}" height="${size}"><defs>${clip}</defs><g ${clip ? 'clip-path="url(#m)"' : ""}>${body}</g></svg>`;
 }
 
-function banner() {
-  return `<div class="banner">
+function banner(theme) {
+  const light = theme === "light";
+  return `<div class="banner${light ? " light" : ""}">
     <div class="txt">
       <div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">${SHIELD}${CHECK}</svg> Treinamento em Realidade Virtual</div>
       <h3>Canteiro Seguro</h3>
       <div class="rule"></div>
       <p class="tag">Treinamento de segurança · Trabalho em altura</p>
     </div>
-    <img class="art" src="art/andaime-linha.png" alt="">
+    <img class="art" src="art/andaime-linha${light ? "-light" : ""}.png" alt="">
     <div class="nrs"><span>NR-35</span><span>NR-18</span><span>NR-06</span></div>
     <div class="carimbo"><span>FOLHA <b>01</b></span><span>ANDAIME FACHADEIRO</span><span>UFC · MDCC · CRAb</span></div>
     <div class="z535"></div>
@@ -67,7 +71,7 @@ function banner() {
 }
 
 window.show = (kind, size, layer, mask) => {
-  document.getElementById("stage").innerHTML = kind === "banner" ? banner() : icon(size, layer, mask);
+  document.getElementById("stage").innerHTML = kind === "banner" ? banner(layer) : icon(size, layer, mask);
   const imgs = [...document.querySelectorAll("#stage img")].map(i => i.decode());
   return Promise.all([document.fonts.ready, ...imgs]).then(() => true);
 };
