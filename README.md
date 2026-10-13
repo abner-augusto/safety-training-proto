@@ -14,7 +14,12 @@ training systems with external participant extensibility. Author: Abner Augusto 
 
 ## Architecture at a glance
 
-<img src="Assets/_SafetyProto/Art/event_driven_unity_architecture.svg" alt="Architecture Diagram" width="800"/>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/architecture-dark.svg">
+  <img src="docs/images/architecture-light.svg" alt="Isometric architecture diagram: Unity producers and consumers talk only through a typed EventBus; the domain logic is one shared assembly that the .NET CLI harness also runs" width="100%"/>
+</picture>
+
+<sub>Regenerate with `node docs/architecture/build-diagram.mjs`. Drawn in the style of <a href="https://iso-glow.vercel.app">ISO-GLOW</a>.</sub>
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
