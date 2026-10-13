@@ -149,4 +149,6 @@ The `.NET` CLI harness drives the same engine from JSON scenarios:
 dotnet run --project Tools/CliHarness -- Tools/CliHarness/scenarios/ppe_equip.json
 ```
 
+It prints a transcript to stdout and writes the session log to `harness-output/`, in the same format the headset writes. A second argument picks another output folder, and `--mode=avaliacao` runs evaluation mode instead of the default guided mode.
+
 `Tools/CliHarness/scenarios/ppe_equip.json` shows a focused equip-set group. The canonical `Assets/_SafetyProto/Resources/Scenarios/default.json` combines equip-set and action tasks and includes the scripted playthrough used by the CLI harness.

@@ -141,9 +141,24 @@ game-state changes through the synchronous channel.
 
 ## 4. The event protocol
 
-The protocol vocabulary is the set of payload structs in `Core/EventPayloads.cs`.
-The README carries the full producer/consumer table; the design points worth
-stating here are these:
+The protocol vocabulary is the set of payload structs in `Core/EventPayloads.cs`:
+
+| Event                           | Producer(s)                     | Consumer(s)                           |
+|---------------------------------|---------------------------------|---------------------------------------|
+| `SessionStartedEventArgs`       | `TrainingSessionManager`, harness | `SessionLoggerCore`, UI               |
+| `SessionCompletedEventArgs`     | `TaskManagerCore`               | `SessionLoggerCore`, dashboard, UI    |
+| `ActionAttemptedEvent`          | Unity interactors, `ScriptedActor` | `SafetyRuleEngineCore`, logger      |
+| `PPEStateChangedEventArgs`      | `PPEManager`, `HarnessPPEManager`, `ScriptedActor` | `SafetyRuleEngineCore`, logger |
+| `TaskEventArgs` (Phase: Started/Completed) | `TaskManagerCore`, `SafetyRuleEngineCore` | `TaskManagerCore`, logger, UI, score |
+| `TaskGroupEventArgs` (Phase: Started/Completed) | `TaskManagerCore` | `SafetyRuleEngineCore`, logger, UI |
+| `ScoreChangedEventArgs`         | `ScoreService`                  | UI, logger                            |
+| `SafetyViolationEventArgs`      | `SafetyRuleEngineCore`          | `SafetyAnalyzer`, logger              |
+| `CriticalSafetyFailureEventArgs`| `SafetyAnalyzer`                | UI, logger                            |
+| `ActionRefusedEventArgs`        | `SafetyRuleEngineCore`          | the emitter of the refused attempt (`ScaffoldPieceInstaller`) |
+| `PopupClosedEventArgs`          | `PopupService`                  | gameplay objects waiting on a warning |
+| `PopupShownEventArgs`           | `PopupService`                  | popup camera (`FadeHandOverlay`)      |
+
+The design points worth stating here are these:
 
 - **Phase discriminators.** `TaskEventArgs` and `TaskGroupEventArgs` carry a
   `Phase` field (`Started` / `Completed`) rather than being split
