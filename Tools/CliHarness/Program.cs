@@ -17,16 +17,18 @@ namespace SafetyProto.CliHarness;
 
 public static class Program
 {
+    private const string CanonicalScenarioRelativePath = "Assets/_SafetyProto/Resources/Scenarios/default.json";
+
     public static async Task<int> Main(string[] args)
     {
-        if (args.Length < 1)
+        var positionalArgs = args.Where(a => !a.StartsWith("--", StringComparison.Ordinal)).ToArray();
+        if (positionalArgs.Length > 1 ||
+            positionalArgs.Any(a => a.EndsWith(".json", StringComparison.OrdinalIgnoreCase)))
         {
-            Console.Error.WriteLine("Usage: CliHarness <scenario.json> [output-dir] [--interactive] [--mode=guiado|avaliacao]");
+            Console.Error.WriteLine("Usage: CliHarness [output-dir] [--interactive] [--mode=guiado|avaliacao]");
+            Console.Error.WriteLine($"The harness always plays the canonical scenario ({CanonicalScenarioRelativePath}).");
             return 1;
         }
-
-        var scenarioPath = args[0];
-        var positionalArgs = args.Skip(1).Where(a => !a.StartsWith("--", StringComparison.Ordinal)).ToArray();
         var outputDir = positionalArgs.Length > 0 ? positionalArgs[0] : "harness-output";
         bool interactive = args.Any(a =>
             string.Equals(a, "--interactive", StringComparison.OrdinalIgnoreCase));
@@ -37,9 +39,10 @@ public static class Program
             : SessionMode.Guided;
         SessionModeState.Current = mode;
 
-        if (!File.Exists(scenarioPath))
+        var scenarioPath = FindInRepo(CanonicalScenarioRelativePath);
+        if (scenarioPath == null)
         {
-            Console.Error.WriteLine($"Scenario file not found: {scenarioPath}");
+            Console.Error.WriteLine($"Canonical scenario not found: run from inside the repository ({CanonicalScenarioRelativePath}).");
             return 1;
         }
 
@@ -102,7 +105,7 @@ public static class Program
             outputDirectory: outputDir,
             serialize: SessionLoggerCore.SerializeIndentedOmittingDefaults,
             logger: logger,
-            actionNameResolver: BuildActionNameResolver(scenarioPath),
+            actionNameResolver: BuildActionNameResolver(),
             modeSource: () => mode);
         sessionLogger.Subscribe();
 
@@ -172,30 +175,30 @@ public static class Program
     }
 
     /// <summary>
-    /// Best-effort actionId → friendly-name resolver for nicer harness logs. Walks up from the
-    /// scenario file and the working directory looking for the repo's embedded action catalog
-    /// (<c>Assets/_SafetyProto/Resources/Actions/actions.json</c>). Returns the raw id when the
-    /// catalog can't be found, so the harness works standalone.
+    /// Resolves a repo-relative path by walking up from the working directory, then from the
+    /// harness binary, so <c>dotnet run --project Tools/CliHarness</c> works from any folder
+    /// inside the repository. Returns null outside it.
     /// </summary>
-    private static Func<string, string> BuildActionNameResolver(string scenarioPath)
+    private static string? FindInRepo(string relativePath)
     {
-        const string relative = "Assets/_SafetyProto/Resources/Actions/actions.json";
-        var seeds = new[]
-        {
-            Path.GetDirectoryName(Path.GetFullPath(scenarioPath)),
-            Directory.GetCurrentDirectory()
-        };
-
-        string? catalogPath = null;
-        foreach (var seed in seeds)
+        foreach (var seed in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
         {
             for (var dir = seed; dir != null; dir = Path.GetDirectoryName(dir))
             {
-                var candidate = Path.Combine(dir, relative);
-                if (File.Exists(candidate)) { catalogPath = candidate; break; }
+                var candidate = Path.Combine(dir, relativePath);
+                if (File.Exists(candidate)) return candidate;
             }
-            if (catalogPath != null) break;
         }
+        return null;
+    }
+
+    /// <summary>
+    /// Best-effort actionId → friendly-name resolver for nicer harness logs, read from the repo's
+    /// embedded action catalog. Returns the raw id when the catalog can't be found.
+    /// </summary>
+    private static Func<string, string> BuildActionNameResolver()
+    {
+        var catalogPath = FindInRepo("Assets/_SafetyProto/Resources/Actions/actions.json");
 
         var catalog = catalogPath != null
             ? ActionCatalogLoader.Parse(File.ReadAllText(catalogPath)).Catalog

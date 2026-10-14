@@ -143,12 +143,10 @@ Equip-set task:
 
 ## Testing Without The Headset
 
-The `.NET` CLI harness drives the same engine from JSON scenarios:
+The `.NET` CLI harness drives the same engine through the canonical scenario, `Assets/_SafetyProto/Resources/Scenarios/default.json`, and plays its embedded `script`:
 
 ```bash
-dotnet run --project Tools/CliHarness -- Tools/CliHarness/scenarios/ppe_equip.json
+dotnet run --project Tools/CliHarness
 ```
 
-It prints a transcript to stdout and writes the session log to `harness-output/`, in the same format the headset writes. A second argument picks another output folder, and `--mode=avaliacao` runs evaluation mode instead of the default guided mode.
-
-`Tools/CliHarness/scenarios/ppe_equip.json` shows a focused equip-set group. The canonical `Assets/_SafetyProto/Resources/Scenarios/default.json` combines equip-set and action tasks and includes the scripted playthrough used by the CLI harness.
+It prints a transcript to stdout and writes the session log to `harness-output/`, in the same format the headset writes. An argument picks another output folder, and `--mode=avaliacao` runs evaluation mode instead of the default guided mode. The harness takes no scenario argument, so an edit to `default.json` is exercised on the next run.

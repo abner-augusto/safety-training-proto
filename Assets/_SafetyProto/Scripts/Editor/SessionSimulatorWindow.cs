@@ -42,7 +42,7 @@ namespace SafetyProto.Editor
                     if (GUILayout.Button("Escolher...", GUILayout.Width(80)))
                     {
                         _externalScenarioPath = EditorUtility.OpenFilePanel(
-                            "Escolher cenário JSON", "Tools/CliHarness/scenarios", "json");
+                            "Escolher cenário JSON", "Assets/_SafetyProto/Resources/Scenarios", "json");
                     }
                 }
                 _mode = (SessionMode)EditorGUILayout.EnumPopup("Modo", _mode);

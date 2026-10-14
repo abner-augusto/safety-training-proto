@@ -29,8 +29,8 @@ without putting on a Quest.
    command. The popup service stays active so gameplay feedback can still be tested.
 2. Open `SafetyProto > Session Simulator`.
 3. Leave the loaded scenario selected to replay the scenario `TaskManager` already
-   loaded, or pick an external JSON with **Escolher...** (e.g.
-   `Tools/CliHarness/scenarios/eval_omission.json`). An external file must describe
+   loaded, or pick an external JSON with **Escolher...** (e.g. an omission
+   variant, see [Variant scripts](#variant-scripts)). An external file must describe
    the same groups/tasks/actions as the loaded scenario — see
    [Using an external scenario](#using-an-external-scenario).
 4. Choose **Guiado** or **Avaliação**. The embedded script always comes from the
@@ -122,18 +122,22 @@ with a Portuguese diagnostic naming the mismatch instead of producing a misleadi
 transcript. In practice: copy the loaded scenario, keep its `groups` intact, and
 edit only the `script`.
 
-## Example scenarios
+## Variant scripts
 
-Under `Tools/CliHarness/scenarios/` (all compatible with the default scenario):
+The repository keeps one scenario, the canonical
+`Assets/_SafetyProto/Resources/Scenarios/default.json`; the CLI harness plays only
+that file. To exercise an evaluation path the default script does not reach, copy
+it outside the repository, keep `groups` and `scoring` untouched, and edit only the
+`script`:
 
-- **`eval_omission.json`** — omits the boots (PPE) and the damaged-mesh report,
-  completing everything else. Both show `TASK_NOT_PERFORMED`, the boots at the
-  phase-1 gate and the mesh report at the inspection gate. No visual consequence
-  (neither omitted task has a consequence mapping).
-- **`eval_consequence.json`** — equips all PPE and completes the guardrail, toeboard
-  and mesh report, but omits the lanyard connection (`connect_harness`). At the
-  inspection gate this drives the real blackout consequence — see below.
-- **`ppe_equip.json`** — the focused PPE-only scenario.
+- **Omission:** drop the `Boots` PPE step and the `flag_safety_net` action, and add
+  a `gate` step after the PPE steps and another at the end. Both omitted tasks show
+  `TASK_NOT_PERFORMED`, the boots at the phase-1 gate and the mesh report at the
+  inspection gate. Neither has a consequence mapping, so nothing plays.
+- **Consequence:** drop only the `connect_harness` action and end with a `gate`
+  step. At the inspection gate this drives the real blackout consequence, see below.
+
+Delete the copy afterwards; a committed variant drifts from the canonical scenario.
 
 ## Triggering consequences
 
@@ -144,7 +148,7 @@ is mapped.
 
 The default scene maps exactly one: `connect_harness` (the lanyard) →
 `PlayerFallSimulation` blackout. So omitting the lanyard connection while completing
-the rest — what `eval_consequence.json` does — raises `ConsequenceStarted`/`Ended`
+the rest — the consequence variant above — raises `ConsequenceStarted`/`Ended`
 plus a `CriticalSafetyFailure` ("Trabalhou desconectado"). Omitting a task with no
 mapping (e.g. the mesh report) is still recorded as `TASK_NOT_PERFORMED` but plays
 no animation.
