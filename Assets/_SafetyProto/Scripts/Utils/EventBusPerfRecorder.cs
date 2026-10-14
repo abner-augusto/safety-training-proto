@@ -60,7 +60,7 @@ namespace SafetyProto.Utils
             Current = this;
             EventBus.FlushProbe = this;
             EventBus.Instance.onSessionStarted.AddListener(OnSessionStarted);
-            EventBus.Instance.onSessionCompleted.AddListener(OnSessionCompleted);
+            EventBus.Instance.onSessionCompleted.AddListener(StopBeforeSessionLoggerSummary);
             EventBus.Instance.onSessionEnded.AddListener(OnSessionEnded);
         }
 
@@ -73,7 +73,7 @@ namespace SafetyProto.Utils
             if (EventBus.Instance != null)
             {
                 EventBus.Instance.onSessionStarted.RemoveListener(OnSessionStarted);
-                EventBus.Instance.onSessionCompleted.RemoveListener(OnSessionCompleted);
+                EventBus.Instance.onSessionCompleted.RemoveListener(StopBeforeSessionLoggerSummary);
                 EventBus.Instance.onSessionEnded.RemoveListener(OnSessionEnded);
             }
 
@@ -153,7 +153,7 @@ namespace SafetyProto.Utils
             _recording = true;
         }
 
-        private void OnSessionCompleted(SessionCompletedEventArgs _) => StopAndWrite(background: true);
+        private void StopBeforeSessionLoggerSummary(SessionCompletedEventArgs _) => StopAndWrite(background: true);
 
         private void OnSessionEnded(SessionEndedEventArgs _) => StopAndWrite(background: true);
 

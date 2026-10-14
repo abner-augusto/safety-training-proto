@@ -55,7 +55,9 @@ namespace SafetyProto.Networking.Dashboard
         /// <summary>The layout DTO, captured at scene start. Install spots do not move, so it is cached.</summary>
         public SceneLayoutDto Build() => _cached ??= BuildFrom(floors, markers, this);
 
-        private void Start() => Build();
+        private void Start() => CaptureLayoutBeforeScaffoldCollapse();
+
+        private void CaptureLayoutBeforeScaffoldCollapse() => Build();
 
         /// <summary>Floor ids, then marker ids: the session simulator's move targets.</summary>
         public IReadOnlyList<string> WaypointIds

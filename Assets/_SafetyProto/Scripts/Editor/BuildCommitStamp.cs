@@ -20,7 +20,7 @@ namespace SafetyProto.Editor
         public void OnPreprocessBuild(BuildReport report)
         {
             string projectRoot = Directory.GetParent(Application.dataPath)!.FullName;
-            string commit = BuildCommit.Describe(projectRoot);
+            string commit = ComputeStamp(projectRoot);
 
             File.WriteAllText(Path.Combine(projectRoot, BuildCommit.AssetPath), commit);
             AssetDatabase.ImportAsset(BuildCommit.AssetPath, ImportAssetOptions.ForceSynchronousImport);
@@ -33,6 +33,8 @@ namespace SafetyProto.Editor
             else
                 Debug.Log($"[BuildCommitStamp] Build stamped with commit {commit}.");
         }
+
+        private static string ComputeStamp(string projectRoot) => BuildCommit.Describe(projectRoot);
 
         public void OnPostprocessBuild(BuildReport report) =>
             AssetDatabase.DeleteAsset(BuildCommit.AssetPath);
