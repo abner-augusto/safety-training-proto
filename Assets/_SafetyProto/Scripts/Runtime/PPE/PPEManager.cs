@@ -75,45 +75,35 @@ namespace SafetyProto.Runtime.PPE
         public bool AreAllRequiredPPEWorn(List<PPEType> requiredPPEList)
         {
             if (requiredPPEList == null || requiredPPEList.Count == 0)
-            {
                 return true;
-            }
 
             foreach (PPEType ppe in requiredPPEList)
             {
-                if (!IsWearing(ppe))
-                {
+                if (!_wornPPE.TryGetValue(ppe, out var obj) || obj == null)
                     return false;
-                }
             }
             return true;
         }
 
-        public bool CheckAndEvictPPECompliance(List<PPEType> requiredPpe)
+        /// <summary>Marks as not worn any listed PPE that has drifted beyond the compliance distance.</summary>
+        public void EvictDistantPPE(List<PPEType> ppeList)
         {
-            if (requiredPpe == null || requiredPpe.Count == 0)
-                return true;
+            if (ppeList == null || ppeList.Count == 0 || complianceDistance <= 0f)
+                return;
 
-            bool allValid = true;
-            foreach (var ppe in requiredPpe)
+            var referencePos = _playerTransform != null ? _playerTransform.position : transform.position;
+            foreach (var ppe in ppeList)
             {
                 if (!_wornPPE.TryGetValue(ppe, out var obj) || obj == null)
-                {
-                    allValid = false;
                     continue;
-                }
 
-                var referencePos = _playerTransform != null ? _playerTransform.position : transform.position;
-                if (complianceDistance > 0f && obj.activeInHierarchy &&
+                if (obj.activeInHierarchy &&
                     Vector3.Distance(referencePos, obj.transform.position) > complianceDistance)
                 {
                     _wornPPE.Remove(ppe);
                     PPEEvents.RaisePpeStateChanged(new PPEStateChangedEventArgs(ppe, false));
-                    allValid = false;
                 }
             }
-
-            return allValid;
         }
 
         /// <summary>
@@ -127,8 +117,10 @@ namespace SafetyProto.Runtime.PPE
             var scoring = TaskManager.Instance != null ? TaskManager.Instance.Scoring : ScoringConfig.Default;
             IncidentalChargePolicy.ChargeWrongPpeSelected(
                 EventBus.Instance, ScoreService.Instance, scoring,
-                GetPpeLabel(ppeType), itemName, firstAttemptForItem: _chargedDistractors.Add(itemName));
+                GetPpeLabel(ppeType), itemName, firstAttemptForItem: TryChargeDistractor(itemName));
         }
+
+        private bool TryChargeDistractor(string itemName) => _chargedDistractors.Add(itemName);
 
         private static string GetPpeLabel(PPEType ppeType)
         {

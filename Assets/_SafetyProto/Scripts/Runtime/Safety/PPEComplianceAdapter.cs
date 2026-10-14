@@ -20,7 +20,8 @@ namespace SafetyProto.Runtime.Safety
             if (requiredPpe == null || requiredPpe.Count == 0) return true;
 
             var list = requiredPpe is List<PPEType> existing ? existing : requiredPpe.ToList();
-            return _ppeManager.CheckAndEvictPPECompliance(list);
+            _ppeManager.EvictDistantPPE(list);
+            return _ppeManager.AreAllRequiredPPEWorn(list);
         }
     }
 }
