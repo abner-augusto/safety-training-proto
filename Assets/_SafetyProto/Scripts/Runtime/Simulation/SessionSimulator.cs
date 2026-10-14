@@ -177,8 +177,7 @@ namespace SafetyProto.Runtime.Simulation
                 yield break;
             }
 
-            ScaffoldCollapseSequence.OnBeat -= OnCollapseBeat;
-            ScaffoldCollapseSequence.OnBeat += OnCollapseBeat;
+            AttachRehearsalBeatHandler();
 
             _result.consequences.Clear();
             AddTranscript("Ensaio de colapso iniciado.");
@@ -198,8 +197,7 @@ namespace SafetyProto.Runtime.Simulation
             AddTranscript("Ensaio de colapso concluído — andaime restaurado.");
             RefreshSnapshot();
 
-            if (!IsRunning)
-                ScaffoldCollapseSequence.OnBeat -= OnCollapseBeat;
+            DetachRehearsalBeatHandler();
 
             _busy = false;
             _routine = null;
@@ -212,7 +210,7 @@ namespace SafetyProto.Runtime.Simulation
             _busy = false;
             _inspectionGate?.CancelSimulationProcessing();
 
-            FindFirstObjectByType<ScaffoldCollapseSequence>()?.ResetSession();
+            CancelScaffoldCollapse();
 
             if (IsRunning)
             {
@@ -221,6 +219,25 @@ namespace SafetyProto.Runtime.Simulation
                 RefreshSnapshot();
             }
             Unsubscribe();
+        }
+
+        private static void CancelScaffoldCollapse() =>
+            FindFirstObjectByType<ScaffoldCollapseSequence>()?.ResetSession();
+
+        /// <summary>
+        /// A rehearsal needs only the beat handler. It deliberately avoids <see cref="Subscribe"/>,
+        /// whose <see cref="Unsubscribe"/> counterpart also cancels the inspection gate and phase controller.
+        /// </summary>
+        private void AttachRehearsalBeatHandler()
+        {
+            ScaffoldCollapseSequence.OnBeat -= OnCollapseBeat;
+            ScaffoldCollapseSequence.OnBeat += OnCollapseBeat;
+        }
+
+        private void DetachRehearsalBeatHandler()
+        {
+            if (!IsRunning)
+                ScaffoldCollapseSequence.OnBeat -= OnCollapseBeat;
         }
 
         private IEnumerator RunAllCoroutine()
@@ -339,8 +356,7 @@ namespace SafetyProto.Runtime.Simulation
             Subscribe();
             SessionModeState.Current = mode;
             _result.participantId = ParticipantIdentity.SetSimulatedParticipant();
-            _inspectionGate?.SetSimulationAutoConfirm(true);
-            _phaseController?.SetSimulationAutoConfirm(true);
+            ArmSimulationAutoConfirm();
             _sessionManager.BeginSession();
             _prepared = true;
 
@@ -404,6 +420,21 @@ namespace SafetyProto.Runtime.Simulation
             RefreshSnapshot();
         }
 
+        private void ArmSimulationAutoConfirm()
+        {
+            _inspectionGate?.SetSimulationAutoConfirm(true);
+            _phaseController?.SetSimulationAutoConfirm(true);
+        }
+
+        private bool PhaseTransitionCompletedThisSession =>
+            _phaseController != null && _phaseController.SimulationTransitionCompleted;
+
+        private bool IsPhaseTransitionPending =>
+            _phaseController != null && _phaseController.IsInAndaimePhase;
+
+        private IEnumerator WaitForPhaseTransition(string timeoutMessage) =>
+            WaitUntil(() => PhaseTransitionCompletedThisSession, timeoutMessage, operationTimeoutSeconds);
+
         private IEnumerator ExecuteMove(ScriptStepDef step, int index)
         {
             if (!SimulatedPlayerMover.TryParsePosture(step.Posture, out var posture))
@@ -412,11 +443,10 @@ namespace SafetyProto.Runtime.Simulation
                 yield break;
             }
 
-            if (_phaseController != null && _phaseController.IsInAndaimePhase)
+            if (IsPhaseTransitionPending)
             {
-                yield return WaitUntil(() => _phaseController.SimulationTransitionCompleted,
-                    $"Espera da transição de fase excedeu {operationTimeoutSeconds:F0} s antes de mover o jogador.",
-                    operationTimeoutSeconds);
+                yield return WaitForPhaseTransition(
+                    $"Espera da transição de fase excedeu {operationTimeoutSeconds:F0} s antes de mover o jogador.");
                 if (!IsRunning) yield break;
             }
 
@@ -437,13 +467,13 @@ namespace SafetyProto.Runtime.Simulation
 
                 if (_phaseController != null)
                 {
-                    yield return WaitUntil(() => _phaseController.SimulationTransitionCompleted,
+                    yield return WaitUntil(() => PhaseTransitionCompletedThisSession,
                         $"Espera da transição de fase excedeu {operationTimeoutSeconds:F0} s: o andaime não ficou pronto.",
                         operationTimeoutSeconds);
                 }
                 else
                 {
-                        var before = _taskManager?.GetCurrentGroup();
+                    var before = _taskManager?.GetCurrentGroup();
                     yield return WaitUntil(() => !ReferenceEquals(before, _taskManager?.GetCurrentGroup()),
                         $"Espera da transição de fase excedeu {operationTimeoutSeconds:F0} s: o grupo não avançou.",
                         operationTimeoutSeconds);
