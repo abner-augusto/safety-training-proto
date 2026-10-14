@@ -96,15 +96,7 @@ namespace SafetyProto.Editor
                     updated.Add($"js/{name}.txt");
                 }
 
-                foreach (var txtPath in Directory.GetFiles(jsTargetDir, "*.txt"))
-                {
-                    var name = Path.GetFileNameWithoutExtension(txtPath);
-                    if (sourceNames.Contains(name))
-                        continue;
-
-                    AssetDatabase.DeleteAsset($"{TargetDir}/js/{name}.txt");
-                    deleted.Add($"js/{name}.txt");
-                }
+                PruneOrphanedGenerated(jsTargetDir, sourceNames, deleted);
             }
 
             if (updated.Count > 0 || deleted.Count > 0)
@@ -116,6 +108,20 @@ namespace SafetyProto.Editor
                 Debug.Log($"[DashboardSourceSync] Deleted {deleted.Count} orphan file(s): {string.Join(", ", deleted)}");
             if (updated.Count == 0 && deleted.Count == 0 && verbose)
                 Debug.Log("[DashboardSourceSync] All dashboard files already in sync (0 files updated).");
+        }
+
+        // Resources/Dashboard/js/ is 100% generated, so a .txt with no source .js is deleted along with its .meta.
+        private static void PruneOrphanedGenerated(string jsTargetDir, HashSet<string> sourceNames, List<string> deleted)
+        {
+            foreach (var txtPath in Directory.GetFiles(jsTargetDir, "*.txt"))
+            {
+                var name = Path.GetFileNameWithoutExtension(txtPath);
+                if (sourceNames.Contains(name))
+                    continue;
+
+                AssetDatabase.DeleteAsset($"{TargetDir}/js/{name}.txt");
+                deleted.Add($"js/{name}.txt");
+            }
         }
 
         /// <summary>Sync before every player build so the APK never ships a stale dashboard.</summary>
