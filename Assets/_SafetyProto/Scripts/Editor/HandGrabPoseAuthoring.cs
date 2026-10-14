@@ -38,21 +38,7 @@ namespace SafetyProto.Editor
                 return;
             }
 
-            item.isKinematic = true;
-            item.useGravity = false;
-            foreach (HandPhysicsCapsules capsules in Object.FindObjectsByType<HandPhysicsCapsules>())
-                capsules.enabled = false;
-            foreach (HandSurfaceLimiter limiter in Object.FindObjectsByType<HandSurfaceLimiter>())
-                limiter.enabled = false;
-
-            // The ISDK recorder stores every active HandGrabInteractable under the item; hide the others.
-            foreach (HandGrabInteractable existing in item.GetComponentsInChildren<HandGrabInteractable>())
-            {
-                if (existing.GetComponents<Component>().Length > 2)
-                    Object.Destroy(existing);
-                else
-                    existing.gameObject.SetActive(false);
-            }
+            PrepareItemForRecording(item);
 
             var wizard = EditorWindow.GetWindow<HandGrabPoseWizard>();
             wizard.titleContent = new GUIContent("Hand Grab Pose Recorder");
@@ -297,6 +283,39 @@ namespace SafetyProto.Editor
 
         private static string InteractableName(int index) => $"HandGrabInteractable_{index:00}";
 
+        private static void PrepareItemForRecording(Rigidbody item)
+        {
+            item.isKinematic = true;
+            item.useGravity = false;
+            foreach (HandPhysicsCapsules capsules in Object.FindObjectsByType<HandPhysicsCapsules>())
+                capsules.enabled = false;
+            foreach (HandSurfaceLimiter limiter in Object.FindObjectsByType<HandSurfaceLimiter>())
+                limiter.enabled = false;
+
+            // The ISDK recorder stores every active HandGrabInteractable under the item; hide the others.
+            foreach (HandGrabInteractable existing in item.GetComponentsInChildren<HandGrabInteractable>())
+            {
+                if (SharesGameObjectWithOtherComponents(existing))
+                    Object.Destroy(existing);
+                else
+                    existing.gameObject.SetActive(false);
+            }
+        }
+
+        /// <summary>
+        /// True when the interactable sits on a GameObject that also hosts another component
+        /// (the controller GrabInteractable), so only the component, not the object, may be removed.
+        /// </summary>
+        private static bool SharesGameObjectWithOtherComponents(HandGrabInteractable interactable)
+        {
+            foreach (Component component in interactable.GetComponents<Component>())
+            {
+                if (component is Transform || component == interactable) continue;
+                return true;
+            }
+            return false;
+        }
+
         private static int RemovePoselessInteractables(Rigidbody item)
         {
             int removed = 0;
@@ -304,7 +323,7 @@ namespace SafetyProto.Editor
             {
                 if (interactable.HandGrabPoses.Count > 0)
                     continue;
-                if (interactable.GetComponents<Component>().Length > 2)
+                if (SharesGameObjectWithOtherComponents(interactable))
                     Object.DestroyImmediate(interactable);
                 else
                     Object.DestroyImmediate(interactable.gameObject);
