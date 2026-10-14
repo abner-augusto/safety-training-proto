@@ -50,8 +50,10 @@ namespace SafetyProto.Runtime.Task
         private void Awake()
         {
             Instance = this;
-            _runtimeGroups = LoadRuntimeGroups();
+            LoadScenario();
         }
+
+        private void LoadScenario() => _runtimeGroups = LoadRuntimeGroups();
 
         /// <summary>Total number of tasks across all groups in the loaded scenario.</summary>
         public int TotalTaskCount
@@ -96,6 +98,11 @@ namespace SafetyProto.Runtime.Task
 
             _core.Subscribe();
 
+            WireListeners();
+        }
+
+        private void WireListeners()
+        {
             _onSessionCompleted = _ => _core?.ForceCompleteAllPendingTasks();
             EventBus.Instance!.onSessionCompleted.AddListener(_onSessionCompleted);
 
