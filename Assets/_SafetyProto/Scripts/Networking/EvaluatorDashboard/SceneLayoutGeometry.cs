@@ -14,11 +14,15 @@ namespace SafetyProto.Networking.Dashboard
         /// component. False only for a missing source.</summary>
         public static bool TryGetLocalBounds(Component source, out Bounds bounds)
         {
+            // `case null` misses Unity's fake-null for an unassigned field; the overloaded == catches it.
+            if (source == null)
+            {
+                bounds = default;
+                return false;
+            }
+
             switch (source)
             {
-                case null:
-                    bounds = default;
-                    return false;
                 case Renderer renderer:
                     bounds = renderer.localBounds;
                     return true;
