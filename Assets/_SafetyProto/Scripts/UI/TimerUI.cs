@@ -74,12 +74,8 @@ namespace SafetyProto.UI
             bool countingUp = timerSystem != null && timerSystem.IsCountingUp;
             ApplyLabel(countingUp);
 
-            // A group with no time limit reaches zero at the start, not at a missed deadline:
-            // the red "esgotado" state must never fire for it.
             if (countingUp || seconds > 0f)
             {
-                // A hold taken before the group starts (focus loss, an open popup) would otherwise
-                // show a frozen white clock that reads as "timer never started".
                 WriteClock(seconds, SessionPause.IsPaused ? Color.yellow : Color.white);
                 return;
             }

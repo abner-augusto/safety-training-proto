@@ -78,7 +78,6 @@ namespace SafetyProto.UI
 
                 for (float t = 0f; t < fade; t += Time.unscaledDeltaTime)
                 {
-                    // Staggered so two unrelated poses never sit fully overlaid mid-transition.
                     float k = t / fade;
                     SetAlpha(_front, 1f - Mathf.SmoothStep(0f, 1f, k / 0.6f));
                     SetAlpha(_back, Mathf.SmoothStep(0f, 1f, (k - 0.4f) / 0.6f));

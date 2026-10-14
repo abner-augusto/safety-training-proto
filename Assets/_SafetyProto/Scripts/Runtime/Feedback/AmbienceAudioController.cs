@@ -152,7 +152,7 @@ namespace SafetyProto.Runtime.Feedback
             src.clip = clip;
             src.loop = true;
             src.playOnAwake = false;
-            src.spatialBlend = 0f; // 2D Stereo
+            src.spatialBlend = 0f;
             src.spatialize = false;
             src.volume = 0f;
             return src;
@@ -183,7 +183,6 @@ namespace SafetyProto.Runtime.Feedback
         {
             float playerY = playerHead != null ? playerHead.position.y : groundElevationY;
 
-            // Calculate elevation factor (0.0 at ground, 1.0 at scaffold deck or higher)
             float elevationRange = Mathf.Max(0.1f, scaffoldDeckElevationY - groundElevationY);
             float elevationFactor = Mathf.Clamp01((playerY - groundElevationY) / elevationRange);
 

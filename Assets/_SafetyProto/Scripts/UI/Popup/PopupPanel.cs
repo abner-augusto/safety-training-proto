@@ -72,17 +72,12 @@ namespace SafetyProto.UI
         private Coroutine _autoCloseCoroutine;
         private CanvasGroup _canvasGroup;
 
-        // Resolved from actionButtonRoot/inputFieldRoot so no extra Inspector wiring is needed.
-        // Used to lock the action button while a required input field is empty.
         private Button _actionButton;
         private TMP_InputField _inputField;
         private bool _gateActionOnInput;
 
-        // Clones of actionButtonRoot instantiated per PopupData.choiceOptions. Tracked so the
-        // next Show() (choice or not) can tear them down instead of leaking one set per popup.
         private readonly List<GameObject> _choiceButtons = new List<GameObject>();
 
-        // Built once on first use and kept; Show() only toggles it.
         private GameObject _keypadRoot;
         private int _keypadMaxDigits;
         private PopupIllustration _illustration;
@@ -139,8 +134,6 @@ namespace SafetyProto.UI
                 bool showIcon = !hideIconRow && (data.customIcon != null || data.type != PopupType.Normal);
                 iconImage.gameObject.SetActive(showIcon);
 
-                // The icon sits inside a fixed-height row (IconBackground); hiding only the
-                // image would leave that empty row taking the height hideIcon is meant to free.
                 var iconRow = iconImage.transform.parent;
                 if (iconRow != null && iconRow != transform && iconRow != layoutRoot)
                     iconRow.gameObject.SetActive(!hideIconRow);
@@ -191,14 +184,12 @@ namespace SafetyProto.UI
             {
                 EnsureKeypad();
                 _keypadMaxDigits = Mathf.Max(1, data.keypadMaxDigits);
-                // Read-only keeps Horizon OS from opening its own keyboard over the panel;
-                // assigning .text still raises onValueChanged, so the action gate keeps working.
+                // Read-only stops Horizon OS from opening its system keyboard over the panel.
                 if (_inputField != null) _inputField.readOnly = true;
             }
             if (_keypadRoot != null)
                 _keypadRoot.SetActive(useKeypad);
 
-            // Lock the action button until the participant types a name (or uses Pular/Skip).
             _gateActionOnInput = isInteractive && data.showInputField && data.requireInputForAction;
             RefreshActionInteractable();
 
@@ -217,7 +208,6 @@ namespace SafetyProto.UI
 
             Shown?.Invoke();
 
-            // Optional auto-close. Interactive popups never close on their own — they require a user click.
             StopAutoClose();
             if (!isInteractive && data.autoCloseSeconds > 0f)
                 _autoCloseCoroutine = StartCoroutine(AutoCloseRoutine(data.autoCloseSeconds));
@@ -263,7 +253,6 @@ namespace SafetyProto.UI
 
         public void OnActionButtonPressed()
         {
-            // Safety net: ignore presses while gated empty, even if something re-enables the button.
             if (_gateActionOnInput && string.IsNullOrWhiteSpace(_inputField != null ? _inputField.text : null))
                 return;
 
@@ -401,14 +390,11 @@ namespace SafetyProto.UI
                 buttonLayout.preferredHeight = keypadCellSize.y;
             }
 
-            // The clone keeps the action button's persistent OnActionButtonPressed call, which
-            // would submit the popup on the first digit. Switch only that call off so the
-            // authored click audio still plays.
+            // Persistent listeners are copied onto clones; disable OnActionButtonPressed so a digit does not submit.
             for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++)
                 if (button.onClick.GetPersistentMethodName(i) == nameof(OnActionButtonPressed))
                     button.onClick.SetPersistentListenerState(i, UnityEngine.Events.UnityEventCallState.Off);
 
-            // Cloned while the gated action button may be non-interactable.
             button.interactable = true;
             button.onClick.AddListener(() => onPressed(label));
         }

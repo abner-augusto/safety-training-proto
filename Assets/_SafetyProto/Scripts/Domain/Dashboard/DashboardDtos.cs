@@ -2,9 +2,7 @@ using System;
 
 namespace SafetyProto.Domain.Dashboard
 {
-    // Wire DTOs broadcast to the evaluator dashboard over WebSocket. Field names are the
-    // protocol - the dashboard JS reads them off the JSON, so never rename a field.
-
+    // Wire DTOs for the evaluator dashboard WebSocket; its JS reads these field names, so do not rename them.
     [Serializable]
     public struct SessionDto
     {
@@ -57,9 +55,6 @@ namespace SafetyProto.Domain.Dashboard
         public string expectedAction;
         public string[] requiredPpe;
         public int successPoints;
-        // Points lost to an unsafe (missing-PPE) completion, derived from the scenario's
-        // ScoringConfig - no longer an authored per-task field. There is no counterpart for
-        // a task left undone: that outcome forfeits successPoints and subtracts nothing.
         public int ppePenalty;
         public string status;
         public long timestampMs;

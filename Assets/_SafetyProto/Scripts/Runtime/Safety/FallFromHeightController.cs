@@ -78,7 +78,6 @@ namespace SafetyProto.Runtime.Safety
 
         private void OnLanyardLocked(bool isCorrectAnchor)
         {
-            // Only a correct anchor protects the player. A wrong anchor must still let them fall.
             if (isCorrectAnchor) SuspendFall();
             else RestoreFall();
         }
@@ -124,7 +123,6 @@ namespace SafetyProto.Runtime.Safety
                 yield break;
             }
 
-            // Make sure gravity is active for the drop (the off-tether state).
             RestoreFall();
 
             yield return collapse.Play();
@@ -132,7 +130,6 @@ namespace SafetyProto.Runtime.Safety
 
         public void ResetSession()
         {
-            // Never leave the next session with gravity suspended from a prior anchored state.
             if (locomotor != null) locomotor.GravityFactor = _defaultGravityFactor;
             _fallSuspended = false;
         }

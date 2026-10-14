@@ -132,7 +132,6 @@ namespace SafetyProto.Runtime.PPE
         private static readonly int TriggerOpenClose  = Animator.StringToHash("Open_Close");
         private static readonly int TriggerCloseOpen  = Animator.StringToHash("Close_Open");
 
-        // Reusable buffer for OverlapSphere (no alloc per frame)
         private readonly Collider[] _overlapBuffer = new Collider[16];
 
         private void Awake()
@@ -147,7 +146,6 @@ namespace SafetyProto.Runtime.PPE
             _verletLanyard = GetComponent<VerletLanyard>();
             if (_verletLanyard == null)
                 _verletLanyard = gameObject.AddComponent<VerletLanyard>();
-
 
         }
 
@@ -273,7 +271,6 @@ namespace SafetyProto.Runtime.PPE
 
             if (state == LanyardState.Locked)
             {
-                // Player is pulling the tip out of a locked anchor — unlock
                 Unlock();
             }
 
@@ -302,10 +299,8 @@ namespace SafetyProto.Runtime.PPE
         {
             state = LanyardState.Idle;
 
-            // Keep the tip outside the harness Grabbable hierarchy.
             transform.SetParent(null);
 
-            // Snap to harness immediately (no lerp pop on first frame)
             if (harnessAttachPoint != null)
             {
                     transform.SetPositionAndRotation(
@@ -313,7 +308,6 @@ namespace SafetyProto.Runtime.PPE
                     RestRotation);
             }
 
-            // Kinematic while idle (no physics jitter)
             if (!_rb.isKinematic)
             {
                 _rb.linearVelocity = Vector3.zero;
@@ -334,10 +328,8 @@ namespace SafetyProto.Runtime.PPE
             state = LanyardState.Pulling;
             _nearAnchor = false;
 
-            // Un-parent so the hand can move it freely
             transform.SetParent(null);
 
-            // Enable physics for hand tracking
             _rb.isKinematic = false;
 
             _rb.useGravity = false;
@@ -345,20 +337,15 @@ namespace SafetyProto.Runtime.PPE
 
         private void CheckAnchorProximity()
         {
-            // Hysteresis: enter the near-zone at anchorSearchRadius, but only leave it once
-            // the tip is well outside (anchorSearchRadius * release). Without the wider exit
-            // band, hand-tracking jitter at the exact boundary toggles isNear every frame and
-            // re-fires the Close_Open / Open_Close triggers, replaying the gate transition
-            // clips on a loop while the player hovers near the anchor.
             float radius = _nearAnchor
                 ? anchorSearchRadius * anchorReleaseHysteresis
                 : anchorSearchRadius;
             bool isNear = FindNearestAnchor(radius) != null;
 
             if (isNear && !_nearAnchor)
-                FireTrigger(TriggerCloseOpen);  // gate opens as tip approaches anchor
+                FireTrigger(TriggerCloseOpen);
             else if (!isNear && _nearAnchor)
-                FireTrigger(TriggerOpenClose);  // gate closes when tip leaves without locking
+                FireTrigger(TriggerOpenClose);
 
             _nearAnchor = isNear;
         }
@@ -392,7 +379,6 @@ namespace SafetyProto.Runtime.PPE
 
             EmitConnectAction(anchor);
 
-            // Snap gate closed
             FireTrigger(TriggerOpenClose);
 
             PlayLockAudio();
@@ -413,7 +399,7 @@ namespace SafetyProto.Runtime.PPE
 
             _lockedAnchor = null;
 
-            FireTrigger(TriggerCloseOpen);  // gate opens as player pulls tip free
+            FireTrigger(TriggerCloseOpen);
             transform.SetParent(null);
             if (!_isGrabbed) EnterRetracting();
         }
@@ -427,7 +413,6 @@ namespace SafetyProto.Runtime.PPE
 
         private IEnumerator RetractSequence()
         {
-            // Phase 1: Enable gravity and Verlet rope, let it fall naturally
             _rb.isKinematic = false;
             _rb.useGravity = true;
 
@@ -438,14 +423,11 @@ namespace SafetyProto.Runtime.PPE
                 yield return null;
             }
 
-            // Phase 2: Disable gravity, stop all velocity, then go kinematic and retract
             _rb.useGravity = false;
             _rb.linearVelocity = Vector3.zero;
             _rb.angularVelocity = Vector3.zero;
             _rb.isKinematic = true;
 
-
-            // Phase 3: Smoothly retract
             Vector3 startPos = transform.position;
             Quaternion startRot = transform.rotation;
 
@@ -465,7 +447,6 @@ namespace SafetyProto.Runtime.PPE
 
                 transform.position = Vector3.Lerp(startPos, targetPos, t);
                 transform.rotation = Quaternion.Slerp(startRot, targetRot, t);
-
 
                 yield return null;
             }
@@ -501,7 +482,7 @@ namespace SafetyProto.Runtime.PPE
                 if (audioSource == null)
                 {
                     audioSource = gameObject.AddComponent<AudioSource>();
-                    audioSource.spatialBlend = 1f; // 3D HRTF
+                    audioSource.spatialBlend = 1f;
                     audioSource.spatialize = true;
                     audioSource.playOnAwake = false;
                     audioSource.rolloffMode = AudioRolloffMode.Logarithmic;

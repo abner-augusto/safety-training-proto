@@ -96,9 +96,7 @@ namespace SafetyProto.Runtime.Feedback
         {
             if (evt.Type == PointerEventType.Select)
             {
-                // Only cancel an in-progress return when something is genuinely holding the
-                // object. Guards against spurious Select events from the Meta SDK firing after
-                // Unselect (e.g. interactor handoff / hand-tracking re-acquisition).
+                // Meta SDK can fire Select after Unselect (interactor handoff); only cancel when actually held.
                 bool actuallyGrabbed = _grabbable.SelectingPointsCount > 0;
                 _isGrabbed = actuallyGrabbed;
 
@@ -114,8 +112,6 @@ namespace SafetyProto.Runtime.Feedback
             }
             else if (evt.Type == PointerEventType.Unselect || evt.Type == PointerEventType.Cancel)
             {
-                // Use SelectingPointsCount so releasing one hand while the other still holds
-                // does not start the return timer prematurely.
                 bool actuallyGrabbed = _grabbable.SelectingPointsCount > 0;
                 _isGrabbed = actuallyGrabbed;
 

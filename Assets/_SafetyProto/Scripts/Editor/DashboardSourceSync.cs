@@ -21,7 +21,6 @@ namespace SafetyProto.Editor
         private const string SourceDir = "Tools/DashboardSrc";
         private const string TargetDir = "Assets/_SafetyProto/Resources/Dashboard";
 
-        // source file -> (target file, banner comment)
         private static readonly (string source, string target, string banner)[] Files =
         {
             ("index.html", "index.txt", "<!-- GENERATED FILE — DO NOT EDIT. Source: Tools/DashboardSrc/index.html (menu: SafetyProto → Sync Dashboard Source) -->"),
@@ -74,9 +73,6 @@ namespace SafetyProto.Editor
                 updated.Add(target);
             }
 
-            // Mirror Tools/DashboardSrc/js/*.js -> Resources/Dashboard/js/<name>.txt.
-            // Resources/Dashboard/js/ is 100% generated, so deletions are mirrored too:
-            // an orphaned .txt with no source .js counterpart is deleted (with its .meta).
             var deleted = new List<string>();
             var jsSourceDir = Path.Combine(sourceDir, "js");
             if (Directory.Exists(jsSourceDir))

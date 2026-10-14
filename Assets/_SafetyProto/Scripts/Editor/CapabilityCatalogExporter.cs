@@ -78,7 +78,6 @@ namespace SafetyProto.Editor
 
         private static string GetProjectRoot()
         {
-            // Application.dataPath is "<root>/Assets".
             return Directory.GetParent(Application.dataPath)!.FullName;
         }
     }

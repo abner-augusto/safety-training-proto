@@ -117,10 +117,7 @@ namespace SafetyProto.Tests.Editor
 
         [Test]
         public void ResetSessionClearsReportedState()
-        {
-            // Cancel first so CancelledReportCount is nonzero going into the reset — otherwise
-            // the assertion below passes trivially whether or not ResetSession actually clears it.
-            _reporter.PopupFeedback = new ScriptedPopup(confirm: false);
+        {            _reporter.PopupFeedback = new ScriptedPopup(confirm: false);
             _reporter.Report();
             EventBus.Instance.ProcessEvents(10);
 

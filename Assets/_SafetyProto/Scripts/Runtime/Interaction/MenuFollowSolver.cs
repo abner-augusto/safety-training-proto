@@ -108,12 +108,9 @@ namespace SafetyProto.Runtime.Interaction
         private float _lockedHeight;
         private bool _hasLockedHeight;
 
-        // Last valid flattened head-forward, reused when the head looks straight up or down and the
-        // projection onto the horizontal plane is degenerate.
         private Vector3 _lastFlatForward = Vector3.forward;
 
-        // SmoothDamp only approaches its target asymptotically, so the disengage test needs a small
-        // tolerance on top of the settle ring / deadzone fraction to ever fire.
+        // SmoothDamp never reaches its target exactly; the epsilon lets the disengage test fire.
         private const float AngleSettleEpsilonDegrees = 0.5f;
         private const float DistanceSettleEpsilonMetres = 0.01f;
 
@@ -181,9 +178,6 @@ namespace SafetyProto.Runtime.Interaction
             Vector3 nextPosition = current.Position;
             if (_following)
             {
-                // Ease toward the inner settle ring (and back to follow distance) — not the outer
-                // cone edge, so the follow can actually reach its target and relax rather than
-                // trailing the head forever.
                 Vector3 positionTarget = SolveSettleTarget(current.Position, headPosition, headRotation);
 
                 nextPosition = Vector3.SmoothDamp(current.Position, positionTarget,

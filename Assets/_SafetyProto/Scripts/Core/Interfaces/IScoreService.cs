@@ -24,6 +24,6 @@ namespace SafetyProto.Core.Interfaces
         void SubtractPoints(int amount, string reason, string taskId);
 
         /// <summary>Raised every time the score changes.</summary>
-        event Action<int /*newScore*/, int /*delta*/, string /*reason*/, string /*taskId*/> ScoreChanged;
+        event Action<int, int, string, string> ScoreChanged;
     }
 }

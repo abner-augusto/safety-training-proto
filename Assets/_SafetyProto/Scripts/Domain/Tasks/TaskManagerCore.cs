@@ -106,14 +106,12 @@ namespace SafetyProto.Domain.Tasks
 
             if (args.RuntimeTask != null)
             {
-                // External caller provided complete instance — copy state.
                 runtimeTask.State = args.RuntimeTask.State;
                 runtimeTask.CompletionTime = args.RuntimeTask.CompletionTime;
                 runtimeTask.HasMissedPPEOnce = args.RuntimeTask.HasMissedPPEOnce;
             }
             else
             {
-                // No external instance — determine state from payload.
                 runtimeTask.CompletionTime = _timer?.ElapsedSeconds ?? 0f;
                 if (runtimeTask.State == TaskState.NotStarted ||
                     runtimeTask.State == TaskState.InProgress)
@@ -380,9 +378,6 @@ namespace SafetyProto.Domain.Tasks
                 var t = _sessionTasks[i];
                 if (!ContainsByReference(currentGroup.tasks, t.TaskData)) continue;
 
-                // Every terminal state must be listed here. Dropping one leaves the group
-                // open forever: the gate closes its tasks, nothing publishes GroupCompleted,
-                // and a later group that depends on this one is skipped in silence.
                 var s = t.State;
                 if (s != TaskState.CompletedSuccess &&
                     s != TaskState.CompletedSuccessButUnsafe &&
@@ -457,11 +452,6 @@ namespace SafetyProto.Domain.Tasks
             _lastSessionSummary = summary;
             _bus.Publish(summary);
 
-            // Domain-level terminal signal, published unconditionally alongside the summary so
-            // any path that reaches EndSession() (normal completion or a group-timeout cascade
-            // via HandleGroupTimeout) drives the session to the same terminal state. Publishing
-            // it here also makes it observable from a pure-domain integration test (no Unity
-            // Mono layer required).
             _bus.Publish(new SessionEndedEventArgs());
         }
 
@@ -582,7 +572,6 @@ namespace SafetyProto.Domain.Tasks
             {
                 var t = tasks[i];
                 if (ReferenceEquals(t, _currentTask.TaskData)) activeIdx = i;
-                // The "owning" step is the first task that introduces this PPE type.
                 if (owningIdx < 0 && TaskExecutionRules.IsEquipTask(t) && RequiresPpe(t, type)) owningIdx = i;
             }
             return activeIdx >= 0 && owningIdx > activeIdx ? tasks[owningIdx] : null;

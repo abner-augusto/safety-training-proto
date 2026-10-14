@@ -48,8 +48,6 @@ namespace SafetyProto.UI
                 return;
             }
 
-            // Resume the session whenever the panel hides, including the close button,
-            // which calls PopupPanel.Hide() directly and never routes through Hide() here.
             popupPanel.Hidden += OnPanelHidden;
             popupPanel.Shown += OnPanelShown;
 
@@ -74,12 +72,8 @@ namespace SafetyProto.UI
 
         private void OnPanelHidden()
         {
-            // A no-op after a transient notice, which never took the hold.
             SessionPause.Release(PauseSource.Popup);
 
-            // Announced for every close (button, dismiss, auto-close) so gameplay objects can
-            // wait for a warning to have been read. Deliberately not tied to the pause pair —
-            // a transient notice pauses nothing but still closes.
             PopupEvents.RaisePopupClosed(_currentReasonCode);
             _currentReasonCode = string.Empty;
         }
@@ -120,7 +114,6 @@ namespace SafetyProto.UI
         {
             if (popupPanel == null) return;
 
-            // PopupPanel.Hide() raises Hidden, which OnPanelHidden uses to resume the session.
             popupPanel.Hide();
         }
 
@@ -137,10 +130,6 @@ namespace SafetyProto.UI
         {
             if (popupPanel == null) return;
 
-            // There is a single shared panel, so showing this would replace whatever is already
-            // up — including the name-entry dialog, which is open during exactly the case the
-            // recenter targets. A courtesy notice must never destroy a prompt the participant
-            // still has to answer, so yield instead.
             if (popupPanel.IsVisible)
             {
                 SafetyLog.Info($"[PopupService] Aviso '{title}' suprimido — outro popup já está visível.", this);
@@ -198,8 +187,6 @@ namespace SafetyProto.UI
                 onSkipPressed     = new UnityEvent(),
             };
 
-            // Both choices close the popup first, then run the caller's callback so a callback
-            // that opens another popup isn't immediately hidden by this one.
             data.onActionPressed.AddListener(() => { Hide(); onConfirm?.Invoke(); });
             data.onSkipPressed.AddListener(() => { Hide(); onCancel?.Invoke(); });
             Show(data);

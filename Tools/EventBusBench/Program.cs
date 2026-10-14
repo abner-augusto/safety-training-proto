@@ -37,7 +37,6 @@ static class Program
 
         var payload = new ActionAttemptedEvent("bench-action");
 
-        // Benchmark 1 & 2: Dispatch latency + Throughput (single subscriber)
         Log("--- Benchmark 1 & 2: Dispatch latency / Throughput ---");
         var latencyResults = new double[Runs];
         for (int r = 0; r < Runs; r++)
@@ -66,7 +65,6 @@ static class Program
         Log($"  Throughput:    {throughput:F0} events/sec");
         Log("");
 
-        // Benchmark 3: Subscriber scaling
         Log("--- Benchmark 3: Subscriber scaling ---");
         int[] subscriberCounts = [1, 10, 100, 1000];
         var scalingResults = new Dictionary<int, double>();
@@ -102,7 +100,6 @@ static class Program
 
         Log("");
 
-        // Benchmark 4: Memory overhead
         Log("--- Benchmark 4: Memory overhead ---");
         var eventTypes = FindEventTypes();
         Log($"  Found {eventTypes.Count} event types: {string.Join(", ", eventTypes.Select(t => t.Name))}");
@@ -138,7 +135,6 @@ static class Program
         Log($"  Delta:       {deltaKB:F1} KB");
         Log("");
 
-        // Generate bench-results.md
         var cpuModel = "see hardware spec";
         try
         {

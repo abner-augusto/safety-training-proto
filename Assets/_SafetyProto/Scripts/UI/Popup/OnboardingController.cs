@@ -117,7 +117,6 @@ namespace SafetyProto.UI
                 ShowNext();
             });
 
-            // Offer a "Pular" button on the very first popup so testers can bypass the intro.
             if (_currentIndex == 0)
             {
                 data.showSkipButton = true;
@@ -149,8 +148,6 @@ namespace SafetyProto.UI
             popupService?.Hide();
         }
 
-        // Single completion path (natural finish, skip, or already-seen auto-skip): tears down the
-        // sequence, optionally records the seen flag, and fires onOnboardingFinished exactly once.
         private void FinishOnboarding()
         {
             if (_finished) return;

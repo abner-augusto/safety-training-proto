@@ -55,8 +55,6 @@ namespace SafetyProto.Runtime.Interaction
             if (_audioSource == null)
                 _audioSource = GetComponent<AudioSource>();
 
-            // With a clip but no source, PlayClickAudio builds one at play time from the
-            // hard-coded values below, so what an author tuned in the scene is not what plays.
             if (_audioSource == null && _clickSound != null)
             {
                 SafetyLog.Warning(

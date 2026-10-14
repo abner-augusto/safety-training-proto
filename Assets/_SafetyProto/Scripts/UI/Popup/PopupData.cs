@@ -13,47 +13,29 @@ namespace SafetyProto.UI
         [TextArea(2, 5)]
         public string body;
 
-        // Optional — overrides the default icon for this type when non-null
         public Sprite customIcon;
 
-        // Hides the icon row entirely, for popups whose content needs the height (keypad).
         public bool hideIcon;
 
-        // Larger illustration shown in place of the icon row; several frames crossfade in a loop.
         public Sprite[] illustrationFrames;
 
-        // Interactive only — ignored for other types
         public string actionButtonLabel;
         public UnityEvent onActionPressed;
 
-        // Optional secondary "Skip" button — used by onboarding to exit the sequence
-        // and as the "Cancel" button in confirmations.
         public bool showSkipButton;
         public UnityEvent onSkipPressed;
 
-        // Optional label for the secondary button (e.g. "Cancel"). Empty keeps the authored
-        // text in the prefab ("Skip").
         public string skipButtonLabel;
 
-        // Optional text field — used by the participant identification screen.
         public bool showInputField;
 
-        // When true (and showInputField), the action button is blocked while the text field
-        // is empty. The participant must type a name or use "Skip".
         public bool requireInputForAction;
 
-        // When true (and showInputField), the field is read-only and filled from an in-panel
-        // numeric keypad instead of the system keyboard. keypadMaxDigits caps the length.
         public bool showNumericKeypad;
         public int keypadMaxDigits = 3;
 
-        // Auto-closes the popup after N seconds. 0 = no timeout (stays until manual action).
-        // Ignored for PopupType.Interactive (requires a user click).
         public float autoCloseSeconds = 0f;
 
-        // N labeled choices (e.g. hazard classification) instead of the fixed action/skip
-        // buttons. Null/empty means "not a choice popup" — actionButtonRoot/skipButtonRoot
-        // keep governing Show() as before.
         public IReadOnlyList<IReportOption> choiceOptions;
         public UnityAction<IReportOption> onChoiceSelected;
     }

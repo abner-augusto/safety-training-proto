@@ -29,7 +29,7 @@ namespace SafetyProto.UI
         private void OnEnable()
         {
             if (targetLabel == null) return;
-            targetLabel.text = $"{prefix}..."; // placeholder while resolving
+            targetLabel.text = $"{prefix}...";
             _ = RefreshAsync();
         }
 
@@ -42,10 +42,8 @@ namespace SafetyProto.UI
         {
             if (targetLabel == null) return;
 
-            // Offload blocking network interface enumeration to a background thread
             string ip = await Task.Run(TryGetLocalIPv4);
 
-            // Back on main thread
             _cachedIp = ip;
             targetLabel.text = string.IsNullOrEmpty(prefix) ? _cachedIp : $"{prefix}{_cachedIp}";
         }
@@ -74,7 +72,6 @@ namespace SafetyProto.UI
             }
             catch (Exception)
             {
-                // ignored – fall back to host name lookup below
             }
 
             try
@@ -88,7 +85,6 @@ namespace SafetyProto.UI
             }
             catch (Exception)
             {
-                // ignored – leave as fallback below
             }
 
             return "Indisponível";

@@ -40,19 +40,14 @@ namespace SafetyProto.Tests.Editor
 
         [Test]
         public void FromGrades_OnlyMaximumOfBothAxesIsIntolerable()
-        {
-            // Guards the band table: dropping either axis one step must fall to Substantial.
-            // This is what makes "Intolerável" mean nothing interposed between worker and harm.
-            Assert.AreEqual(RiskLevel.Substantial, RiskAssessment.FromGrades(5, 4).Level);
+        {            Assert.AreEqual(RiskLevel.Substantial, RiskAssessment.FromGrades(5, 4).Level);
             Assert.AreEqual(RiskLevel.Substantial, RiskAssessment.FromGrades(4, 5).Level);
             Assert.AreEqual(RiskLevel.Intolerable, RiskAssessment.FromGrades(5, 5).Level);
         }
 
         [Test]
         public void FromGrades_ClampsOutOfRangeInsteadOfThrowing()
-        {
-            // One bad grade must not take a whole scenario down with it.
-            var risk = RiskAssessment.FromGrades(severity: 99, probability: 0);
+        {            var risk = RiskAssessment.FromGrades(severity: 99, probability: 0);
 
             Assert.AreEqual(RiskAssessment.MaxGrade, risk.Severity);
             Assert.AreEqual(RiskAssessment.MinGrade, risk.Probability);
@@ -88,13 +83,7 @@ namespace SafetyProto.Tests.Editor
 
         [Test]
         public void EliminatoryThreshold_CoversSubstantialAndAboveOnly()
-        {
-            // Regression guard: the medal rule used to test equality against the single top
-            // tier, so adding a new top tier silently dropped the worst task out of it.
-            // Enumerate every current level explicitly (not a cherry-picked subset), including
-            // one that compares the threshold to itself, so a future tier inserted anywhere in
-            // the order — or a threshold that stops covering its own level — is caught here.
-            Assert.IsFalse(RiskLevel.Trivial >= RiskLevels.EliminatoryThreshold);
+        {            Assert.IsFalse(RiskLevel.Trivial >= RiskLevels.EliminatoryThreshold);
             Assert.IsFalse(RiskLevel.Tolerable >= RiskLevels.EliminatoryThreshold);
             Assert.IsFalse(RiskLevel.Moderate >= RiskLevels.EliminatoryThreshold);
             Assert.IsTrue(RiskLevel.Substantial >= RiskLevels.EliminatoryThreshold);
@@ -103,14 +92,7 @@ namespace SafetyProto.Tests.Editor
 
         [Test]
         public void ScoringConfig_LegacyFlatKeys_PreserveTheOldEconomy()
-        {
-            // Values are deliberately different from ScoringConfig's built-in Defaults
-            // (100/150/200 points, 30/50/100 penalty, 0.7/0.5/0.0 unsafeFactor). Using the
-            // default numbers here would let a broken (or entirely deleted) legacy-key
-            // migration pass by accident, since PointsFor/BasePenaltyFor/UnsafeFactorFor would
-            // fall through to those very same defaults regardless of whether the legacy keys
-            // were ever read.
-            var load = ScenarioLoader.Parse(@"{
+        {            var load = ScenarioLoader.Parse(@"{
                 ""name"": ""legacy"",
                 ""scoring"": {
                     ""criticalPoints"": 220, ""moderatePoints"": 160, ""minorPoints"": 90,
@@ -134,8 +116,6 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual(0.6, scoring.UnsafeFactorFor(RiskLevel.Tolerable));
             Assert.AreEqual(0.4, scoring.UnsafeFactorFor(RiskLevel.Moderate));
             Assert.AreEqual(0.1, scoring.UnsafeFactorFor(RiskLevel.Substantial));
-
-            // Tiers the legacy vocabulary had no word for fall back to the defaults, untouched.
             Assert.AreEqual(50, scoring.PointsFor(RiskLevel.Trivial));
             Assert.AreEqual(250, scoring.PointsFor(RiskLevel.Intolerable));
         }

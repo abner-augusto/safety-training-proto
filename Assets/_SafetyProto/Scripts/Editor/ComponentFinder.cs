@@ -43,7 +43,7 @@ public class ComponentFinderWindow : EditorWindow
             new GUIContent("Component Name", "Type the exact class name, e.g. Rigidbody"),
             _typeName);
         if (EditorGUI.EndChangeCheck())
-            _monoScript = null; // user typed manually — clear the drag slot
+            _monoScript = null;
 
         GUILayout.Space(6);
 
@@ -91,7 +91,6 @@ public class ComponentFinderWindow : EditorWindow
 
             EditorGUILayout.LabelField((i + 1).ToString(), GUILayout.Width(28));
 
-            // Clicking the label selects the object in the Hierarchy
             if (GUILayout.Button(go.name, EditorStyles.label))
                 Selection.activeGameObject = go;
 
@@ -147,7 +146,6 @@ public class ComponentFinderWindow : EditorWindow
             Type t = assembly.GetType(name, throwOnError: false);
             if (t != null) return t;
 
-            // Also try without namespace (match by simple name)
             foreach (var exported in assembly.GetExportedTypes())
                 if (exported.Name == name) return exported;
         }

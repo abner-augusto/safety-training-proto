@@ -1,4 +1,3 @@
-// Assets/_SafetyProto/Tests/Editor/AudioFeedbackManagerTests.cs
 using NUnit.Framework;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
@@ -164,7 +163,6 @@ namespace SafetyProto.Tests.Editor
         {
             SessionModeState.Current = SessionMode.Evaluation;
 
-            // When a task is performed unsafely, both a safety violation and a task completion fire
             EventBus.Instance.RaiseSafetyViolation(new SafetyViolationEventArgs { ViolationCode = "NO_PPE" });
             EventBus.Instance.RaiseTaskCompleted(new TaskEventArgs { WasPpeCompliant = false });
             ProcessEvents();

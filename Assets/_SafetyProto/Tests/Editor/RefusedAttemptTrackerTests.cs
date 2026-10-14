@@ -126,8 +126,6 @@ namespace SafetyProto.Tests.Editor
         {
             var tracker = new RefusedAttemptTracker();
             tracker.Observe(MyAction, MySource, Code, MyAction, MySource, waitForPopup: true, now: 0f, fallbackSeconds: 10f);
-
-            // A second refusal arrives at t=9 — must not push the deadline to t=19.
             tracker.Observe(MyAction, MySource, Code, MyAction, MySource, waitForPopup: true, now: 9f, fallbackSeconds: 10f);
 
             Assert.IsFalse(tracker.TryTakeRevert(9.9f));

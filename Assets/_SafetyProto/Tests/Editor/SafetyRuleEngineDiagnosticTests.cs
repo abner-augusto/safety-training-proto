@@ -25,15 +25,7 @@ namespace SafetyProto.Tests.Editor
 
         [Test]
         public void Diagnostic_ActionAfterGroupStarted_PublishesCompletion_NoActiveGroupViolation()
-        {
-            // The completion assertion is load-bearing: asserting only the ABSENCE of
-            // NO_ACTIVE_GROUP passes even when the engine does nothing at all, because an
-            // empty violations list satisfies it trivially. Do not drop it.
-            //
-            // Two engine instances share the bus to also cover the handler-ordering /
-            // Delegate.Combine bug where one core could receive ActionAttempted before
-            // GroupStarted.
-            var coreA = new SafetyRuleEngineCore(_bus);
+        {            var coreA = new SafetyRuleEngineCore(_bus);
             var coreB = new SafetyRuleEngineCore(_bus);
             coreA.Subscribe();
             coreB.Subscribe();
@@ -51,10 +43,6 @@ namespace SafetyProto.Tests.Editor
             _bus.Publish(new TaskEventArgs(task));
             _bus.Publish(new PPEStateChangedEventArgs(PPEType.GloveLeft, true));
             _bus.Publish(new ActionAttemptedEvent("ppe.putongloves"));
-
-            // Each engine owns its own state and neither guards against a second instance also
-            // completing the same task, so two subscribed engines correctly produce two
-            // completions here — this is the expected shape of THIS fixture, not a bug.
             Assert.AreEqual(2, completions.Count,
                 "Expected both subscribed engines to publish a TaskCompleted for the matched action.");
 
@@ -93,26 +81,12 @@ namespace SafetyProto.Tests.Editor
 
         [Test]
         public void Diagnostic_SubscribeAfterGroupStarted_NeverRecoversForThatGroup()
-        {
-            // The engine has no resync-on-subscribe: OnGroupStarted is the only place that
-            // sets _activeGroup, and OnTaskStarted bails out immediately when _activeGroup is
-            // null (SafetyRuleEngineCore.OnTaskStarted). So an engine that subscribes AFTER a
-            // group's Started event already fired can never recover for that group — not even
-            // once a later task within the same group starts.
-            //
-            // Do not re-publish TaskGroupEventArgs after subscribing: that makes the missed
-            // first publication irrelevant and the test passes whether or not the gap exists.
-            var task = _tasks.Task("t", "a", PPEType.Helmet);
+        {            var task = _tasks.Task("t", "a", PPEType.Helmet);
             var group = _tasks.Group("g", TaskExecutionModeShared.Sequential, task);
-
-            // Group starts before anyone is listening.
             _bus.Publish(new TaskGroupEventArgs(group));
 
             var engine = new SafetyRuleEngineCore(_bus);
             engine.Subscribe();
-
-            // A later task-started event for the SAME group's task fires, but the engine still
-            // has no active group to attach it to.
             _bus.Publish(new TaskEventArgs(task));
             _bus.Publish(new PPEStateChangedEventArgs(PPEType.Helmet, true));
             _bus.Publish(new ActionAttemptedEvent("a"));

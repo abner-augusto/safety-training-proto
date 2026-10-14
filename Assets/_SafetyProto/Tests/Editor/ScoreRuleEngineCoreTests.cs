@@ -68,10 +68,8 @@ namespace SafetyProto.Tests.Editor
         [Test]
         public void TaskCompleted_Unsafe_Critical_EarnsZero_DoesNotThrow_ScoreUnchanged()
         {
-            // Plan-009 regression, re-expressed: AddPoints throws on amount <= 0, so an
-            // unsafe critical completion (which earns 0 under the default config) must
-            // never call it. Use the real ScoreService (not a fake) so the guard in
-            // ScoreRuleEngineCore.ApplyTaskCompletedScoring is actually exercised.
+            // AddPoints throws on amount <= 0, so a zero-earning completion must never reach it.
+            // The real ScoreService is needed to exercise the guard in ApplyTaskCompletedScoring.
             var task = _builder.Task("t1", "action_a");
             task.riskLevel = RiskLevel.Substantial;
 
@@ -127,8 +125,7 @@ namespace SafetyProto.Tests.Editor
             _core = new ScoreRuleEngineCore(_bus, _score, config: ScoringConfig.Default);
             _core.Subscribe();
 
-            // Non-compliant completion with no RuntimeTask instance: unsafe state is conveyed via
-            // WasPpeCompliant=false (the path SafetyRuleEngineCore uses). The unsafe factor must apply.
+            // Unsafe state without a RuntimeTask is conveyed via WasPpeCompliant=false.
             _bus.Publish(new TaskEventArgs(task, null, TaskPhase.Completed) { WasPpeCompliant = false });
 
             Assert.AreEqual(75, _score.CurrentScore, "150 x moderateUnsafeFactor(0.5) = 75");
@@ -153,9 +150,6 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual(0, _score.CurrentScore);
         }
 
-        // No test for a task-level penalty: this engine has no path that subtracts points from
-        // a task. Not doing one forfeits what it was worth and costs nothing beyond that, so a
-        // higher-risk task already carries a heavier consequence through what it stops earning.
         [Test]
         public void TaskCompleted_NullTask_NoChange()
         {

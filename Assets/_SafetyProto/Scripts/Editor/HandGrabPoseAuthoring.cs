@@ -38,8 +38,6 @@ namespace SafetyProto.Editor
                 return;
             }
 
-            // Frozen so the posing hand cannot shove it; hand physics and the surface limiter are
-            // disabled so the visible hand is exactly the tracked hand the recorder samples.
             item.isKinematic = true;
             item.useGravity = false;
             foreach (HandPhysicsCapsules capsules in Object.FindObjectsByType<HandPhysicsCapsules>())
@@ -47,8 +45,7 @@ namespace SafetyProto.Editor
             foreach (HandSurfaceLimiter limiter in Object.FindObjectsByType<HandSurfaceLimiter>())
                 limiter.enabled = false;
 
-            // The recorder stores every active HandGrabInteractable under the item, so existing
-            // ones are hidden to keep the collection limited to this session's recordings.
+            // The ISDK recorder stores every active HandGrabInteractable under the item; hide the others.
             foreach (HandGrabInteractable existing in item.GetComponentsInChildren<HandGrabInteractable>())
             {
                 if (existing.GetComponents<Component>().Length > 2)
@@ -307,7 +304,6 @@ namespace SafetyProto.Editor
             {
                 if (interactable.HandGrabPoses.Count > 0)
                     continue;
-                // The placeholder shares its GameObject with the controller GrabInteractable.
                 if (interactable.GetComponents<Component>().Length > 2)
                     Object.DestroyImmediate(interactable);
                 else
@@ -326,8 +322,7 @@ namespace SafetyProto.Editor
             GameObject selectedGo = selected.gameObject;
             if (IsSceneInstanceRoot(selectedGo))
             {
-                // Poses loaded with the ISDK recorder's own Load button land on the scene instance
-                // as added overrides; editing the asset would silently ignore them.
+                // ISDK recorder's Load writes overrides onto the scene instance; editing the asset ignores them.
                 int stranded = PrefabUtility.GetAddedGameObjects(selectedGo)
                     .Count(added => added.instanceGameObject.GetComponentInChildren<HandGrabInteractable>(true) != null);
                 if (stranded > 0)
@@ -359,8 +354,7 @@ namespace SafetyProto.Editor
             Debug.Log($"[HandGrabPoseAuthoring] {selectedGo.name}: {inPlace}.");
         }
 
-        // A variant's root is itself an instance of its base, so objects in Prefab Mode or in
-        // loaded prefab contents must be edited in place rather than redirected to a source asset.
+        // Prefab Mode and loaded prefab contents must be edited in place; variant roots are instances of their base.
         private static bool IsSceneInstanceRoot(GameObject go) =>
             PrefabUtility.IsAnyPrefabInstanceRoot(go)
             && PrefabStageUtility.GetPrefabStage(go) == null
@@ -377,7 +371,6 @@ namespace SafetyProto.Editor
             foreach (HandGrabInteractor interactor in Object.FindObjectsByType<HandGrabInteractor>())
             {
                 IHand hand = interactor.Hand;
-                // HandRef forwards to the real Hand component the recorder needs.
                 while (hand is HandRef handRef)
                     hand = handRef.Hand;
                 if (hand is Hand concrete && concrete.Handedness == Handedness.Right)

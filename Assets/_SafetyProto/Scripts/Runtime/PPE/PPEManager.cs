@@ -19,8 +19,6 @@ namespace SafetyProto.Runtime.PPE
         private readonly Dictionary<PPEType, GameObject> _wornPPE = new Dictionary<PPEType, GameObject>();
         private Transform _playerTransform;
 
-        // Unique distractor items already charged this session (penalty is once per
-        // item; every attempt is still logged for the researcher).
         private readonly HashSet<string> _chargedDistractors = new HashSet<string>();
 
         private void Start()
@@ -91,8 +89,6 @@ namespace SafetyProto.Runtime.PPE
             return true;
         }
 
-        // Checks compliance and evicts any PPE that has drifted too far from the player.
-        // Callers should expect this to modify worn PPE state as a side effect.
         public bool CheckAndEvictPPECompliance(List<PPEType> requiredPpe)
         {
             if (requiredPpe == null || requiredPpe.Count == 0)

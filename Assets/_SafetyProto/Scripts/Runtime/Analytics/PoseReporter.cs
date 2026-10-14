@@ -74,11 +74,6 @@ namespace SafetyProto.Runtime.Analytics
                 return;
             }
 
-            // Um EPI com hideWhenEquipped sai da cena ao ser vestido (PPESnapSlot faz
-            // SetActive(false)), mas o Transform continua vivo — se ele seguisse no frame de
-            // pose, o painel desenharia uma caixa fantasma parada no slot. Objetos inativos
-            // ficam fora do frame; o painel continua sabendo que o EPI está vestido pelo
-            // evento PpeChanged, que é independente do stream de pose.
             int activeCount = 0;
             for (int i = 0; i < ppeObjects.Length; i++)
             {

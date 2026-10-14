@@ -39,7 +39,6 @@ namespace SafetyProto.UI
             popupPanel.Hidden += OnPopupHidden;
             _subscribed = true;
 
-            // Sync to the current popup state in case it's already open when we re-enable.
             if (content != null)
                 content.SetActive(!popupPanel.IsVisible);
         }

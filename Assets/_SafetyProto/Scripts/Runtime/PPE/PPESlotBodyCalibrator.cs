@@ -58,8 +58,7 @@ namespace SafetyProto.Runtime.PPE
                 yield break;
             }
 
-            // On Quest, the HMD pose isn't applied to CenterEyeAnchor until a few frames after Start().
-            // Calibrating immediately would cast from Y≈0 and miss any floor above origin.
+            // Quest applies the HMD pose a few frames after Start(); calibrating earlier casts from Y=0.
             float waited = 0f;
             while (_eyeAnchor.position.y < minimumEyeYToCalibrate && waited < trackingWaitTimeout)
             {
@@ -107,7 +106,6 @@ namespace SafetyProto.Runtime.PPE
             }
             else
             {
-                // Proportional fallback — assumes scene floor at world Y = 0.
                 targetWorldY = eyeWorldY * proportionalRatio;
                 SafetyLog.Warning(
                     $"PPESlotBodyCalibrator [{name}]: raycast não encontrou chão (máx {raycastMaxDistance:F1} m)" +
@@ -119,7 +117,6 @@ namespace SafetyProto.Runtime.PPE
 #endif
             }
 
-            // Preserve X and Z; only correct Y relative to the eye anchor.
             var local = transform.localPosition;
             local.y = targetWorldY - eyeWorldY;
             transform.localPosition = local;

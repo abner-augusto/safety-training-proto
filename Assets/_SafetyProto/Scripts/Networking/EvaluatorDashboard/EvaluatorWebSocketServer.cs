@@ -28,9 +28,6 @@ namespace SafetyProto.Networking.Dashboard
         private Thread _listenerThread;
         private volatile bool _running;
 
-        // Event broadcasts defer their JSON serialization + framing to this single
-        // encoder thread, so the main thread never pays that cost during event bursts.
-        // One thread + a FIFO queue preserves message ordering across clients.
         private BlockingCollection<Func<byte[]>> _encodeQueue;
         private Thread _encoderThread;
 
@@ -87,7 +84,6 @@ namespace SafetyProto.Networking.Dashboard
             }
             catch
             {
-                // ignored
             }
 
             lock (_clientLock)
@@ -101,15 +97,15 @@ namespace SafetyProto.Networking.Dashboard
 
             if (_listenerThread != null && _listenerThread.IsAlive)
             {
-                try { _listenerThread.Join(100); } catch { /* ignore */ }
+                try { _listenerThread.Join(100); } catch { }
             }
 
             _encodeQueue?.CompleteAdding();
             if (_encoderThread != null && _encoderThread.IsAlive)
             {
-                try { _encoderThread.Join(100); } catch { /* ignore */ }
+                try { _encoderThread.Join(100); } catch { }
             }
-            try { _encodeQueue?.Dispose(); } catch { /* ignore */ }
+            try { _encodeQueue?.Dispose(); } catch { }
             _encodeQueue = null;
         }
 
@@ -172,9 +168,7 @@ namespace SafetyProto.Networking.Dashboard
             if (!_running || queue == null || queue.IsAddingCompleted)
                 return;
 
-            // Only the (cheap) envelope allocation happens on the calling thread; the
-            // JsonUtility.ToJson + UTF8 encode + framing run on the encoder thread.
-            // JsonUtility.ToJson over a plain [Serializable] struct is thread-safe.
+            // JsonUtility.ToJson is thread-safe only for plain [Serializable] structs.
             var envelope = new Envelope<T> { eventType = eventType, payload = payload };
             try
             {
@@ -186,7 +180,6 @@ namespace SafetyProto.Networking.Dashboard
             }
             catch (InvalidOperationException)
             {
-                // CompleteAdding() was called concurrently during shutdown; drop.
             }
         }
 
@@ -202,12 +195,11 @@ namespace SafetyProto.Networking.Dashboard
                     }
                     catch
                     {
-                        // A single failed encode must not tear down the encoder loop.
                     }
                 }
             }
-            catch (ObjectDisposedException) { /* queue disposed during shutdown */ }
-            catch (InvalidOperationException) { /* CompleteAdding/dispose race */ }
+            catch (ObjectDisposedException) { }
+            catch (InvalidOperationException) { }
         }
 
         private void ListenLoop()
@@ -223,13 +215,12 @@ namespace SafetyProto.Networking.Dashboard
                 }
                 catch (SocketException)
                 {
-                    // Listener stopped or network issue; exit loop if not running.
                     if (!_running)
                         break;
                 }
                 catch
                 {
-                    try { client?.Close(); } catch { /* ignore */ }
+                    try { client?.Close(); } catch { }
                 }
             }
         }
@@ -355,25 +346,23 @@ namespace SafetyProto.Networking.Dashboard
 
                     switch (opcode)
                     {
-                        case 0x1: // Text
+                        case 0x1:
                             var text = Encoding.UTF8.GetString(payload, 0, payloadRead);
                             MessageReceived?.Invoke(conn, text);
                             break;
-                        case 0x9: // Ping
+                        case 0x9:
                             conn.Enqueue(BuildControlFrame(0xA, payload, payloadRead), droppable: false);
                             break;
-                        case 0x8: // Close
+                        case 0x8:
                             DisconnectClient(conn);
                             return;
                         default:
-                            // Unsupported opcodes (e.g. binary) are ignored; the connection stays open.
                             break;
                     }
                 }
             }
             catch
             {
-                // ignore read failures; connection will be closed
             }
             finally
             {
@@ -509,8 +498,8 @@ namespace SafetyProto.Networking.Dashboard
             {
                 Cts.Cancel();
                 Outgoing.Complete();
-                try { SenderThread?.Join(50); } catch { /* ignore */ }
-                try { Client.Close(); } catch { /* ignore */ }
+                try { SenderThread?.Join(50); } catch { }
+                try { Client.Close(); } catch { }
                 Outgoing.Dispose();
             }
         }

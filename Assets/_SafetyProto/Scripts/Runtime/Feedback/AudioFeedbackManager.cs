@@ -29,14 +29,8 @@ namespace SafetyProto.Runtime.Feedback
         [SerializeField, Range(0f, 1f)] private float failureVolume = 0.8f;
         [SerializeField, Range(0f, 1f)] private float criticalVolume = 1.0f;
 
-        // One action commonly raises several feedback events (an unsafe completion publishes
-        // both the PPE violation and the completion itself), so requests are collected during
-        // the frame and only the most important one is played — see AudioFeedbackArbiter.
         private readonly AudioFeedbackArbiter _arbiter = new AudioFeedbackArbiter();
 
-        // The per-clip volumes above were authored as PlayOneShot scales, i.e. relative to the
-        // AudioSource's own volume. Playing through the source directly would drop that factor,
-        // so it is captured once and reapplied.
         private float _baseVolume = 1f;
 
         public AudioClip SuccessClip => successClip;
@@ -82,16 +76,12 @@ namespace SafetyProto.Runtime.Feedback
 
         private void OnTaskCompleted(TaskEventArgs args)
         {
-            // In Evaluation mode, play generic task complete feedback regardless of safety or compliance,
-            // avoiding revealing errors to the player before the scenario ends.
             if (SessionModeState.Current == SessionMode.Evaluation)
             {
                 _arbiter.Request(AudioFeedbackKind.Success);
                 return;
             }
 
-            // RuntimeTask is null when SafetyRuleEngineCore publishes the completion, so
-            // WasPpeCompliant is the authoritative flag for whether the task was safe.
             bool compliant = args.RuntimeTask != null
                 ? args.RuntimeTask.State == TaskState.CompletedSuccess
                 : args.WasPpeCompliant;
@@ -112,14 +102,12 @@ namespace SafetyProto.Runtime.Feedback
 
         private void OnSafetyViolation(SafetyViolationEventArgs _)
         {
-            // Suppress error audio in Evaluation mode so mistakes are not leaked before scenario ends.
             if (SessionModeState.Current == SessionMode.Evaluation) return;
             _arbiter.Request(AudioFeedbackKind.Failure);
         }
 
         private void OnCriticalFailure(CriticalSafetyFailureEventArgs _)
         {
-            // Suppress error audio in Evaluation mode so mistakes are not leaked before scenario ends.
             if (SessionModeState.Current == SessionMode.Evaluation) return;
             _arbiter.Request(AudioFeedbackKind.Critical);
         }
@@ -156,8 +144,6 @@ namespace SafetyProto.Runtime.Feedback
             var clip = ResolveClip(kind);
             if (clip == null || audioSource == null) return;
 
-            // Play (not PlayOneShot) so a clip that does win over what is sounding replaces it
-            // instead of mixing with it — this source belongs to the feedback manager alone.
             audioSource.Stop();
             audioSource.clip = clip;
             audioSource.volume = _baseVolume * ResolveVolume(kind);

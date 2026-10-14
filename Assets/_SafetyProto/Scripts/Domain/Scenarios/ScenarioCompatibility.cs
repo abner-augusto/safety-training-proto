@@ -140,9 +140,6 @@ namespace SafetyProto.Domain.Scenarios
             return values.SetEquals(second);
         }
 
-        // Compares the resolved economy per risk level rather than the raw JSON block, so a
-        // scenario that spells its levels out and one that inherits them from the defaults are
-        // recognised as the same economy.
         private static bool SameScoring(ScoringConfig first, ScoringConfig second)
         {
             if (!first.GateReductionFactor.Equals(second.GateReductionFactor)) return false;

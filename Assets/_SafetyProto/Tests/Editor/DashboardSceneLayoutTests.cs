@@ -29,9 +29,7 @@ namespace SafetyProto.Tests.Editor
 
         [Test]
         public void BuildFrom_SkipsFloorWithoutArea_AndWarns()
-        {
-            // A bare Transform resolves to a point: no rectangle to stand on.
-            var floors = new[] { new DashboardSceneLayout.FloorEntry { id = "flat", source = _go.transform } };
+        {            var floors = new[] { new DashboardSceneLayout.FloorEntry { id = "flat", source = _go.transform } };
 
             LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("flat"));
             var dto = DashboardSceneLayout.BuildFrom(floors, new DashboardSceneLayout.MarkerEntry[0], null);
@@ -71,7 +69,7 @@ namespace SafetyProto.Tests.Editor
             typeof(DashboardSceneLayout).GetMethod("Start",
                     System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
                 .Invoke(layout, null);
-            _go.transform.rotation = Quaternion.Euler(30f, 0f, 0f);   // the collapse tilts the deck later
+            _go.transform.rotation = Quaternion.Euler(30f, 0f, 0f);
 
             Assert.AreEqual(1f, layout.Build().floors[0].qw, 1e-5f);
         }
@@ -104,7 +102,7 @@ namespace SafetyProto.Tests.Editor
             box.size = new Vector3(4f, 0.2f, 1f);
             var spot = new GameObject("spot");
             spot.transform.SetParent(_go.transform, false);
-            spot.transform.localPosition = new Vector3(1f, 1f, 2f);   // beyond the 1 m deck depth
+            spot.transform.localPosition = new Vector3(1f, 1f, 2f);
 
             var layout = _go.AddComponent<DashboardSceneLayout>();
             var so = new UnityEditor.SerializedObject(layout);

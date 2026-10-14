@@ -46,7 +46,6 @@ public class SceneDumper : EditorWindow
         "r_handMeshNode",    "l_handMeshNode",
         "OVRLeftHandDataSource",      "OVRRightHandDataSource",
         "OVRLeftControllerDataSource","OVRRightControllerDataSource",
-        // Subtrees of OVR SDK interactors
         "LeftInteractions",  "RightInteractions",
         "OVRControllerPrefab",
     };
@@ -55,15 +54,13 @@ public class SceneDumper : EditorWindow
         ("LeftInteractions",  "RightInteractions"),
     };
 
-    // Components whose references are always internal ISDK wiring
     private static readonly string[] SkipRefSourceComponents = {
         "HandGrabInteractable",
         "GrabInteractable",
         "HandGrabPose",
         "PointableUnityEventWrapper",
         "TouchHandGrabInteractable",
-        // OVR SDK locomotion/interaction components — they only reference
-        // rig parts, never project objects
+        // OVR locomotion/interaction components reference only rig parts, never project objects.
         "RayInteractor",
         "PokeInteractor",
         "HandGrabInteractor",
@@ -71,7 +68,6 @@ public class SceneDumper : EditorWindow
         "TeleportInteractor",
         "GrabInteractor",
         "DistanceGrabInteractor",
-        // Visuais e helpers internos do OVR SDK
         "HandVisual",
         "HandGrabStateVisual",
         "ReticleGhostDrawer",
@@ -86,30 +82,24 @@ public class SceneDumper : EditorWindow
         "TunnelingEffect",
     };
 
-    // TARGET name prefixes that indicate the SDK player rig.
-    // Any edge pointing to these objects is removed.
     private static readonly string[] SkipRefTargetPrefixes = {
-        // OVRCameraRig anchors
         "CenterEyeAnchor/",
         "LeftEyeAnchor/",
         "RightEyeAnchor/",
         "LeftHandAnchor/",
         "RightHandAnchor/",
         "TrackingSpace/",
-        // Internal interactors (referencing each other)
         "LeftInteractions/",
         "RightInteractions/",
         "OVRHands/",
         "OVRControllers/",
         "OVRHmd/",
-        // Generic rig components that are never part of the project
         "HandGrabAPI/",
         "HandWristPoint/",
         "GripPoint/",
         "PinchPoint/",
         "PinchPointRange/",
         "HandSphereMap/",
-        // Parts of the synthetic visual rig / controller
         "SyntheticHandData/",
         "ControllerInHandVisibilityActiveState/",
         "OVRLeftHandVisual/",
@@ -123,7 +113,6 @@ public class SceneDumper : EditorWindow
         "OpenXRRightHand/",
     };
 
-    // Component types in the TARGET that are always SDK infrastructure
     private static readonly string[] SkipRefTargetComponentSuffixes = {
         "/HandRef",
         "/HmdRef",
@@ -141,7 +130,6 @@ public class SceneDumper : EditorWindow
         "/HandJoint",
     };
 
-        // Components that, on their own, indicate a node is purely visual (no logic)
     private static readonly HashSet<string> VisualOnlyComponents = new() {
         "MeshRenderer", "MeshCollider", "SkinnedMeshRenderer",
         "Animator", "SortingGroup", "ProBuilderMesh", "ProBuilderShape",
@@ -294,13 +282,8 @@ public class SceneDumper : EditorWindow
     {
         if (!filterSdkInternals) return false;
 
-        // Self-reference (object pointing to itself)
-        // Note: sourceName is not available here; we apply this in RegisterEdges
-        
-        // Target is part of the player's SDK rig
         if (SkipRefTargetPrefixes.Any(p => targetName.StartsWith(p))) return true;
 
-        // Target is an SDK infrastructure component (suffix)
         if (SkipRefTargetComponentSuffixes.Any(s => targetName.EndsWith(s))) return true;
 
         return false;
@@ -358,14 +341,12 @@ public class SceneDumper : EditorWindow
                 RegisterEdges(go.GetEntityId(), go.name, refs);
         }
 
-        // Mirror: emit note and do not expand
         if (IsMirrorOf(go, out string mirrorNote))
         {
             sb.AppendLine($"{pad}  *(mirror of {mirrorNote} — omitted)*");
             return;
         }
 
-        // SDK subtree: expand the node but collapse children
         if (ShouldCollapseSubtree(go))
         {
             if (go.transform.childCount > 0)
@@ -495,7 +476,7 @@ public class SceneDumper : EditorWindow
     {
         var filteredEdges = BuildFilteredEdges();
 
-        sb.Length -= 2; // remove "}\n"
+        sb.Length -= 2;
         sb.AppendLine(",");
         sb.AppendLine("  \"references\": [");
 
@@ -531,7 +512,6 @@ public class SceneDumper : EditorWindow
         var fields = new Dictionary<string, string>();
         var refs   = new List<RefEdge>();
 
-        // Componentes SDK: nunca emitem referências arquiteturalmente relevantes
         if (ShouldSkipRefSource(c.GetType().Name))
             return (fields, refs);
 

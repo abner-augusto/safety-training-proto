@@ -6,7 +6,6 @@ using SafetyProto.Utils;
 [CustomEditor(typeof(CollectionInstanceArray))]
 public class CollectionInstanceArrayEditor : Editor
 {
-    // Serialized property handles (wired up in OnEnable)
     SerializedProperty _sourcePrefab;
     SerializedProperty _count;
     SerializedProperty _axis;
@@ -15,7 +14,7 @@ public class CollectionInstanceArrayEditor : Editor
 
     int    _prevCount;
     float  _prevOffset;
-    int    _prevAxis;          // enum stored as int
+    int    _prevAxis;
     bool   _prevRelative;
     Object _prevPrefab;
 
@@ -69,7 +68,6 @@ public class CollectionInstanceArrayEditor : Editor
 
         EditorGUILayout.LabelField("Array Parameters", EditorStyles.boldLabel);
 
-        // Axis — toolbar style (matches Blender expand=True)
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("Axis", GUILayout.Width(EditorGUIUtility.labelWidth - 4));
         int newAxis = GUILayout.Toolbar(_axis.enumValueIndex, new[] { "X", "Y", "Z" });
@@ -79,7 +77,6 @@ public class CollectionInstanceArrayEditor : Editor
 
         EditorGUILayout.Space(4);
 
-        // Count — slider + drag button + step buttons
         DrawCountControl();
 
         EditorGUILayout.Space(4);
@@ -133,7 +130,6 @@ public class CollectionInstanceArrayEditor : Editor
 
         serializedObject.ApplyModifiedProperties();
 
-        // Ensure the list is never null (e.g. after domain reload)
         if (arr.instances == null)
             arr.instances = new List<GameObject>();
 
@@ -156,7 +152,6 @@ public class CollectionInstanceArrayEditor : Editor
         float spacing = 2f;
         float controlsW = btnW + spacing + btnW;
 
-        // Slider occupies the space left of the right-side buttons
         Rect sliderR = new Rect(
             fullRect.x + labelW,
             fullRect.y,
@@ -191,8 +186,7 @@ public class CollectionInstanceArrayEditor : Editor
         Vector3 axisVec    = arr.GetAxisVector();
         float   stepOffset = arr.GetEffectiveOffset();
 
-        // Determine whether the source is a project asset or a scene object.
-        // PrefabUtility.InstantiatePrefab only works for project assets.
+        // PrefabUtility.InstantiatePrefab only accepts project assets.
         bool isProjectAsset = EditorUtility.IsPersistent(arr.sourcePrefab);
 
         for (int i = 0; i < arr.count; i++)
@@ -203,14 +197,12 @@ public class CollectionInstanceArrayEditor : Editor
 
             if (isProjectAsset)
             {
-                // Keeps the prefab link intact
                 inst = (GameObject)PrefabUtility.InstantiatePrefab(
                     arr.sourcePrefab, arr.transform
                 );
             }
             else
             {
-                // Source is a scene object — plain instantiate under the root
                 inst = Instantiate(arr.sourcePrefab, arr.transform);
             }
 

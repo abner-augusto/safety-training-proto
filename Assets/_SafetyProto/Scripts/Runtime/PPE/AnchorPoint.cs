@@ -44,13 +44,10 @@ namespace SafetyProto.Runtime.PPE
 #if UNITY_EDITOR
         private void OnDrawGizmos()
         {
-            // Visualize the snap reference pose so the attachPoint empty can be
-            // authored to the exact spot/orientation where the carabiner should sit.
             Transform t = AttachTransform;
             Gizmos.color = isCorrectAnchor ? Color.green : new Color(1f, 0.4f, 0f);
             Gizmos.DrawWireSphere(t.position, 0.02f);
 
-            // Local axes (forward = blue, up = green) to make orientation readable.
             Gizmos.color = Color.blue;
             Gizmos.DrawLine(t.position, t.position + t.forward * 0.05f);
             Gizmos.color = Color.green;

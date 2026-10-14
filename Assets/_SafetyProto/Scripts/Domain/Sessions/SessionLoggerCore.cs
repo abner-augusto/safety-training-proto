@@ -47,37 +47,24 @@ namespace SafetyProto.Domain.Sessions
         [Serializable]
         public struct LogData
         {
-            // ActionAttempt (stable id; the friendly name goes in LogEntry.details)
             public string actionId;
-            // ActionAttempt — free-form context (e.g. "gaze_dwell", or
-            // "gaze_dwell:option=loose_fixing" for a hazard-classification report).
             public string context;
-            // PpeStateChanged
             public string ppeType;
             public bool wearing;
-            // ScoreChanged (totalScore reused by SessionCompleted)
             public int delta;
             public int totalScore;
-            // Task* — the risk the task carried, so a session log can be read and analysed on
-            // its own without joining it back to the scenario document it ran from.
-            // riskLevel is the NR-01 class token ("substantial"); riskSeverity/riskProbability
-            // are the 1-5 grades behind it, 0 when the scenario declared a level directly.
             public string riskLevel;
             public int riskSeverity;
             public int riskProbability;
-            // SafetyViolation (message reused by SafetyError)
             public string violationCode;
             public string message;
             public string taskId;
             public string groupId;
-            // SafetyError
             public string source;
             public string errorDetails;
-            // CriticalSafetyFailure
             public string reason;
             public int violationCount;
             public float windowSeconds;
-            // SessionCompleted
             public float totalElapsedTime;
             public int tasksCompleted;
             public int totalTasks;
@@ -206,8 +193,6 @@ namespace SafetyProto.Domain.Sessions
         private bool _subscribed;
         private bool _disposed;
 
-        // Running tallies, kept so a summary can be synthesized when the session is reset or
-        // abandoned before SessionCompleted fires (see BuildFallbackSummary / WriteLogAsync).
         private long _sessionStartMs;
         private long _lastEventMs;
         private int _lastTotalScore;
@@ -234,9 +219,6 @@ namespace SafetyProto.Domain.Sessions
 
             _onSessionStarted        = args =>
             {
-                // The logger exists before the participant session starts, so Editor focus and
-                // application lifecycle events may arrive without session metadata. A report is
-                // session-scoped and must always begin with its authoritative SessionStarted.
                 _log.entries.Clear();
                 _log.summary = null;
                 ResetTallies(args.TimestampMs);
@@ -471,7 +453,7 @@ namespace SafetyProto.Domain.Sessions
             mode = _mode,
             totalScore = _lastTotalScore,
             tasksCompleted = _tasksCompletedCount,
-            totalTasks = _totalTasks, // from SessionStarted; 0 only if that event never carried it
+            totalTasks = _totalTasks,
             totalElapsedTime = _sessionStartMs > 0 ? (_lastEventMs - _sessionStartMs) / 1000f : 0f,
             perf = _perfSource?.Invoke(_sessionId)
         };
@@ -486,18 +468,10 @@ namespace SafetyProto.Domain.Sessions
                     Directory.CreateDirectory(outputDirectory);
                 }
 
-                // Name the file after the SESSION START (not the wall-clock time of this write), so
-                // the two writes a normal session makes — one on SessionCompleted, one on the restart
-                // ResetSession — resolve to the same path and the later write overwrites the earlier
-                // one. Previously each write minted a new timestamped file, littering the folder with
-                // near-duplicate pairs. A short session-id suffix disambiguates sessions that happen to
-                // start within the same second.
+                // Keyed by session start, not write time: the SessionCompleted write and the later ResetSession write must overwrite each other.
                 var fileName = $"session_log_{SessionFileStem.Of(_sessionStartMs, _sessionId)}.json";
                 var path = Path.Combine(outputDirectory, fileName);
 
-                // Synthesize an accurate summary from the events logged so far when the session
-                // ended without a SessionCompleted event (reset / abandoned). Guarantees the file
-                // never carries the old all-zero placeholder summary.
                 _log.summary ??= BuildFallbackSummary();
 
                 var json = _serialize(_log);

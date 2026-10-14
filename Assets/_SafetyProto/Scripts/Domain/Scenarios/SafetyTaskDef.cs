@@ -134,8 +134,6 @@ namespace SafetyProto.Domain.Scenarios
         /// </summary>
         internal void Bind(string groupName, List<string> errors)
         {
-            // Graded risk wins: it carries the criteria NR-01 1.5.4.4.2.2 wants documented, and
-            // the level falls out of it. The level token is the pre-matrix fallback.
             if (Grades != null)
             {
                 if (Grades.Severity < RiskAssessment.MinGrade || Grades.Severity > RiskAssessment.MaxGrade ||
@@ -181,8 +179,6 @@ namespace SafetyProto.Domain.Scenarios
                 }
             }
 
-            // Empty is valid (keeps today's plain confirm/cancel report flow); a non-empty
-            // list must resolve to exactly one correct answer for the analysis to score it.
             if (ReportOptions.Count > 0)
             {
                 int correctCount = ReportOptions.Count(o => o.Correct);

@@ -53,7 +53,6 @@ namespace SafetyProto.Domain.Scenarios
         [JsonIgnore]
         private readonly List<ITaskGroup> _requiredGroups = new();
 
-        // IReadOnlyList<T> is covariant, so List<SafetyTaskDef> satisfies IReadOnlyList<ISafetyTask>.
         [JsonIgnore]
         IReadOnlyList<ISafetyTask> ITaskGroup.tasks => TaskDefs;
 
@@ -80,8 +79,6 @@ namespace SafetyProto.Domain.Scenarios
                 task.Bind(groupName, errors);
             }
 
-            // A prerequisite that matches no task would silently block the whole group, so it
-            // is a load error rather than something the rule engine has to defend against.
             prerequisiteTaskId = prerequisiteTaskId?.Trim() ?? string.Empty;
             if (prerequisiteTaskId.Length > 0 &&
                 !TaskDefs.Exists(t => string.Equals(t.id, prerequisiteTaskId, System.StringComparison.OrdinalIgnoreCase)))

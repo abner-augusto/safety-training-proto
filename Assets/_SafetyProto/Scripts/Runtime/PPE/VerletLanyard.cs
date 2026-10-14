@@ -70,7 +70,7 @@ namespace SafetyProto.Runtime.PPE
         [SerializeField, Range(0.002f, 0.05f)] private float ropeWidth = 0.012f;
 
         [Tooltip("Color of the lanyard rope.")]
-        [SerializeField] private Color ropeColor = new Color(1f, 0.55f, 0f); // safety orange
+        [SerializeField] private Color ropeColor = new Color(1f, 0.55f, 0f);
 
         private struct VerletNode
         {
@@ -81,13 +81,11 @@ namespace SafetyProto.Runtime.PPE
         private VerletNode[] _nodes;
         private float _segmentLength;
         private LineRenderer _lineRenderer;
-        private Vector3[] _linePositions; // reusable buffer for LineRenderer.SetPositions
+        private Vector3[] _linePositions;
 
         private bool _initialized;
         private Material _runtimeMaterial;
 
-        // Manual end position override (used when endAnchor is null but the tip
-        // should still follow a specific transform, e.g. during retracting)
         private bool _useManualEndPosition;
         private Vector3 _manualEndPosition;
 
@@ -102,7 +100,6 @@ namespace SafetyProto.Runtime.PPE
 
             if (anchor != null && _initialized)
             {
-                // Snap last node to new anchor so there's no pop
                 _nodes[_nodes.Length - 1].Position = anchor.position;
                 _nodes[_nodes.Length - 1].PreviousPosition = anchor.position;
             }
@@ -184,7 +181,6 @@ namespace SafetyProto.Runtime.PPE
 
         private void OnEnable()
         {
-            // Re-initialize when enabled by the RetractableLanyardController
             if (_lineRenderer != null)
                 _lineRenderer.enabled = true;
 
@@ -231,14 +227,12 @@ namespace SafetyProto.Runtime.PPE
         {
             if (!_initialized) return;
             PinAnchors();
-            // The harness follows its slot in LateUpdate, after the physics tick.
             for (int i = 0; i < constraintIterations; i++) ApplyBodyConstraints();
             UpdateLineRenderer();
         }
 
         private void OnValidate()
         {
-            // Live-tweak support in Editor
             if (_lineRenderer != null)
             {
                 _lineRenderer.startWidth = ropeWidth;
@@ -278,7 +272,6 @@ namespace SafetyProto.Runtime.PPE
                 float t = (float)i / (nodeCount - 1);
                 Vector3 pos = Vector3.Lerp(startPos, endPos, t);
 
-                // Add a slight sag so the rope doesn't start perfectly straight
                 float sag = Mathf.Sin(t * Mathf.PI) * ropeLength * 0.05f;
                 pos.y -= sag;
                 if (bodyCollider != null)
@@ -317,7 +310,6 @@ namespace SafetyProto.Runtime.PPE
                 _nodes[last].Position = endAnchor.position;
                 _nodes[last].PreviousPosition = endAnchor.position;
             }
-            // Or use manual end position override (e.g. during retracting)
             else if (_useManualEndPosition)
             {
                 int last = _nodes.Length - 1;
@@ -325,7 +317,6 @@ namespace SafetyProto.Runtime.PPE
                 _nodes[last].PreviousPosition = _manualEndPosition;
             }
 
-            // Integrate free nodes (skip pinned endpoints)
             int startIdx = 1;
             int endIdx = (endAnchor != null || _useManualEndPosition) ? _nodes.Length - 2 : _nodes.Length - 1;
 
@@ -334,10 +325,8 @@ namespace SafetyProto.Runtime.PPE
                 Vector3 current = _nodes[i].Position;
                 Vector3 previous = _nodes[i].PreviousPosition;
 
-                // Velocity = current - previous (implicit in Verlet)
                 Vector3 velocity = (current - previous) * dampFactor;
 
-                // New position: x(t+dt) = x(t) + v*dampFactor + a*dt²
                 Vector3 newPos = current + velocity + gravity * dtSq;
 
                 _nodes[i].PreviousPosition = current;
@@ -354,7 +343,6 @@ namespace SafetyProto.Runtime.PPE
                     SolveDistanceConstraint(i, i + 1);
                 }
 
-                // Re-pin anchors after each iteration to prevent drift
                 ApplyBodyConstraints();
                 PinAnchors();
             }
@@ -398,7 +386,7 @@ namespace SafetyProto.Runtime.PPE
             Vector3 delta = posB - posA;
             float currentLength = delta.magnitude;
 
-            if (currentLength < 1e-6f) return; // avoid division by zero
+            if (currentLength < 1e-6f) return;
 
             float error = currentLength - _segmentLength;
             Vector3 correction = (delta / currentLength) * error * 0.5f;
@@ -410,7 +398,6 @@ namespace SafetyProto.Runtime.PPE
 
             if (aPinned && bPinned)
             {
-                // Both pinned — don't move either
                 return;
             }
             else if (aPinned)
@@ -459,7 +446,6 @@ namespace SafetyProto.Runtime.PPE
             _lineRenderer.numCornerVertices = 2;
             _lineRenderer.textureMode = LineTextureMode.Tile;
 
-            // Create a runtime material if none assigned — avoids the pink "missing material"
             if (_lineRenderer.sharedMaterial == null)
             {
                 _runtimeMaterial = CreateRopeMaterial();
@@ -477,10 +463,8 @@ namespace SafetyProto.Runtime.PPE
         /// </summary>
         private Material CreateRopeMaterial()
         {
-            // Try URP Unlit (preferred for Quest / URP projects)
             Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
 
-            // Fallback chain for non-URP or editor-only contexts
             if (shader == null)
                 shader = Shader.Find("Unlit/Color");
             if (shader == null)

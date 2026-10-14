@@ -108,11 +108,9 @@ namespace SafetyProto.Editor
                 DestroyImmediate(go);
         }
 
-        // Removes components that would otherwise try to wire themselves into runtime systems
-        // (EventBus subscriptions, grab interactables, etc.) on a preview-only instance.
         private static void StripRuntimeBehaviours(GameObject instance)
         {
-            // Order matters: PPESnapItem requires Rigidbody, so remove PPESnapItem first.
+            // Remove PPESnapItem first: its RequireComponent blocks removing the Rigidbody.
             DestroyAllOfType<PPESnapItem>(instance);
             DestroyAllOfType<Rigidbody>(instance);
 

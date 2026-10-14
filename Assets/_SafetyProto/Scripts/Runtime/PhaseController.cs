@@ -212,9 +212,6 @@ namespace SafetyProto.Runtime
         public void OnAdvanceClicked()
         {
             if (_advanceConsumed) { SafetyLog.Warning("[PhaseController] OnAdvanceClicked ignorado — já consumido.", this); return; }
-            // Simulation arms auto-confirm up front, so a group that self-completes teleports
-            // from OnGroupCompleted before the scripted gate press arrives. Without this the
-            // press would start a second transition on top of the running one.
             if (_transitionExecuted) { SafetyLog.Info("[PhaseController] Avanço ignorado — transição de fase já iniciada.", this); return; }
             if (SessionModeState.Current != SessionMode.Evaluation && !_simulationAutoConfirm)
             {
@@ -241,9 +238,6 @@ namespace SafetyProto.Runtime
             _advanceConsumed = true;
             SetButtonsActive(false);
 
-            // Judged by id, never "whatever group is current": a group that completed naturally
-            // is already behind us here, and measuring the next one would charge the participant
-            // for the wrong tasks.
             ApplyOrderPenaltyIfDeviated(targetGroupId, taskManager.FindGroup(targetGroupId)?.groupName ?? string.Empty);
 
             if (decision == PhaseAdvanceAction.CloseThenAdvance)
@@ -317,10 +311,6 @@ namespace SafetyProto.Runtime
                     StartTransition();
                 }
             }
-            // Evaluation mode: do nothing — the participant presses the advance button when
-            // ready. The flags stay untouched on purpose: OnAdvanceClicked recognises a group
-            // that already completed on its own, and CurrentAnchor must keep pointing at the
-            // canteiro until the teleport actually runs.
         }
 
         /// <summary>Single entry point into the teleport. Flips the anchor to the andaime the

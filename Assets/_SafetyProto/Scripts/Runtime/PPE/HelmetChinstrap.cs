@@ -88,7 +88,7 @@ namespace SafetyProto.Runtime.PPE
             for (int i = 0; i < _strapRenderers.Length; i++)
                 _rendererVisibility[i] = _strapRenderers[i].enabled;
 
-            // ComputePenetration requires an enabled collider. Park this trigger away from gameplay.
+            // ComputePenetration requires an enabled collider.
             _probeObject = new GameObject("ChinstrapContactProbe")
             {
                 hideFlags = HideFlags.HideAndDontSave,
@@ -170,7 +170,6 @@ namespace SafetyProto.Runtime.PPE
             else if (returning) CarryWithHelmet();
             if (held != _wasHeld)
             {
-                // A clock change must not reinterpret the last displacement as a new velocity.
                 foreach (Strap strap in straps)
                     Array.Copy(strap.positions, strap.previous, strap.positions.Length);
                 _previousStepDuration = 0f;
@@ -243,7 +242,6 @@ namespace SafetyProto.Runtime.PPE
                     p[i] += shellCorrection * (i == 1 ? 2f : 1f);
                     if (_collision.Resolve(ref p[i - 1], ref p[i], i == 1))
                     {
-                        // Static friction prevents perpetual tabletop jitter in a visual-only chain.
                         strap.previous[i - 1] = p[i - 1];
                         strap.previous[i] = p[i];
                         strap.surfaceNormals[i - 1] = _collision.ContactNormal;
@@ -281,7 +279,6 @@ namespace SafetyProto.Runtime.PPE
         private void LateUpdate()
         {
             if (!_ready) return;
-            // Read the final snap state after PPESnapItem's LateUpdate, including frames without a physics step.
             bool fitted = IsFitted;
             SetVisible(!fitted);
             if (fitted)
@@ -296,7 +293,6 @@ namespace SafetyProto.Runtime.PPE
                 _wasFitted = false;
                 RememberPose();
             }
-            // Tracked grabs move the Transform outside FixedUpdate; solve before drawing that pose.
             if (IsHeld) AdvanceSimulation(Time.deltaTime);
             UpdateBones();
         }
@@ -314,7 +310,6 @@ namespace SafetyProto.Runtime.PPE
             {
                 for (int i = 0; i < strap.bones.Length; i++)
                 {
-                    // The mounting point must not inherit contact roll or lag behind the tracked helmet.
                     if (i == 0)
                     {
                         strap.bones[i].SetPositionAndRotation(transform.TransformPoint(strap.fittedPositions[i]),
@@ -332,7 +327,6 @@ namespace SafetyProto.Runtime.PPE
                         rotation = bend * rotation;
                         if (strap.surfaceNormals[i].sqrMagnitude > 0.0001f)
                         {
-                            // Roll the webbing onto the contact surface instead of balancing on its edge.
                             Vector3 normal = bend * Vector3.Cross(restDirection, transform.forward).normalized;
                             float roll = Vector3.SignedAngle(Vector3.ProjectOnPlane(normal, direction),
                                 Vector3.ProjectOnPlane(strap.surfaceNormals[i], direction), direction);

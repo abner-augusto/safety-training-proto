@@ -97,7 +97,6 @@ namespace SafetyProto.Runtime.Session
                 }
                 if (!exists) return candidate;
             }
-            // Astronomically unlikely fallback — widen to 8 chars.
             return "P-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpperInvariant();
         }
 

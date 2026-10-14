@@ -32,14 +32,10 @@ namespace SafetyProto.UI
             adviceContainer.SetActive(hasAdvice);
             if (hasAdvice) adviceText.text = advice;
 
-            // The row owns its own height through a ContentSizeFitter, and the list parent
-            // deliberately does not control it. Without this the fitter only runs for rows whose
-            // advice box toggled, leaving every other row at its uninitialised instantiation size.
+            // Forces the row's ContentSizeFitter to run; otherwise only rows whose advice box toggled get laid out.
             LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)transform);
         }
 
-        // Grey is reserved for invalid/unavailable task data, never for a task the participant
-        // simply did not perform — an omission is an actionable issue and stays amber.
         private Color GetBadgeColor(RuntimeSafetyTask runtimeTask)
         {
             if (!runtimeTask.IsValid || runtimeTask.TaskData == null) return notTriedColor;

@@ -66,8 +66,6 @@ namespace SafetyProto.Runtime.Interaction
             if (!Physics.Raycast(ray, out RaycastHit hit, _maxDistance, mask, QueryTriggerInteraction.Ignore))
                 return null;
 
-            // The first thing hit must BE the target. If a scaffold tube is nearer, the participant
-            // is looking through the structure and that does not count as having inspected anything.
             if ((_gazeTargetMask.value & (1 << hit.collider.gameObject.layer)) == 0)
                 return null;
 

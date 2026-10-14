@@ -60,8 +60,6 @@ namespace SafetyProto.Domain.Scenarios
                         }
                     }
 
-                    // An equip-set task (no action) completes on PPE; an action task needs an action.
-                    // A task with neither can never complete.
                     if (!hasAction && task.RequiredPpeNames.Count == 0)
                     {
                         errors.Add(

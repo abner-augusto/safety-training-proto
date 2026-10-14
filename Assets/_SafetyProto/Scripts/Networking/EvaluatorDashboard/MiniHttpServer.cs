@@ -70,10 +70,10 @@ namespace SafetyProto.Networking.Dashboard
         public void Stop()
         {
             _running = false;
-            try { _listener?.Stop(); } catch { /* ignore */ }
+            try { _listener?.Stop(); } catch { }
             if (_thread != null && _thread.IsAlive)
             {
-                try { _thread.Join(100); } catch { /* ignore */ }
+                try { _thread.Join(100); } catch { }
             }
         }
 
@@ -95,7 +95,7 @@ namespace SafetyProto.Networking.Dashboard
                 }
                 catch
                 {
-                    try { client?.Close(); } catch { /* ignore */ }
+                    try { client?.Close(); } catch { }
                 }
             }
         }

@@ -1,19 +1,3 @@
-// Assets/_SafetyProto/Tests/Editor/DashboardCommandRoutingTests.cs
-//
-// Unity EditMode only (MonoBehaviours + reflection over Unity types) — not linked into the
-// headless Tools/SafetyProto.Tests csproj.
-//
-// Covers RecenterCommandHandler's TryExecute truth table from Step 5 of
-// plans/026-evaluator-recenter-playspace.md: accept, busy-reject, null-anchor-reject.
-//
-// EvaluatorDashboardBootstrap's own envelope parsing / dispatch-to-handler plumbing
-// (ProcessClientMessage, the private GenericEventEnvelope / DashboardCommandEnvelope classes) is
-// deliberately NOT exercised here: those are private members of a MonoBehaviour that also owns a
-// live TCP/WebSocket server (JsonUtility-based, network-coupled), so reaching them would require
-// either reflection-heavy scaffolding around a real socket or changing their visibility beyond
-// what Step 5 specifies (it mirrors the existing private GenericEventEnvelope exactly). The
-// envelope round trip (Command -> handler -> CommandAck) is verified in Play Mode instead, per
-// the plan's Done Criterion #9.
 using System.Reflection;
 using NUnit.Framework;
 using SafetyProto.Runtime;
@@ -67,9 +51,7 @@ namespace SafetyProto.Tests.Editor
                 anchorGo = new GameObject("Anchor");
                 _anchorProvider.Anchor = anchorGo.transform;
 
-                // Drive RecenterTo's first step manually — with no OVRScreenFade in an EditMode
-                // scene the sequence runs synchronously up to its first real yield, which is
-                // enough to flip IsBusy without needing Play Mode.
+                // With no OVRScreenFade the sequence runs synchronously to its first yield, which sets IsBusy.
                 var busySequence = _service.RecenterTo(_anchorProvider.Anchor, new RecenterOptions
                 {
                     HoldBlackDuration = 999f,

@@ -75,7 +75,7 @@ namespace SafetyProto.Utils
         }
 #endif
 
-        // Domain reload is disabled on entering Play Mode, so a cached hash would survive a commit.
+        // Domain reload is disabled in Play Mode, so the cache must be cleared explicitly.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetOnPlay() => _cached = null;
     }

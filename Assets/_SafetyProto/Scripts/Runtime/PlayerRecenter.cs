@@ -49,20 +49,12 @@ namespace SafetyProto.Runtime
         public static RecenterSolution Solve(
             Vector3 rigPosition, Vector3 headPosition, float headYaw, Vector3 targetPos, float targetYaw)
         {
-            // 1. Align yaw by rotating the rig about the head's vertical axis (head stays put,
-            //    only reorients) so a target yaw is matched without sliding the player.
             float yawDelta = Mathf.DeltaAngle(headYaw, targetYaw);
 
-            // Analytic form of Transform.RotateAround(headPosition, Vector3.up, yawDelta)
-            // applied to rigPosition: rotate the rig's offset from the head, then re-add it.
             Vector3 relative = rigPosition - headPosition;
             Vector3 rotatedRelative = Quaternion.AngleAxis(yawDelta, Vector3.up) * relative;
             Vector3 rigPositionAfterRotation = headPosition + rotatedRelative;
 
-            // 2. Translate so the head lands over targetPos (XZ); rig floor at target height (Y).
-            //    headOffset is recomputed AFTER the rotation so it reflects the new head XZ —
-            //    the head itself does not move (rotation pivot == head's own position), but the
-            //    rig does, so the offset between them changes.
             Vector3 headOffset = headPosition - rigPositionAfterRotation;
 
             Vector3 finalRigPosition = new Vector3(
@@ -87,8 +79,6 @@ namespace SafetyProto.Runtime
             rig.RotateAround(head.position, Vector3.up, solution.RigYawDelta);
             rig.position = solution.RigPosition;
 
-            // Push the move into the physics scene this frame so any ground probe / first Move
-            // after the recenter sees the final position.
             Physics.SyncTransforms();
         }
 

@@ -114,8 +114,6 @@ namespace SafetyProto.Tests.Editor
             _bus.Publish(new TaskGroupEventArgs(group, TaskGroupPhase.Started));
             _bus.Publish(new PPEStateChangedEventArgs(PPEType.Harness, true));
             _bus.Publish(new PPEStateChangedEventArgs(PPEType.Helmet, true));
-
-            // A correct pick never calls HazardClassificationPolicy at all — nothing to charge.
             _bus.Publish(new ActionAttemptedEvent("flag_safety_net", sourceId: "MeshRip_Location"));
 
             Assert.AreEqual(150, _score.CurrentScore, "Full moderate points, no penalty.");
@@ -123,13 +121,9 @@ namespace SafetyProto.Tests.Editor
 
         [Test]
         public void CompoundCase_MissingPpeAndWrongOption_NetsQuarterPoints()
-        {
-            // Plan 044: "missing PPE (x0.5 -> 75) plus misclassification (-50) = 25".
-            var task = ReportTask();
+        {            var task = ReportTask();
             var group = _tasks.Group("Inspeção", TaskExecutionModeShared.FreeOrder, task);
             _bus.Publish(new TaskGroupEventArgs(group, TaskGroupPhase.Started));
-            // Deliberately no PPEStateChanged events — Harness/Helmet stay unworn.
-
             PublishWrongClassification(task, group);
 
             Assert.AreEqual(25, _score.CurrentScore,
@@ -138,10 +132,7 @@ namespace SafetyProto.Tests.Editor
 
         [Test]
         public void ChargeMisclassification_ZeroPenaltyTier_DoesNotThrowOrChangeScore()
-        {
-            // Trivial tier's penalty (20) is still > 0 under defaults, so force a zero-penalty
-            // config to exercise the SubtractPoints(amount<=0) guard directly.
-            var config = new ScoringConfig();
+        {            var config = new ScoringConfig();
             config.Levels["moderate"] = new RiskLevelScoring(points: 150, penalty: 0, unsafeFactor: 0.5);
 
             var task = ReportTask();

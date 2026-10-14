@@ -14,15 +14,12 @@ namespace SafetyProto.Editor
     /// </summary>
     internal sealed class BuildCommitStamp : IPreprocessBuildWithReport, IPostprocessBuildWithReport
     {
-        // Run before every other build processor: some (the Meta XR ones among them) rewrite
-        // ProjectSettings and OVRBuildConfig for the duration of the build, which would read
-        // as uncommitted changes.
+        // Meta XR build processors rewrite ProjectSettings mid-build; run before them to avoid a false dirty tree.
         public int callbackOrder => int.MinValue;
 
         public void OnPreprocessBuild(BuildReport report)
         {
             string projectRoot = Directory.GetParent(Application.dataPath)!.FullName;
-            // Query git before writing the stamp, so the stamp itself can't count as a change.
             string commit = BuildCommit.Describe(projectRoot);
 
             File.WriteAllText(Path.Combine(projectRoot, BuildCommit.AssetPath), commit);

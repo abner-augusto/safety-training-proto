@@ -18,8 +18,6 @@ namespace SafetyProto.Networking.Dashboard
         [Tooltip("Scene reset entry point. Resolved from the scene when left empty.")]
         [SerializeField] private SceneLoader sceneLoader;
 
-        // The reload is deferred to the end of the frame, so a duplicate command queued in the
-        // same frame would otherwise run every resettable twice and write the log twice.
         private bool _resetRequested;
 
         public string Command => CommandName;

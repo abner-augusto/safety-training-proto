@@ -5,7 +5,6 @@ using SafetyProto.Domain.Scoring;
 using SafetyProto.Runtime.Safety;
 using SafetyProto.Runtime.Task;
 using SafetyProto.Utils;
-// RuntimeSafetyTask has been moved to Core for clean dependency layering
 using RuntimeSafetyTask = SafetyProto.Core.RuntimeSafetyTask;
 using TMPro;
 using UnityEngine;
@@ -76,8 +75,6 @@ namespace SafetyProto.UI
 
         private void OnEnable()
         {
-            // Registered before the EventBus check below: the toggle must work even if the
-            // report is opened without a fresh SessionCompleted publish this activation.
             if (detailsToggleButton != null)
                 detailsToggleButton.onClick.AddListener(ToggleDetails);
 
@@ -85,7 +82,6 @@ namespace SafetyProto.UI
 
             EventBus.Instance.onSessionCompleted.AddListener(OnSessionCompleted);
 
-            // Panel may have been activated after the event already fired
             if (_cachedArgs.HasValue)
             {
                 PopulateReport(_cachedArgs.Value);
@@ -163,10 +159,6 @@ namespace SafetyProto.UI
 
             float pct = max > 0 ? Mathf.Max(0, score) / (float)max : 0f;
 
-            // Bronze anchors to the conventional NR-training minimum (70% de
-            // aproveitamento). A critical-tier violation caps the medal at silver:
-            // a session where the participant worked unanchored cannot be gold,
-            // whatever the points say (eliminatory-fault model).
             Color? medal = pct >= 0.95f ? goldColor
                          : pct >= 0.85f ? silverColor
                          : pct >= 0.70f ? bronzeColor
@@ -179,12 +171,6 @@ namespace SafetyProto.UI
             if (medal.HasValue) medalIcon.color = medal.Value;
         }
 
-        // A task at or above the eliminatory risk threshold that did not end in a clean
-        // CompletedSuccess is a critical violation for medal purposes (unsafe completion,
-        // timeout, or omission). Gate charges on those tasks are covered by the same test:
-        // a charged task was pending, so it is not CompletedSuccess.
-        // The comparison is a threshold, not an equality on one tier — that is what keeps a
-        // newly added top tier (Intolerable) inside the rule instead of silently outside it.
         private bool HasCriticalViolation(IReadOnlyList<RuntimeSafetyTask> tasks)
         {
             foreach (var t in tasks)
@@ -216,10 +202,6 @@ namespace SafetyProto.UI
             ShowSafeCard();
         }
 
-        // Deterministic ranking: highest risk level, then highest risk index, then the more
-        // severe outcome (omission over unsafe completion over a clean run with a remembered
-        // PPE miss), then original task order. Every tie-break narrows the field further, so
-        // two runs of the same session always surface the same lesson.
         private RuntimeSafetyTask SelectPrimaryIssueTask(IReadOnlyList<RuntimeSafetyTask> tasks)
         {
             RuntimeSafetyTask best = null;
@@ -256,8 +238,8 @@ namespace SafetyProto.UI
         private static int IssueSeverityRank(RuntimeSafetyTask t)
         {
             if (t.State == TaskState.CompletedSuccessButUnsafe) return 1;
-            if (t.State == TaskState.CompletedSuccess) return 2; // clean completion, missed PPE remembered
-            return 0; // not performed, or any other non-terminal state
+            if (t.State == TaskState.CompletedSuccess) return 2;
+            return 0;
         }
 
         private void ShowIssueCard(RuntimeSafetyTask t)
@@ -362,9 +344,7 @@ namespace SafetyProto.UI
                 }
             }
 
-            // Two passes on purpose. The first assigns each row its width; only then can a
-            // wrapping task name report a real preferred height, so a single pass leaves every
-            // row sized for one-word-per-line text.
+            // Two passes: wrapping task names report a real preferred height only after the first assigns widths.
             var listRect = taskListParent as RectTransform;
             LayoutRebuilder.ForceRebuildLayoutImmediate(listRect);
             Canvas.ForceUpdateCanvases();
@@ -378,9 +358,6 @@ namespace SafetyProto.UI
         {
             var sev = t.TaskData?.riskLevel ?? RiskAssessment.Default.Level;
             int full = scoring.PointsFor(sev);
-            // Not doing a task costs nothing but the points it would have earned. The
-            // weighting still shows through: a task graded higher on the risk matrix is
-            // worth more, so skipping it forfeits more.
             return t.State switch
             {
                 TaskState.CompletedSuccess => full,
@@ -450,11 +427,6 @@ namespace SafetyProto.UI
 
             if (t.State != TaskState.CompletedSuccess)
             {
-                // NotPerformed, or still open because the report was built before a gate
-                // closed the group. Either way the participant did not carry the task
-                // out, which is what omissionAdvice — the NR-quoting text — is written
-                // for; failureAdvice survives as a fallback for scenarios authored
-                // before omissionAdvice existed.
                 string advice = FirstNonEmpty(t.TaskData.omissionAdvice, t.TaskData.failureAdvice, t.TaskData.hintText);
                 return string.IsNullOrEmpty(advice) ? "Tarefa não realizada." : $"Tarefa não realizada. {advice}";
             }

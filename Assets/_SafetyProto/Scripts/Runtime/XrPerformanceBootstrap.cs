@@ -67,8 +67,7 @@ namespace SafetyProto.Runtime
         {
             ApplyRenderScale();
             HideHandDebugSpheres();
-            // Foveation needs the XR display subsystem running; it may not be ready on the
-            // very first frame, so retry for a few frames until at least one display takes it.
+            // The XR display subsystem may not be running on the first frame; retry.
             StartCoroutine(ApplyFoveationWhenReady());
         }
 
@@ -89,10 +88,7 @@ namespace SafetyProto.Runtime
             if (!hideHandDebugSpheres)
                 return;
 
-            // The HandSphereMap debug spheres are named "sphere" and parented under a
-            // "HandSphereMap" node inside each TouchHandGrabInteractor. Match on both so we
-            // never touch unrelated sphere geometry in the scene. Include inactive so we still
-            // catch the hand branch that is disabled until its controller/hand is tracked.
+            // Meta's hand branches stay inactive until the hand is tracked, so include inactive objects.
             var renderers = Object.FindObjectsByType<MeshRenderer>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             int disabled = 0;
             foreach (var mr in renderers)

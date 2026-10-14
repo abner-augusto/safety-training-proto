@@ -134,7 +134,6 @@ namespace SafetyProto.Runtime.PPE
             Vector3 correction = Vector3.MoveTowards(_offset, Vector3.zero, returnSpeed * deltaTime);
             if (_hasPrevious)
             {
-                // A shared offset can push another probe into contact, so revisit all six probes.
                 for (int pass = 0; pass < 3; pass++)
                 {
                     Vector3 before = correction;
@@ -147,7 +146,6 @@ namespace SafetyProto.Runtime.PPE
                 }
             }
 
-            // Resolve all probes together so a finger correction also moves the palm out of corners.
             // Unity needs an enabled collider for penetration queries; disable it before any physics step.
             _probe.enabled = true;
             for (int pass = 0; pass < 3; pass++)
@@ -173,7 +171,6 @@ namespace SafetyProto.Runtime.PPE
             }
             _probe.enabled = false;
 
-            // A large real/virtual mismatch releases the hand until it leaves the obstacle.
             if (correction.magnitude > maximumOffset)
             {
                 ResetContact();
@@ -184,7 +181,6 @@ namespace SafetyProto.Runtime.PPE
             _visual.Root.position = root + correction;
             for (int i = 0; i < _points.Length; i++) _previous[i] = _points[i] + correction;
             _hasPrevious = true;
-            // The solver's clearance must not turn a resting hand into repeated contact entries.
             if (!_hasSurfaceContact && wasTouching) _hasSurfaceContact = HasOverlap(correction, 0.003f);
             if (_hasSurfaceContact) WhenSurfaceContact?.Invoke(_contactPoint);
         }
@@ -222,7 +218,6 @@ namespace SafetyProto.Runtime.PPE
                 remaining -= hit.normal * Mathf.Min(0f, Vector3.Dot(remaining, hit.normal));
             }
 
-            // Keep the last swept position if the contact budget is exhausted.
             return position;
         }
 

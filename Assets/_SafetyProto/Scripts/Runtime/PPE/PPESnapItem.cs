@@ -56,7 +56,6 @@ namespace SafetyProto.Runtime.PPE
         [SerializeField] private AudioClip unsnapSound;
         [SerializeField, Range(0f, 1f)] private float audioVolume = 0.85f;
 
-        // Public so PPESnapSlot can read it
         public PPEType PpeType => _ppeItem.ppeType;
 
         /// <summary>
@@ -70,7 +69,6 @@ namespace SafetyProto.Runtime.PPE
         public bool IsSnapped => _isSnapped && _currentSlot != null;
 
 #if UNITY_EDITOR
-        // Exposed for editor preview tooling (PPESnapSlot gizmo / inspector).
         public Transform SnapPoseOverride => snapPoseOverride;
 #endif
 
@@ -88,7 +86,6 @@ namespace SafetyProto.Runtime.PPE
         private bool _grabDisabled;
         private readonly List<Behaviour> _disabledGrabBehaviours = new List<Behaviour>();
 
-        // Cached pose of snapPoseOverride in this root's local space, used to keep a stable offset while following a slot.
         private bool _useSnapPoseOverride;
         private Vector3 _snapOverrideLocalPos;
         private Quaternion _snapOverrideLocalRot;
@@ -108,8 +105,6 @@ namespace SafetyProto.Runtime.PPE
             if (audioSource == null)
                 audioSource = GetComponent<AudioSource>();
 
-            // With a clip but no source, EnsureAudioSource builds one at play time from the
-            // hard-coded values below, so what an author tuned in the scene is not what plays.
             if (audioSource == null && (snapSound != null || unsnapSound != null))
             {
                 SafetyLog.Warning(
@@ -150,7 +145,6 @@ namespace SafetyProto.Runtime.PPE
         {
             bool wasGrabbed = _isGrabbed;
 
-            // InteractableState.Select = actively grabbed
             _isGrabbed = args.NewState == InteractableState.Select;
 
             if (!wasGrabbed && _isGrabbed)
@@ -189,8 +183,6 @@ namespace SafetyProto.Runtime.PPE
                 return;
             }
 
-            // Each authored hand pose can have its own interactable. Nested equipment
-            // with a separate rigidbody (such as the lanyard tip) must remain usable.
             _isGrabbed = false;
             foreach (var behaviour in GetComponentsInChildren<MonoBehaviour>(true))
             {
@@ -308,7 +300,6 @@ namespace SafetyProto.Runtime.PPE
 
             PlayUnsnapAudio();
 
-            // If the user is still holding it, keep ReturnObjectHome disabled until released.
             if (returnObjectHome != null && !_isGrabbed)
             {
                 returnObjectHome.enabled = true;
@@ -357,10 +348,8 @@ namespace SafetyProto.Runtime.PPE
 
             if (_useSnapPoseOverride)
             {
-                // Want: (rootRot * overrideLocalRot) == slotRot  => rootRot = slotRot * inverse(overrideLocalRot)
                 targetRot = slotRotation * Quaternion.Inverse(_snapOverrideLocalRot);
 
-                // Want: rootPos + rootRot * overrideLocalPos == slotPos  => rootPos = slotPos - rootRot * overrideLocalPos
                 targetPos = slotPosition - (targetRot * _snapOverrideLocalPos);
             }
 
@@ -388,7 +377,6 @@ namespace SafetyProto.Runtime.PPE
             _rigidbody.useGravity = physicsEnabled;
         }
 
-        // Trigger detection — notifies slots directly
         private void OnTriggerEnter(Collider other)
         {
             var slot = other.GetComponentInParent<PPESnapSlot>();
@@ -432,7 +420,7 @@ namespace SafetyProto.Runtime.PPE
                 if (audioSource == null)
                 {
                     audioSource = gameObject.AddComponent<AudioSource>();
-                    audioSource.spatialBlend = 1f; // 3D HRTF
+                    audioSource.spatialBlend = 1f;
                     audioSource.spatialize = true;
                     audioSource.playOnAwake = false;
                     audioSource.rolloffMode = AudioRolloffMode.Logarithmic;

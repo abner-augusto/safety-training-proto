@@ -45,7 +45,6 @@ namespace SafetyProto.Runtime.Actions
         private System.Action<ConsequenceStartedEventArgs> _onConsequenceStarted;
         private System.Action _onConsequenceEnded;
 
-        // Back-compat for scenes/prefabs that had a single target field.
         [FormerlySerializedAs("target")]
         [SerializeField, HideInInspector] private GameObject legacyTarget;
 
@@ -179,10 +178,8 @@ namespace SafetyProto.Runtime.Actions
 
         private IEnumerable<GameObject> EnumerateTargets()
         {
-            // Avoid duplicate SetActive calls (and tolerate null entries).
             var seen = new HashSet<GameObject>();
 
-            // Runtime migration for builds where OnValidate doesn't run.
             if ((targets == null || targets.Length == 0) && legacyTarget != null)
                 targets = new[] { legacyTarget };
 

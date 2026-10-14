@@ -40,7 +40,6 @@ namespace SafetyProto.Utils
                 return;
 
             SetMenuVisible(false);
-            // Keep the controller-button edge detector in sync so the next press re-opens cleanly.
             _wasButtonActiveLastFrame = buttonState != null && buttonState.Active;
         }
 

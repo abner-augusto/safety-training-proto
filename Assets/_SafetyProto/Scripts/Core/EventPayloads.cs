@@ -52,7 +52,7 @@ namespace SafetyProto.Core
     }
 
     [System.Serializable]
-    public struct TaskEventArgs : IEventPayload // Used for TaskStarted, TaskCompleted
+    public struct TaskEventArgs : IEventPayload
     {
         public string SessionId;
         public string PlayerId;
@@ -176,8 +176,6 @@ namespace SafetyProto.Core
 
         public int TotalScore;
         public int Delta;
-        // Stable id of the task that caused the change (empty when not task-driven, e.g. reset or
-        // gate penalty) and the human-readable reason (distinguishes completion/ppe-penalty/timeout).
         public string TaskId;
         public string Reason;
 
@@ -217,9 +215,6 @@ namespace SafetyProto.Core
 
         public string ViolationCode;
         public string Message;
-        // TaskId/GroupId are stable, language-independent ids (analysis keys in the session log).
-        // TaskName/GroupName carry the localized display strings for human-facing surfaces
-        // (LogHUD, evaluator dashboard) so those stay readable without parsing the log id.
         public string TaskId;
         public string GroupId;
         public string TaskName;

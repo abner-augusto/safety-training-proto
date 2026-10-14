@@ -39,8 +39,6 @@ namespace SafetyProto.Runtime.Safety
     /// </summary>
     public static class ScaffoldCollapseSolver
     {
-        // Perlin sampling rate for the tremor. High enough to read as a structural shudder rather
-        // than a slow sway, low enough not to alias at 72 Hz.
         private const float TremorFrequency = 13f;
 
         /// <summary>Maps a 0..1 curve sample onto the configured tilt angle. Clamps, because

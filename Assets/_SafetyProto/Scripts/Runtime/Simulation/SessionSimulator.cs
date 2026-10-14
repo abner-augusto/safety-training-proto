@@ -177,10 +177,6 @@ namespace SafetyProto.Runtime.Simulation
                 yield break;
             }
 
-            // Deliberately NOT calling Subscribe(): that method wires a whole session's worth of
-            // EventBus listeners and its Unsubscribe() counterpart cancels the inspection gate and
-            // the phase controller. A rehearsal needs exactly one handler, so it manages that one
-            // itself and leaves any in-flight session subscription untouched.
             ScaffoldCollapseSequence.OnBeat -= OnCollapseBeat;
             ScaffoldCollapseSequence.OnBeat += OnCollapseBeat;
 
@@ -189,7 +185,6 @@ namespace SafetyProto.Runtime.Simulation
 
             yield return collapse.Play();
 
-            // Hold the black a beat so the operator can read the beat list before the world returns.
             yield return new WaitForSeconds(1.5f);
 
             if (OVRScreenFade.instance != null)
@@ -203,7 +198,6 @@ namespace SafetyProto.Runtime.Simulation
             AddTranscript("Ensaio de colapso concluído — andaime restaurado.");
             RefreshSnapshot();
 
-            // Leave the handler attached only if a real session already owns it.
             if (!IsRunning)
                 ScaffoldCollapseSequence.OnBeat -= OnCollapseBeat;
 
@@ -218,11 +212,6 @@ namespace SafetyProto.Runtime.Simulation
             _busy = false;
             _inspectionGate?.CancelSimulationProcessing();
 
-            // Both cancel paths kill the collapse mid-sequence — StopCoroutine here for a
-            // rehearsal, StopAllCoroutines inside the gate for a run, where Play() is a nested
-            // enumerator inside the gate's own coroutine. Neither unwinds the scaffold, so ask the
-            // sequence to do it: otherwise the andaime stays tipped, the rig stays displaced and
-            // the locomotor stays disabled until the scene reloads.
             FindFirstObjectByType<ScaffoldCollapseSequence>()?.ResetSession();
 
             if (IsRunning)
@@ -351,9 +340,6 @@ namespace SafetyProto.Runtime.Simulation
             SessionModeState.Current = mode;
             _result.participantId = ParticipantIdentity.SetSimulatedParticipant();
             _inspectionGate?.SetSimulationAutoConfirm(true);
-            // Arm the phase auto-confirm up front, not at the gate step. When every PPE is equipped the
-            // ppe_selection group self-completes on the last equip — before the scripted gate step runs —
-            // and PhaseController.OnGroupCompleted would otherwise show the confirmation popup and stall.
             _phaseController?.SetSimulationAutoConfirm(true);
             _sessionManager.BeginSession();
             _prepared = true;
@@ -426,7 +412,6 @@ namespace SafetyProto.Runtime.Simulation
                 yield break;
             }
 
-            // A move issued while the phase teleport runs would be undone when the teleport lands.
             if (_phaseController != null && _phaseController.IsInAndaimePhase)
             {
                 yield return WaitUntil(() => _phaseController.SimulationTransitionCompleted,
@@ -448,24 +433,17 @@ namespace SafetyProto.Runtime.Simulation
             if (target == "phase" || target == "phase1" || target == "fase1")
             {
                 _phaseController?.SetSimulationAutoConfirm(true);
-                // OnAdvanceClicked() applies order penalties, closes the group without
-                // touching pending task states, and — with auto-confirm set — starts the
-                // teleport without a popup.
                 _phaseController?.OnAdvanceClicked();
 
                 if (_phaseController != null)
                 {
-                    // The teleport sets SimulationTransitionCompleted at its end and never clears it again
-                    // this session, so it is a stable terminal signal whether the group completed via the
-                    // gate press or on its own when the last PPE was equipped.
                     yield return WaitUntil(() => _phaseController.SimulationTransitionCompleted,
                         $"Espera da transição de fase excedeu {operationTimeoutSeconds:F0} s: o andaime não ficou pronto.",
                         operationTimeoutSeconds);
                 }
                 else
                 {
-                    // No PhaseController to track — fall back to observing the group advance.
-                    var before = _taskManager?.GetCurrentGroup();
+                        var before = _taskManager?.GetCurrentGroup();
                     yield return WaitUntil(() => !ReferenceEquals(before, _taskManager?.GetCurrentGroup()),
                         $"Espera da transição de fase excedeu {operationTimeoutSeconds:F0} s: o grupo não avançou.",
                         operationTimeoutSeconds);
@@ -505,7 +483,6 @@ namespace SafetyProto.Runtime.Simulation
                 yield break;
             }
 
-            // Wrong input is a valid observable outcome, so settlement timing must not fail it.
             elapsed = 0f;
             bool taskSettled = string.IsNullOrEmpty(taskId);
             while (elapsed < Mathf.Min(3f, Mathf.Max(0.5f, inputTimeoutSeconds)))
@@ -524,8 +501,6 @@ namespace SafetyProto.Runtime.Simulation
                 yield return null;
             }
 
-            // TaskManager may intentionally delay starting the next task. Do not publish
-            // the next scripted input into that gap.
             if (taskSettled && !string.IsNullOrEmpty(taskId))
             {
                 elapsed = 0f;
@@ -679,10 +654,6 @@ namespace SafetyProto.Runtime.Simulation
             AddTranscript("ConsequenceEnded");
         }
 
-        /// <summary>
-        /// Records each collapse beat with its offset from the first one, so the window's transcript
-        /// shows the ordering directly instead of leaving it to be inferred from the Editor log.
-        /// </summary>
         private void OnCollapseBeat(string beatId)
         {
             if (string.Equals(beatId, ScaffoldCollapseSequence.BeatLocked, StringComparison.Ordinal))

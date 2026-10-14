@@ -66,9 +66,6 @@ namespace SafetyProto.UI
             SetVisible(progress > 0f);
         }
 
-        // Completed fires right after the final ProgressChanged(1) in the same LateUpdate, so this
-        // wins the race and hides the ring the moment the report button takes over — no full-ring
-        // flash left sitting on top of the button.
         private void HandleDwellCompleted() => SetVisible(false);
 
         private void LateUpdate()
@@ -87,8 +84,6 @@ namespace SafetyProto.UI
                 _billboardRoot.rotation = Quaternion.LookRotation(away, Vector3.up);
         }
 
-        // Canvas.enabled rather than SetActive: toggling the GameObject forces a full layout and
-        // graphic rebuild every time the ring appears, which is wasted work on a GPU-bound target.
         private void SetVisible(bool visible)
         {
             if (_canvas != null) _canvas.enabled = visible;

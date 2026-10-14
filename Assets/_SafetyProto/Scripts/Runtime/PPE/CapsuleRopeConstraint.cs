@@ -38,8 +38,6 @@ namespace SafetyProto.Runtime.PPE
             float firstWeight = firstPinned ? 0f : 1f - t;
             float secondWeight = secondPinned ? 0f : t;
             float denominator = firstWeight * firstWeight + secondWeight * secondWeight;
-            // A pinned endpoint inside the body is an invalid authored pose; do not
-            // launch its neighbour trying to satisfy an impossible constraint.
             if (denominator < 0.0001f) return;
             Vector3 correction = normal * (radius - distance + 0.0001f) / denominator;
             first += correction * firstWeight;

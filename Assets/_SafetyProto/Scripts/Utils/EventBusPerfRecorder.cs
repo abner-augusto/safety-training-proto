@@ -89,7 +89,6 @@ namespace SafetyProto.Utils
             _frameCut |= cutByBudget;
         }
 
-        // LateUpdate runs after every Update, so the EventBusRunner flush of this frame is in.
         private void LateUpdate()
         {
             if (_recording) CommitFrame();
@@ -130,7 +129,6 @@ namespace SafetyProto.Utils
         {
             StopAndWrite(background: false);
 
-            // Simulator sessions are excluded from participant data, as in the session logger.
             if ((args.PlayerId ?? string.Empty).StartsWith("SIM-", StringComparison.OrdinalIgnoreCase))
                 return;
 
@@ -155,8 +153,6 @@ namespace SafetyProto.Utils
             _recording = true;
         }
 
-        // Stopping here keeps the end-of-session frame out of the data: the session logger
-        // builds its summary inside this same flush, and that one-off work is not bus cost.
         private void OnSessionCompleted(SessionCompletedEventArgs _) => StopAndWrite(background: true);
 
         private void OnSessionEnded(SessionEndedEventArgs _) => StopAndWrite(background: true);

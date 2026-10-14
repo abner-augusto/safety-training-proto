@@ -99,8 +99,6 @@ namespace SafetyProto.Runtime.Safety
         [SerializeField] private AudioClip impactSfx;
         [SerializeField, Range(0f, 1f)] private float impactVolume = 1f;
 
-        // Captured on Play() so ResetSession can unwind from any beat, including a mid-sequence
-        // StopAllCoroutines from the simulator's cancel path.
         private Quaternion _pivotBaseRotation;
         private Vector3 _rigStartPosition;
         private Quaternion _rigStartRotation;
@@ -163,8 +161,6 @@ namespace SafetyProto.Runtime.Safety
 
             RaiseBeat(BeatTear);
             PlayOneShot(scaffoldAudioSource, meshTearSfx, meshTearVolume);
-            // Cut, not fade. The mesh material does not respond to an alpha ramp, so the tear
-            // audio carries the moment and the mesh simply stops existing under it.
             if (safetyMesh != null) safetyMesh.SetActive(false);
             if (tearDuration > 0f)
                 yield return new WaitForSeconds(tearDuration);
@@ -173,9 +169,6 @@ namespace SafetyProto.Runtime.Safety
             StopLoop(scaffoldAudioSource);
             PlayOneShot(scaffoldAudioSource, structureCollapseSfx, structureCollapseVolume);
 
-            // One loop drives the tip-over, the ride, the detach, the scripted fall and the fade,
-            // because they overlap: the fade begins while the player is still falling so black
-            // arrives before any ground contact could jolt the view.
             Vector3 rigPivotLocalPosition = collapsePivot.InverseTransformPoint(_rigStartPosition);
             Vector3 worldTiltAxis = collapsePivot.TransformDirection(tiltAxis).normalized;
 
@@ -197,9 +190,6 @@ namespace SafetyProto.Runtime.Safety
                 if (!detached && ScaffoldCollapseSolver.ShouldDetach(angle, cfg))
                 {
                     detached = true;
-                    // How much of the sequence is left to fall through. The pitch is scaled against
-                    // this rather than against endTime, so it actually reaches fallPitchDegrees by
-                    // the blackout no matter where the detach angle lands on the curve.
                     fallWindow = Mathf.Max(0.01f, endTime - elapsed);
                     RaiseBeat(BeatDetach);
                     PlayOneShot(scaffoldAudioSource, boltSnapSfx, boltSnapVolume);
@@ -210,7 +200,6 @@ namespace SafetyProto.Runtime.Safety
                 {
                     if (!detached)
                     {
-                        // Ride the deck: full translation, rotation clamped for comfort.
                         float followTilt = ScaffoldCollapseSolver.FollowTiltDegrees(angle, cfg);
                         playerRig.position = collapsePivot.TransformPoint(rigPivotLocalPosition + playerRideOffsetLocal);
                         playerRig.rotation = Quaternion.AngleAxis(followTilt, worldTiltAxis) * _rigStartRotation;
@@ -243,11 +232,6 @@ namespace SafetyProto.Runtime.Safety
             StopLoop(playerAudioSource);
             PlayOneShot(playerAudioSource, impactSfx, impactVolume);
 
-            // Level the rig, keeping only its yaw. The ride and the fall leave it pitched by
-            // maxFollowTiltDegrees + fallPitchDegrees, and nothing else would ever undo that — the
-            // consequence is terminal, so the participant would read the whole finish screen with
-            // their horizon tilted. The screen is already fully black here, so the correction is
-            // invisible: discomfort is the lesson during the fall, not while reading the report.
             if (playerRig != null)
             {
                 playerRig.rotation = Quaternion.Euler(0f, playerRig.eulerAngles.y, 0f);

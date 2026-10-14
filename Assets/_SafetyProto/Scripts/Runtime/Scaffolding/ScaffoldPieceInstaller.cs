@@ -182,9 +182,6 @@ namespace SafetyProto.Runtime.Scaffolding
             if (grabbable != null)
                 grabbable.WhenPointerEventRaised += OnPointerEvent;
 
-            // No bus means no protocol: the piece could still snap into its socket but would
-            // never hear a refusal, so it would install and lock with no way back. Disabling is
-            // the honest outcome.
             if (!this.IsEventBusReady()) return;
 
             _onActionRefused ??= OnActionRefused;
@@ -313,7 +310,6 @@ namespace SafetyProto.Runtime.Scaffolding
                 case PointerEventType.Cancel:
                     _isGrabbed = grabbable.SelectingPointsCount > 0;
 
-                    // Attempt install only when the last hand releases
                     if (!_isGrabbed)
                     {
                         TryInstall();
@@ -325,13 +321,6 @@ namespace SafetyProto.Runtime.Scaffolding
             }
         }
 
-        /// <summary>
-        /// The rule engine declined the attempt this piece published. The piece is already
-        /// snapped and locked at this point, so it has to come back out. When the refusal's code
-        /// is in <see cref="waitForPopupOnCodes"/> the revert waits for the participant's warning
-        /// to close instead of yanking the piece away mid-sentence; any other code reverts on the
-        /// next <see cref="LateUpdate"/>.
-        /// </summary>
         private void OnActionRefused(ActionRefusedEventArgs args)
         {
             if (!revertInstallWhenRefused || !_isInstalled) return;
@@ -396,7 +385,6 @@ namespace SafetyProto.Runtime.Scaffolding
         {
             if (!HasRequiredReferences()) return false;
 
-            // 1. Normal: A -> SA (and B -> SB for TwoSockets)
             if (IsAnchorAligned(pieceAnchorA, targetSocketA) &&
                 (installMode == InstallMode.SingleSocket || IsAnchorAligned(pieceAnchorB, targetSocketB)))
             {
@@ -407,7 +395,6 @@ namespace SafetyProto.Runtime.Scaffolding
 
             if (allowAnySlotDirection)
             {
-                // 2. Reversed: A -> SB (and B -> SA for TwoSockets)
                 if (targetSocketB != null && IsAnchorAligned(pieceAnchorA, targetSocketB) &&
                     (installMode == InstallMode.SingleSocket || IsAnchorAligned(pieceAnchorB, targetSocketA)))
                 {
@@ -416,7 +403,6 @@ namespace SafetyProto.Runtime.Scaffolding
                     return true;
                 }
 
-                // 3. Optional: B -> SA (SingleSocket only, as TwoSockets is covered by Case 2)
                 if (installMode == InstallMode.SingleSocket && pieceAnchorB != null && IsAnchorAligned(pieceAnchorB, targetSocketA))
                 {
                     _activeAnchor = pieceAnchorB;
@@ -424,7 +410,6 @@ namespace SafetyProto.Runtime.Scaffolding
                     return true;
                 }
 
-                // 4. Optional: B -> SB (SingleSocket only, as TwoSockets is covered by Case 1)
                 if (installMode == InstallMode.SingleSocket && pieceAnchorB != null && targetSocketB != null && IsAnchorAligned(pieceAnchorB, targetSocketB))
                 {
                     _activeAnchor = pieceAnchorB;
@@ -453,7 +438,6 @@ namespace SafetyProto.Runtime.Scaffolding
 
             if (allow180Rotation)
             {
-                // Check if it matches after a 180 degree rotation around the Y axis
                 Quaternion flippedRotation = socket.rotation * Quaternion.Euler(0, 180, 0);
                 if (IsRotationAligned(pieceAnchor.rotation, flippedRotation)) return true;
             }
@@ -461,21 +445,13 @@ namespace SafetyProto.Runtime.Scaffolding
             return false;
         }
 
-        // Per-axis rotation gate. Decomposes the piece→socket delta into yaw (about the
-        // vertical axis) and tilt (roll/pitch, i.e. how far the piece's up axis leans off the
-        // socket's up axis), and gates each against its own tolerance: yaw tight, tilt loose. So a
-        // slightly-leaning-but-correctly-facing piece passes, while a piece spun the wrong way
-        // around Y is still rejected.
         private bool IsRotationAligned(Quaternion pieceRot, Quaternion socketRot)
         {
-            // Delta expressed in the socket's local frame.
             Quaternion delta = Quaternion.Inverse(socketRot) * pieceRot;
 
-            // Tilt: angle between the (local) up axes.
             float tilt = Vector3.Angle(Vector3.up, delta * Vector3.up);
             if (tilt > tiltTolerance) return false;
 
-            // Yaw: rotation of the forward axis about the vertical, measured on the horizontal plane.
             Vector3 flatFwd = Vector3.ProjectOnPlane(delta * Vector3.forward, Vector3.up);
             float yaw = flatFwd.sqrMagnitude < 1e-6f ? 0f : Vector3.Angle(Vector3.forward, flatFwd);
             return yaw <= yawTolerance;
@@ -485,8 +461,6 @@ namespace SafetyProto.Runtime.Scaffolding
         {
             if (_activeAnchor == null || _activeSocket == null) return;
 
-            // Determine if we need to apply the 180 degree flip: pick whichever orientation the
-            // piece is actually closest to (robust to the loose tilt tolerance).
             Quaternion targetRotation = _activeSocket.rotation;
             if (allow180Rotation)
             {
@@ -564,12 +538,6 @@ namespace SafetyProto.Runtime.Scaffolding
             targetPreviewRenderer.enabled = !showTargetPreviewOnlyWhileGrabbed || _isGrabbed;
         }
 
-        /// <summary>
-        /// A clip with no AudioSource anywhere on the object means EnsureAudioSource will build
-        /// one at play time from the hard-coded values below — so the spatial settings an author
-        /// sees in the scene are not the ones this piece will use. Say so at load, while there
-        /// is still something to fix.
-        /// </summary>
         private void WarnIfAudioRunsOnCodeDefaults()
         {
             if (audioSource != null) return;

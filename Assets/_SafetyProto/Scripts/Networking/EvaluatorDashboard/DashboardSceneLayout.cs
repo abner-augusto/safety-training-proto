@@ -55,8 +55,6 @@ namespace SafetyProto.Networking.Dashboard
         /// <summary>The layout DTO, captured at scene start. Install spots do not move, so it is cached.</summary>
         public SceneLayoutDto Build() => _cached ??= BuildFrom(floors, markers, this);
 
-        // Capture before anything moves: the scaffold collapse tilts the deck, and a dashboard
-        // connecting after it would otherwise cache a tilted floor the yaw-only lookup misreads.
         private void Start() => Build();
 
         /// <summary>Floor ids, then marker ids: the session simulator's move targets.</summary>
@@ -112,8 +110,7 @@ namespace SafetyProto.Networking.Dashboard
         }
 
 #if UNITY_EDITOR
-        // Dropping a GameObject on a Component field assigns its Transform, which would turn a
-        // floor into a zero-size point. Prefer the Renderer, then any Collider, on that object.
+        // Unity's object-field drop assigns the Transform; prefer the Renderer, then a Collider.
         private void OnValidate()
         {
             for (int i = 0; i < floors.Length; i++) floors[i].source = Upgrade(floors[i].source);

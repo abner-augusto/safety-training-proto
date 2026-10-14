@@ -104,7 +104,6 @@ namespace SafetyProto.UI
 
             if (evaluation)
             {
-                // Evaluation: no task list, no remaining counter, only the group objective.
                 _pendingTasks.Clear();
                 if (remainingTasksText != null) remainingTasksText.text = string.Empty;
                 return;
@@ -150,8 +149,6 @@ namespace SafetyProto.UI
             if (args.Task is not { } task) return;
             if (_activeGroup == null || _activeGroup.executionMode != TaskExecutionModeShared.Sequential) return;
 
-            // The started task may still be outside the visible window while the previous one
-            // lingers; FillWindow reads this to highlight it once it scrolls in.
             _currentSequentialTask = task;
             RefreshHighlights();
         }
@@ -160,15 +157,12 @@ namespace SafetyProto.UI
         {
             if (_activeGroup == null) return TaskHighlight.None;
 
-            // While the prerequisite is pending every sibling is refused, so only it may draw the eye.
             if (_prerequisitePending)
                 return IsPrerequisite(task) ? TaskHighlight.Primary : TaskHighlight.None;
 
             if (_activeGroup.executionMode == TaskExecutionModeShared.Sequential)
                 return task == _currentSequentialTask ? TaskHighlight.Primary : TaskHighlight.None;
 
-            // Every pending free-order task is actionable now; a whole list at full strength
-            // would drown the text, hence the softer pulse.
             return TaskHighlight.Secondary;
         }
 
@@ -203,7 +197,7 @@ namespace SafetyProto.UI
 
         private void ScheduleRemoval(ISafetyTask task, TaskState state)
         {
-            if (_removalCoroutines.ContainsKey(task)) return; // already scheduled
+            if (_removalCoroutines.ContainsKey(task)) return;
 
             if (_taskToEntry.TryGetValue(task, out var entry))
                 entry.UpdateState(state);

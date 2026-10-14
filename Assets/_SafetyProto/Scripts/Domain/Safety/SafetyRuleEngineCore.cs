@@ -98,10 +98,6 @@ namespace SafetyProto.Domain.Safety
             }
             else if (args.Phase == TaskPhase.Completed && args.Task != null)
             {
-                // Also covers completions this engine did not drive, so a prerequisite
-                // satisfied elsewhere still unlocks its siblings. Timeout is deliberately
-                // not recorded: a prerequisite the participant never satisfied must keep
-                // blocking, and the group time limit is what ends the group.
                 _completedTaskIds.Add(args.Task.id);
             }
         }
@@ -117,7 +113,6 @@ namespace SafetyProto.Domain.Safety
             {
                 _activeFreeOrderTasks.AddRange(_activeGroup.tasks);
 
-                // An equip-set task may already be satisfied at group start (PPE worn earlier).
                 for (int i = _activeFreeOrderTasks.Count - 1; i >= 0; i--)
                     TryCompleteEquipTask(_activeFreeOrderTasks[i]);
             }
@@ -139,8 +134,6 @@ namespace SafetyProto.Domain.Safety
             {
                 _activeSequentialTask = args.Task;
 
-                // If this newly active task is an equip-set task whose PPE are already worn
-                // (player equipped them during an earlier task), complete it right away.
                 TryCompleteEquipTask(_activeSequentialTask);
             }
         }
@@ -157,9 +150,6 @@ namespace SafetyProto.Domain.Safety
         {
             _ppeStates[args.PpeType] = args.IsWearing;
 
-            // Equip-set tasks (no expected action, only requiredPPE) complete on PPE state,
-            // not on an action attempt — so the member items can be equipped in any order
-            // even inside a Sequential group (e.g. left/right gloves as one "wear gloves" task).
             if (!args.IsWearing || _activeGroup == null) return;
 
             if (TaskExecutionRules.EffectiveMode(_activeGroup, CurrentMode) == TaskExecutionModeShared.Sequential)
@@ -183,18 +173,12 @@ namespace SafetyProto.Domain.Safety
             if (_activeGroup == null || !TaskExecutionRules.IsEquipTask(task)) return false;
             if (!IsPpeCompliant(task!.requiredPPE)) return false;
 
-            // Equip-set tasks complete on PPE state, not an action attempt, so there is no
-            // actionId/sourceId to stamp a refusal with — raise the violation directly and
-            // publish no ActionRefusedEventArgs for this path.
             if (!ProcessTaskAttempt(task!, _activeGroup, out var refusalCode, out var refusalMessage))
             {
                 RaiseViolation(refusalCode, refusalMessage, task, _activeGroup);
                 return false;
             }
 
-            // Stop a later PPE event from re-completing the same sequential task before the
-            // next OnTaskStarted reassigns the active reference. (FreeOrder is already guarded
-            // by ProcessTaskAttempt removing the task from _activeFreeOrderTasks.)
             if (ReferenceEquals(_activeSequentialTask, task))
                 _activeSequentialTask = null;
 
@@ -314,8 +298,6 @@ namespace SafetyProto.Domain.Safety
             if (string.Equals(task.id, prerequisiteId, StringComparison.OrdinalIgnoreCase)) return false;
             if (_completedTaskIds.Contains(prerequisiteId)) return false;
 
-            // ScenarioLoader rejects an unresolvable id, but a host that builds groups in code
-            // could still pass one. Warn and let the group run rather than deadlock it.
             if (FindTask(group, prerequisiteId) == null)
             {
                 _logger?.Warning(
@@ -380,9 +362,6 @@ namespace SafetyProto.Domain.Safety
 
             if (!compliant)
             {
-                // Not a decline: the task still completes below as CompletedSuccessButUnsafe, so
-                // this goes through RaiseViolation directly rather than RefuseAttempt — routing it
-                // through the funnel would tell the emitter to undo a task that succeeded.
                 RaiseViolation(
                     ViolationCodes.PpeMissing,
                     $"Faltam EPIs obrigatórios para a tarefa '{task.taskName}'.",
@@ -440,10 +419,7 @@ namespace SafetyProto.Domain.Safety
             if (requiredPpe == null || requiredPpe.Count == 0)
                 return true;
 
-            // Use the event-driven state cache so compliance is checked against
-            // the PPE state consistent with the current event-processing order.
-            // Querying PPEManager directly races against physics callbacks that
-            // update _wornPPE before the EventBus dispatches PpeStateChanged events.
+            // Read the event-driven cache: PPEManager is updated by physics callbacks before EventBus dispatches PpeStateChanged.
             foreach (var ppe in requiredPpe)
             {
                 if (!_ppeStates.TryGetValue(ppe, out var isWearing) || !isWearing)

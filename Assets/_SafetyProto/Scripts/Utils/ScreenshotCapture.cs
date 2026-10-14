@@ -20,10 +20,7 @@ namespace SafetyProto.Utils
 
         private void Update()
         {
-            // Input System, not the legacy Input class: the project runs with
-            // activeInputHandler = "Input System Package (New)", under which
-            // Input.GetKeyDown throws. Keyboard.current is null in a headset
-            // session with no keyboard attached, hence the guard.
+            // Legacy Input throws under activeInputHandler = New; Keyboard.current is null with no keyboard attached.
             var keyboard = Keyboard.current;
             if (keyboard == null || captureKey == Key.None) return;
 

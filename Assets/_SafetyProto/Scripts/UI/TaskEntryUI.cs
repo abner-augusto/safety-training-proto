@@ -71,7 +71,6 @@ namespace SafetyProto.UI
         {
             if (_highlight == TaskHighlight.None || pillImage == null) return;
 
-            // A shared clock, not a per-row timer, keeps every pulsing row in phase.
             float wave = 0.5f - 0.5f * Mathf.Cos(Time.time * (2f * Mathf.PI / pulsePeriod));
             var peak = _highlight == TaskHighlight.Primary ? pillPulseColor : pillSoftPulseColor;
             pillImage.color = Color.Lerp(pillColor, peak, wave);

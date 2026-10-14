@@ -1,11 +1,3 @@
-// Assets/_SafetyProto/Tests/Editor/PhaseControllerAnchorTests.cs
-//
-// Unity EditMode only. Covers Step 2 of plans/026-evaluator-recenter-playspace.md:
-// PhaseController.CurrentAnchor (IRecenterAnchorProvider) must return the pre-transition
-// (canteiro) anchor before the phase transition executes, and the post-transition (andaime)
-// anchor afterwards. Fields are set via reflection and Start() is deliberately never invoked —
-// CurrentAnchor only reads already-serialized state, so exercising PhaseController's full Start()
-// lifecycle (EventBus, TaskManager, popup wiring) would be unrelated setup cost for this case.
 using System.Reflection;
 using NUnit.Framework;
 using SafetyProto.Runtime;

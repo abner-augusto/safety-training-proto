@@ -27,7 +27,6 @@ namespace SafetyProto.Runtime.Actions
 
         public static ActionCatalogDef? Load(string catalogName = DefaultCatalogName)
         {
-            // Tier 1: external override.
             var overridePath = Path.Combine(OverrideDirectory, catalogName + ".json");
             if (File.Exists(overridePath))
             {
@@ -43,7 +42,6 @@ namespace SafetyProto.Runtime.Actions
                     $"Motivo: {result.ErrorSummary}");
             }
 
-            // Tier 2: embedded default.
             var textAsset = Resources.Load<TextAsset>($"Actions/{catalogName}");
             if (textAsset == null)
             {

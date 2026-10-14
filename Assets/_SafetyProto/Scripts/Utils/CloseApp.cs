@@ -35,7 +35,6 @@ namespace SafetyProto.Core
             popup.ShowConfirmation(confirmTitle, confirmBody, confirmButtonLabel, cancelButtonLabel, QuitApp);
         }
 
-        // Located by interface so this component stays decoupled from the UI assembly.
         private static IPopupFeedback FindPopupService()
         {
             foreach (var mb in FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None))

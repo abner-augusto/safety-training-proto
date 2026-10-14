@@ -24,11 +24,7 @@ namespace SafetyProto.Tests.Editor
             _score = new ScoreService();
         }
 
-        // Projected straight from FakeEventBus's own chronological publish log
-        // (Support/FakeEventBus.cs PublishedEvents) instead of five separately-subscribed
-        // lists. Five independent lists can never reveal anything about the order events were
-        // published IN RELATION TO EACH OTHER — only counts within each type — which is exactly
-        // what let a "...ThenTaskStarted" test pass no matter which one actually fired first.
+        // Projected from the bus's chronological publish log; per-type lists cannot prove event order.
         private List<TaskGroupEventArgs> _groupEvents => Of<TaskGroupEventArgs>();
         private List<TaskEventArgs> _taskEvents => Of<TaskEventArgs>();
         private List<SessionCompletedEventArgs> _sessionCompletions => Of<SessionCompletedEventArgs>();
@@ -125,9 +121,7 @@ namespace SafetyProto.Tests.Editor
             core.Subscribe();
             core.StartSession();
 
-            // Read the actual cross-type ORDER off the bus's single interleaved publish log —
-            // not two independently-populated per-type lists, which could never prove one event
-            // preceded the other regardless of what order the production code published them in.
+            // Read cross-type order from the single interleaved publish log.
             var lifecycle = _bus.PublishedEvents
                 .Where(e => e.payload is TaskGroupEventArgs || e.payload is TaskEventArgs)
                 .Select(e => e.payload)
@@ -331,12 +325,7 @@ namespace SafetyProto.Tests.Editor
         [Test]
         public void CloseCurrentGroup_WithPendingTasks_StartsTheNextGroup()
         {
-            // The Evaluation phase-advance gate closes its group while a task is still
-            // open (the participant skipped a PPE). The session must move on to the next
-            // group, exactly as it does when the group completes on its own. This is the
-            // regression that stranded a participant on a scaffold whose inspection group
-            // never started, and it depends on CheckGroupCompletion treating NotPerformed
-            // as terminal.
+            // A group closed with an open task must still advance; depends on CheckGroupCompletion treating NotPerformed as terminal.
             var t1 = _tasks.Task("t1", "action_a");
             var t2 = _tasks.Task("t2", "action_b");
             var groupA = _tasks.Group("gA", TaskExecutionModeShared.FreeOrder, t1, t2);
@@ -415,11 +404,7 @@ namespace SafetyProto.Tests.Editor
         [Test]
         public void GroupThatCompletesNaturally_StopsBeingCurrent_ButIsReportedCompleted()
         {
-            // Why the Phase 1 advance button needs IsGroupCompleted: the moment the last task of
-            // a group lands, the core publishes GroupCompleted and moves straight on to the next
-            // group. A gate that only asked "is my group the current one?" saw the group that
-            // came after and did nothing — which is why the button worked when a task was
-            // skipped and did nothing when every task was performed.
+            // The advance gate must use IsGroupCompleted: the core moves on to the next group as soon as the last task lands.
             var t1 = _tasks.Task("t1", "action_a");
             var t2 = _tasks.Task("t2", "action_b");
             var g1 = _tasks.Group("g1", TaskExecutionModeShared.Sequential, t1);
@@ -453,10 +438,7 @@ namespace SafetyProto.Tests.Editor
             core.Subscribe();
             core.StartSession();
 
-            // g1 completes in full, out of order (t3 before t2), so it is no longer current.
-            // The algorithm walks tasks in authored order and compares each one's
-            // CompletionTime against its predecessor's, so the task it names is t3 (index 2,
-            // timestamp 1.5, against t2 at index 1 with 2) — not t2 itself.
+            // g1 completes out of order (t3 before t2); the out-of-order check names t3, not t2.
             _bus.Publish(new TaskEventArgs(t1, new RuntimeSafetyTask(t1) { State = TaskState.CompletedSuccess, CompletionTime = 1f }, TaskPhase.Completed));
             _bus.Publish(new TaskEventArgs(t2, new RuntimeSafetyTask(t2) { State = TaskState.CompletedSuccess, CompletionTime = 2f }, TaskPhase.Completed));
             _bus.Publish(new TaskEventArgs(t3, new RuntimeSafetyTask(t3) { State = TaskState.CompletedSuccess, CompletionTime = 1.5f }, TaskPhase.Completed));

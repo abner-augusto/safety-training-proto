@@ -115,8 +115,7 @@ namespace SafetyProto.UI
 
             if (nameField != null && !useKeypad)
             {
-                // Meta's system keyboard overlay opens when an editable field receives focus.
-                // Keep TMP editable so the overlay can attach to the focused field.
+                // Meta's system keyboard attaches only to a focused, editable field.
                 nameField.readOnly = false;
                 SafetyLog.Info(
                     $"[NameEntryController] Campo preparado — plataforma {Application.platform}, " +
@@ -158,8 +157,7 @@ namespace SafetyProto.UI
 
         private IEnumerator OpenKeyboardAfterPopup()
         {
-            // PopupPanel activates the canvas and enables raycasts during its fade. Wait one
-            // frame so the input field can become selectable before asking Horizon OS for input.
+            // Wait a frame: the popup fade must make the field selectable before the OS keyboard asks for focus.
             yield return null;
             _keyboardOpenCoroutine = null;
 
@@ -176,8 +174,6 @@ namespace SafetyProto.UI
         public void Confirm()
         {
             string name = nameField != null ? nameField.text : string.Empty;
-            // Require a typed name on confirm — this also gates the keyboard "Done" path.
-            // An empty submission is intentional only via Skip (which assigns the anon id).
             if (string.IsNullOrWhiteSpace(name)) return;
             if (inputMode == ParticipantInputMode.NumericKeypad)
                 Finish(() => ParticipantIdentity.SetParticipantCode(FormatCode(name.Trim())));

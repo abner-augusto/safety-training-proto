@@ -40,7 +40,6 @@ namespace SafetyProto.Runtime.Task
         /// </summary>
         public static ScenarioDef? Load(string resourceName)
         {
-            // Tier 1: external override.
             var overridePath = Path.Combine(OverrideDirectory, resourceName + ".json");
             if (File.Exists(overridePath))
             {
@@ -56,7 +55,6 @@ namespace SafetyProto.Runtime.Task
                     $"Motivo: {result.ErrorSummary}");
             }
 
-            // Tier 2: embedded default.
             var textAsset = Resources.Load<TextAsset>($"Scenarios/{resourceName}");
             if (textAsset == null)
             {

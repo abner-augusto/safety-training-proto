@@ -115,8 +115,6 @@ namespace SafetyProto.Runtime.PPE
                 enabled = false;
             }
 
-            // Optional: only needed for the wrong-order guard. If absent, the guard is
-            // skipped and the slot behaves as before (TryAcceptSnap null-checks it).
             _taskManager = TaskManager.Instance != null ? TaskManager.Instance : FindFirstObjectByType<TaskManager>();
             if (_taskManager == null)
                 SafetyLog.Warning($"PPESnapSlot on {name}: TaskManager not found — verificação de ordem desativada.", this);
@@ -171,11 +169,6 @@ namespace SafetyProto.Runtime.PPE
 
             var ppeItem = item.GetComponent<PPEItem>();
 
-            // Reject distractors before the type check. A distractor shares the
-            // valid PPEType (e.g. a helmet without a chin strap is still Helmet), so Accepts()
-            // would otherwise pass and the decoy would be reported as worn — exactly
-            // the opposite of the educational intent. Firing here, before Accepts(),
-            // means the slot the item legitimately hovers always triggers the popup.
             if (ppeItem != null && ppeItem.isDistractor)
             {
                 onDistractorSnapAttempted?.Invoke(item.PpeType);
@@ -189,11 +182,6 @@ namespace SafetyProto.Runtime.PPE
 
             if (ContainsItem(item)) return false;
 
-            // Order guard (equip-set model). If this PPE belongs to a later step than the current
-            // one, reject the snap and nudge the player: it must NOT equip, hide, or register as
-            // worn out of order — otherwise a hideWhenEquipped item (gloves/goggles) would vanish
-            // and silently count. Within a step (gloves L/R) any order is fine. No-op for FreeOrder
-            // groups, current/prior-step PPE, or when TaskManager is absent.
             if (_taskManager != null && _taskManager.IsPpeAheadOfCurrentStep(item.PpeType))
             {
                 onWrongOrderSnapAttempted?.Invoke(item.PpeType);
@@ -212,12 +200,7 @@ namespace SafetyProto.Runtime.PPE
             if (ppeItem != null && ppeItem.hideWhenEquipped)
                 item.gameObject.SetActive(false);
 
-            // Register as worn AFTER the optional hide. SetActive(false) triggers
-            // PPEItem.OnDisable -> PPEManager.UnregisterIfOwned, which would immediately
-            // clear a worn flag set before the hide. That ordering bug made
-            // hideWhenEquipped items (gloves, goggles) report worn then instantly
-            // un-worn, so they never satisfied cumulative PPE requirements. Proximity
-            // eviction skips inactive objects, so a hidden-but-worn item stays compliant.
+            // SetActive(false) fires OnDisable, which unregisters the item; mark worn only after hiding.
             _ppeManager?.ReportPPEStateChange(item.PpeType, true, item.gameObject);
 
             SafetyLog.Info($"PPESnapSlot [{name}]: accepted {item.PpeType} ({_snappedItems.Count}/{_slotCapacity})", this);
@@ -287,8 +270,6 @@ namespace SafetyProto.Runtime.PPE
 
             RemoveItem(item);
 
-            // Allow re-equipping to fire the action again: the task system decides
-            // whether re-completion is valid, so blocking it here is too aggressive.
             _emittedActions.Remove(item.PpeType);
 
             var ppeItemComp = item.GetComponent<PPEItem>();
@@ -315,8 +296,6 @@ namespace SafetyProto.Runtime.PPE
 
         private void Update()
         {
-            // Drive the end of the hover-hold window even when no enter/exit events arrive this
-            // frame, so the highlight eventually settles back to idle after a flicker burst.
             if (_hoverVisualActive && _hoverCounts.Count == 0 && Time.time >= _hoverHoldUntil)
                 UpdateHighlight();
         }
@@ -334,15 +313,12 @@ namespace SafetyProto.Runtime.PPE
 
             if (_hoverCounts.Count > 0)
             {
-                // Active hover — show it and (re)arm the hold window.
                 _hoverVisualActive = true;
                 _hoverHoldUntil = Time.time + hoverHoldSeconds;
                 SetHighlight(hoverColor);
             }
             else if (_hoverVisualActive && Time.time < _hoverHoldUntil)
             {
-                // Hover blipped off, but we're inside the hold window — keep it steady to ride
-                // out a flickering boundary trigger.
                 SetHighlight(hoverColor);
             }
             else
@@ -357,11 +333,7 @@ namespace SafetyProto.Runtime.PPE
             if (_highlightMaterial != null)
                 _highlightMaterial.color = color;
 
-            // Honor a fully transparent color as "hidden" regardless of shader. The Standard
-            // transparent shader still renders specular highlights and glossy reflections at
-            // alpha 0, so a faint shiny sphere would otherwise remain visible (e.g. an occupied
-            // slot whose item is hideWhenEquipped). Toggling the renderer is shader-independent
-            // and applies per-state (idle/hover/occupied) based on each color's alpha.
+            // Standard transparent shader still draws specular at alpha 0; toggle the renderer instead.
             if (highlightRenderer != null)
                 highlightRenderer.enabled = color.a > 0.001f;
         }
@@ -413,7 +385,6 @@ namespace SafetyProto.Runtime.PPE
         {
             ComputeSnapPose(item, transform.position, transform.rotation, out var targetPos, out var targetRot);
 
-            // Anchor crosshair at the resolved snap pose.
             var prevColor = Gizmos.color;
             var prevMatrix = Gizmos.matrix;
             Gizmos.color = editorPreviewColor;
@@ -423,12 +394,8 @@ namespace SafetyProto.Runtime.PPE
             Gizmos.DrawLine(Vector3.zero, Vector3.forward * 0.05f);
             Gizmos.matrix = prevMatrix;
 
-            // Each MeshFilter in the item's hierarchy, transformed from item-local space
-            // to the resolved snap pose.
             var itemRoot = item.transform;
             var rootScale = itemRoot.lossyScale;
-            // Compensate for prefab-asset transforms (which sit at world origin) the same way:
-            // worldToLocalMatrix is local-to-root regardless of where the root lives.
             var rootWorldToLocal = itemRoot.worldToLocalMatrix;
             var targetRootMatrix = Matrix4x4.TRS(targetPos, targetRot, rootScale);
 

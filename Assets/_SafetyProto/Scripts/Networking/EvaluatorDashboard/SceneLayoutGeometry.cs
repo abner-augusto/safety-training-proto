@@ -107,7 +107,6 @@ namespace SafetyProto.Networking.Dashboard
                 Vector3 bestLocal = default;
                 foreach (var floor in floors)
                 {
-                    // Markers sit on or above their floor; the slack absorbs a spot flush with the deck.
                     if (floor.py > marker.py + 0.1f) continue;
                     var local = FloorLocal(floor, target);
                     if (Mathf.Abs(local.x) > floor.sx / 2f + StandReach || Mathf.Abs(local.z) > floor.sz / 2f + StandReach) continue;

@@ -90,8 +90,6 @@ namespace SafetyProto.Runtime
                 UseGroundProbe = false,
                 LocomotorHandling = LocomotorMode.ToggleEnabled,
                 OnBlackout = ShowBlackoutMessage,
-                // No OnBeforeFadeIn: the popup closes itself, deliberately outliving the fade-in
-                // so the message is still readable when the participant's view comes back.
             };
 
             StartCoroutine(recenterService.RecenterTo(anchor, options));

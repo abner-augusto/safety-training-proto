@@ -132,7 +132,6 @@ namespace SafetyProto.Editor
                 "da postura. Desliga a locomoção até sair do Play Mode, senão o jogador cai pelo piso.",
                 MessageType.None);
 
-            // The window repaints every frame: look the provider up once, not per repaint.
             if (_waypoints == null || (_waypoints is Object unityObject && unityObject == null))
                 _waypoints = SimulatedPlayerMover.FindWaypoints();
             if (_waypoints == null)

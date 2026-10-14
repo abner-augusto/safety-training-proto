@@ -59,9 +59,6 @@ namespace SafetyProto.UI
                 }
         }
 
-        // Only a completion reaches here. A task the participant never carried out is closed
-        // by a gate without a TaskCompleted event, and its advice belongs on the final report
-        // (see SessionReportUI) — not as a popup fired while the gate is teleporting them.
         private void OnTaskCompleted(TaskEventArgs args)
         {
             if (args.RuntimeTask == null) return;
@@ -98,7 +95,6 @@ namespace SafetyProto.UI
                 ? advice
                 : "Este equipamento não é adequado para trabalho em altura.";
 
-            // Attach the current task hint to reinforce the correct PPE.
             var hint = task?.hintText;
             if (!string.IsNullOrWhiteSpace(hint))
                 body += $"\n\nDica: {hint}";
@@ -108,8 +104,6 @@ namespace SafetyProto.UI
 
         private void OnWrongOrderSnapAttempted(PPEType attempted)
         {
-            // The item is valid PPE but was equipped before its turn. Point the player
-            // at the task that is actually expected now via its hint.
             var hint = _taskManager?.CurrentRuntimeTask?.TaskData?.hintText;
 
             var body = !string.IsNullOrWhiteSpace(hint)

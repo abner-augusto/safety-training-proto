@@ -1,5 +1,3 @@
-// Assets/_SafetyProto/Tests/Editor/ScaffoldCollapseSolverTests.cs
-//
 // Unity EditMode only (Mathf, no scene, no headset). Exercises the pure maths behind
 // ScaffoldCollapseSequence the same way MenuFollowSolverTests exercises MenuFollowSolver:
 // the tilt ramp, the detach threshold, the comfort clamp on inherited camera rotation,

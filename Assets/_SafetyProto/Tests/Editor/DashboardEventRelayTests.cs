@@ -1,4 +1,3 @@
-// Assets/_SafetyProto/Tests/Editor/DashboardEventRelayTests.cs
 using NUnit.Framework;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
@@ -29,10 +28,6 @@ namespace SafetyProto.Tests.Editor
         public void SessionStarted_BroadcastsSessionThenManifest()
         {
             _bus.Publish(new SessionStartedEventArgs { SessionId = "S1", PlayerId = "P-1234", TimestampMs = 42L });
-
-            // Assert the actual ORDER on _host.Broadcasts (an ordered log), not Last<T> (which
-            // finds a match anywhere in the log) plus an unordered Count — that combination can
-            // never tell "session broadcast before manifest" apart from "manifest before session".
             Assert.AreEqual(2, _host.Broadcasts.Count);
             Assert.AreEqual("SessionStarted", _host.Broadcasts[0].eventType,
                 "SessionStarted must broadcast before the manifest.");

@@ -61,8 +61,6 @@ namespace SafetyProto.Tests.Editor
             var group = _tasks.Group("EPIs", TaskExecutionModeShared.Sequential, boots, gloves);
 
             _bus.Publish(new TaskGroupEventArgs(group, TaskGroupPhase.Started));
-
-            // Reverse order: gloves first, then boots — both must complete.
             _bus.Publish(new PPEStateChangedEventArgs(PPEType.GloveLeft, true));
             _bus.Publish(new PPEStateChangedEventArgs(PPEType.GloveRight, true));
             _bus.Publish(new PPEStateChangedEventArgs(PPEType.Boots, true));
@@ -73,11 +71,7 @@ namespace SafetyProto.Tests.Editor
 
         [Test]
         public void GuidedMode_SequentialGroup_StillWaitsForActiveTask()
-        {
-            // Guard: the EffectiveMode change must not alter Guided semantics.
-            // (Same arrange as above but mode stays Guided and only the group's
-            // first task may complete before a TaskStarted advances the cursor.)
-            var boots = _tasks.Task("Botas", "", PPEType.Boots);
+        {            var boots = _tasks.Task("Botas", "", PPEType.Boots);
             var gloves = _tasks.Task("Luvas", "", PPEType.GloveLeft, PPEType.GloveRight);
             var group = _tasks.Group("EPIs", TaskExecutionModeShared.Sequential, boots, gloves);
 
@@ -284,14 +278,7 @@ namespace SafetyProto.Tests.Editor
 
         [Test]
         public void RaceCondition_PpeZoneExitAfterActionInSameBatch_NoFalseViolation()
-        {
-            // Models the physics-frame race: player picks up new PPE while the
-            // previously-held item exits its zone. The action and the zone-exit
-            // arrive in the event queue in the same batch before EventBusRunner
-            // processes them. Compliance must be evaluated against the state at
-            // action time (boots still on in _ppeStates) — not against the
-            // physics-ahead PPEManager state (boots already off).
-            var task = _tasks.Task("equip_gloves", "equip_gloves", PPEType.Boots);
+        {            var task = _tasks.Task("equip_gloves", "equip_gloves", PPEType.Boots);
             var group = _tasks.Group("PPE selection", TaskExecutionModeShared.Sequential, task);
 
             _bus.Publish(new TaskGroupEventArgs(group));
@@ -311,11 +298,7 @@ namespace SafetyProto.Tests.Editor
 
         [Test]
         public void RaceCondition_PpeZoneExitBeforeActionInSameBatch_ViolationFires()
-        {
-            // Sanity-check: if the zone-exit arrives *before* the action in the same
-            // batch, the engine correctly sees missing PPE at action time and raises
-            // a violation — the fix must not suppress legitimate failures.
-            var task = _tasks.Task("equip_gloves", "equip_gloves", PPEType.Boots);
+        {            var task = _tasks.Task("equip_gloves", "equip_gloves", PPEType.Boots);
             var group = _tasks.Group("PPE selection", TaskExecutionModeShared.Sequential, task);
 
             _bus.Publish(new TaskGroupEventArgs(group));
@@ -377,8 +360,6 @@ namespace SafetyProto.Tests.Editor
         {
             var (group, _, _, _) = BuildPlatformGroup();
             _bus.Publish(new TaskGroupEventArgs(group, TaskGroupPhase.Started));
-
-            // Refused, then the participant anchors and retries the same task.
             _bus.Publish(new ActionAttemptedEvent("install_guardrail"));
             _bus.Publish(new ActionAttemptedEvent("connect_harness"));
             _bus.Publish(new ActionAttemptedEvent("install_guardrail"));
@@ -389,10 +370,7 @@ namespace SafetyProto.Tests.Editor
 
         [Test]
         public void GuidedMode_PrerequisiteMet_SiblingsStillCompleteInAnyOrder()
-        {
-            // The precondition must not turn the group into a sequence: once anchored, the
-            // remaining tasks are free-order again, here done back-to-front.
-            var (group, _, _, _) = BuildPlatformGroup();
+        {            var (group, _, _, _) = BuildPlatformGroup();
             _bus.Publish(new TaskGroupEventArgs(group, TaskGroupPhase.Started));
 
             _bus.Publish(new ActionAttemptedEvent("connect_harness"));
@@ -406,10 +384,7 @@ namespace SafetyProto.Tests.Editor
 
         [Test]
         public void EvaluationMode_PrerequisitePending_DoesNotBlockSibling()
-        {
-            // Evaluation has to let the participant work unanchored — the inspection gate's
-            // consequences are what measure the omission.
-            UseEvaluationEngine();
+        {            UseEvaluationEngine();
 
             var (group, _, _, _) = BuildPlatformGroup();
             _bus.Publish(new TaskGroupEventArgs(group, TaskGroupPhase.Started));
@@ -435,11 +410,7 @@ namespace SafetyProto.Tests.Editor
 
         [Test]
         public void GuidedMode_PrerequisitePending_PublishesActionRefusedForTheEmitter()
-        {
-            // The refused attempt already changed the world (the piece snapped into its socket),
-            // so the emitter is told it was declined and can put itself back. Both halves of the
-            // pair must agree on what was refused.
-            var refusals = new List<ActionRefusedEventArgs>();
+        {            var refusals = new List<ActionRefusedEventArgs>();
             _bus.Subscribe<ActionRefusedEventArgs>(args => refusals.Add(args));
 
             var (group, _, _, _) = BuildPlatformGroup();

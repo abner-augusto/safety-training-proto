@@ -32,7 +32,6 @@ namespace SafetyProto.Runtime.Task
 
         private TaskManagerCore? _core;
 
-        /// <summary>The groups actually driving this session, loaded from JSON.</summary>
         private IReadOnlyList<ITaskGroup> _runtimeGroups = new List<ITaskGroup>();
         public IReadOnlyList<ITaskGroup> RuntimeGroups => _runtimeGroups;
         public string ScenarioResourceName => scenarioResourceName;
@@ -51,8 +50,6 @@ namespace SafetyProto.Runtime.Task
         private void Awake()
         {
             Instance = this;
-            // Load groups in Awake (before any Start) so TotalTaskCount is available to whoever
-            // stamps SessionStarted, regardless of script execution order.
             _runtimeGroups = LoadRuntimeGroups();
         }
 
@@ -107,11 +104,6 @@ namespace SafetyProto.Runtime.Task
                 timerSystem.onTimerTimeout.AddListener(OnGroupTimerTimeout);
             }
 
-            // Start tasks only once the session has actually begun, so GroupStarted/TaskStarted are
-            // stamped with the session context. In the name-entry flow BeginSession is deferred until
-            // the participant id is captured; starting here (scene load) would emit orphan lifecycle
-            // events with empty session ids. The EventBus is a deferred queue, so a SessionStarted
-            // raised during another component's Start() is still dispatched after this listener is set.
             if (startTasksAutomatically)
             {
                 _onSessionStarted = _ => StartTasksOnce();
@@ -119,8 +111,7 @@ namespace SafetyProto.Runtime.Task
             }
         }
 
-        /// <summary>Kicks off the first group/task exactly once (SessionStarted may only fire once per
-        /// scene load, but this guards against any re-raise).</summary>
+        /// <summary>Starts the first group and task once.</summary>
         private void StartTasksOnce()
         {
             if (_tasksStarted) return;
@@ -149,10 +140,7 @@ namespace SafetyProto.Runtime.Task
         }
 
         /// <summary>
-        /// Bridges the Runtime timer (Unity-only UnityEvent, previously observed only by
-        /// TimerUI for cosmetic red-text feedback) into the domain layer so a group timeout
-        /// actually drives task/group/session state forward. See
-        /// <see cref="TaskManagerCore.HandleGroupTimeout"/> for the orchestration this triggers.
+        /// Routes a group timeout from the Runtime timer into <see cref="TaskManagerCore.HandleGroupTimeout"/>.
         /// </summary>
         private void OnGroupTimerTimeout() => _core?.HandleGroupTimeout();
 
@@ -188,8 +176,6 @@ namespace SafetyProto.Runtime.Task
                     var actionId = task.ResolveExpectedActionId();
                     if (string.IsNullOrEmpty(actionId))
                     {
-                        // Equip-set tasks intentionally have no action — they complete on PPE
-                        // state. Only flag a task that has neither an action nor any requiredPPE.
                         if (task.requiredPPE == null || task.requiredPPE.Count == 0)
                             SafetyLog.Error($"[TaskManager] Task '{task.taskName}' has no expected action id.", this);
                         continue;

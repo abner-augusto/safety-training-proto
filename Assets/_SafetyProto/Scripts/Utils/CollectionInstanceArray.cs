@@ -49,7 +49,6 @@ namespace SafetyProto.Utils
             if (!relativeOffset || sourcePrefab == null)
                 return offset;
 
-            // Sample bounds from the prefab's renderers
             var renderers = sourcePrefab.GetComponentsInChildren<Renderer>();
             if (renderers.Length == 0)
                 return offset;

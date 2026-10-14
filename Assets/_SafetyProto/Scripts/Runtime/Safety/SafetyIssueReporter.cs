@@ -124,8 +124,6 @@ namespace SafetyProto.Runtime.Safety
 
             ShowButton();
 
-            // The button can appear at the edge of vision, and a blink can swallow the last frames
-            // of the fill. Announce the transition on two channels the participant cannot miss.
             if (_audioSource != null && _dwellCompletedSound != null)
                 _audioSource.PlayOneShot(_dwellCompletedSound);
 

@@ -62,9 +62,6 @@ namespace SafetyProto.Core
         }
 
         private const int MaxQueueWarningThreshold = 1000;
-        // Edge-triggered: the report itself enqueues a SafetyError, so a level-triggered check
-        // would add one item per frame to the backlog it is reporting. Re-armed only once the
-        // queue has fully drained.
         private bool _queueOverflowReported;
 
         public void ProcessEvents(double maxMillis = 2)
@@ -110,8 +107,6 @@ namespace SafetyProto.Core
             if (_eventQueue.Count == 0) _queueOverflowReported = false;
             _stopwatch.Stop();
 
-            // The loop also drains events enqueued by listeners during the flush, so dispatched
-            // can exceed queueBefore; anything left means the budget cut the flush short.
             FlushProbe?.OnFlush(queueBefore, dispatched, _stopwatch.ElapsedTicks, _eventQueue.Count > 0);
         }
 
@@ -119,8 +114,7 @@ namespace SafetyProto.Core
         /// timing of the queued dispatch. Null (the default) costs one null check per flush.</summary>
         public static IEventBusFlushProbe FlushProbe { get; set; }
 
-        // Domain reload is disabled on entering Play Mode; a probe from the previous run would
-        // otherwise outlive its destroyed recorder.
+        // Domain reload is disabled on Play Mode entry; static state persists between runs.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetFlushProbe() => FlushProbe = null;
 
@@ -150,11 +144,6 @@ namespace SafetyProto.Core
                 });
             }
         }
-
-        //
-        // Subscribers added via Subscribe<T> are invoked in addition to any UnityEvent
-        // bindings. Dispatch is queued (via Enqueue) to preserve frame-boundary semantics
-        // with the rest of the bus.
 
         public void Subscribe<T>(Action<T> handler)
         {

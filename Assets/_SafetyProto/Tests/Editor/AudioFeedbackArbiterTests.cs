@@ -1,8 +1,3 @@
-// Assets/_SafetyProto/Tests/Editor/AudioFeedbackArbiterTests.cs
-//
-// Feedback-sound arbitration. The regression it guards: completing a task without the required
-// PPE publishes both a violation and an unsafe completion, and both clips used to be mixed on
-// top of each other through PlayOneShot.
 using NUnit.Framework;
 using SafetyProto.Domain.Feedback;
 

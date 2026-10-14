@@ -11,7 +11,7 @@ namespace SafetyProto.Tests.Editor
     /// </summary>
     public class PerfStatsTests
     {
-        private const long MicrosecondTicks = 1_000_000; // 1 tick = 1 µs
+        private const long MicrosecondTicks = 1_000_000;
 
         private static FramePerfRow Flush(int us, int dispatched, bool cut = false, float mainMs = 10f) =>
             new FramePerfRow
@@ -154,9 +154,7 @@ namespace SafetyProto.Tests.Editor
 
         [Test]
         public void FileStem_MatchesTheSessionLogNaming()
-        {
-            // 2025-10-09 08:53:20 UTC
-            Assert.AreEqual("20251009_085320_d9a2af99", SessionFileStem.Of(1759999999999 + 1, "d9a2af99-1234-5678"));
+        {            Assert.AreEqual("20251009_085320_d9a2af99", SessionFileStem.Of(1759999999999 + 1, "d9a2af99-1234-5678"));
             Assert.AreEqual("20251009_085320", SessionFileStem.Of(1760000000000, ""));
         }
     }

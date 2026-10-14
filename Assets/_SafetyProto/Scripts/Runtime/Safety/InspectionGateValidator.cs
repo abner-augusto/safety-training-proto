@@ -129,10 +129,6 @@ namespace SafetyProto.Runtime.Safety
         private bool _playerFallFadeActive;
         private readonly List<string> _lastPendingTaskIds = new List<string>();
 
-        // Tasks already charged at a failed gate press this session. The charge
-        // attaches to the task, not the press: pressing again with the same pending
-        // set costs nothing more (but is still logged), so a disoriented participant
-        // is not taxed repeatedly for one mistake.
         private readonly HashSet<string> _chargedTaskIds = new HashSet<string>();
 
         private ScoringConfig GateScoring =>
@@ -222,7 +218,6 @@ namespace SafetyProto.Runtime.Safety
                 return;
             }
 
-            // Failed attempt — skip consequences in Guided mode
             FailedAttemptCount++;
             _lastPendingTaskIds.Clear();
             _lastPendingTaskIds.AddRange(pendingTasks.Select(t => t.ExpectedActionId));
@@ -246,7 +241,6 @@ namespace SafetyProto.Runtime.Safety
             }
             else
             {
-                // Repeat press: violations still logged, no animation replay.
                 foreach (var task in pendingTasks)
                 {
                     SafetyEvents.RaiseSafetyViolation(new SafetyViolationEventArgs
@@ -264,14 +258,11 @@ namespace SafetyProto.Runtime.Safety
             }
         }
 
-        // All tasks complete → success popup with a manual "Continuar" button that ends the
-        // session (and shows the finish screen). No timed auto-dismiss.
         private void ShowSuccessAndEnd(ITaskGroup currentGroup)
         {
             if (verboseLogging)
                 SafetyLog.Info("[InspectionGateValidator] Inspeção aprovada. Aguardando 'Continuar' para finalizar a sessão.", this);
 
-            // Inspection passed: take the gate button (and its canvas) out so it can't be pressed again.
             HideGateButtons();
 
             void Finish()
@@ -292,10 +283,8 @@ namespace SafetyProto.Runtime.Safety
                 Finish();
         }
 
-        // The gate canvas and the popup are both OVROverlayCanvas compositor layers. Layer
-        // teardown and setup are queued and flushed at end of frame, so hiding the gate canvas
-        // and resizing the popup overlay in the same frame leaves the popup layer showing stale
-        // gate content for several frames. Keep the two transitions one frame apart, both ways.
+        // OVROverlayCanvas layer setup/teardown is flushed at end of frame: changing the gate and popup in one frame shows stale content.
+        // Keep the two transitions one frame apart.
         private IEnumerator ShowFinishConfirmationNextFrame(List<RuntimeSafetyTask> pendingTasks, GameObject[] hiddenButtons)
         {
             yield return null;
@@ -327,7 +316,6 @@ namespace SafetyProto.Runtime.Safety
         {
             _isProcessing = true;
 
-            // Build ordered mapping list — PlayerFallSimulation always last
             var pendingMappings = new List<(RuntimeSafetyTask task, ConsequenceMapping mapping)>();
             foreach (var task in pendingTasks)
             {
@@ -344,9 +332,6 @@ namespace SafetyProto.Runtime.Safety
                 return 0;
             });
 
-            // PlayerFallSimulation ends the run: it leaves the screen black on purpose so the
-            // finish screen can be drawn over the fade. Nothing may follow it, and the trailing
-            // pacing delays would only hold a frozen black screen.
             bool terminalConsequence = false;
 
             foreach (var (task, mapping) in pendingMappings)
@@ -368,7 +353,6 @@ namespace SafetyProto.Runtime.Safety
                 if (mapping == null)
                 {
                     if (!includeFallback) continue;
-                    // Fallback: generic warning + hintText
                     PlaySound(warningSound);
                     ShowConsequenceFeedback(task.taskName, task.TaskData?.hintText ?? task.taskName);
                     yield return new WaitForSeconds(delayBetweenConsequences);
@@ -390,9 +374,6 @@ namespace SafetyProto.Runtime.Safety
                         break;
 
                     case ConsequenceType.PlayerFallSimulation:
-                        // The collapse animation runs first and returns with the player mid-fall
-                        // under black; blackoutOnly keeps the cheap fade-only path as a fallback
-                        // for scenes with no collapse rig wired.
                         bool collapsePlayed = false;
                         if (!mapping.blackoutOnly && fallController != null)
                         {
@@ -432,17 +413,12 @@ namespace SafetyProto.Runtime.Safety
                 yield return new WaitForSeconds(delayAfterAllConsequences);
             HideConsequenceFeedback();
 
-            // Warn-and-continue. The gate no longer ends the session on failure — list the
-            // still-pending tasks and let the player keep going to finish them. _isProcessing is
-            // released only when the player presses "Continuar".
             if (onComplete != null)
                 onComplete();
             else
                 ShowPendingWarningAndContinue(pendingTasks);
         }
 
-        // Warning popup listing the remaining tasks, with a "Continuar" button that dismisses
-        // and lets the player keep playing (no SessionCompleted).
         private void ShowPendingWarningAndContinue(List<RuntimeSafetyTask> pendingTasks)
         {
             string list = string.Join("\n", pendingTasks.Select(t =>
@@ -541,8 +517,6 @@ namespace SafetyProto.Runtime.Safety
         private IEnumerator ExecutePlayerFallSimulation(ConsequenceMapping mapping,
             bool alreadyBlack, bool keepBlackAfterContinue)
         {
-            // Keep the world black while the consequence explanation is visible. The popup is an
-            // overlay, so the participant can read it without seeing the simulated fall setup.
             bool continued = _simulationAutoConfirm || _simulationCancellationRequested;
 
             if (OVRScreenFade.instance != null)
@@ -587,8 +561,6 @@ namespace SafetyProto.Runtime.Safety
 
                 if (keepBlackAfterContinue)
                 {
-                    // Terminal consequence: the world stays black and the finish screen is drawn
-                    // over the fade. Clearing the flag stops the cancellation path from fading in.
                     _playerFallFadeActive = false;
                     yield break;
                 }

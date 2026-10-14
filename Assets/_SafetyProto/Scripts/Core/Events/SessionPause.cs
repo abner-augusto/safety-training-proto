@@ -60,7 +60,7 @@ namespace SafetyProto.Core.Events
         /// a source destroyed mid-pause would otherwise leave the next session paused.</summary>
         public static void Reset() => Holds.Clear();
 
-        // Domain reload is disabled on entering Play Mode, so static state survives between runs.
+        // Domain reload is disabled on Play Mode entry; static state persists between runs.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetOnPlay() => Holds.Clear();
     }

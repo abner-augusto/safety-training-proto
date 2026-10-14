@@ -10,8 +10,6 @@ namespace SafetyProto.Core.Events
         {
             if (payload is IEventPayload stampable)
             {
-                // The pattern match boxed the struct; SetMetadata mutates that box, and the
-                // unbox hands back the stamped copy. One box per publish, same as before.
                 stampable.SetMetadata(
                     EventContext.CurrentSessionId ?? string.Empty,
                     EventContext.CurrentPlayerId ?? string.Empty,
