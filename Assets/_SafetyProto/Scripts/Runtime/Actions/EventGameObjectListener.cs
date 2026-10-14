@@ -137,11 +137,11 @@ namespace SafetyProto.Runtime.Actions
                     break;
                 case EventType.ConsequenceStarted:
                     _onConsequenceStarted = _ => Toggle();
-                    ConsequenceEvents.OnConsequenceStarted += _onConsequenceStarted;
+                    DirectConsequenceChannel.OnConsequenceStarted += _onConsequenceStarted;
                     break;
                 case EventType.ConsequenceEnded:
                     _onConsequenceEnded = Toggle;
-                    ConsequenceEvents.OnConsequenceEnded += _onConsequenceEnded;
+                    DirectConsequenceChannel.OnConsequenceEnded += _onConsequenceEnded;
                     break;
             }
         }
@@ -161,8 +161,8 @@ namespace SafetyProto.Runtime.Actions
                 if (_onActionAttempt   != null) EventBus.Instance.onActionAttempt.RemoveListener(_onActionAttempt);
                 if (_onTasksCompleted  != null) EventBus.Instance.onSessionCompleted.RemoveListener(_onTasksCompleted);
             }
-            if (_onConsequenceStarted != null) ConsequenceEvents.OnConsequenceStarted -= _onConsequenceStarted;
-            if (_onConsequenceEnded != null) ConsequenceEvents.OnConsequenceEnded -= _onConsequenceEnded;
+            if (_onConsequenceStarted != null) DirectConsequenceChannel.OnConsequenceStarted -= _onConsequenceStarted;
+            if (_onConsequenceEnded != null) DirectConsequenceChannel.OnConsequenceEnded -= _onConsequenceEnded;
         }
 
         private bool HasAnyTarget()
@@ -176,12 +176,17 @@ namespace SafetyProto.Runtime.Actions
             return false;
         }
 
+        private void MigrateLegacyTarget()
+        {
+            if ((targets == null || targets.Length == 0) && legacyTarget != null)
+                targets = new[] { legacyTarget };
+        }
+
         private IEnumerable<GameObject> EnumerateTargets()
         {
             var seen = new HashSet<GameObject>();
 
-            if ((targets == null || targets.Length == 0) && legacyTarget != null)
-                targets = new[] { legacyTarget };
+            MigrateLegacyTarget();
 
             if (targets == null) yield break;
 

@@ -22,7 +22,11 @@ namespace SafetyProto.Core.Events
         public string MappingId;
     }
 
-    public static class ConsequenceEvents
+    /// <summary>
+    /// Synchronous channel that deliberately bypasses the deferred <c>EventBus</c> queue, so
+    /// subscribers run in the same frame as the raise.
+    /// </summary>
+    public static class DirectConsequenceChannel
     {
         public static event Action<ConsequenceStartedEventArgs> OnConsequenceStarted;
         public static event Action OnConsequenceEnded;

@@ -26,7 +26,7 @@ against `FakeEventBus` — the CLI harness and the Unity runtime both satisfy
 
 **Unity-side producers** (`Scripts/Runtime/**`, `Scripts/UI/**`) go through a
 facade in `Core/Events/` — `SessionEvents`, `ActionEvents`, `PPEEvents`,
-`ScoreEvents`, `SafetyEvents`, `PopupEvents`, `ConsequenceEvents`. A facade is a
+`ScoreEvents`, `SafetyEvents`, `PopupEvents`, `DirectConsequenceChannel`. A facade is a
 static class with `Raise*`/`Publish*` methods that call `EventBus.Instance`
 directly, so it is Unity-side by construction and must never be referenced from
 `Scripts/Domain/**`. This is where the stamping guarantee is stated: every
@@ -110,12 +110,12 @@ struct that declares `SessionId` without implementing the interface.
 
 ## The synchronous exception
 
-`ConsequenceEvents` (`ConsequenceStarted`/`ConsequenceEnded`) bypasses the
+`DirectConsequenceChannel` (`ConsequenceStarted`/`ConsequenceEnded`) bypasses the
 deferred queue entirely and dispatches inline — see `ARCHITECTURE.md` §3. This
 exists so a scripted hazard reaction's animation/audio timing isn't delayed by
 a frame. It is deliberately the only synchronous channel. Do not add a second
 one; route game-state changes through the normal deferred `Publish`/`Subscribe`
-path even when the timing feels tight, and use `ConsequenceEvents` only for the
+path even when the timing feels tight, and use `DirectConsequenceChannel` only for the
 audio/visual reaction it already owns.
 
 ## Violation and refusal codes

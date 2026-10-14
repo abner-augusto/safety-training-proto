@@ -640,8 +640,8 @@ namespace SafetyProto.Runtime.Simulation
             bus.onSafetyViolation.AddListener(_onSafetyViolation);
             bus.onCriticalSafetyFailure.AddListener(_onCriticalFailure);
             bus.onSafetyError.AddListener(_onSafetyError);
-            ConsequenceEvents.OnConsequenceStarted += OnConsequenceStarted;
-            ConsequenceEvents.OnConsequenceEnded += OnConsequenceEnded;
+            DirectConsequenceChannel.OnConsequenceStarted += OnConsequenceStarted;
+            DirectConsequenceChannel.OnConsequenceEnded += OnConsequenceEnded;
             ScaffoldCollapseSequence.OnBeat += OnCollapseBeat;
         }
 
@@ -667,8 +667,8 @@ namespace SafetyProto.Runtime.Simulation
                 if (_onCriticalFailure != null) bus.onCriticalSafetyFailure.RemoveListener(_onCriticalFailure);
                 if (_onSafetyError != null) bus.onSafetyError.RemoveListener(_onSafetyError);
             }
-            ConsequenceEvents.OnConsequenceStarted -= OnConsequenceStarted;
-            ConsequenceEvents.OnConsequenceEnded -= OnConsequenceEnded;
+            DirectConsequenceChannel.OnConsequenceStarted -= OnConsequenceStarted;
+            DirectConsequenceChannel.OnConsequenceEnded -= OnConsequenceEnded;
             ScaffoldCollapseSequence.OnBeat -= OnCollapseBeat;
         }
 

@@ -115,7 +115,7 @@ through it.
 
 Producers do not hand-stamp metadata. The event facades in `Core/Events/`
 (`SessionEvents`, `ActionEvents`, `PPEEvents`, `ScoreEvents`, `SafetyEvents`,
-`PopupEvents`, `ConsequenceEvents`) expose static `Raise*` methods that stamp
+`PopupEvents`, `DirectConsequenceChannel`) expose static `Raise*` methods that stamp
 every event with `SessionId`, `PlayerId`, `ScenarioId`, and a Unix timestamp
 drawn from `EventContext`. A subscriber can therefore correlate any event to a
 session and participant without the producer having to thread that state
@@ -128,7 +128,7 @@ split.
 
 ### The synchronous consequence channel — a deliberate exception
 
-`ConsequenceEvents` does **not** go through the deferred queue. When the
+`DirectConsequenceChannel` does **not** go through the deferred queue. When the
 `InspectionGateValidator` decides a consequence must play (for example a
 scripted hazard reaction), it raises `ConsequenceStarted` / `ConsequenceEnded`
 synchronously so that animation and audio timing are not deferred by a frame.

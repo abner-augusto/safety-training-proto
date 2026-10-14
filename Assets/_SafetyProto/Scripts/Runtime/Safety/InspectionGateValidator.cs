@@ -359,7 +359,7 @@ namespace SafetyProto.Runtime.Safety
                     continue;
                 }
 
-                ConsequenceEvents.RaiseConsequenceStarted(new ConsequenceStartedEventArgs
+                DirectConsequenceChannel.RaiseConsequenceStarted(new ConsequenceStartedEventArgs
                 {
                     ConsequenceType = mapping.consequenceType,
                     TargetObject = mapping.consequenceTarget,
@@ -403,7 +403,7 @@ namespace SafetyProto.Runtime.Safety
                 PlaySound(mapping.consequenceSound != null ? mapping.consequenceSound : warningSound);
                 if (!feedbackHandledByConsequence)
                     ShowConsequenceFeedback(mapping.displayName, mapping.feedbackMessage);
-                ConsequenceEvents.RaiseConsequenceEnded();
+                DirectConsequenceChannel.RaiseConsequenceEnded();
 
                 if (!terminalConsequence)
                     yield return new WaitForSeconds(delayBetweenConsequences);
