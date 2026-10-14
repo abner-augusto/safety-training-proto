@@ -163,6 +163,22 @@ namespace SafetyProto.Runtime.PPE
             UpdateHighlight();
         }
 
+        private bool RejectDistractor(PPESnapItem item)
+        {
+            onDistractorSnapAttempted?.Invoke(item.PpeType);
+            SafetyLog.Info($"PPESnapSlot [{name}]: distrator '{item.name}' ({item.PpeType}) rejeitado.", this);
+            _ppeManager?.ReportDistractorAttempt(item.PpeType, item.name);
+            return false;
+        }
+
+        private bool RejectOutOfOrder(PPESnapItem item)
+        {
+            onWrongOrderSnapAttempted?.Invoke(item.PpeType);
+            _taskManager.RecordPpeOutOfOrder(item.PpeType);
+            SafetyLog.Info($"PPESnapSlot [{name}]: '{item.name}' ({item.PpeType}) fora de ordem — snap rejeitado.", this);
+            return false;
+        }
+
         public bool TryAcceptSnap(PPESnapItem item)
         {
             if (item == null) return false;
@@ -170,12 +186,7 @@ namespace SafetyProto.Runtime.PPE
             var ppeItem = item.GetComponent<PPEItem>();
 
             if (ppeItem != null && ppeItem.isDistractor)
-            {
-                onDistractorSnapAttempted?.Invoke(item.PpeType);
-                SafetyLog.Info($"PPESnapSlot [{name}]: distrator '{item.name}' ({item.PpeType}) rejeitado.", this);
-                _ppeManager?.ReportDistractorAttempt(item.PpeType, item.name);
-                return false;
-            }
+                return RejectDistractor(item);
 
             if (!Accepts(item.PpeType)) return false;
             if (!HasAvailableSpace) return false;
@@ -183,12 +194,7 @@ namespace SafetyProto.Runtime.PPE
             if (ContainsItem(item)) return false;
 
             if (_taskManager != null && _taskManager.IsPpeAheadOfCurrentStep(item.PpeType))
-            {
-                onWrongOrderSnapAttempted?.Invoke(item.PpeType);
-                _taskManager.RecordPpeOutOfOrder(item.PpeType);
-                SafetyLog.Info($"PPESnapSlot [{name}]: '{item.name}' ({item.PpeType}) fora de ordem — snap rejeitado.", this);
-                return false;
-            }
+                return RejectOutOfOrder(item);
 
             _snappedItems.Add(item);
             _hoverCounts.Remove(item);
