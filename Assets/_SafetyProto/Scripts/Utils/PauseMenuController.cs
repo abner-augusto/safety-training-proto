@@ -40,6 +40,11 @@ namespace SafetyProto.Utils
                 return;
 
             SetMenuVisible(false);
+            SyncButtonEdgeDetector();
+        }
+
+        private void SyncButtonEdgeDetector()
+        {
             _wasButtonActiveLastFrame = buttonState != null && buttonState.Active;
         }
 
