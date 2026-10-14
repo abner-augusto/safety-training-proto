@@ -9,7 +9,7 @@ namespace SafetyProto.Tests.Editor
 {
     /// <summary>
     /// Pins the amounts and violations of the charges that belong to no task outcome
-    /// (order deviation, distractor PPE, inspection-gate press), wired to a
+    /// (distractor PPE, inspection-gate press) and the uncharged order deviation, wired to a
     /// <see cref="FakeEventBus"/> and a real <see cref="ScoreService"/> as at runtime.
     /// </summary>
     public class IncidentalChargePolicyTests
@@ -28,13 +28,11 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
-        public void OrderDeviation_ChargesTolerablePenaltyAndRaisesViolation()
+        public void OrderDeviation_RaisesViolationWithoutCharge()
         {
-            int charge = IncidentalChargePolicy.ChargeOrderDeviation(
-                _bus, _score, ScoringConfig.Default, "g1", "EPIs", new[] { "A", "B" });
+            IncidentalChargePolicy.RecordOrderDeviation(_bus, "g1", "EPIs", new[] { "A", "B" });
 
-            Assert.AreEqual(30, charge);
-            Assert.AreEqual(-30, _score.CurrentScore);
+            Assert.AreEqual(0, _score.CurrentScore);
             Assert.AreEqual(1, _violations.Count);
             Assert.AreEqual(ViolationCodes.OrderViolation, _violations[0].ViolationCode);
             Assert.AreEqual("g1", _violations[0].GroupId);
@@ -45,10 +43,8 @@ namespace SafetyProto.Tests.Editor
         [Test]
         public void OrderDeviation_NoDeviations_IsNoOp()
         {
-            int charge = IncidentalChargePolicy.ChargeOrderDeviation(
-                _bus, _score, ScoringConfig.Default, "g1", "EPIs", new string[0]);
+            IncidentalChargePolicy.RecordOrderDeviation(_bus, "g1", "EPIs", new string[0]);
 
-            Assert.AreEqual(0, charge);
             Assert.AreEqual(0, _score.CurrentScore);
             CollectionAssert.IsEmpty(_violations);
         }
@@ -100,7 +96,6 @@ namespace SafetyProto.Tests.Editor
 
             Assert.DoesNotThrow(() =>
             {
-                IncidentalChargePolicy.ChargeOrderDeviation(_bus, _score, config, "g1", "EPIs", new[] { "A" });
                 IncidentalChargePolicy.ChargeWrongPpeSelected(_bus, _score, config, "Capacete", "Decoy", true);
             });
             Assert.AreEqual(0, _score.CurrentScore);

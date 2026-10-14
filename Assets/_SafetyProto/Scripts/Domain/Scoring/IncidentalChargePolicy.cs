@@ -7,20 +7,21 @@ namespace SafetyProto.Domain.Scoring
 {
     /// <summary>
     /// Charges that belong to no task outcome: the participant did something the scenario
-    /// does not model as a task (equipped out of order, picked a decoy, pressed the gate too
-    /// early). Each method publishes the violation that explains the charge and applies the
+    /// does not model as a task (picked a decoy, pressed the gate too early). An order
+    /// deviation is recorded here too, but costs nothing. Each method publishes the violation that explains the charge and applies the
     /// amount <see cref="ScoringConfig"/> derives for it. The hosts decide WHEN one of these
     /// happened; this class decides what it costs, so a headless run charges exactly what the
     /// headset does. Modelled on <see cref="Safety.HazardClassificationPolicy"/>.
     /// </summary>
     public static class IncidentalChargePolicy
     {
-        /// <summary>Phase-advance gate found tasks completed out of the authored order.
-        /// No-op (returns 0) when <paramref name="deviations"/> is empty.</summary>
-        public static int ChargeOrderDeviation(IEventBus bus, IScoreService scoreService, ScoringConfig scoring,
-                                               string groupId, string groupName, IReadOnlyList<string> deviations)
+        /// <summary>Phase-advance gate found tasks completed out of the authored order. Logged as
+        /// a violation for analysis only: the participant is never told the order in Evaluation,
+        /// so it must not cost points. No-op when <paramref name="deviations"/> is empty.</summary>
+        public static void RecordOrderDeviation(IEventBus bus, string groupId, string groupName,
+                                                IReadOnlyList<string> deviations)
         {
-            if (deviations == null || deviations.Count == 0) return 0;
+            if (deviations == null || deviations.Count == 0) return;
             string list = string.Join(", ", deviations);
             bus.Publish(new SafetyViolationEventArgs
             {
@@ -31,9 +32,6 @@ namespace SafetyProto.Domain.Scoring
                 TaskName = string.Empty,
                 GroupName = groupName ?? string.Empty
             });
-            int charge = scoring.BasePenaltyFor(RiskLevels.IncidentalChargeTier);
-            if (charge > 0) scoreService.SubtractPoints(charge, ViolationCodes.OrderViolation, string.Empty);
-            return charge;
         }
 
         /// <summary>A distractor item was snapped. The violation is always published (decoy

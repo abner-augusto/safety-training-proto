@@ -299,7 +299,8 @@ enforces order and how it reports what the participant did *not* do.
 - **Evaluation mode** (*modo avaliação*) assesses. The orchestrator advances
   through phases behind a **phase-advance gate**: the participant must explicitly
   complete and confirm a phase, and the gate evaluates whether the tasks were
-  done, done out of order (an order deviation carries a penalty), or left undone.
+  done, done out of order (an order deviation is logged as a violation but costs
+  no points), or left undone.
   Both gates run the same closer: pending tasks at phase end are marked
   `NotPerformed` and each raises a `TASK_NOT_PERFORMED` violation, so a skipped
   PPE leaves the same trace as a skipped inspection step. The session summary

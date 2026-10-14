@@ -238,7 +238,7 @@ namespace SafetyProto.Runtime
             _advanceConsumed = true;
             SetButtonsActive(false);
 
-            ApplyOrderPenaltyIfDeviated(targetGroupId, taskManager.FindGroup(targetGroupId)?.groupName ?? string.Empty);
+            RecordOrderDeviations(targetGroupId);
 
             if (decision == PhaseAdvanceAction.CloseThenAdvance)
             {
@@ -276,15 +276,14 @@ namespace SafetyProto.Runtime
         /// <summary>True when the group finished on its own, so it is no longer the current group.</summary>
         private bool WasCompletedNaturally(string groupId) => taskManager.IsGroupCompleted(groupId);
 
-        private void ApplyOrderPenaltyIfDeviated(string groupId, string groupName)
+        private void RecordOrderDeviations(string groupId)
         {
             var deviations = taskManager.GetCompletionOrderDeviations(groupId);
             if (deviations.Count == 0) return;
 
             taskManager.RegisterOrderViolation($"EPIs fora da ordem recomendada: {string.Join(", ", deviations)}");
-            IncidentalChargePolicy.ChargeOrderDeviation(
-                EventBus.Instance, ScoreService.Instance, taskManager.Scoring ?? ScoringConfig.Default,
-                groupId, groupName, deviations);
+            IncidentalChargePolicy.RecordOrderDeviation(
+                EventBus.Instance, groupId, taskManager.FindGroup(groupId)?.groupName ?? string.Empty, deviations);
         }
 
         private void OnGroupCompleted(TaskGroupEventArgs args)
