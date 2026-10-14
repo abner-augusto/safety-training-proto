@@ -26,8 +26,9 @@ namespace SafetyProto.Domain.Safety
         private readonly List<ISafetyTask> _activeFreeOrderTasks = new List<ISafetyTask>();
 
         /// <summary>Ids completed inside the active group, used to resolve a group's
-        /// prerequisite independently of execution mode. Cleared on every group start.</summary>
-        private readonly HashSet<string> _completedTaskIds =
+        /// prerequisite independently of execution mode. Cleared on every group start.
+        /// Timed-out tasks are deliberately absent so an unmet prerequisite keeps blocking.</summary>
+        private readonly HashSet<string> _satisfiedPrerequisiteIds =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         private readonly Action<ActionAttemptedEvent>    _onActionAttempt;
@@ -98,7 +99,7 @@ namespace SafetyProto.Domain.Safety
             }
             else if (args.Phase == TaskPhase.Completed && args.Task != null)
             {
-                _completedTaskIds.Add(args.Task.id);
+                _satisfiedPrerequisiteIds.Add(args.Task.id);
             }
         }
 
@@ -107,14 +108,13 @@ namespace SafetyProto.Domain.Safety
             _activeGroup = args.Group;
             _activeSequentialTask = null;
             _activeFreeOrderTasks.Clear();
-            _completedTaskIds.Clear();
+            _satisfiedPrerequisiteIds.Clear();
 
             if (_activeGroup != null && TaskExecutionRules.EffectiveMode(_activeGroup, CurrentMode) == TaskExecutionModeShared.FreeOrder)
             {
                 _activeFreeOrderTasks.AddRange(_activeGroup.tasks);
 
-                for (int i = _activeFreeOrderTasks.Count - 1; i >= 0; i--)
-                    TryCompleteEquipTask(_activeFreeOrderTasks[i]);
+                CompleteSatisfiedFreeOrderEquipTasks();
             }
         }
 
@@ -143,7 +143,7 @@ namespace SafetyProto.Domain.Safety
             _activeGroup = null;
             _activeSequentialTask = null;
             _activeFreeOrderTasks.Clear();
-            _completedTaskIds.Clear();
+            _satisfiedPrerequisiteIds.Clear();
         }
 
         private void HandlePpeStateChanged(PPEStateChangedEventArgs args)
@@ -158,9 +158,14 @@ namespace SafetyProto.Domain.Safety
             }
             else
             {
-                for (int i = _activeFreeOrderTasks.Count - 1; i >= 0; i--)
-                    TryCompleteEquipTask(_activeFreeOrderTasks[i]);
+                CompleteSatisfiedFreeOrderEquipTasks();
             }
+        }
+
+        private void CompleteSatisfiedFreeOrderEquipTasks()
+        {
+            for (int i = _activeFreeOrderTasks.Count - 1; i >= 0; i--)
+                TryCompleteEquipTask(_activeFreeOrderTasks[i]);
         }
 
         /// <summary>
@@ -175,7 +180,7 @@ namespace SafetyProto.Domain.Safety
 
             if (!ProcessTaskAttempt(task!, _activeGroup, out var refusalCode, out var refusalMessage))
             {
-                RaiseViolation(refusalCode, refusalMessage, task, _activeGroup);
+                RaiseEquipRefusal(refusalCode, refusalMessage, task!, _activeGroup);
                 return false;
             }
 
@@ -184,6 +189,13 @@ namespace SafetyProto.Domain.Safety
 
             return true;
         }
+
+        /// <summary>
+        /// Equip-set tasks complete on PPE state, not an action attempt, so there is no action
+        /// id or source id to stamp a refusal with: only the violation is raised.
+        /// </summary>
+        private void RaiseEquipRefusal(string code, string message, ISafetyTask task, ITaskGroup group) =>
+            RaiseViolation(code, message, task, group);
 
         private void HandleActionAttempt(ActionAttemptedEvent args)
         {
@@ -289,14 +301,23 @@ namespace SafetyProto.Domain.Safety
         /// stays pending and every sibling remains available in any order once the
         /// precondition is met.
         /// </remarks>
+        private enum PrerequisitePolicy
+        {
+            Enforced,
+            Bypassed
+        }
+
+        private static PrerequisitePolicy PrerequisitePolicyFor(SessionMode mode) =>
+            mode == SessionMode.Guided ? PrerequisitePolicy.Enforced : PrerequisitePolicy.Bypassed;
+
         private bool IsBlockedByPrerequisite(ISafetyTask task, ITaskGroup group)
         {
-            if (CurrentMode != SessionMode.Guided) return false;
+            if (PrerequisitePolicyFor(CurrentMode) == PrerequisitePolicy.Bypassed) return false;
 
             var prerequisiteId = group.prerequisiteTaskId;
             if (string.IsNullOrWhiteSpace(prerequisiteId)) return false;
             if (string.Equals(task.id, prerequisiteId, StringComparison.OrdinalIgnoreCase)) return false;
-            if (_completedTaskIds.Contains(prerequisiteId)) return false;
+            if (_satisfiedPrerequisiteIds.Contains(prerequisiteId)) return false;
 
             if (FindTask(group, prerequisiteId) == null)
             {
@@ -362,11 +383,7 @@ namespace SafetyProto.Domain.Safety
 
             if (!compliant)
             {
-                RaiseViolation(
-                    ViolationCodes.PpeMissing,
-                    $"Faltam EPIs obrigatórios para a tarefa '{task.taskName}'.",
-                    task,
-                    currentGroup);
+                RecordUnsafeCompletion(task, currentGroup);
             }
 
             if (_verboseLogging)
@@ -379,7 +396,7 @@ namespace SafetyProto.Domain.Safety
                 _activeFreeOrderTasks.Remove(task);
             }
 
-            _completedTaskIds.Add(task.id);
+            _satisfiedPrerequisiteIds.Add(task.id);
 
             _bus.Publish(new TaskEventArgs(task, null, TaskPhase.Completed)
             {
@@ -405,8 +422,7 @@ namespace SafetyProto.Domain.Safety
 
             if (TaskExecutionRules.EffectiveMode(_activeGroup, CurrentMode) == TaskExecutionModeShared.FreeOrder)
             {
-                for (int i = _activeFreeOrderTasks.Count - 1; i >= 0; i--)
-                    TryCompleteEquipTask(_activeFreeOrderTasks[i]);
+                CompleteSatisfiedFreeOrderEquipTasks();
             }
             else
             {
@@ -441,6 +457,18 @@ namespace SafetyProto.Domain.Safety
                 GroupName = group != null ? group.groupName : string.Empty
             });
         }
+
+        /// <summary>
+        /// Records the PPE-missing violation of a task that still completes (as unsafe). Not a
+        /// refusal: it must never publish <see cref="ActionRefusedEventArgs"/>, which would tell
+        /// the emitter to undo a task that succeeded.
+        /// </summary>
+        private void RecordUnsafeCompletion(ISafetyTask task, ITaskGroup group) =>
+            RaiseViolation(
+                ViolationCodes.PpeMissing,
+                $"Faltam EPIs obrigatórios para a tarefa '{task.taskName}'.",
+                task,
+                group);
 
         /// <summary>
         /// Declines an attempt: raises the violation that explains it to the participant AND the
