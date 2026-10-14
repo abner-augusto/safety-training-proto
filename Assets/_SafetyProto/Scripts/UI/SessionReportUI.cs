@@ -75,8 +75,7 @@ namespace SafetyProto.UI
 
         private void OnEnable()
         {
-            if (detailsToggleButton != null)
-                detailsToggleButton.onClick.AddListener(ToggleDetails);
+            RegisterDetailsToggle();
 
             if (!this.IsEventBusReady()) return;
 
@@ -90,6 +89,12 @@ namespace SafetyProto.UI
             {
                 PopulateReport(taskManager.LastSessionSummary.Value);
             }
+        }
+
+        private void RegisterDetailsToggle()
+        {
+            if (detailsToggleButton != null)
+                detailsToggleButton.onClick.AddListener(ToggleDetails);
         }
 
         private void OnDisable()
@@ -114,7 +119,7 @@ namespace SafetyProto.UI
                 taskManager != null ? taskManager.GetSessionTasks() : new List<RuntimeSafetyTask>();
 
             int maxPossibleScore = ComputeMaxScore(tasks);
-            bool criticalViolation = HasCriticalViolation(tasks);
+            bool criticalViolation = IsEliminatoryFault(tasks);
             float pct = maxPossibleScore > 0 ? Mathf.Max(0, args.totalScore) / (float)maxPossibleScore : 0f;
             _medalCappedByCritical = criticalViolation && pct >= 0.95f;
 
@@ -157,6 +162,13 @@ namespace SafetyProto.UI
         {
             if (medalIcon == null) return;
 
+            Color? medal = MedalFor(score, max, criticalViolation);
+            medalIcon.enabled = medal.HasValue;
+            if (medal.HasValue) medalIcon.color = medal.Value;
+        }
+
+        private Color? MedalFor(int score, int max, bool eliminatoryFault)
+        {
             float pct = max > 0 ? Mathf.Max(0, score) / (float)max : 0f;
 
             Color? medal = pct >= 0.95f ? goldColor
@@ -164,14 +176,12 @@ namespace SafetyProto.UI
                          : pct >= 0.70f ? bronzeColor
                          : (Color?)null;
 
-            if (criticalViolation && medal.HasValue && medal.Value == goldColor)
+            if (eliminatoryFault && medal.HasValue && medal.Value == goldColor)
                 medal = silverColor;
-
-            medalIcon.enabled = medal.HasValue;
-            if (medal.HasValue) medalIcon.color = medal.Value;
+            return medal;
         }
 
-        private bool HasCriticalViolation(IReadOnlyList<RuntimeSafetyTask> tasks)
+        private bool IsEliminatoryFault(IReadOnlyList<RuntimeSafetyTask> tasks)
         {
             foreach (var t in tasks)
             {

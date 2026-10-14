@@ -71,12 +71,12 @@ namespace SafetyProto.UI
 
         private void UpdateTimeDisplay(float seconds)
         {
-            bool countingUp = timerSystem != null && timerSystem.IsCountingUp;
-            ApplyLabel(countingUp);
+            bool isUntimedGroup = timerSystem != null && timerSystem.IsCountingUp;
+            ApplyLabel(isUntimedGroup);
 
-            if (countingUp || seconds > 0f)
+            if (isUntimedGroup || seconds > 0f)
             {
-                WriteClock(seconds, SessionPause.IsPaused ? Color.yellow : Color.white);
+                WriteClock(seconds, RunningClockColor());
                 return;
             }
 
@@ -84,6 +84,8 @@ namespace SafetyProto.UI
             _timerText.text = "00:00";
             _timerText.color = Color.red;
         }
+
+        private static Color RunningClockColor() => SessionPause.IsPaused ? Color.yellow : Color.white;
 
         private void WriteClock(float seconds, Color color)
         {
