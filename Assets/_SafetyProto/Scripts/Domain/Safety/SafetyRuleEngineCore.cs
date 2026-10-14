@@ -288,6 +288,15 @@ namespace SafetyProto.Domain.Safety
                    _activeFreeOrderTasks.All(t => !TaskExecutionRules.MatchesAction(t, actionId));
         }
 
+        private enum PrerequisitePolicy
+        {
+            Enforced,
+            Bypassed
+        }
+
+        private static PrerequisitePolicy PrerequisitePolicyFor(SessionMode mode) =>
+            mode == SessionMode.Guided ? PrerequisitePolicy.Enforced : PrerequisitePolicy.Bypassed;
+
         /// <summary>
         /// True when <paramref name="task"/> must be refused because its group names another
         /// task as the safety precondition for the whole group and that task is still pending.
@@ -301,15 +310,6 @@ namespace SafetyProto.Domain.Safety
         /// stays pending and every sibling remains available in any order once the
         /// precondition is met.
         /// </remarks>
-        private enum PrerequisitePolicy
-        {
-            Enforced,
-            Bypassed
-        }
-
-        private static PrerequisitePolicy PrerequisitePolicyFor(SessionMode mode) =>
-            mode == SessionMode.Guided ? PrerequisitePolicy.Enforced : PrerequisitePolicy.Bypassed;
-
         private bool IsBlockedByPrerequisite(ISafetyTask task, ITaskGroup group)
         {
             if (PrerequisitePolicyFor(CurrentMode) == PrerequisitePolicy.Bypassed) return false;
