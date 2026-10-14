@@ -226,7 +226,7 @@ namespace SafetyProto.Runtime
 
             var currentGroup = taskManager.GetCurrentGroup();
             var decision = PhaseAdvanceGate.Decide(currentGroup?.id, targetGroupId,
-                taskManager.IsGroupCompleted(targetGroupId));
+                WasCompletedNaturally(targetGroupId));
 
             if (decision == PhaseAdvanceAction.Ignore)
             {
@@ -272,6 +272,9 @@ namespace SafetyProto.Runtime
                 StartTransition();
             }
         }
+
+        /// <summary>True when the group finished on its own, so it is no longer the current group.</summary>
+        private bool WasCompletedNaturally(string groupId) => taskManager.IsGroupCompleted(groupId);
 
         private void ApplyOrderPenaltyIfDeviated(string groupId, string groupName)
         {
