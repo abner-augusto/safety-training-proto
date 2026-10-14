@@ -367,6 +367,13 @@ namespace SafetyProto.Domain.Tasks
             }
         }
 
+        /// <summary>True once a task can no longer change state. Group completion depends on
+        /// this list: a state missing from it leaves its group open forever.</summary>
+        public static bool IsTerminal(TaskState state) =>
+            state == TaskState.CompletedSuccess ||
+            state == TaskState.CompletedSuccessButUnsafe ||
+            state == TaskState.NotPerformed;
+
         private void CheckGroupCompletion()
         {
             var currentGroup = GetCurrentGroup();
@@ -378,10 +385,7 @@ namespace SafetyProto.Domain.Tasks
                 var t = _sessionTasks[i];
                 if (!ContainsByReference(currentGroup.tasks, t.TaskData)) continue;
 
-                var s = t.State;
-                if (s != TaskState.CompletedSuccess &&
-                    s != TaskState.CompletedSuccessButUnsafe &&
-                    s != TaskState.NotPerformed)
+                if (!IsTerminal(t.State))
                 {
                     allDone = false;
                     break;
@@ -452,8 +456,12 @@ namespace SafetyProto.Domain.Tasks
             _lastSessionSummary = summary;
             _bus.Publish(summary);
 
-            _bus.Publish(new SessionEndedEventArgs());
+            PublishSessionEnded();
         }
+
+        /// <summary>Terminal signal published alongside the summary on every path through
+        /// <see cref="EndSession"/>, including a group-timeout cascade.</summary>
+        private void PublishSessionEnded() => _bus.Publish(new SessionEndedEventArgs());
 
         /// <summary>
         /// Final state of every task, tagged with the group it belongs to and the risk it
