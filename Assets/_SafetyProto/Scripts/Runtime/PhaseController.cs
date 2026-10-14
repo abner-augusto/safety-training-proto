@@ -295,6 +295,9 @@ namespace SafetyProto.Runtime
 
             if (_simulationAutoConfirm)
             {
+                // Stands in for the Evaluation advance press, which is where a real run records the order.
+                if (SessionModeState.Current == SessionMode.Evaluation)
+                    RecordOrderDeviations(args.Group.id);
                 StartTransition();
             }
             else if (SessionModeState.Current == SessionMode.Guided)
