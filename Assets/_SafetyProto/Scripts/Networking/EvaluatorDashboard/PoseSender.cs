@@ -34,7 +34,7 @@ namespace SafetyProto.Networking.Dashboard
         {
             while (true)
             {
-                if (!DashboardGate.PoseBroadcastSuspended && _server.HasConnections && _channel != null)
+                if (ShouldSendPose())
                 {
                     SendPoseFrame();
                 }
@@ -42,6 +42,9 @@ namespace SafetyProto.Networking.Dashboard
                 yield return _wait;
             }
         }
+
+        private bool ShouldSendPose() =>
+            !DashboardGate.PoseBroadcastSuspended && _server.HasConnections && _channel != null;
 
         private void SendPoseFrame()
         {

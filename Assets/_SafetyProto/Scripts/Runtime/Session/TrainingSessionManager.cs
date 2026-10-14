@@ -135,16 +135,19 @@ namespace SafetyProto.Runtime.Session
             return xrFocused || !_xrSessionWasFocused;
         }
 
+        private void RaiseAbortedSessionEnd()
+        {
+            SessionEvents.RaiseSessionEnded();
+            SafetyLog.Info("TrainingSessionManager: Session Ended event raised.", this);
+        }
+
         private void OnDestroy()
         {
             if (EventBus.Instance != null)
             {
                 EventBus.Instance.onSessionEnded.RemoveListener(OnSessionEnded);
                 if (!_sessionEnded)
-                {
-                    SessionEvents.RaiseSessionEnded();
-                    SafetyLog.Info("TrainingSessionManager: Session Ended event raised.", this);
-                }
+                    RaiseAbortedSessionEnd();
             }
 
             ScoreService.DestroyInstance();

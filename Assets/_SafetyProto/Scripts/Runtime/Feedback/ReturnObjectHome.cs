@@ -92,12 +92,14 @@ namespace SafetyProto.Runtime.Feedback
             }
         }
 
+        private bool IsHeldByAnyHand() => _grabbable.SelectingPointsCount > 0;
+
         private void OnPointerEvent(PointerEvent evt)
         {
             if (evt.Type == PointerEventType.Select)
             {
                 // Meta SDK can fire Select after Unselect (interactor handoff); only cancel when actually held.
-                bool actuallyGrabbed = _grabbable.SelectingPointsCount > 0;
+                bool actuallyGrabbed = IsHeldByAnyHand();
                 _isGrabbed = actuallyGrabbed;
 
                 if (actuallyGrabbed)
@@ -112,7 +114,7 @@ namespace SafetyProto.Runtime.Feedback
             }
             else if (evt.Type == PointerEventType.Unselect || evt.Type == PointerEventType.Cancel)
             {
-                bool actuallyGrabbed = _grabbable.SelectingPointsCount > 0;
+                bool actuallyGrabbed = IsHeldByAnyHand();
                 _isGrabbed = actuallyGrabbed;
 
                 if (!actuallyGrabbed)
