@@ -12,8 +12,9 @@ namespace SafetyProto.Core.Interfaces
         /// <paramref name="autoCloseSeconds"/>. Unlike the other Show* methods this one does NOT
         /// pause the session: there is nothing for the participant to answer, so pausing would
         /// only add noise to the session log — including when no session is running at all
-        /// (e.g. recentering from the menu).</summary>
-        void ShowTransient(string title, string body, float autoCloseSeconds);
+        /// (e.g. recentering from the menu). The panel is shared, so the notice is dropped
+        /// rather than replacing a popup already visible; returns false in that case.</summary>
+        bool TryShowIfIdle(string title, string body, float autoCloseSeconds);
 
         /// <summary>Shows a popup with a single action button (e.g. "Continuar") that invokes
         /// <paramref name="onAction"/> when pressed.</summary>

@@ -121,19 +121,21 @@ namespace SafetyProto.UI
             => Show(new PopupData { type = PopupType.Normal, title = title, body = body });
 
         /// <summary>
-        /// Transient notice: shows the panel directly instead of going through <see cref="Show"/>,
+        /// Shows a transient notice only when no popup is visible, returning false when it is dropped
+        /// (the shared panel may hold a prompt the participant still has to answer, such as name entry).
+        /// Shows the panel directly instead of going through <see cref="Show"/>,
         /// so no SessionPaused/SessionResumed pair is raised. The participant has nothing to
         /// answer here, and the recenter case fires it with no session running, where that pair
         /// would land in the log with an empty session id.
         /// </summary>
-        public void ShowTransient(string title, string body, float autoCloseSeconds)
+        public bool TryShowIfIdle(string title, string body, float autoCloseSeconds)
         {
-            if (popupPanel == null) return;
+            if (popupPanel == null) return false;
 
             if (popupPanel.IsVisible)
             {
                 SafetyLog.Info($"[PopupService] Aviso '{title}' suprimido — outro popup já está visível.", this);
-                return;
+                return false;
             }
 
             popupPanel.Show(new PopupData
@@ -143,6 +145,7 @@ namespace SafetyProto.UI
                 body = body,
                 autoCloseSeconds = autoCloseSeconds > 0f ? autoCloseSeconds : 5f,
             });
+            return true;
         }
 
         public void ShowNormal(string title, string body)
@@ -187,9 +190,15 @@ namespace SafetyProto.UI
                 onSkipPressed     = new UnityEvent(),
             };
 
-            data.onActionPressed.AddListener(() => { Hide(); onConfirm?.Invoke(); });
-            data.onSkipPressed.AddListener(() => { Hide(); onCancel?.Invoke(); });
+            data.onActionPressed.AddListener(() => CloseThen(onConfirm));
+            data.onSkipPressed.AddListener(() => CloseThen(onCancel));
             Show(data);
+        }
+
+        private void CloseThen(UnityAction callback)
+        {
+            Hide();
+            callback?.Invoke();
         }
 
         public void ShowChoice(string title, string body, IReadOnlyList<IReportOption> options,

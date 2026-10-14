@@ -99,7 +99,7 @@ namespace SafetyProto.Runtime
 
         private void ShowBlackoutMessage()
         {
-            _popupFeedback?.ShowTransient(blackoutTitle, blackoutBody, blackoutMessageSeconds);
+            _popupFeedback?.TryShowIfIdle(blackoutTitle, blackoutBody, blackoutMessageSeconds);
         }
     }
 }

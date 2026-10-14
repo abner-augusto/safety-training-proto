@@ -43,7 +43,7 @@ namespace SafetyProto.Tests.Editor
 
             public void ShowSuccess(string title, string body) { }
             public void ShowWarning(string title, string body) { }
-            public void ShowTransient(string title, string body, float autoCloseSeconds) { }
+            public bool TryShowIfIdle(string title, string body, float autoCloseSeconds) => true;
             public void ShowInteractive(string title, string body, string buttonLabel, UnityAction onAction) { }
             public void ShowChoice(string title, string body, IReadOnlyList<IReportOption> options,
                                     UnityAction<IReportOption> onChosen) { }
