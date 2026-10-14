@@ -83,6 +83,14 @@ namespace SafetyProto.Core
         /// </summary>
         public bool WasPpeCompliant;
 
+        /// <summary>
+        /// The task's final state: the runtime instance's when the emitter owns one, otherwise
+        /// derived from <see cref="WasPpeCompliant"/>. Consumers read this, never the two sources.
+        /// </summary>
+        public readonly TaskState Outcome =>
+            RuntimeTask?.State
+            ?? (WasPpeCompliant ? TaskState.CompletedSuccess : TaskState.CompletedSuccessButUnsafe);
+
         public TaskEventArgs(ISafetyTask task, RuntimeSafetyTask? runtimeTask = null)
         {
             SessionId = string.Empty;

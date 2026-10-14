@@ -74,27 +74,22 @@ namespace SafetyProto.Runtime.Feedback
             _arbiter.Reset();
         }
 
+        private static bool ShouldRevealOutcome(SessionMode mode) => mode != SessionMode.Evaluation;
+
         private void OnTaskCompleted(TaskEventArgs args)
         {
-            if (SessionModeState.Current == SessionMode.Evaluation)
+            if (!ShouldRevealOutcome(SessionModeState.Current))
             {
                 _arbiter.Request(AudioFeedbackKind.Success);
                 return;
             }
 
-            bool compliant = args.RuntimeTask != null
-                ? args.RuntimeTask.State == TaskState.CompletedSuccess
-                : args.WasPpeCompliant;
-
-            bool unsafeTask = args.RuntimeTask != null
-                ? args.RuntimeTask.State == TaskState.CompletedSuccessButUnsafe
-                : !args.WasPpeCompliant;
-
-            if (compliant)
+            var outcome = args.Outcome;
+            if (outcome == TaskState.CompletedSuccess)
             {
                 _arbiter.Request(AudioFeedbackKind.Success);
             }
-            else if (unsafeTask)
+            else if (outcome == TaskState.CompletedSuccessButUnsafe)
             {
                 _arbiter.Request(AudioFeedbackKind.UnsafeSuccess);
             }
@@ -102,13 +97,13 @@ namespace SafetyProto.Runtime.Feedback
 
         private void OnSafetyViolation(SafetyViolationEventArgs _)
         {
-            if (SessionModeState.Current == SessionMode.Evaluation) return;
+            if (!ShouldRevealOutcome(SessionModeState.Current)) return;
             _arbiter.Request(AudioFeedbackKind.Failure);
         }
 
         private void OnCriticalFailure(CriticalSafetyFailureEventArgs _)
         {
-            if (SessionModeState.Current == SessionMode.Evaluation) return;
+            if (!ShouldRevealOutcome(SessionModeState.Current)) return;
             _arbiter.Request(AudioFeedbackKind.Critical);
         }
 
@@ -116,7 +111,7 @@ namespace SafetyProto.Runtime.Feedback
 
         public void PlayUnsafeSuccessClip()
         {
-            if (SessionModeState.Current == SessionMode.Evaluation)
+            if (!ShouldRevealOutcome(SessionModeState.Current))
             {
                 _arbiter.Request(AudioFeedbackKind.Success);
                 return;
@@ -127,13 +122,13 @@ namespace SafetyProto.Runtime.Feedback
 
         public void PlayFailureClip()
         {
-            if (SessionModeState.Current == SessionMode.Evaluation) return;
+            if (!ShouldRevealOutcome(SessionModeState.Current)) return;
             _arbiter.Request(AudioFeedbackKind.Failure);
         }
 
         public void PlayCriticalFailureClip()
         {
-            if (SessionModeState.Current == SessionMode.Evaluation) return;
+            if (!ShouldRevealOutcome(SessionModeState.Current)) return;
             _arbiter.Request(AudioFeedbackKind.Critical);
         }
 
@@ -154,7 +149,7 @@ namespace SafetyProto.Runtime.Feedback
 
         private AudioClip ResolveClip(AudioFeedbackKind kind)
         {
-            if (SessionModeState.Current == SessionMode.Evaluation)
+            if (!ShouldRevealOutcome(SessionModeState.Current))
             {
                 return genericTaskCompleteClip != null ? genericTaskCompleteClip : successClip;
             }
@@ -171,7 +166,7 @@ namespace SafetyProto.Runtime.Feedback
 
         private float ResolveVolume(AudioFeedbackKind kind)
         {
-            if (SessionModeState.Current == SessionMode.Evaluation)
+            if (!ShouldRevealOutcome(SessionModeState.Current))
             {
                 return successVolume;
             }

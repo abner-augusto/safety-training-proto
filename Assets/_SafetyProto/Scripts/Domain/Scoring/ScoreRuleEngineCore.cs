@@ -58,8 +58,7 @@ namespace SafetyProto.Domain.Scoring
         {
             if (args.Task == null) return;
 
-            var state = args.RuntimeTask?.State
-                ?? (args.WasPpeCompliant ? TaskState.CompletedSuccess : TaskState.CompletedSuccessButUnsafe);
+            var state = args.Outcome;
 
             if (state == TaskState.NotPerformed) return;
 
