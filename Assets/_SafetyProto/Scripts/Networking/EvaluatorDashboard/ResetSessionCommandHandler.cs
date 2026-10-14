@@ -18,13 +18,13 @@ namespace SafetyProto.Networking.Dashboard
         [Tooltip("Scene reset entry point. Resolved from the scene when left empty.")]
         [SerializeField] private SceneLoader sceneLoader;
 
-        private bool _resetRequested;
+        private bool _reloadQueuedThisFrame;
 
         public string Command => CommandName;
 
         public bool TryExecute(out string reason)
         {
-            if (_resetRequested)
+            if (_reloadQueuedThisFrame)
             {
                 reason = "Reinício já em andamento.";
                 return false;
@@ -39,7 +39,7 @@ namespace SafetyProto.Networking.Dashboard
                 return false;
             }
 
-            _resetRequested = true;
+            _reloadQueuedThisFrame = true;
             sceneLoader.ResetSession();
             reason = string.Empty;
             return true;

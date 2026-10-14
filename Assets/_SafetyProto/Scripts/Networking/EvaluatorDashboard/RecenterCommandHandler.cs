@@ -89,7 +89,7 @@ namespace SafetyProto.Runtime
                 SuspendPoseBroadcast = true,
                 UseGroundProbe = false,
                 LocomotorHandling = LocomotorMode.ToggleEnabled,
-                OnBlackout = ShowBlackoutMessage,
+                OnBlackout = ShowSelfClosingBlackoutMessage,
             };
 
             StartCoroutine(recenterService.RecenterTo(anchor, options));
@@ -97,7 +97,7 @@ namespace SafetyProto.Runtime
             return true;
         }
 
-        private void ShowBlackoutMessage()
+        private void ShowSelfClosingBlackoutMessage()
         {
             _popupFeedback?.TryShowIfIdle(blackoutTitle, blackoutBody, blackoutMessageSeconds);
         }
