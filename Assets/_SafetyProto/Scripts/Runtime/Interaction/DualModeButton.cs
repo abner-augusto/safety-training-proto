@@ -1,6 +1,7 @@
 ﻿using System;
 using Oculus.Interaction;
 using SafetyProto.Core.Logging;
+using SafetyProto.Runtime.Feedback;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -115,19 +116,7 @@ namespace SafetyProto.Runtime.Interaction
         private void PlayClickAudio()
         {
             if (_clickSound == null) return;
-            if (_audioSource == null)
-            {
-                _audioSource = GetComponent<AudioSource>();
-                if (_audioSource == null)
-                {
-                    _audioSource = gameObject.AddComponent<AudioSource>();
-                    _audioSource.spatialBlend = 1f;
-                    _audioSource.spatialize = true;
-                    _audioSource.playOnAwake = false;
-                    _audioSource.minDistance = 0.2f;
-                    _audioSource.maxDistance = 4f;
-                }
-            }
+            _audioSource = AudioSourceDefaults.EnsureSpatial(this, _audioSource, 0.2f, 4f);
             _audioSource.PlayOneShot(_clickSound, _clickVolume);
         }
     }

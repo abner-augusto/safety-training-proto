@@ -139,12 +139,17 @@ namespace SafetyProto.Runtime.Feedback
             var clip = ResolveClip(kind);
             if (clip == null || audioSource == null) return;
 
-            audioSource.Stop();
-            audioSource.clip = clip;
-            audioSource.volume = _baseVolume * ResolveVolume(kind);
-            audioSource.Play();
+            PlayExclusive(clip, _baseVolume * ResolveVolume(kind));
 
             _arbiter.NotifyPlaying(kind, Time.unscaledTime, clip.length);
+        }
+
+        private void PlayExclusive(AudioClip clip, float volume)
+        {
+            audioSource.Stop();
+            audioSource.clip = clip;
+            audioSource.volume = volume;
+            audioSource.Play();
         }
 
         private AudioClip ResolveClip(AudioFeedbackKind kind)

@@ -182,7 +182,7 @@ namespace SafetyProto.Runtime.Scaffolding
             if (grabbable != null)
                 grabbable.WhenPointerEventRaised += OnPointerEvent;
 
-            if (!this.IsEventBusReady()) return;
+            if (!RequireEventBusOrDisable()) return;
 
             _onActionRefused ??= OnActionRefused;
             _onPopupClosed ??= OnPopupClosed;
@@ -321,12 +321,24 @@ namespace SafetyProto.Runtime.Scaffolding
             }
         }
 
+        /// <summary>
+        /// Without a bus the piece would snap and lock but never hear a refusal, so it must
+        /// disable itself. Returns false when it did.
+        /// </summary>
+        private bool RequireEventBusOrDisable() => this.IsEventBusReady();
+
+        /// <summary>
+        /// Refusal codes in <see cref="waitForPopupOnCodes"/> hold the revert until the
+        /// participant's warning popup closes; any other code reverts on the next LateUpdate.
+        /// </summary>
+        private bool ShouldWaitForPopup(string reasonCode) =>
+            waitForPopupOnCodes != null && System.Array.IndexOf(waitForPopupOnCodes, reasonCode) >= 0;
+
         private void OnActionRefused(ActionRefusedEventArgs args)
         {
             if (!revertInstallWhenRefused || !_isInstalled) return;
 
-            bool waitForPopup = waitForPopupOnCodes != null &&
-                                 System.Array.IndexOf(waitForPopupOnCodes, args.ReasonCode) >= 0;
+            bool waitForPopup = ShouldWaitForPopup(args.ReasonCode);
 
             _refusalTracker.Observe(args.ActionId, args.SourceId, args.ReasonCode,
                 GetConfiguredActionId(), ResolvedSourceId, waitForPopup, Time.time, revertFallbackSeconds);
@@ -551,20 +563,7 @@ namespace SafetyProto.Runtime.Scaffolding
 
         private void EnsureAudioSource()
         {
-            if (audioSource == null)
-            {
-                audioSource = GetComponent<AudioSource>();
-                if (audioSource == null)
-                {
-                    audioSource = gameObject.AddComponent<AudioSource>();
-                    audioSource.spatialBlend = 1f;
-                    audioSource.spatialize = true;
-                    audioSource.playOnAwake = false;
-                    audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
-                    audioSource.minDistance = 0.5f;
-                    audioSource.maxDistance = 10f;
-                }
-            }
+            audioSource = AudioSourceDefaults.EnsureSpatial(this, audioSource, 0.5f, 10f);
         }
 
         private string GetConfiguredActionId()

@@ -414,20 +414,7 @@ namespace SafetyProto.Runtime.PPE
 
         private void EnsureAudioSource()
         {
-            if (audioSource == null)
-            {
-                audioSource = GetComponent<AudioSource>();
-                if (audioSource == null)
-                {
-                    audioSource = gameObject.AddComponent<AudioSource>();
-                    audioSource.spatialBlend = 1f;
-                    audioSource.spatialize = true;
-                    audioSource.playOnAwake = false;
-                    audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
-                    audioSource.minDistance = 0.3f;
-                    audioSource.maxDistance = 5f;
-                }
-            }
+            audioSource = AudioSourceDefaults.EnsureSpatial(this, audioSource, 0.3f, 5f);
         }
     }
 }
