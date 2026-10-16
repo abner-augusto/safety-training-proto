@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 #nullable enable
 using System;
 using System.Collections;
@@ -111,7 +111,7 @@ namespace SafetyProto.Runtime.Simulation
             _instance = FindFirstObjectByType<SessionSimulator>();
             if (_instance != null) return _instance;
 
-            var go = new GameObject("Session Simulator (Editor Only)")
+            var go = new GameObject("Session Simulator")
             {
                 hideFlags = HideFlags.HideAndDontSave
             };

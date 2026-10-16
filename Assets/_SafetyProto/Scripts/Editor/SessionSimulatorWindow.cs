@@ -160,26 +160,7 @@ namespace SafetyProto.Editor
         private void PrepareForSimulation()
         {
             if (_simulator == null) return;
-
-            var popupService = PopupService.Instance;
-            if (popupService != null)
-                popupService.Hide();
-
-            foreach (var controller in FindObjectsByType<NameEntryController>(FindObjectsInactive.Include,
-                         FindObjectsSortMode.None))
-            {
-                controller.StopAllCoroutines();
-                controller.enabled = false;
-            }
-            foreach (var controller in FindObjectsByType<SessionModeSelectionController>(FindObjectsInactive.Include,
-                         FindObjectsSortMode.None))
-                controller.enabled = false;
-            foreach (var controller in FindObjectsByType<OnboardingController>(FindObjectsInactive.Include,
-                         FindObjectsSortMode.None))
-            {
-                controller.StopAllCoroutines();
-                controller.enabled = false;
-            }
+            PreSessionFlow.Suppress();
         }
     }
 }

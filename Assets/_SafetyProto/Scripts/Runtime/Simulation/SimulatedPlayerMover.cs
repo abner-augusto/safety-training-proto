@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 #nullable enable
 using System.Linq;
 using Oculus.Interaction.Locomotion;
