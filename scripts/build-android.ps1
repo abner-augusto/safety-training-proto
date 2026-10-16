@@ -3,6 +3,7 @@ param(
     [switch]$BumpVersion,
     [string]$NewVersion,
     [int]$NewVersionCode,
+    [switch]$NoCommit,
     [int]$PollIntervalSeconds = 15,
     [int]$MaxPollAttempts = 80,
     [switch]$Help
@@ -24,6 +25,9 @@ Options:
   -BumpVersion                Increment the patch version and the Android version code
   -NewVersion <x.y.z>         Version to set before building; only used with -BumpVersion
   -NewVersionCode <int>       Android version code to set; only used with -BumpVersion
+  -NoCommit                   With -BumpVersion, leave the bump uncommitted (the APK is
+                              then stamped <commit>-dirty). By default the bump is
+                              committed on its own before the build.
   -PollIntervalSeconds <int>  Seconds between build status polls (default: 15)
   -MaxPollAttempts <int>      Poll attempts before giving up (default: 80)
   -Help, --help               Show this help and exit
@@ -113,9 +117,28 @@ try {
             $NewVersionCode = $currentCode + 1
         }
 
+        # The bump must be its own commit before the build: an uncommitted bump stamps the APK
+        # "<commit>-dirty" (BuildCommitStamp), which then reads as untracked code in the session logs.
+        $settingsPath = "ProjectSettings/ProjectSettings.asset"
+        if (-not $NoCommit -and (git status --porcelain -- $settingsPath)) {
+            throw "$settingsPath already has uncommitted changes; commit or revert them so the bump commit holds only the version (or pass -NoCommit)."
+        }
+
         Write-Host "  $currentVersion (code $currentCode) -> $NewVersion (code $NewVersionCode)"
         $code = 'UnityEditor.PlayerSettings.bundleVersion = "' + $NewVersion + '"; UnityEditor.PlayerSettings.Android.bundleVersionCode = ' + $NewVersionCode + '; UnityEditor.AssetDatabase.SaveAssets(); return UnityEditor.PlayerSettings.bundleVersion + "|" + UnityEditor.PlayerSettings.Android.bundleVersionCode;'
         Invoke-UnityEval -Code $code | Out-Null
+
+        if (-not $NoCommit) {
+            git add -- $settingsPath
+            git commit -q -m "build(android): bump version to $NewVersion (code $NewVersionCode)" -- $settingsPath
+            if ($LASTEXITCODE -ne 0) { throw "Committing the version bump failed." }
+            Write-Host "  committed: $(git log -1 --format='%h %s')"
+        }
+    }
+
+    $otherChanges = git status --porcelain
+    if ($otherChanges) {
+        Write-Warning "Uncommitted changes; the APK will be stamped '<commit>-dirty':`n$($otherChanges -join "`n")"
     }
 
     # A dirty scene makes the build open a modal "save scene?" dialog that blocks the editor
