@@ -9,7 +9,8 @@ ones.
 
 Use it to reproduce a full guided or evaluation run in seconds, to check a
 scenario end to end after editing it, or to see how a specific omission plays out
-without putting on a Quest.
+without putting on a Quest. A Development build can also run it on the headset,
+with nobody wearing it — see [On the headset](#on-the-headset).
 
 ## Prerequisites
 
@@ -173,9 +174,35 @@ writes the private real-name mapping. This `SIM-` prefix is the MVP data-separat
 contract:
 
 - Session logs for a `SIM-` run are written under
-  `Application.persistentDataPath/simulations`, not alongside real runs.
+  `Application.persistentDataPath/simulations`, not alongside real runs, and their
+  EventBus/frame-time CSVs under `simulations/perf/` instead of `perf/`.
 - They still appear as live dashboard events, but are excluded from the dashboard's
   localStorage history.
+
+## On the headset
+
+Development builds compile the simulator in; release builds do not. Launching a
+Development build with a `safety_sim` intent extra skips the identification,
+mode and onboarding popups and replays the script as soon as the scenario loads:
+
+```powershell
+scripts/quest-sim-run.ps1 -Mode avaliacao -Runs 3 -MetricsCsv
+```
+
+The script checks that the installed package is debuggable, overrides the
+proximity sensor and pauses Guardian so a headset resting on a desk keeps the app
+in focus, launches one run per app start, and saves to `dist/quest-sim/` each
+run's session log, perf CSV, `[SafetyProto]` logcat lines, per-second VrApi lines
+and, with `-MetricsCsv`, the OVR Metrics CSV. It restores the sensor and Guardian
+when it finishes. `-Script <file.json>` pushes and plays a variant script.
+
+By hand: `adb shell am start -n <package>/<launcher activity> --es safety_sim
+guiado|avaliacao [--es safety_sim_script <device path>]`. The launcher logs the
+final status as a `[DeviceSimulationLauncher]` line.
+
+The head pose is wherever the headset rests, so desk runs are comparable with each
+other but not with a participant's run: a static view renders a different share of
+the scene, and the GPU numbers move with it.
 
 ## Coverage and limitations
 
