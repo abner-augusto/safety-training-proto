@@ -5,6 +5,7 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Metrics;
 using SafetyProto.Utils;
 using UnityEngine;
 using UnityEngine.Events;
@@ -25,7 +26,7 @@ namespace SafetyProto.Runtime.Task
         private ITaskGroup _timedGroup;
         private float _timeRemaining;
         private float _elapsedTime;
-        private float _sessionStartTime = -1f;
+        private readonly SessionClock _sessionClock = new SessionClock();
         private bool _countingUp;
 
         /// <summary>Tells consumers how to read <see cref="onTimeUpdated"/>: seconds left when
@@ -80,7 +81,12 @@ namespace SafetyProto.Runtime.Task
 
         private void OnSessionStarted(SessionStartedEventArgs _)
         {
-            _sessionStartTime = Time.time;
+            _sessionClock.Start();
+        }
+
+        private void Update()
+        {
+            _sessionClock.Tick(Time.deltaTime, SessionPause.IsPaused);
         }
 
         private void OnTaskStartedForFreeOrder(TaskEventArgs args)
@@ -124,6 +130,7 @@ namespace SafetyProto.Runtime.Task
         {
             StopCurrentTimer();
             _timedGroup = null;
+            _sessionClock.Stop();
         }
 
         private void StartTimerForGroup(TaskGroupEventArgs args)
@@ -230,15 +237,14 @@ namespace SafetyProto.Runtime.Task
 
         public float GetTimeRemaining() => _timeRemaining;
         public float GetElapsedTime() => _elapsedTime;
-        public float GetTotalSessionTime()
-        {
-            if (_sessionStartTime < 0) return 0f;
-            return Time.time - _sessionStartTime;
-        }
+        /// <summary>Session time excluding paused time; the <see cref="ITimerSource"/> the
+        /// orchestrator stamps completion times with.</summary>
+        public float GetTotalSessionTime() => _sessionClock.ElapsedSeconds;
 
         public void ResetSession()
         {
             StopCurrentTimer();
+            _sessionClock.Reset();
             _timedGroup = null;
             _timeRemaining = 0f;
             _elapsedTime = 0f;

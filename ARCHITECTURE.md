@@ -296,7 +296,13 @@ The cores never read `Time.time` or start a coroutine. `ITimerSource` supplies
 the session clock and `IAsyncScheduler` supplies delays; the runtime binds them
 to `TimerSystem` and to Unity's `Awaitable`, the harness to a stopwatch. This is
 what lets the same `TaskManagerCore` run a scripted session in milliseconds
-under `dotnet test`.
+under `dotnet test`. The clock is defined as pause-excluded session time:
+`SessionClock` (`Domain/Metrics`) advances only while the session runs unpaused,
+and both the group countdown and every logged completion time read it, so a
+popup or a lost headset focus never inflates a recorded duration. A scheduler
+may complete or throw when its token is cancelled; the orchestrator checks the
+token after every await, so a reset during the inter-task delay can never
+resume the session it tore down.
 
 ---
 
