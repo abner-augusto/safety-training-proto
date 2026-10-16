@@ -40,7 +40,7 @@ namespace SafetyProto.Tests.Editor
                 _tasks.Task("equip_boots", string.Empty, PPEType.Boots),
                 _tasks.Task("equip_gloves", string.Empty, PPEType.GloveLeft, PPEType.GloveRight),
                 _tasks.Task("equip_harness", string.Empty, PPEType.Harness));
-            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group }, () => SessionMode.Guided);
             core.Subscribe();
             core.StartSession();
             return core;
@@ -182,7 +182,7 @@ namespace SafetyProto.Tests.Editor
             var task = _tasks.Task("t1", "action_a");
             var group = _tasks.Group("g1", TaskExecutionModeShared.Sequential, task);
 
-            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group }, () => SessionMode.Guided);
             core.Subscribe();
             core.StartSession();
 
@@ -213,7 +213,7 @@ namespace SafetyProto.Tests.Editor
             var t2 = _tasks.Task("t2", "action_b");
             var group = _tasks.Group("g1", TaskExecutionModeShared.Sequential, t1, t2);
 
-            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group }, () => SessionMode.Guided);
             core.Subscribe();
             core.StartSession();
 
@@ -234,7 +234,7 @@ namespace SafetyProto.Tests.Editor
             var t1 = _tasks.Task("t1", "action_a");
             var group = _tasks.Group("g1", TaskExecutionModeShared.Sequential, t1);
 
-            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group }, () => SessionMode.Guided);
             core.Subscribe();
             core.StartSession();
 
@@ -255,7 +255,7 @@ namespace SafetyProto.Tests.Editor
         {
             var task = _tasks.Task("t1", "action_a");
             var group = _tasks.Group("g1", TaskExecutionModeShared.Sequential, task);
-            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group }, () => SessionMode.Guided);
             core.Subscribe();
             core.StartSession();
 
@@ -281,7 +281,7 @@ namespace SafetyProto.Tests.Editor
             var phantomGroup = _tasks.Group("phantom", TaskExecutionModeShared.Sequential);
             groupB.requiredGroups = new List<ITaskGroup> { phantomGroup };
 
-            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { groupA, groupB });
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { groupA, groupB }, () => SessionMode.Guided);
             core.Subscribe();
             core.StartSession();
 
@@ -300,7 +300,7 @@ namespace SafetyProto.Tests.Editor
             var t1 = _tasks.Task("t1", "action_a");
             var group = _tasks.Group("g1", TaskExecutionModeShared.Sequential, t1);
 
-            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group }, () => SessionMode.Guided);
             core.Subscribe();
             core.StartSession();
 
@@ -321,7 +321,7 @@ namespace SafetyProto.Tests.Editor
             var t2 = _tasks.Task("t2", "action_b");
             var group = _tasks.Group("g1", TaskExecutionModeShared.FreeOrder, t1, t2);
 
-            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group }, () => SessionMode.Guided);
             core.Subscribe();
             core.StartSession();
 
@@ -350,7 +350,7 @@ namespace SafetyProto.Tests.Editor
             var t2 = _tasks.Task("t2", "action_b");
             var group = _tasks.Group("g1", TaskExecutionModeShared.FreeOrder, t1, t2);
 
-            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group }, () => SessionMode.Guided);
             core.Subscribe();
             core.StartSession();
 
@@ -372,7 +372,7 @@ namespace SafetyProto.Tests.Editor
             var t1 = _tasks.Task("t1", "action_a");
             var group = _tasks.Group("g1", TaskExecutionModeShared.Sequential, t1);
 
-            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group }, () => SessionMode.Guided);
             core.Subscribe();
             // StartSession() intentionally not called — no active group yet.
 
@@ -398,7 +398,7 @@ namespace SafetyProto.Tests.Editor
             var t3 = _tasks.Task("t3", "action_c");
             var groupB = _tasks.Group("gB", TaskExecutionModeShared.FreeOrder, t3);
 
-            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { groupA, groupB });
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { groupA, groupB }, () => SessionMode.Guided);
             core.Subscribe();
             core.StartSession();
 
@@ -423,7 +423,7 @@ namespace SafetyProto.Tests.Editor
             var t2 = _tasks.Task("t2", "action_b");
             var group = _tasks.Group("g1", TaskExecutionModeShared.FreeOrder, t1, t2);
 
-            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group }, () => SessionMode.Guided);
             core.Subscribe();
             core.StartSession();
 
@@ -453,7 +453,7 @@ namespace SafetyProto.Tests.Editor
             var t3 = _tasks.Task("t3", "action_c");
             var group = _tasks.Group("g1", TaskExecutionModeShared.FreeOrder, t1, t2, t3);
 
-            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group }, () => SessionMode.Guided);
             core.Subscribe();
             core.StartSession();
 
@@ -475,7 +475,7 @@ namespace SafetyProto.Tests.Editor
             var g1 = _tasks.Group("g1", TaskExecutionModeShared.Sequential, t1);
             var g2 = _tasks.Group("g2", TaskExecutionModeShared.Sequential, t2);
 
-            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { g1, g2 });
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { g1, g2 }, () => SessionMode.Guided);
             core.Subscribe();
             core.StartSession();
 
@@ -499,7 +499,7 @@ namespace SafetyProto.Tests.Editor
             var g1 = _tasks.Group("g1", TaskExecutionModeShared.FreeOrder, t1, t2, t3);
             var g2 = _tasks.Group("g2", TaskExecutionModeShared.FreeOrder, later);
 
-            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { g1, g2 });
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { g1, g2 }, () => SessionMode.Guided);
             core.Subscribe();
             core.StartSession();
 
@@ -527,7 +527,7 @@ namespace SafetyProto.Tests.Editor
             var t4 = _tasks.Task("t4", "action_d");
             var group = _tasks.Group("g1", TaskExecutionModeShared.FreeOrder, t1, t2, t3, t4);
 
-            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group }, () => SessionMode.Guided);
             core.Subscribe();
             core.StartSession();
 

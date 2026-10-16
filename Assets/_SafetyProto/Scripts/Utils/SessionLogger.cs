@@ -25,12 +25,12 @@ namespace SafetyProto.Utils
                 EventBus.Instance,
                 Application.persistentDataPath,
                 SessionLoggerCore.SerializeIndentedOmittingDefaults,
+                () => SessionModeState.Current,
                 new SafetyLogAdapter(),
                 BuildActionNameResolver(),
                 () => (EventContext.CurrentPlayerId ?? string.Empty).StartsWith("SIM-", StringComparison.OrdinalIgnoreCase)
                     ? Path.Combine(Application.persistentDataPath, "simulations")
                     : Application.persistentDataPath,
-                () => SessionModeState.Current,
                 Application.version,
                 BuildCommit.Current,
                 sessionId => EventBusPerfRecorder.Current != null

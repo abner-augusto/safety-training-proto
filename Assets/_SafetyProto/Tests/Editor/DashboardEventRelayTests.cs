@@ -20,7 +20,7 @@ namespace SafetyProto.Tests.Editor
             _bus = new FakeEventBus();
             _host = new FakeDashboardHost();
             _builder = new FakeTaskBuilder();
-            _relay = new DashboardEventRelay(_bus, _host);
+            _relay = new DashboardEventRelay(_bus, _host, () => SessionMode.Guided);
             _relay.Subscribe();
         }
 

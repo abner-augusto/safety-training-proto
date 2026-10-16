@@ -38,7 +38,7 @@ namespace SafetyProto.Tests.Editor
         {
             var notifications = new List<string>();
             using var logger = new SessionLoggerCore(
-                _bus, _outputDir, SessionLoggerCore.SerializeIndentedOmittingDefaults);
+                _bus, _outputDir, SessionLoggerCore.SerializeIndentedOmittingDefaults, () => SessionMode.Guided);
             logger.CompletedLogWritten += (_, _, path) => notifications.Add(path);
             logger.Subscribe();
 
@@ -87,7 +87,7 @@ namespace SafetyProto.Tests.Editor
             // A reset/abandoned run has no task list to report. The fallback summary must still
             // be written, and must not fake an all-pending block that never happened.
             using var logger = new SessionLoggerCore(
-                _bus, _outputDir, SessionLoggerCore.SerializeIndentedOmittingDefaults);
+                _bus, _outputDir, SessionLoggerCore.SerializeIndentedOmittingDefaults, () => SessionMode.Guided);
             logger.Subscribe();
 
             _bus.Publish(new SessionStartedEventArgs { SessionId = "S1", TotalTasks = 3, TimestampMs = 1000L });
@@ -103,7 +103,7 @@ namespace SafetyProto.Tests.Editor
         {
             var notifications = 0;
             using var logger = new SessionLoggerCore(
-                _bus, _outputDir, SessionLoggerCore.SerializeIndentedOmittingDefaults);
+                _bus, _outputDir, SessionLoggerCore.SerializeIndentedOmittingDefaults, () => SessionMode.Guided);
             logger.CompletedLogWritten += (_, _, _) => notifications++;
             // Without Subscribe() the logger never sees SessionStarted, and the assertions pass vacuously.
             logger.Subscribe();
@@ -120,7 +120,7 @@ namespace SafetyProto.Tests.Editor
         public void SessionStarted_DiscardsPreSessionEvents()
         {
             using var logger = new SessionLoggerCore(
-                _bus, _outputDir, SessionLoggerCore.SerializeIndentedOmittingDefaults);
+                _bus, _outputDir, SessionLoggerCore.SerializeIndentedOmittingDefaults, () => SessionMode.Guided);
             logger.Subscribe();
 
             _bus.Publish(new SessionPausedEventArgs { TimestampMs = 500L });

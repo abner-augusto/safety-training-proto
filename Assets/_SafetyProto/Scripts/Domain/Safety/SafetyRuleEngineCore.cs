@@ -41,16 +41,16 @@ namespace SafetyProto.Domain.Safety
 
         public SafetyRuleEngineCore(
             IEventBus bus,
+            Func<SessionMode> modeSource,
             ITimerSource? timer = null,
             IHarnessLogger? logger = null,
-            bool verboseLogging = false,
-            Func<SessionMode>? modeSource = null)
+            bool verboseLogging = false)
         {
             _bus = bus ?? throw new ArgumentNullException(nameof(bus));
             _timer = timer;
             _logger = logger;
             _verboseLogging = verboseLogging;
-            _modeSource = modeSource ?? (() => SessionModeState.Current);
+            _modeSource = modeSource ?? throw new ArgumentNullException(nameof(modeSource));
 
             _onActionAttempt = HandleActionAttempt;
             _onPpeStateChanged = HandlePpeStateChanged;

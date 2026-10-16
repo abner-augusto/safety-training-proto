@@ -25,8 +25,8 @@ namespace SafetyProto.Tests.Editor
 
         [Test]
         public void Diagnostic_ActionAfterGroupStarted_PublishesCompletion_NoActiveGroupViolation()
-        {            var coreA = new SafetyRuleEngineCore(_bus);
-            var coreB = new SafetyRuleEngineCore(_bus);
+        {            var coreA = new SafetyRuleEngineCore(_bus, () => SessionMode.Guided);
+            var coreB = new SafetyRuleEngineCore(_bus, () => SessionMode.Guided);
             coreA.Subscribe();
             coreB.Subscribe();
 
@@ -59,7 +59,7 @@ namespace SafetyProto.Tests.Editor
         [Test]
         public void Diagnostic_GroupCompleted_DoesNotIncorrectlyReactivateGroup()
         {
-            var engine = new SafetyRuleEngineCore(_bus);
+            var engine = new SafetyRuleEngineCore(_bus, () => SessionMode.Guided);
             engine.Subscribe();
 
             var task = _tasks.Task("t", "a");
@@ -85,7 +85,7 @@ namespace SafetyProto.Tests.Editor
             var group = _tasks.Group("g", TaskExecutionModeShared.Sequential, task);
             _bus.Publish(new TaskGroupEventArgs(group));
 
-            var engine = new SafetyRuleEngineCore(_bus);
+            var engine = new SafetyRuleEngineCore(_bus, () => SessionMode.Guided);
             engine.Subscribe();
             _bus.Publish(new TaskEventArgs(task));
             _bus.Publish(new PPEStateChangedEventArgs(PPEType.Helmet, true));

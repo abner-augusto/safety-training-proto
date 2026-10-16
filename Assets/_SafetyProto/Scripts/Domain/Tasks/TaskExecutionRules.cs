@@ -15,11 +15,6 @@ namespace SafetyProto.Domain.Tasks
         public static TaskExecutionModeShared EffectiveMode(ITaskGroup group, SessionMode mode) =>
             mode == SessionMode.Evaluation ? TaskExecutionModeShared.FreeOrder : group.executionMode;
 
-        /// <summary>Reads the process-wide default mode, for hosts that have not opted
-        /// into injection; the cores use the mode-explicit overload.</summary>
-        public static TaskExecutionModeShared EffectiveMode(ITaskGroup group) =>
-            EffectiveMode(group, SessionModeState.Current);
-
         public static bool IsEquipTask(ISafetyTask? task) =>
             task != null &&
             string.IsNullOrEmpty(task.ResolveExpectedActionId()) &&

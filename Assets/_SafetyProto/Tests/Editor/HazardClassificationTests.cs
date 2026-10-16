@@ -37,7 +37,7 @@ namespace SafetyProto.Tests.Editor
             _score = new ScoreService();
             _tasks = new FakeTaskBuilder();
 
-            _safetyEngine = new SafetyRuleEngineCore(_bus);
+            _safetyEngine = new SafetyRuleEngineCore(_bus, () => SessionMode.Guided);
             _safetyEngine.Subscribe();
 
             _scoreEngine = new ScoreRuleEngineCore(_bus, _score, config: ScoringConfig.Default);
@@ -49,7 +49,6 @@ namespace SafetyProto.Tests.Editor
         {
             _safetyEngine.Dispose();
             _scoreEngine.Dispose();
-            SessionModeState.Reset();
         }
 
         private FakeTaskBuilder.FakeSafetyTask ReportTask(RiskLevel level = RiskLevel.Moderate)

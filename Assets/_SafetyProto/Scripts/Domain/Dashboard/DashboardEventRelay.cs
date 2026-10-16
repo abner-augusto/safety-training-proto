@@ -21,11 +21,11 @@ namespace SafetyProto.Domain.Dashboard
         private readonly IDashboardHost _host;
         private readonly Func<SessionMode> _modeSource;
 
-        public DashboardEventRelay(IEventBus bus, IDashboardHost host, Func<SessionMode>? modeSource = null)
+        public DashboardEventRelay(IEventBus bus, IDashboardHost host, Func<SessionMode> modeSource)
         {
             _bus = bus;
             _host = host;
-            _modeSource = modeSource ?? (() => SessionModeState.Current);
+            _modeSource = modeSource ?? throw new ArgumentNullException(nameof(modeSource));
         }
 
         public void Subscribe()

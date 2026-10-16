@@ -51,11 +51,11 @@ namespace SafetyProto.Domain.Tasks
             IEventBus bus,
             IScoreService scoreService,
             IReadOnlyList<ITaskGroup> taskGroups,
+            Func<SessionMode> modeSource,
             ITimerSource? timer = null,
             IAsyncScheduler? scheduler = null,
             IHarnessLogger? logger = null,
-            float delayBetweenTasks = 0f,
-            Func<SessionMode>? modeSource = null)
+            float delayBetweenTasks = 0f)
         {
             _bus = bus ?? throw new ArgumentNullException(nameof(bus));
             _scoreService = scoreService ?? throw new ArgumentNullException(nameof(scoreService));
@@ -64,7 +64,7 @@ namespace SafetyProto.Domain.Tasks
             _scheduler = scheduler;
             _logger = logger;
             _delayBetweenTasks = delayBetweenTasks;
-            _modeSource = modeSource ?? (() => SessionModeState.Current);
+            _modeSource = modeSource ?? throw new ArgumentNullException(nameof(modeSource));
 
             _onTaskLifecycle = HandleTaskLifecycle;
 

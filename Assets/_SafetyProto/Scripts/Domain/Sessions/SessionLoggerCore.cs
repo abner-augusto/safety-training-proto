@@ -204,7 +204,7 @@ namespace SafetyProto.Domain.Sessions
         private string _mode = string.Empty;
         private bool _completionWriteStarted;
 
-        public SessionLoggerCore(IEventBus eventBus, string outputDirectory, Func<SessionLog, string> serialize, IHarnessLogger? logger = null, Func<string, string>? actionNameResolver = null, Func<string>? outputDirectoryResolver = null, Func<SessionMode>? modeSource = null, string? appVersion = null, string? commit = null, Func<string, PerfSummary?>? perfSource = null)
+        public SessionLoggerCore(IEventBus eventBus, string outputDirectory, Func<SessionLog, string> serialize, Func<SessionMode> modeSource, IHarnessLogger? logger = null, Func<string, string>? actionNameResolver = null, Func<string>? outputDirectoryResolver = null, string? appVersion = null, string? commit = null, Func<string, PerfSummary?>? perfSource = null)
         {
             _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
             _outputDirectory = outputDirectory ?? throw new ArgumentNullException(nameof(outputDirectory));
@@ -212,7 +212,7 @@ namespace SafetyProto.Domain.Sessions
             _logger = logger;
             _actionNameResolver = actionNameResolver;
             _outputDirectoryResolver = outputDirectoryResolver;
-            _modeSource = modeSource ?? (() => SessionModeState.Current);
+            _modeSource = modeSource ?? throw new ArgumentNullException(nameof(modeSource));
             _appVersion = appVersion ?? string.Empty;
             _commit = commit ?? string.Empty;
             _perfSource = perfSource;

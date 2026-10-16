@@ -34,7 +34,7 @@ namespace SafetyProto.Tests.Editor
             });
             _bus.Subscribe<SafetyViolationEventArgs>(args => _violations.Add(args));
 
-            _engine = new SafetyRuleEngineCore(_bus);
+            _engine = new SafetyRuleEngineCore(_bus, () => SessionMode.Guided);
             _engine.Subscribe();
         }
 
@@ -47,7 +47,7 @@ namespace SafetyProto.Tests.Editor
         private void UseEvaluationEngine()
         {
             _engine.Dispose();
-            _engine = new SafetyRuleEngineCore(_bus, modeSource: () => SessionMode.Evaluation);
+            _engine = new SafetyRuleEngineCore(_bus, () => SessionMode.Evaluation);
             _engine.Subscribe();
         }
 
