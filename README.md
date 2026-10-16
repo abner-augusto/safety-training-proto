@@ -110,11 +110,14 @@ licensing) and must be imported manually before the UI renders correctly:
 ### Shared library and CLI harness
 
 ```bash
-dotnet build SafetyProto.sln
+dotnet build Tools/SafetyProto.Tests/SafetyProto.Tests.csproj -warnaserror
+dotnet build Tools/CliHarness/CliHarness.csproj -warnaserror
 
-# Run the harness against the same scenario Unity loads; writes a transcript
-# to stdout and session_log_*.json to harness-output/
-dotnet run --project Tools/CliHarness -- Assets/_SafetyProto/Resources/Scenarios/default.json
+# The argument is the output directory. The harness always plays
+# Assets/_SafetyProto/Resources/Scenarios/default.json, the scenario Unity
+# loads, and writes a transcript to stdout and session_log_*.json to
+# harness-output/
+dotnet run --project Tools/CliHarness -- harness-output
 ```
 
 The authoring GUI is not in the solution; [docs/authoring-tasks.md](docs/authoring-tasks.md)
@@ -129,6 +132,12 @@ dotnet test Tools/SafetyProto.Tests/SafetyProto.Tests.csproj
 This runs the engine-independent fixtures without Unity. The Unity-coupled ones
 run in `Window → General → Test Runner → EditMode`. Counts, coverage commands,
 and per-fixture coverage are in [metrics/revision-evidence.md](metrics/revision-evidence.md).
+
+The same build, the headless tests, and a harness smoke run execute as a
+pre-push hook. Enable it once per clone with
+`git config core.hooksPath scripts/git-hooks`; skip it deliberately with
+`git push --no-verify`. The Unity EditMode suite is not part of the hook; run it
+in the Editor before merging a change that touches a `MonoBehaviour`.
 
 The EventBus benchmark runs with `dotnet run --project Tools/EventBusBench`;
 results depend on the host and the reported run is in [docs/bench-results.md](docs/bench-results.md).

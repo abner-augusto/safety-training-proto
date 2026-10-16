@@ -1,0 +1,30 @@
+#!/bin/sh
+# Headless gate, run before every push. Builds the shared library, the headless
+# tests and the CLI harness with warnings as errors, runs the engine-independent
+# suite, and plays the canonical scenario in both modes. The Unity EditMode suite
+# is not covered: run it in the Editor before merging a MonoBehaviour change.
+#
+# Install once per clone:  git config core.hooksPath scripts/git-hooks
+# Skip deliberately:       git push --no-verify
+set -eu
+
+root=$(git rev-parse --show-toplevel)
+cd "$root"
+
+out="$root/.hook-harness-output"
+cleanup() { rm -rf "$out"; }
+trap cleanup EXIT
+
+echo "[pre-push] building headless projects"
+dotnet build Tools/SafetyProto.Tests/SafetyProto.Tests.csproj -warnaserror --nologo -v quiet
+dotnet build Tools/CliHarness/CliHarness.csproj -warnaserror --nologo -v quiet
+
+echo "[pre-push] running the headless suite"
+dotnet test Tools/SafetyProto.Tests/SafetyProto.Tests.csproj --no-build --nologo -v quiet
+
+echo "[pre-push] harness smoke run (guided, avaliacao)"
+dotnet run --project Tools/CliHarness --no-build -- "$out" > /dev/null
+dotnet run --project Tools/CliHarness --no-build -- "$out" --mode=avaliacao > /dev/null
+ls "$out"/session_log_*.json > /dev/null
+
+echo "[pre-push] ok"
