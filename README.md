@@ -57,6 +57,7 @@ such a participant can take: `ScriptedActor` produces events from a JSON script,
 | [Tools/DashboardSrc/README.md](Tools/DashboardSrc/README.md) | Evaluator dashboard source and its generated Unity copies |
 | [metrics/revision-evidence.md](metrics/revision-evidence.md) | Current test counts, coverage, coupling metrics, and scenario scores |
 | [docs/bench-results.md](docs/bench-results.md) | EventBus benchmark results |
+| [docs/adr/](docs/adr/README.md) | Architecture decision records: the deliberate exceptions and why |
 
 ## Repository layout
 
