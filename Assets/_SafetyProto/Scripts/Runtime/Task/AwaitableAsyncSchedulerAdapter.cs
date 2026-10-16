@@ -6,15 +6,12 @@ namespace SafetyProto.Runtime.Task
 {
     internal sealed class AwaitableAsyncSchedulerAdapter : IAsyncScheduler
     {
-        public async System.Threading.Tasks.Task DelayAsync(float seconds, CancellationToken cancellationToken)
+        public System.Threading.Tasks.Task DelayAsync(float seconds, CancellationToken cancellationToken)
+            => Await(seconds, cancellationToken);
+
+        private static async System.Threading.Tasks.Task Await(float seconds, CancellationToken cancellationToken)
         {
-            try
-            {
-                await Awaitable.WaitForSecondsAsync(seconds, cancellationToken);
-            }
-            catch (System.OperationCanceledException)
-            {
-            }
+            await Awaitable.WaitForSecondsAsync(seconds, cancellationToken);
         }
     }
 }

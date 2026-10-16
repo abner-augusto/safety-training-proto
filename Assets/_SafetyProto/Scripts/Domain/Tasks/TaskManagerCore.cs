@@ -411,17 +411,21 @@ namespace SafetyProto.Domain.Tasks
             _taskDelayCts?.Cancel();
             _taskDelayCts?.Dispose();
             _taskDelayCts = new CancellationTokenSource();
+            var token = _taskDelayCts.Token;
 
             try
             {
-                await _scheduler.DelayAsync(delay, _taskDelayCts.Token);
+                await _scheduler.DelayAsync(delay, token);
             }
             catch (OperationCanceledException)
             {
                 return;
             }
 
-            if (_terminal || _currentTask != null) return;
+            // A scheduler may complete instead of throwing when cancelled; after a reset the
+            // state guards below are back at their initial values and would let this start a
+            // session that was just torn down.
+            if (token.IsCancellationRequested || _terminal || _currentTask != null) return;
             StartNextTask();
         }
 

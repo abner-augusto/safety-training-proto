@@ -111,6 +111,71 @@ namespace SafetyProto.Tests.Editor
             core.Dispose();
         }
 
+        private TaskManagerCore StartTwoTaskSessionWithDelay(FakeAsyncScheduler scheduler)
+        {
+            var group = _tasks.Group("g1", TaskExecutionModeShared.Sequential,
+                _tasks.Task("t1", "action_a"),
+                _tasks.Task("t2", "action_b"));
+            var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group },
+                scheduler: scheduler, delayBetweenTasks: 2f);
+            core.Subscribe();
+            core.StartSession();
+            return core;
+        }
+
+        private void CompleteCurrentTask(TaskManagerCore core)
+        {
+            var current = core.CurrentRuntimeTask!;
+            current.State = TaskState.CompletedSuccess;
+            _bus.Publish(new TaskEventArgs(current.TaskData, current, TaskPhase.Completed));
+        }
+
+        [Test]
+        public void ResetDuringInterTaskDelay_DoesNotEndSession_WhenSchedulerThrows()
+        {
+            var scheduler = new FakeAsyncScheduler { ThrowOnCancel = true };
+            var core = StartTwoTaskSessionWithDelay(scheduler);
+            CompleteCurrentTask(core);
+            Assert.IsTrue(scheduler.HasPending, "the inter-task delay should be pending");
+
+            core.ResetSession();
+            scheduler.Complete();
+
+            Assert.IsEmpty(_sessionCompletions, "a reset must not publish a session summary");
+            Assert.IsEmpty(_sessionEnded);
+            core.Dispose();
+        }
+
+        [Test]
+        public void ResetDuringInterTaskDelay_DoesNotEndSession_WhenSchedulerCompletesSilently()
+        {
+            var scheduler = new FakeAsyncScheduler { ThrowOnCancel = false };
+            var core = StartTwoTaskSessionWithDelay(scheduler);
+            CompleteCurrentTask(core);
+            Assert.IsTrue(scheduler.HasPending, "the inter-task delay should be pending");
+
+            core.ResetSession();
+            scheduler.Complete();
+
+            Assert.IsEmpty(_sessionCompletions, "a silently cancelled delay must not resume the old session");
+            Assert.IsEmpty(_sessionEnded);
+            Assert.IsNull(core.CurrentRuntimeTask);
+            core.Dispose();
+        }
+
+        [Test]
+        public void InterTaskDelay_WhenItElapses_StartsTheNextTask()
+        {
+            var scheduler = new FakeAsyncScheduler();
+            var core = StartTwoTaskSessionWithDelay(scheduler);
+            CompleteCurrentTask(core);
+
+            scheduler.Complete();
+
+            Assert.AreEqual("t2", core.CurrentRuntimeTask!.TaskData.taskName);
+            core.Dispose();
+        }
+
         [Test]
         public void StartSession_WithOneGroupOneTask_PublishesGroupStartedThenTaskStarted()
         {
