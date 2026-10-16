@@ -16,7 +16,7 @@ namespace SafetyProto.Utils
     /// Records, for every frame of a participant session, the queued EventBus flush (duration,
     /// events dispatched, queue length, budget cut) and the engine's frame timings, then writes
     /// them to <c>persistentDataPath/perf/perf_&lt;stem&gt;.csv</c>, where the stem matches the
-    /// session log's. Rows go to disk on session end, reset, application pause, focus loss and
+    /// session log's (<c>simulations/perf/</c> for SIM- runs). Rows go to disk on session end, reset, application pause, focus loss and
     /// quit — never on a timer, so disk work never lands inside the measured frames.
     /// </summary>
     [DisallowMultipleComponent]
@@ -129,8 +129,12 @@ namespace SafetyProto.Utils
         {
             StopAndWrite(background: false);
 
-            if ((args.PlayerId ?? string.Empty).StartsWith("SIM-", StringComparison.OrdinalIgnoreCase))
-                return;
+            // Simulated runs are measured too (that is how unattended headset runs get numbers), but
+            // stay out of the participant data folder, like their session logs.
+            bool simulated = (args.PlayerId ?? string.Empty).StartsWith("SIM-", StringComparison.OrdinalIgnoreCase);
+            string root = simulated
+                ? Path.Combine(Application.persistentDataPath, "simulations")
+                : Application.persistentDataPath;
 
             lock (_ioLock)
             {
@@ -147,7 +151,7 @@ namespace SafetyProto.Utils
                     Commit = BuildCommit.Current,
                     StopwatchFrequency = Stopwatch.Frequency
                 };
-                _path = Path.Combine(Application.persistentDataPath, "perf",
+                _path = Path.Combine(root, "perf",
                     $"perf_{SessionFileStem.Of(args.TimestampMs, args.SessionId)}.csv");
             }
             _recording = true;
