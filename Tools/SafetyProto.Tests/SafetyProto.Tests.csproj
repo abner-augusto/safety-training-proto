@@ -62,6 +62,7 @@
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\RefusedAttemptTrackerTests.cs"      Link="RefusedAttemptTrackerTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\TaskManagerCoreTests.cs"            Link="TaskManagerCoreTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\TaskExecutionRulesTests.cs"         Link="TaskExecutionRulesTests.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\DomainModeSeamTests.cs"             Link="DomainModeSeamTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\PhaseAdvanceGateTests.cs"           Link="PhaseAdvanceGateTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\AudioFeedbackArbiterTests.cs"       Link="AudioFeedbackArbiterTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\OutgoingMessageBufferTests.cs"       Link="OutgoingMessageBufferTests.cs" />

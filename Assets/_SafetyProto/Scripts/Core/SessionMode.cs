@@ -18,9 +18,10 @@ namespace SafetyProto.Core
 
     /// <summary>
     /// Process-wide session mode. Static (like ScoreService.Instance and
-    /// EventContext) so both hosts and the pure-C# cores read one source of
-    /// truth. Set before the session starts (menu flow in Unity, --mode flag
-    /// in the CLI); reset with the session.
+    /// EventContext) so Unity runtime and UI components read one source of
+    /// truth. Set before the session starts (menu flow in Unity); reset with
+    /// the session. Domain code receives the mode as a Func&lt;SessionMode&gt;
+    /// and must not read <c>Current</c>; DomainModeSeamTests enforces this.
     /// </summary>
     public static class SessionModeState
     {
