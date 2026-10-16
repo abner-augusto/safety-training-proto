@@ -117,7 +117,7 @@ namespace SafetyProto.Tests.Editor
                 _tasks.Task("t1", "action_a"),
                 _tasks.Task("t2", "action_b"));
             var core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group },
-                scheduler: scheduler, delayBetweenTasks: 2f);
+                () => SessionMode.Guided, scheduler: scheduler, delayBetweenTasks: 2f);
             core.Subscribe();
             core.StartSession();
             return core;
