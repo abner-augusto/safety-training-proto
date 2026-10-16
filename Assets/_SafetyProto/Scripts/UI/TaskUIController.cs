@@ -40,6 +40,10 @@ namespace SafetyProto.UI
         private int _completedVisibleCount = 0;
         private readonly AnimationCurve _scaleCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
+        // Instantiating a full window of rows inside one EventBus flush cost several milliseconds
+        // on the headset at every group change, so rows are created once at load and reused.
+        private readonly Stack<GameObject> _rowPool = new();
+
         private void Awake()
         {
             if (taskListContainer == null || taskEntryPrefab == null)
@@ -58,6 +62,30 @@ namespace SafetyProto.UI
             EventBus.Instance.onGroupStarted.AddListener(OnGroupStarted);
             EventBus.Instance.onTaskStarted.AddListener(OnTaskStarted);
             EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
+        }
+
+        private void Start()
+        {
+            for (int i = _rowPool.Count; i < maxVisibleTasks; i++)
+            {
+                var go = Instantiate(taskEntryPrefab, taskListContainer);
+                go.SetActive(false);
+                _rowPool.Push(go);
+            }
+        }
+
+        private GameObject AcquireRow()
+        {
+            var go = _rowPool.Count > 0 ? _rowPool.Pop() : Instantiate(taskEntryPrefab, taskListContainer);
+            go.transform.SetAsLastSibling();
+            go.SetActive(true);
+            return go;
+        }
+
+        private void ReleaseRow(GameObject go)
+        {
+            go.SetActive(false);
+            _rowPool.Push(go);
         }
 
         private void OnDestroy()
@@ -87,7 +115,7 @@ namespace SafetyProto.UI
             _removalCoroutines.Clear();
 
             foreach (var go in _taskToGO.Values)
-                if (go != null) Destroy(go);
+                if (go != null) ReleaseRow(go);
 
             _taskToEntry.Clear();
             _taskToGO.Clear();
@@ -122,7 +150,7 @@ namespace SafetyProto.UI
                 _visibleTasks.Add(task);
 
                 int globalOrder = _groupTasks.IndexOf(task) + 1;
-                var go    = Instantiate(taskEntryPrefab, taskListContainer);
+                var go    = AcquireRow();
                 var entry = go.GetComponent<TaskEntryUI>();
 
                 if (entry == null)
@@ -217,8 +245,8 @@ namespace SafetyProto.UI
             if (_taskToGO.TryGetValue(task, out var go) && go != null)
                 yield return AnimateScale(go.transform, Vector3.one, Vector3.zero);
 
-            if (_taskToGO.TryGetValue(task, out var goToDestroy) && goToDestroy != null)
-                Destroy(goToDestroy);
+            if (_taskToGO.TryGetValue(task, out var goToRelease) && goToRelease != null)
+                ReleaseRow(goToRelease);
 
             _visibleTasks.Remove(task);
             _taskToEntry.Remove(task);
