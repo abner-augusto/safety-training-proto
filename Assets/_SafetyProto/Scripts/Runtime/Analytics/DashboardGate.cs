@@ -7,7 +7,8 @@ namespace SafetyProto.Runtime.Analytics
     /// the player through colliders.
     ///
     /// Only the droppable pose stream is gated here; discrete gameplay events keep flowing so
-    /// no analytics data is lost. Set by gameplay (PhaseController) and honored by PoseSender.
+    /// no analytics data is lost. Set by RecenterService around a teleport and honored by
+    /// PoseSender.
     /// </summary>
     public static class DashboardGate
     {

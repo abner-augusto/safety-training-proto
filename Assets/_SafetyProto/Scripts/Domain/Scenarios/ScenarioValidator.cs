@@ -9,8 +9,8 @@ namespace SafetyProto.Domain.Scenarios
     /// Catalog-aware semantic validation: checks that a scenario only references actions,
     /// PPE, and dependencies that the target build actually implements (per a
     /// <see cref="CapabilityCatalog"/>). This is the contract that lets a safety specialist
-    /// author scenarios in the desktop app and be sure they will run — the same check
-    /// runs there and (optionally) at load time in the engine.
+    /// author scenarios in the desktop app and be sure they will run. The engine does not
+    /// run it; the authoring tools are the gate.
     /// </summary>
     /// <remarks>
     /// Complements <see cref="ScenarioLoader"/>: the loader guarantees the document is

@@ -16,15 +16,16 @@ namespace SafetyProto.Runtime
         /// (phase-transition style — pairs with a ground probe).</summary>
         ToggleEnabled,
         /// <summary>Call FirstPersonLocomotor.EnableMovement() after the teleport to re-ground
-        /// the character controller (controlled-fall style).</summary>
+        /// the character controller.</summary>
         EnableMovement,
     }
 
     /// <summary>
-    /// Options describing one teleport flavor. Lets the phase transition and the controlled fall
-    /// keep their deliberate behavioral differences (see PhaseController.ExecutePhaseTransition
-    /// and FallFromHeightController.TriggerControlledFall) while sharing the single
-    /// fade-out -> recenter -> reground -> fade-in sequence and the single busy guard.
+    /// Options describing one teleport flavor. Lets the phase transition
+    /// (PhaseController.ExecutePhaseTransition) and the dashboard's recenter command keep their
+    /// behavioral differences while sharing the single fade-out -> recenter -> reground ->
+    /// fade-in sequence and the single busy guard. The controlled fall never recenters
+    /// (see FallFromHeightController.TriggerControlledFall).
     /// </summary>
     public struct RecenterOptions
     {
@@ -59,7 +60,7 @@ namespace SafetyProto.Runtime
 
     /// <summary>
     /// Owns the single fade -> recenter -> reground coroutine and the single busy guard shared by
-    /// every teleport trigger (phase transition, controlled fall, evaluator dashboard recenter).
+    /// every teleport trigger (phase transition, evaluator dashboard recenter).
     /// See plans/026-evaluator-recenter-playspace.md for the extraction rationale — the two
     /// original call sites diverge deliberately (ground probe, DashboardGate suspension,
     /// locomotor handling, fade-time restore); RecenterOptions is how each keeps its own shape.

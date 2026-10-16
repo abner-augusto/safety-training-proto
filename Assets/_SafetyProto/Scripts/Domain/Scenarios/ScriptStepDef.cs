@@ -4,9 +4,9 @@ using Newtonsoft.Json;
 namespace SafetyProto.Domain.Scenarios
 {
     /// <summary>
-    /// A single scripted-input step in a scenario. Used by the CLI harness (and
-    /// automated tests) to replay a canned playthrough. Ignored by the Unity
-    /// runtime, which receives input from the player. Engine-independent.
+    /// A single scripted-input step in a scenario. Played by the CLI harness's
+    /// ScriptedActor and, inside the scene, by SessionSimulator; a human session
+    /// ignores it. Engine-independent.
     /// </summary>
     public sealed class ScriptStepDef
     {
