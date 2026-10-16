@@ -351,7 +351,7 @@ namespace SafetyProto.Networking.Dashboard
         private SessionManifestDto BuildSessionManifest(string sessionId)
         {
             var scoring = ResolveScoring();
-            var taskManager = FindFirstObjectByType<SafetyProto.Runtime.Task.TaskManager>();
+            var taskManager = SafetyProto.Runtime.Task.TaskManager.Instance;
             if (taskManager != null)
             {
                 RegisterKnownGroupsFromTaskManager(taskManager);
