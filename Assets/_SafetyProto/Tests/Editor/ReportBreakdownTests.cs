@@ -76,7 +76,7 @@ namespace SafetyProto.Tests.Editor
             var builder = new FakeTaskBuilder();
             var scoreEngine = new ScoreRuleEngineCore(bus, _score, config: ScoringConfig.Default);
             scoreEngine.Subscribe();
-            var safetyEngine = new SafetyRuleEngineCore(bus);
+            var safetyEngine = new SafetyRuleEngineCore(bus, () => SessionMode.Guided);
             safetyEngine.Subscribe();
 
             var boots = builder.Task("equip_boots", string.Empty, PPEType.Boots);

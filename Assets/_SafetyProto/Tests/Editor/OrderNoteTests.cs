@@ -37,7 +37,7 @@ namespace SafetyProto.Tests.Editor
             _t3 = builder.Task("t3", "action_c");
             var group = builder.Group("g1", TaskExecutionModeShared.FreeOrder, t1, _t2, _t3);
 
-            _core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group });
+            _core = new TaskManagerCore(_bus, _score, new List<ITaskGroup> { group }, () => SessionMode.Evaluation);
             _core.Subscribe();
             _core.StartSession();
 
