@@ -2868,6 +2868,7 @@ MonoBehaviour:
   ppeType: 6
   hideWhenEquipped: 0
   isDistractor: 1
+  distractorId: flip_flops
 --- !u!114 &776036105316090941
 MonoBehaviour:
   m_ObjectHideFlags: 0

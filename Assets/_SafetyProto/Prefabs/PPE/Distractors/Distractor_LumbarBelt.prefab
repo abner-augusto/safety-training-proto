@@ -403,6 +403,7 @@ MonoBehaviour:
   ppeType: 4
   hideWhenEquipped: 0
   isDistractor: 1
+  distractorId: abdominal_belt
 --- !u!114 &684343707518578438
 MonoBehaviour:
   m_ObjectHideFlags: 0

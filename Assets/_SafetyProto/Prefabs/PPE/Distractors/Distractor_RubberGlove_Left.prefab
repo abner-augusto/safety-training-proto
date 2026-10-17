@@ -910,6 +910,7 @@ MonoBehaviour:
   ppeType: 7
   hideWhenEquipped: 0
   isDistractor: 1
+  distractorId: rubber_gloves
 --- !u!114 &6018358108038858201
 MonoBehaviour:
   m_ObjectHideFlags: 0
