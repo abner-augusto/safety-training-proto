@@ -1,6 +1,6 @@
 # Architecture
 
-> Verified against commit `44fb78f` (2026-10-16): the facts in §2, §4, §6 and §7 are pinned by `AssemblyLayeringTests` and `ArchitectureFactsTests`.
+> Verified against commit `98cf6ca` (2026-10-16): the facts in §2, §4, §6 and §7 are pinned by `AssemblyLayeringTests` and `ArchitectureFactsTests`.
 
 This document describes the internal design of `safety-training-proto`: how the
 system is layered, how its parts communicate, and why it is structured the way
