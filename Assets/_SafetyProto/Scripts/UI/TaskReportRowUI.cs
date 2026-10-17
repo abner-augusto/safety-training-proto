@@ -54,8 +54,7 @@ namespace SafetyProto.UI
             var lines = new List<string>();
             if (!string.IsNullOrEmpty(advice)) lines.Add(advice);
             foreach (var charge in charges) lines.Add(ScoreChargeLabels.FormatLine(charge));
-            return string.Join("
-", lines);
+            return string.Join("\n", lines);
         }
 
         private void ShowDetail(string detail)
