@@ -1,0 +1,6 @@
+#!/bin/sh
+# core.hooksPath replaces .git/hooks, so forward to the machine-local hook of the same
+# name (the graphify rebuild is installed there and is absent from the repository).
+hook="$(git rev-parse --git-common-dir)/hooks/$(basename "$0")"
+[ -f "$hook" ] && exec sh "$hook" "$@"
+exit 0
