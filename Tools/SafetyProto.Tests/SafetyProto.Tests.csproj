@@ -81,6 +81,7 @@
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\AssemblyLayeringTests.cs"      Link="AssemblyLayeringTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\ArchitectureFactsTests.cs"      Link="ArchitectureFactsTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\DistractorTests.cs"                Link="DistractorTests.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\ReportBreakdownTests.cs"           Link="ReportBreakdownTests.cs" />
     <!-- The authoring app's view models have no Avalonia dependency, so they compile here and a
          round-trip test can guard the field-by-field ToDef() rebuild without a UI test project. -->
     <Compile Include="..\AuthoringApp.Gui\ViewModels\*.cs" Exclude="..\AuthoringApp.Gui\ViewModels\MainWindowViewModel.cs"

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
+using SafetyProto.Domain.Safety;
 using SafetyProto.Domain.Scoring;
 using SafetyProto.Runtime.Safety;
 using SafetyProto.Runtime.Task;
@@ -209,8 +210,17 @@ namespace SafetyProto.UI
                 return;
             }
 
+            if (HasRecordedCharges())
+            {
+                // A clean-run message would contradict the itemized charges on the rows below.
+                primaryImprovementCard.SetActive(false);
+                return;
+            }
+
             ShowSafeCard();
         }
+
+        private static bool HasRecordedCharges() => ScoreService.Instance.Ledger.Charges.Count > 0;
 
         private RuntimeSafetyTask SelectPrimaryIssueTask(IReadOnlyList<RuntimeSafetyTask> tasks)
         {
@@ -223,7 +233,7 @@ namespace SafetyProto.UI
             {
                 var t = tasks[i];
                 if (t.TaskData == null) continue;
-                if (t.State == TaskState.CompletedSuccess && !t.HasMissedPPEOnce) continue;
+                if (t.State == TaskState.CompletedSuccess && !t.HasMissedPPEOnce && !t.HasMisclassifiedReport) continue;
 
                 int riskLevel = (int)t.TaskData.riskLevel;
                 int riskIndex = t.TaskData.risk.Index;
@@ -248,7 +258,7 @@ namespace SafetyProto.UI
         private static int IssueSeverityRank(RuntimeSafetyTask t)
         {
             if (t.State == TaskState.CompletedSuccessButUnsafe) return 1;
-            if (t.State == TaskState.CompletedSuccess) return 2;
+            if (t.State == TaskState.CompletedSuccess) return t.HasMisclassifiedReport ? 1 : 2;
             return 0;
         }
 
@@ -336,6 +346,8 @@ namespace SafetyProto.UI
             ClearChildren(taskListParent);
 
             var scoring = taskManager != null ? taskManager.Scoring : ScoringConfig.Default;
+            var ledger = ScoreService.Instance.Ledger;
+            var reportedTaskIds = new HashSet<string>();
 
             foreach (var bucket in BuildGroupBuckets(tasks))
             {
@@ -350,8 +362,18 @@ namespace SafetyProto.UI
                 {
                     var row = Instantiate(taskRowPrefab, taskListParent);
                     var rowUI = row.GetComponent<TaskReportRowUI>();
-                    if (rowUI != null) rowUI.Setup(t, EarnedPointsFor(t, scoring), BuildTaskAdvice(t));
+                    if (rowUI != null)
+                        rowUI.Setup(t, EarnedPointsFor(t, scoring), BuildTaskAdvice(t), ledger.ChargesFor(t.id));
+                    reportedTaskIds.Add(t.id);
                 }
+            }
+
+            var otherCharges = ledger.ChargesOutside(reportedTaskIds);
+            if (otherCharges.Count > 0)
+            {
+                var row = Instantiate(taskRowPrefab, taskListParent);
+                var rowUI = row.GetComponent<TaskReportRowUI>();
+                if (rowUI != null) rowUI.SetupChargesOnly(ScoreChargeLabels.OtherChargesLabel, otherCharges);
             }
 
             // Two passes: wrapping task names report a real preferred height only after the first assigns widths.
@@ -430,6 +452,15 @@ namespace SafetyProto.UI
         {
             if (t.TaskData == null) return string.Empty;
 
+            string advice = BuildStateAdvice(t);
+            if (!t.HasMisclassifiedReport) return advice;
+
+            string correction = HazardClassificationPolicy.BuildCorrectionAdvice(t.TaskData);
+            return string.IsNullOrEmpty(advice) ? correction : $"{advice} {correction}";
+        }
+
+        private static string BuildStateAdvice(RuntimeSafetyTask t)
+        {
             if (t.State == TaskState.CompletedSuccessButUnsafe)
             {
                 return FirstNonEmpty(t.TaskData.ppeAdvice, "Sempre verifique seus equipamentos antes de agir.");
@@ -437,8 +468,8 @@ namespace SafetyProto.UI
 
             if (t.State != TaskState.CompletedSuccess)
             {
-                string advice = FirstNonEmpty(t.TaskData.omissionAdvice, t.TaskData.failureAdvice, t.TaskData.hintText);
-                return string.IsNullOrEmpty(advice) ? "Tarefa não realizada." : $"Tarefa não realizada. {advice}";
+                string omission = FirstNonEmpty(t.TaskData.omissionAdvice, t.TaskData.failureAdvice, t.TaskData.hintText);
+                return string.IsNullOrEmpty(omission) ? "Tarefa não realizada." : $"Tarefa não realizada. {omission}";
             }
 
             if (t.HasMissedPPEOnce)

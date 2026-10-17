@@ -26,6 +26,24 @@ namespace SafetyProto.Core
         /// this same object via <c>TaskManager.GetSessionTasks()</c>.</summary>
         public string ReportedOptionId { get; set; } = string.Empty;
 
+        /// <summary>True when the participant picked a <c>reportOptions</c> choice that is not the
+        /// correct one. The task itself still completes successfully (a misclassification never
+        /// changes task state), so reports must read this to avoid presenting it as a clean run.
+        /// False for a task without options, with no pick, or with a pick that matches no option.</summary>
+        public bool HasMisclassifiedReport
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(ReportedOptionId)) return false;
+                var options = TaskData?.reportOptions;
+                if (options == null) return false;
+
+                foreach (var option in options)
+                    if (option.Id == ReportedOptionId) return !option.Correct;
+                return false;
+            }
+        }
+
         public bool IsValid { get; private set; } = true;
         public string InvalidReason { get; private set; } = string.Empty;
 

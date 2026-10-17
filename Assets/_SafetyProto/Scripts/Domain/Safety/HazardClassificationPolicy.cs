@@ -19,6 +19,33 @@ namespace SafetyProto.Domain.Safety
     /// </summary>
     public static class HazardClassificationPolicy
     {
+        /// <summary>Lead-in of the correction shown after a wrong pick. Provisional wording.</summary>
+        public const string CorrectClassificationPrefix = "Classificação correta: ";
+
+        /// <summary>
+        /// What the report tells a participant who picked the wrong option: the correct
+        /// classification, then the explanation the correct path shows (the task's
+        /// <c>failureAdvice</c>).
+        /// </summary>
+        public static string BuildCorrectionAdvice(ISafetyTask task)
+        {
+            string label = string.Empty;
+            var options = task.reportOptions;
+            if (options != null)
+            {
+                foreach (var option in options)
+                {
+                    if (!option.Correct) continue;
+                    label = option.Label;
+                    break;
+                }
+            }
+
+            string lead = string.IsNullOrWhiteSpace(label) ? string.Empty : $"{CorrectClassificationPrefix}{label}.";
+            if (string.IsNullOrWhiteSpace(task.failureAdvice)) return lead;
+            return lead.Length == 0 ? task.failureAdvice : $"{lead} {task.failureAdvice}";
+        }
+
         public static void ChargeMisclassification(
             IEventBus bus,
             IScoreService scoreService,
