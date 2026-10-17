@@ -64345,6 +64345,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2781388660814576815}
     m_Modifications:
+    - target: {fileID: 513349645433970226, guid: 7ba70831d1b548345a0a702c1ae5c3f1, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1382241779439910191, guid: 7ba70831d1b548345a0a702c1ae5c3f1, type: 3}
       propertyPath: m_Name
       value: Safety_Helmet (1)
@@ -64361,6 +64365,10 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 947fcc6a89c79eb46b0e3df5eb07df8c, type: 2}
+    - target: {fileID: 5331889225637225840, guid: 7ba70831d1b548345a0a702c1ae5c3f1, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5331889225637225840, guid: 7ba70831d1b548345a0a702c1ae5c3f1, type: 3}
       propertyPath: collisionMask.m_Bits
       value: 2147745787
