@@ -41970,6 +41970,11 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1434611971}
   m_Mesh: {fileID: -1360831446715088653, guid: 9b1545b790c85354a9b6449bb3dee586, type: 3}
+--- !u!1 &1435656159 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 936058805810938389, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
+  m_PrefabInstance: {fileID: 9152504665694397440}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1440197515
 GameObject:
   m_ObjectHideFlags: 0
@@ -57699,6 +57704,17 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1947017093}
   m_Mesh: {fileID: -2160634817504456999, guid: 9b1545b790c85354a9b6449bb3dee586, type: 3}
+--- !u!114 &1950377469 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3992221505758115048, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
+  m_PrefabInstance: {fileID: 9152504665694397440}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee10491ef6d5d1d49a270cf6b09bdc19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Oculus.VR::OVROverlayCanvas
 --- !u!1 &1958037332
 GameObject:
   m_ObjectHideFlags: 0
@@ -70854,6 +70870,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 3992221505758115048, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
+      propertyPath: _overlayEnabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4322770529040815714, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
       propertyPath: m_Layer
       value: 3
@@ -71008,7 +71028,10 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2260388966796775858, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
       insertIndex: 4
       addedObject: {fileID: 1157075123}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 936058805810938389, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9152504665694397447}
   m_SourcePrefab: {fileID: 100100000, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
 --- !u!4 &9152504665694397441 stripped
 Transform:
@@ -71020,17 +71043,49 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8450410590061374335, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
   m_PrefabInstance: {fileID: 9152504665694397440}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 1435656159}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 049ee4cf763be804a9bccce126324592, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.UI.PopupPanel
+--- !u!225 &9152504665694397444 stripped
+CanvasGroup:
+  m_CorrespondingSourceObject: {fileID: 5140503507838935300, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
+  m_PrefabInstance: {fileID: 9152504665694397440}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &9152504665694397445 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6494895806796852190, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
+  m_PrefabInstance: {fileID: 9152504665694397440}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1435656159}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85589845d6421a540836f22e40176e49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.UI.MenuFollowHmd
 --- !u!224 &9152504665694397446 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2260388966796775858, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
   m_PrefabInstance: {fileID: 9152504665694397440}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &9152504665694397447
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1435656159}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cedb2f3511a32424c95890bf79a410b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.UI.Unity::SafetyProto.UI.OverlayWhenSettled
+  overlayCanvas: {fileID: 1950377469}
+  follow: {fileID: 9152504665694397445}
+  canvasGroup: {fileID: 9152504665694397444}
+  settleSeconds: 0.3
 --- !u!4 &9182279868993706203
 Transform:
   m_ObjectHideFlags: 0

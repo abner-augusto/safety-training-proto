@@ -6,7 +6,8 @@
     "SafetyProto.Domain.Core",
     "SafetyProto.Utils.Unity",
     "SafetyProto.Runtime.Unity",
-    "Unity.TextMeshPro"
+    "Unity.TextMeshPro",
+    "Oculus.VR"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
