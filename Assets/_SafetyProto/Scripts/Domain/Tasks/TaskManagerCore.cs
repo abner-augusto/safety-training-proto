@@ -215,12 +215,32 @@ namespace SafetyProto.Domain.Tasks
         /// gate that judges that group (the Phase 1 advance button) would otherwise measure the
         /// group that came after it.
         /// </summary>
-        public IReadOnlyList<string> GetCompletionOrderDeviations(string groupId) =>
-            GetCompletionOrderDeviationsFor(FindGroupById(groupId));
-
-        private IReadOnlyList<string> GetCompletionOrderDeviationsFor(ITaskGroup? group)
+        public IReadOnlyList<string> GetCompletionOrderDeviations(string groupId)
         {
-            var deviations = new List<string>();
+            var names = new List<string>();
+            foreach (var task in FindCompletionOrderDeviations(FindGroupById(groupId))) names.Add(task.taskName);
+            return names;
+        }
+
+        /// <summary>
+        /// Same deviations as <see cref="GetCompletionOrderDeviations"/>, but also flags each task
+        /// <see cref="RuntimeSafetyTask.CompletedOutOfOrder"/> so the finish report can note it.
+        /// Kept apart from the query because the query is called by readers that must not mutate.
+        /// </summary>
+        public IReadOnlyList<string> MarkCompletionOrderDeviations(string groupId)
+        {
+            var names = new List<string>();
+            foreach (var task in FindCompletionOrderDeviations(FindGroupById(groupId)))
+            {
+                task.CompletedOutOfOrder = true;
+                names.Add(task.taskName);
+            }
+            return names;
+        }
+
+        private List<RuntimeSafetyTask> FindCompletionOrderDeviations(ITaskGroup? group)
+        {
+            var deviations = new List<RuntimeSafetyTask>();
             if (group == null) return deviations;
 
             float lastTime = float.MinValue;
@@ -242,7 +262,7 @@ namespace SafetyProto.Domain.Tasks
 
                 if (runtime.CompletionTime < lastTime)
                 {
-                    deviations.Add(runtime.taskName);
+                    deviations.Add(runtime);
                 }
                 lastTime = runtime.CompletionTime;
             }

@@ -3,6 +3,7 @@ using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Domain.Safety;
 using SafetyProto.Domain.Scoring;
+using SafetyProto.Domain.Sessions;
 using SafetyProto.Runtime.Safety;
 using SafetyProto.Runtime.Task;
 using SafetyProto.Utils;
@@ -20,6 +21,17 @@ namespace SafetyProto.UI
     /// </summary>
     public class SessionReportUI : MonoBehaviour
     {
+        private const string ChargesCardTitle = "Atividade concluída com descontos";
+
+        private const string ChargesCardBody =
+            "Você concluiu as tarefas, mas perdeu {0} pontos por escolhas durante a atividade. " +
+            "Veja abaixo em que tarefa cada desconto ocorreu.";
+
+        private const string OrderNote =
+            " Alguns EPIs foram colocados fora da ordem recomendada. Isso não gerou desconto.";
+
+        private const string OrderRowLine = "Feita fora da ordem recomendada (sem desconto).";
+
         private const string MedalCapExplanation =
             "Medalha limitada: houve violação crítica de segurança durante a sessão.";
 
@@ -198,29 +210,49 @@ namespace SafetyProto.UI
             if (primaryImprovementCard == null) return;
 
             var issueTask = SelectPrimaryIssueTask(tasks);
+            int totalCharged = ScoreService.Instance.Ledger.TotalCharged;
+
             if (issueTask != null)
             {
                 ShowIssueCard(issueTask);
-                return;
             }
-
-            if (gateValidator != null && gateValidator.FailedAttemptCount > 0)
+            else if (gateValidator != null && gateValidator.FailedAttemptCount > 0)
             {
                 ShowGateAttemptCard(gateValidator.FailedAttemptCount);
-                return;
             }
-
-            if (HasRecordedCharges())
+            else if (ReportComposition.DecidePrimaryCard(false, totalCharged) == PrimaryCardKind.ChargesOnly)
             {
-                // A clean-run message would contradict the itemized charges on the rows below.
-                primaryImprovementCard.SetActive(false);
-                return;
+                ShowChargesCard(totalCharged);
+            }
+            else
+            {
+                ShowSafeCard();
             }
 
-            ShowSafeCard();
+            bool anyOutOfOrder = false;
+            foreach (var t in tasks)
+                if (t.CompletedOutOfOrder) { anyOutOfOrder = true; break; }
+
+            if (primaryImprovementBody != null)
+                primaryImprovementBody.text =
+                    ReportComposition.AppendOrderNote(primaryImprovementBody.text, anyOutOfOrder, OrderNote);
         }
 
-        private static bool HasRecordedCharges() => ScoreService.Instance.Ledger.Charges.Count > 0;
+        private void ShowChargesCard(int totalCharged)
+        {
+            primaryImprovementCard.SetActive(true);
+
+            if (primaryImprovementTitle != null)
+                primaryImprovementTitle.text = ChargesCardTitle;
+
+            if (primaryImprovementBody != null)
+                primaryImprovementBody.text = ReportComposition.FormatChargesBody(ChargesCardBody, totalCharged);
+
+            if (primaryImprovementPillLabel != null)
+                primaryImprovementPillLabel.text = "ATENÇÃO";
+
+            SetPrimaryCardTone(issue: true);
+        }
 
         private RuntimeSafetyTask SelectPrimaryIssueTask(IReadOnlyList<RuntimeSafetyTask> tasks)
         {
@@ -363,7 +395,7 @@ namespace SafetyProto.UI
                     var row = Instantiate(taskRowPrefab, taskListParent);
                     var rowUI = row.GetComponent<TaskReportRowUI>();
                     if (rowUI != null)
-                        rowUI.Setup(t, EarnedPointsFor(t, scoring), BuildTaskAdvice(t), ledger.ChargesFor(t.id));
+                        rowUI.Setup(t, EarnedPointsFor(t, scoring), BuildTaskAdvice(t), ledger.ChargesFor(t.id), OrderRowLine);
                     reportedTaskIds.Add(t.id);
                 }
             }

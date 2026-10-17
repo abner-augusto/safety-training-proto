@@ -17,6 +17,10 @@ namespace SafetyProto.Core
 
         public bool HasMissedPPEOnce { get; set; }
 
+        /// <summary>True when the task completed before one that precedes it in the authored
+        /// order. Informational: it never changes the state or the score.</summary>
+        public bool CompletedOutOfOrder { get; set; }
+
         public float CompletionTime { get; set; }
 
         /// <summary>Id of the <c>reportOptions</c> choice the participant picked, for a

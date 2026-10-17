@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using SafetyProto.Core;
 using SafetyProto.Domain.Scoring;
+using SafetyProto.Domain.Sessions;
 using RuntimeSafetyTask = SafetyProto.Core.RuntimeSafetyTask;
 using TMPro;
 using UnityEngine;
@@ -24,7 +25,7 @@ namespace SafetyProto.UI
         /// <summary>Fills the row. <paramref name="charges"/> are the penalties taken off this
         /// task; they are listed under the advice so earned points and the final score reconcile.</summary>
         public void Setup(RuntimeSafetyTask runtimeTask, int earnedPoints, string advice,
-                          IReadOnlyList<ScoreCharge> charges)
+                          IReadOnlyList<ScoreCharge> charges, string orderLine)
         {
             taskLabel.text = runtimeTask.taskName;
 
@@ -33,7 +34,7 @@ namespace SafetyProto.UI
 
             pointsText.text = earnedPoints > 0 ? $"+{earnedPoints} pts" : "0 pts";
 
-            ShowDetail(JoinDetail(advice, charges));
+            ShowDetail(ReportComposition.BuildRowDetail(advice, charges, runtimeTask.CompletedOutOfOrder, orderLine));
         }
 
         /// <summary>Fills a row that carries charges only, for penalties that belong to no task.</summary>
@@ -46,15 +47,7 @@ namespace SafetyProto.UI
             foreach (var charge in charges) total += charge.Amount;
             pointsText.text = $"-{total} pts";
 
-            ShowDetail(JoinDetail(string.Empty, charges));
-        }
-
-        private static string JoinDetail(string advice, IReadOnlyList<ScoreCharge> charges)
-        {
-            var lines = new List<string>();
-            if (!string.IsNullOrEmpty(advice)) lines.Add(advice);
-            foreach (var charge in charges) lines.Add(ScoreChargeLabels.FormatLine(charge));
-            return string.Join("\n", lines);
+            ShowDetail(ReportComposition.BuildRowDetail(string.Empty, charges, false, string.Empty));
         }
 
         private void ShowDetail(string detail)

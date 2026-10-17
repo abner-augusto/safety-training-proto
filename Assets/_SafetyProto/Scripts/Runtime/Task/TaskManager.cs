@@ -217,6 +217,9 @@ namespace SafetyProto.Runtime.Task
         public IReadOnlyList<string> GetCompletionOrderDeviations(string groupId) =>
             _core?.GetCompletionOrderDeviations(groupId) ?? new List<string>();
 
+        public IReadOnlyList<string> MarkCompletionOrderDeviations(string groupId) =>
+            _core?.MarkCompletionOrderDeviations(groupId) ?? new List<string>();
+
         public bool IsGroupCompleted(string groupId) => _core?.IsGroupCompleted(groupId) ?? false;
 
         public ITaskGroup? FindGroup(string groupId) => _core?.FindGroupById(groupId);

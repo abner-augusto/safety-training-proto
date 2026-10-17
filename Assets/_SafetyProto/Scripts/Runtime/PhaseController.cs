@@ -278,7 +278,7 @@ namespace SafetyProto.Runtime
 
         private void RecordOrderDeviations(string groupId)
         {
-            var deviations = taskManager.GetCompletionOrderDeviations(groupId);
+            var deviations = taskManager.MarkCompletionOrderDeviations(groupId);
             if (deviations.Count == 0) return;
 
             taskManager.RegisterOrderViolation($"EPIs fora da ordem recomendada: {string.Join(", ", deviations)}");
