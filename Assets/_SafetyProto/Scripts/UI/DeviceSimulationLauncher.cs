@@ -54,7 +54,6 @@ namespace SafetyProto.UI
                 yield return null;
             }
 
-            PreSessionFlow.Suppress();
             var simulator = SessionSimulator.GetOrCreate();
             simulator.Mode = _mode;
             simulator.ExternalScenarioPath = _scriptPath;

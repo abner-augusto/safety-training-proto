@@ -1,3 +1,4 @@
+using SafetyProto.Runtime.Simulation;
 using UnityEngine;
 
 namespace SafetyProto.UI
@@ -8,6 +9,12 @@ namespace SafetyProto.UI
     /// </summary>
     public static class PreSessionFlow
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // Domain reload is disabled on Play Mode entry; static state persists between runs.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void RegisterWithSimulator() => SessionSimulator.PreSessionSuppressor = Suppress;
+#endif
+
         public static void Suppress()
         {
             var popupService = PopupService.Instance;

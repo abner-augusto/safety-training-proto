@@ -136,10 +136,19 @@ namespace SafetyProto.Runtime.Simulation
         public bool IsBusy => _busy;
         public string LoadedScenarioName => _taskManager?.LoadedScenario?.Name ?? "(não carregado)";
 
+        /// <summary>Silences the participant's pre-session popups. The UI assembly registers it,
+        /// because Runtime cannot reference UI; every way of starting a run goes through it so a
+        /// pending name-entry popup never keeps the session paused.</summary>
+        public static System.Action? PreSessionSuppressor { get; set; }
+
         public void Run()
         {
             if (_busy || (_prepared && !IsRunning)) return;
-            if (!_prepared) ResetResult();
+            if (!_prepared)
+            {
+                PreSessionSuppressor?.Invoke();
+                ResetResult();
+            }
             _busy = true;
             _routine = StartCoroutine(RunAllCoroutine());
         }
@@ -147,6 +156,7 @@ namespace SafetyProto.Runtime.Simulation
         public void Step()
         {
             if (_busy || (_prepared && !IsRunning)) return;
+            if (!_prepared) PreSessionSuppressor?.Invoke();
             _busy = true;
             _routine = StartCoroutine(StepCoroutine());
         }

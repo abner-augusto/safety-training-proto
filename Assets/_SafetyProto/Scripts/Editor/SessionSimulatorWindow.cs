@@ -60,12 +60,10 @@ namespace SafetyProto.Editor
                     {
                         if (GUILayout.Button("Executar tudo"))
                         {
-                            PrepareForSimulation();
                             _simulator.Run();
                         }
                         if (GUILayout.Button("Próxima etapa"))
                         {
-                            PrepareForSimulation();
                             _simulator.Step();
                         }
                     }
@@ -155,12 +153,6 @@ namespace SafetyProto.Editor
             }
             if (!string.IsNullOrEmpty(_moveError))
                 EditorGUILayout.HelpBox(_moveError, MessageType.Error);
-        }
-
-        private void PrepareForSimulation()
-        {
-            if (_simulator == null) return;
-            PreSessionFlow.Suppress();
         }
     }
 }
