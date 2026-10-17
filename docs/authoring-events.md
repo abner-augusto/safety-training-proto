@@ -17,7 +17,7 @@ which side of the domain/engine seam the code lives on (principle 4 in
 
 **Domain producers** (`Scripts/Domain/**`) publish through the `IEventBus` they
 were constructed with — `_bus.Publish(new SomethingEventArgs(...))` — and get no
-facade and no `UnityEvent` field. `SafetyRuleEngineCore` publishing
+facade. `SafetyRuleEngineCore` publishing
 `ActionRefusedEventArgs` from `RefuseAttempt` is the example: the domain has no
 dependency on `EventBus.Instance` or `UnityEngine`, so it cannot call a facade
 even if one existed. This is also what makes the class headlessly testable
@@ -27,8 +27,8 @@ against `FakeEventBus` — the CLI harness and the Unity runtime both satisfy
 **Unity-side producers** (`Scripts/Runtime/**`, `Scripts/UI/**`) go through a
 facade in `Core/Events/` — `SessionEvents`, `ActionEvents`, `PPEEvents`,
 `ScoreEvents`, `SafetyEvents`, `PopupEvents`, `DirectConsequenceChannel`. A facade is a
-static class with `Raise*`/`Publish*` methods that call `EventBus.Instance`
-directly, so it is Unity-side by construction and must never be referenced from
+static class with `Raise*`/`Publish*` methods that call
+`EventBus.Instance.Publish` directly, so it is Unity-side by construction and must never be referenced from
 `Scripts/Domain/**`. This is where the stamping guarantee is stated: every
 facade method stamps `SessionId`, `PlayerId`, `ScenarioId`, and a Unix
 timestamp before the payload reaches a subscriber, so a producer never
@@ -46,17 +46,8 @@ the way `ActionRefusedEventArgs` is.
 There is one stamping path. Every payload struct implements `IEventPayload`
 explicitly, and `EventMetadata.Stamp` fills the four metadata fields
 (`SessionId`, `PlayerId`, `ScenarioId`, `TimestampMs`) through that interface,
-handing back the stamped copy. Both ways a payload enters the bus call it:
-
-- **Facade events with a dedicated `UnityEvent`** (the ones with a `public
-  UnityEvent<T> onXxx` field and a `RaiseXxx` method on `EventBus`, e.g.
-  `onActionAttempt`/`RaiseActionAttempt`) are stamped by
-  `EventMetadata.Stamp` at the top of that `RaiseXxx` method, before the
-  payload is queued.
-- **Typed-only payloads** (no dedicated `UnityEvent` — `ActionRefusedEventArgs`,
-  `PopupClosedEventArgs`, and `PopupShownEventArgs` today) fall through `EventBus.Publish<T>`'s
-  `default` branch, which calls `EventMetadata.Stamp(payload)` before
-  `DispatchTyped` queues it.
+handing back the stamped copy. `EventBus.Publish<T>` calls it before the payload
+is queued, so every event is stamped the same way.
 
 A type that does not implement `IEventPayload` passes through `Stamp`
 unchanged, so forgetting the interface would leave the metadata empty.
@@ -73,11 +64,8 @@ struct that declares `SessionId` without implementing the interface.
    them in, the producer never should.
 2. Implement `IEventPayload` explicitly (copy the block from any existing
    payload).
-3. Decide whether it needs a dedicated `UnityEvent<T> onXxx` field and
-   `RaiseXxx`/`case` entry on `EventBus`, or whether it is fine to travel as a
-   typed-only payload through the generic `Publish<T>` default branch (this is
-   the right default for anything the domain also publishes, since the domain
-   has no reason to reach for a `UnityEvent`-shaped API).
+3. Nothing changes on `EventBus`: `Publish<T>` and `Subscribe<T>` are generic,
+   so the new type is routed by its own type.
 4. Write the facade method (Unity-side producers only) in the matching
    `Core/Events/*Events.cs` file, or add a new one if the event doesn't belong
    to an existing facade's domain.
@@ -95,18 +83,18 @@ struct that declares `SessionId` without implementing the interface.
 
 ## Subscribing
 
-- **Unity subscribers**: `EventBus.Instance.onXxx.AddListener(Handler)` behind
-  `this.IsEventBusReady()`, with the matching `RemoveListener` in
-  `OnDisable`/`OnDestroy`. This is the only pattern for a facade event with a
-  dedicated `UnityEvent`.
-- **Typed-only payloads**, from either side: `EventBus.Instance.Subscribe<T>`
-  (Unity-side, e.g. `ScaffoldPieceInstaller` subscribing to
-  `ActionRefusedEventArgs`) or the injected `IEventBus.Subscribe<T>` (domain
-  side, e.g. `SafetyRuleEngineCore` subscribing to `ActionAttemptedEvent`).
-  Always pair a `Subscribe` with an `Unsubscribe` using the *same* delegate
-  instance — cache it in a field (`_onActionRefused ??= HandleActionRefused;`)
-  rather than passing a new lambda to each call, or `Unsubscribe` silently
-  does nothing.
+- **Unity subscribers**: `EventBus.Instance.Subscribe<T>(Handler)` behind
+  `this.IsEventBusReady()`, with the matching `Unsubscribe<T>` in
+  `OnDisable`/`OnDestroy`.
+- **Domain subscribers**: the injected `IEventBus.Subscribe<T>` (e.g.
+  `SafetyRuleEngineCore` subscribing to `ActionAttemptedEvent`).
+- **Task and group events** are one payload type each; a handler that cares
+  about one phase returns early unless `args.Phase` matches.
+
+Always pair a `Subscribe` with an `Unsubscribe` using the *same* delegate
+instance — cache it in a field (`_onActionRefused ??= HandleActionRefused;`)
+rather than passing a new lambda to each call, or `Unsubscribe` silently
+does nothing.
 
 ## The synchronous exception
 

@@ -127,20 +127,19 @@ causal — events are processed in the order they were enqueued. A queue deeper
 than 1000 items raises a `SafetyError` once per crossing and the warning re-arms
 when the queue drains.
 
-Two subscription styles coexist, one per side of the boundary:
+There is one subscription style: `Subscribe<T>` / `Unsubscribe<T>`, keyed by the
+payload type. Domain classes call it on the injected `IEventBus`, which the
+headless harness implements, so the same class subscribes the same way in both
+runtimes. Unity components call `EventBus.Instance.Subscribe<T>` with a matching
+`Unsubscribe<T>` in `OnDisable`/`OnDestroy`, and before subscribing a
+`MonoBehaviour` calls the `this.IsEventBusReady()` extension; if the bus is
+absent the component disables itself instead of throwing.
 
-- **Unity subscribers** use `EventBus.Instance.onXxx.AddListener(...)` with a
-  matching `RemoveListener` in `OnDisable`/`OnDestroy`. Before subscribing a
-  `MonoBehaviour` calls the `this.IsEventBusReady()` extension; if the bus is
-  absent the component disables itself instead of throwing.
-- **Domain subscribers** use `IEventBus.Subscribe<T>` / `Unsubscribe`. This is
-  the interface the headless harness implements, so the same domain class
-  subscribes the same way in both runtimes.
-
-Both styles are served from one queue: each enqueued dispatch invokes the
-`UnityEvent` listeners first, then the typed subscribers. The static
-`OnXxxCSharp` events that an earlier revision exposed have been removed; do not
-reintroduce them. There is one bus, and everything flows through it.
+A payload type is delivered to its subscribers in subscription order. Task and
+group events share one payload type each, so a handler that cares about one
+phase checks `Phase` itself. The `UnityEvent` fields and the static
+`OnXxxCSharp` events that earlier revisions exposed have been removed; do not
+reintroduce either. There is one bus, and everything flows through it.
 
 ### Event stamping and identity
 
@@ -812,8 +811,8 @@ connects, and they are the empirical form of the claims above:
 
 | To add… | Do this |
 |---|---|
-| A domain-produced event | Add a payload struct implementing `IEventPayload` to `EventPayloads.cs` (or a standalone `Core/Events/` file), publish it through the injected `IEventBus` — no facade, no `UnityEvent` field. |
-| A Unity-produced event | Add the payload, then a `Raise*`/`Publish*` method on a `Core/Events/` facade (new or existing) that calls `EventBus.Instance`; register a `UnityEvent` + subscription on `EventBus` if the event needs one. |
+| A domain-produced event | Add a payload struct implementing `IEventPayload` to `EventPayloads.cs` (or a standalone `Core/Events/` file), publish it through the injected `IEventBus` — no facade. |
+| A Unity-produced event | Add the payload, then a `Raise*`/`Publish*` method on a `Core/Events/` facade (new or existing) that calls `EventBus.Instance.Publish`. Subscribers use `Subscribe<T>`; `EventBus` itself needs no change. |
 | Domain logic | Place pure C# in `Scripts/Domain/`; the shared csproj picks it up by glob. A `Core/` file the domain needs must be added to `SafetyProto.Shared.csproj` by hand, and only if it references no `UnityEngine` type. |
 | A violation or score reason | Add a constant to `ViolationCodes`; never rename an existing one — the strings are in logs. |
 | An action type | Add an `ActionDef` to `Resources/Actions/actions.json`; wire a scene emitter with the same action-id string. |
