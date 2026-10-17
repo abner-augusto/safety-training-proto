@@ -215,5 +215,25 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual(2, violations);
             Assert.AreEqual(1, score.Ledger.Charges.Count);
         }
+
+        [Test]
+        public void ChargeKey_PairSharingAnIdIsOneChoice()
+        {
+            Assert.AreEqual(
+                DistractorResolver.ChargeKey("rubber_gloves", "RubberGlove_Left"),
+                DistractorResolver.ChargeKey("rubber_gloves", "RubberGlove_Right"));
+        }
+
+        [Test]
+        public void ChargeKey_ItemWithoutIdFallsBackToItsName()
+        {
+            Assert.AreNotEqual(
+                DistractorResolver.ChargeKey("", "Decoy_A"),
+                DistractorResolver.ChargeKey(null, "Decoy_B"));
+            Assert.AreNotEqual(
+                DistractorResolver.ChargeKey("Decoy_A", "x"),
+                DistractorResolver.ChargeKey("", "Decoy_A"),
+                "An id must not collide with an unrelated item's name.");
+        }
     }
 }

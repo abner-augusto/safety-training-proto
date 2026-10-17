@@ -49,6 +49,16 @@ namespace SafetyProto.Domain.Safety
             return null;
         }
 
+        /// <summary>What a decoy's charge is counted against. Items sharing a <c>distractorId</c>
+        /// are one wrong choice (the left and right rubber gloves are a pair), so the id wins; an
+        /// item without one falls back to its own name.</summary>
+        public static string ChargeKey(string? distractorId, string? itemName)
+        {
+            return string.IsNullOrWhiteSpace(distractorId)
+                ? "item:" + (itemName ?? string.Empty)
+                : "id:" + distractorId!.Trim();
+        }
+
         /// <summary>The rejection advice, followed by the task's hint when it has one.</summary>
         public static string BuildRejectionBody(DistractorMatch match)
         {

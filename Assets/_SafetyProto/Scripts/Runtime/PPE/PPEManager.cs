@@ -111,9 +111,9 @@ namespace SafetyProto.Runtime.PPE
         /// Called by PPESnapSlot when a distractor item tries to snap. Always logs a
         /// WRONG_PPE_SELECTED violation (selection among decoys is a primary retention
         /// measure); charges the minor-tier base penalty only on the first attempt of
-        /// each unique item, so fumbling the same decoy repeatedly cannot spiral. The charge
-        /// and the violation are attributed to the equip task that authored the decoy
-        /// (<paramref name="distractorId"/>); an unresolved id leaves them task-less.
+        /// each decoy (a pair sharing a distractorId counts once), so fumbling the same
+        /// decoy repeatedly cannot spiral. The charge and the violation are attributed to
+        /// the equip task that authored the decoy (<paramref name="distractorId"/>); an unresolved id leaves them task-less.
         /// </summary>
         public void ReportDistractorAttempt(PPEType ppeType, string itemName, string distractorId)
         {
@@ -124,12 +124,10 @@ namespace SafetyProto.Runtime.PPE
             IncidentalChargePolicy.ChargeWrongPpeSelected(
                 EventBus.Instance, ScoreService.Instance, scoring,
                 match != null ? match.Distractor.Name : GetPpeLabel(ppeType), itemName,
-                firstAttemptForItem: TryChargeDistractor(itemName),
+                firstAttemptForItem: _chargedDistractors.Add(DistractorResolver.ChargeKey(distractorId, itemName)),
                 taskId: match?.Task.id ?? string.Empty,
                 taskName: match?.Task.taskName);
         }
-
-        private bool TryChargeDistractor(string itemName) => _chargedDistractors.Add(itemName);
 
         private static string GetPpeLabel(PPEType ppeType)
         {
