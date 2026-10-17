@@ -6,17 +6,17 @@ namespace SafetyProto.Core.Events
     {
         public static void RaiseSafetyViolation(SafetyViolationEventArgs args)
         {
-            EventBus.Instance.RaiseSafetyViolation(args);
+            EventBus.Instance.Publish(args);
         }
 
         public static void RaiseCriticalSafetyFailure(CriticalSafetyFailureEventArgs args)
         {
-            EventBus.Instance.RaiseCriticalSafetyFailure(args);
+            EventBus.Instance.Publish(args);
         }
 
         public static void RaiseSafetyError(SafetyErrorEventArgs args)
         {
-            EventBus.Instance.RaiseSafetyError(args);
+            EventBus.Instance.Publish(args);
         }
     }
 }

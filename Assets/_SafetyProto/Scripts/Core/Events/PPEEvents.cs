@@ -6,7 +6,7 @@ namespace SafetyProto.Core.Events
     {
         public static void RaisePpeStateChanged(PPEStateChangedEventArgs args)
         {
-            EventBus.Instance.RaisePpeStateChanged(args);
+            EventBus.Instance.Publish(args);
         }
     }
 }

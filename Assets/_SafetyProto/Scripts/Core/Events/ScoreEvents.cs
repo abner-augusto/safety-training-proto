@@ -6,7 +6,7 @@ namespace SafetyProto.Core.Events
     {
         public static void RaiseScoreChanged(ScoreChangedEventArgs args)
         {
-            EventBus.Instance.RaiseScoreChanged(args);
+            EventBus.Instance.Publish(args);
         }
     }
 }

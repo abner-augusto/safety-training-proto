@@ -69,7 +69,7 @@ namespace SafetyProto.Tests.Editor
         {
             SessionModeState.Current = SessionMode.Guided;
 
-            EventBus.Instance.RaiseTaskCompleted(new TaskEventArgs { WasPpeCompliant = true });
+            EventBus.Instance.Publish(new TaskEventArgs { Phase = TaskPhase.Completed, WasPpeCompliant = true });
             ProcessEvents();
 
             Assert.IsTrue(_manager.Arbiter.TryResolve(0f, out var kind));
@@ -81,7 +81,7 @@ namespace SafetyProto.Tests.Editor
         {
             SessionModeState.Current = SessionMode.Guided;
 
-            EventBus.Instance.RaiseTaskCompleted(new TaskEventArgs { WasPpeCompliant = false });
+            EventBus.Instance.Publish(new TaskEventArgs { Phase = TaskPhase.Completed, WasPpeCompliant = false });
             ProcessEvents();
 
             Assert.IsTrue(_manager.Arbiter.TryResolve(0f, out var kind));
@@ -93,7 +93,7 @@ namespace SafetyProto.Tests.Editor
         {
             SessionModeState.Current = SessionMode.Guided;
 
-            EventBus.Instance.RaiseSafetyViolation(new SafetyViolationEventArgs { ViolationCode = "TEST" });
+            EventBus.Instance.Publish(new SafetyViolationEventArgs { ViolationCode = "TEST" });
             ProcessEvents();
 
             Assert.IsTrue(_manager.Arbiter.TryResolve(0f, out var kind));
@@ -105,7 +105,7 @@ namespace SafetyProto.Tests.Editor
         {
             SessionModeState.Current = SessionMode.Guided;
 
-            EventBus.Instance.RaiseCriticalSafetyFailure(new CriticalSafetyFailureEventArgs { Reason = "TEST" });
+            EventBus.Instance.Publish(new CriticalSafetyFailureEventArgs { Reason = "TEST" });
             ProcessEvents();
 
             Assert.IsTrue(_manager.Arbiter.TryResolve(0f, out var kind));
@@ -117,7 +117,7 @@ namespace SafetyProto.Tests.Editor
         {
             SessionModeState.Current = SessionMode.Evaluation;
 
-            EventBus.Instance.RaiseTaskCompleted(new TaskEventArgs { WasPpeCompliant = true });
+            EventBus.Instance.Publish(new TaskEventArgs { Phase = TaskPhase.Completed, WasPpeCompliant = true });
             ProcessEvents();
 
             Assert.IsTrue(_manager.Arbiter.TryResolve(0f, out var kind));
@@ -129,7 +129,7 @@ namespace SafetyProto.Tests.Editor
         {
             SessionModeState.Current = SessionMode.Evaluation;
 
-            EventBus.Instance.RaiseTaskCompleted(new TaskEventArgs { WasPpeCompliant = false });
+            EventBus.Instance.Publish(new TaskEventArgs { Phase = TaskPhase.Completed, WasPpeCompliant = false });
             ProcessEvents();
 
             Assert.IsTrue(_manager.Arbiter.TryResolve(0f, out var kind));
@@ -141,7 +141,7 @@ namespace SafetyProto.Tests.Editor
         {
             SessionModeState.Current = SessionMode.Evaluation;
 
-            EventBus.Instance.RaiseSafetyViolation(new SafetyViolationEventArgs { ViolationCode = "TEST" });
+            EventBus.Instance.Publish(new SafetyViolationEventArgs { ViolationCode = "TEST" });
             ProcessEvents();
 
             Assert.IsFalse(_manager.Arbiter.TryResolve(0f, out _), "Safety violations in Evaluation mode must not trigger audio feedback.");
@@ -152,7 +152,7 @@ namespace SafetyProto.Tests.Editor
         {
             SessionModeState.Current = SessionMode.Evaluation;
 
-            EventBus.Instance.RaiseCriticalSafetyFailure(new CriticalSafetyFailureEventArgs { Reason = "TEST" });
+            EventBus.Instance.Publish(new CriticalSafetyFailureEventArgs { Reason = "TEST" });
             ProcessEvents();
 
             Assert.IsFalse(_manager.Arbiter.TryResolve(0f, out _), "Critical failure audio must be suppressed in Evaluation mode.");
@@ -163,8 +163,8 @@ namespace SafetyProto.Tests.Editor
         {
             SessionModeState.Current = SessionMode.Evaluation;
 
-            EventBus.Instance.RaiseSafetyViolation(new SafetyViolationEventArgs { ViolationCode = "NO_PPE" });
-            EventBus.Instance.RaiseTaskCompleted(new TaskEventArgs { WasPpeCompliant = false });
+            EventBus.Instance.Publish(new SafetyViolationEventArgs { ViolationCode = "NO_PPE" });
+            EventBus.Instance.Publish(new TaskEventArgs { Phase = TaskPhase.Completed, WasPpeCompliant = false });
             ProcessEvents();
 
             Assert.IsTrue(_manager.Arbiter.TryResolve(0f, out var kind));

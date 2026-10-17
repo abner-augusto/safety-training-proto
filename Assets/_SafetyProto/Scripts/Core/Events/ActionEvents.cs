@@ -7,7 +7,7 @@ namespace SafetyProto.Core.Events
     public static class ActionEvents
     {
         public static void Publish(ActionAttemptedEvent payload)
-            => EventBus.Instance.RaiseActionAttempt(payload);
+            => EventBus.Instance.Publish(payload);
 
         /// <summary>
         /// Unity-friendly overload: accepts Vector3? and converts to the engine-independent

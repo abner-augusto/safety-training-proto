@@ -1,6 +1,10 @@
+using System;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace SafetyProto.Tests.Editor
 {
@@ -54,7 +58,7 @@ namespace SafetyProto.Tests.Editor
             EventBus.Instance.Subscribe<ActionAttemptedEvent>(EchoCompletionAndViolation);
 
             SessionEvents.RaiseSessionStarted();
-            EventBus.Instance.RaiseTaskStarted(new TaskEventArgs());
+            EventBus.Instance.Publish(new TaskEventArgs { Phase = TaskPhase.Started });
 
             ActionEvents.PublishActionAttempt("test_action");
             ProcessEvents();
@@ -63,9 +67,34 @@ namespace SafetyProto.Tests.Editor
             Assert.IsTrue(_safetyViolation, "Expected SafetyViolation to be delivered through the queue.");
         }
 
+        /// <summary>
+        /// A throwing SafetyError listener must not raise another SafetyError, or the queue would
+        /// feed itself forever.
+        /// </summary>
+        [Test]
+        public void EventBus_ThrowingSafetyErrorListener_DoesNotReraise()
+        {
+            int calls = 0;
+            Action<SafetyErrorEventArgs> thrower = _ => { calls++; throw new InvalidOperationException("boom"); };
+            EventBus.Instance.Subscribe(thrower);
+            try
+            {
+                LogAssert.Expect(LogType.Error, new Regex("Listener threw"));
+                SafetyEvents.RaiseSafetyError(new SafetyErrorEventArgs { Source = "test", Message = "m" });
+                ProcessEvents();
+                ProcessEvents();
+            }
+            finally
+            {
+                EventBus.Instance.Unsubscribe(thrower);
+            }
+
+            Assert.AreEqual(1, calls);
+        }
+
         private void EchoCompletionAndViolation(ActionAttemptedEvent _)
         {
-            EventBus.Instance.RaiseTaskCompleted(new TaskEventArgs());
+            EventBus.Instance.Publish(new TaskEventArgs { Phase = TaskPhase.Completed });
             SafetyEvents.RaiseSafetyViolation(new SafetyViolationEventArgs
             {
                 ViolationCode = "PPE_MISSING",
