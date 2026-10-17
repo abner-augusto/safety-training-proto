@@ -44,6 +44,7 @@ namespace SafetyProto.UI
         [SerializeField] private TMP_Text scoreText;
         [SerializeField] private TMP_Text timeText;
         [SerializeField] private TMP_Text tasksText;
+        [SerializeField] private TMP_Text finishTipText;
         [SerializeField] private Image scoreProgressFill;
         [SerializeField] private Image medalIcon;
         [SerializeField] private Color goldColor = new Color(1f, 0.84f, 0f);
@@ -137,11 +138,27 @@ namespace SafetyProto.UI
             _medalCappedByCritical = criticalViolation && pct >= 0.95f;
 
             SetupHeader(args, maxPossibleScore, criticalViolation);
+            SetFinishTip();
             BuildPrimaryImprovement(tasks);
             BuildGroupSummaries(tasks);
             BuildTaskBreakdown(tasks);
             SetDetailsVisible(true);
             PlayAudio(args.totalScore, maxPossibleScore);
+        }
+
+        private void SetFinishTip()
+        {
+            if (finishTipText == null) return;
+
+            var tips = taskManager != null ? taskManager.LoadedScenario?.FinishTips : null;
+            if (tips == null || tips.Count == 0)
+            {
+                finishTipText.gameObject.SetActive(false);
+                return;
+            }
+
+            finishTipText.gameObject.SetActive(true);
+            finishTipText.text = tips[UnityEngine.Random.Range(0, tips.Count)];
         }
 
         private void SetupHeader(SessionCompletedEventArgs args, int maxPossibleScore, bool criticalViolation)

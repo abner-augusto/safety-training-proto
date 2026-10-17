@@ -62,6 +62,24 @@
             <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Editor.ParticipantId}"/>
           </Grid>
 
+          <StackPanel Spacing="4">
+            <TextBlock Text="Dicas da tela final" Classes="label"/>
+            <ScrollViewer MaxHeight="112" VerticalScrollBarVisibility="Auto">
+              <ItemsControl ItemsSource="{Binding Editor.FinishTips}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate DataType="vm:FinishTipViewModel">
+                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,0,4">
+                      <TextBox Text="{Binding Text}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="40"
+                               HorizontalAlignment="Stretch" Width="280"/>
+                      <Button Content="Remover" Click="OnRemoveFinishTip" VerticalAlignment="Top"/>
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+            <Button Content="+ Dica" Click="OnAddFinishTip" HorizontalAlignment="Left"/>
+          </StackPanel>
+
           <StackPanel Orientation="Horizontal" Spacing="6">
             <Button Content="+ Grupo" Click="OnAddGroup"/>
             <Button Content="+ Tarefa" Click="OnAddTask"/>
@@ -197,6 +215,11 @@
                 <StackPanel Spacing="2">
                   <TextBlock Text="Conselho de EPI" Classes="label"/>
                   <TextBox Text="{Binding PpeAdvice}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
+                </StackPanel>
+                <StackPanel Spacing="2">
+                  <TextBlock Text="Dica adicional (sucesso)" Classes="label"/>
+                  <TextBox Text="{Binding SuccessAdvice}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
+                  <CheckBox Content="Narrar com voz" IsChecked="{Binding SuccessAdviceNarrated}"/>
                 </StackPanel>
 
                 <StackPanel Spacing="4">

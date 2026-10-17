@@ -24,6 +24,9 @@ namespace SafetyProto.Domain.Scenarios
         [JsonProperty("groups")]
         public List<TaskGroupDef> Groups { get; set; } = new();
 
+        [JsonProperty("finishTips")]
+        public List<string> FinishTips { get; set; } = new();
+
         /// <summary>Optional scripted playthrough; consumed by the CLI harness, ignored by Unity.</summary>
         [JsonProperty("script")]
         public List<ScriptStepDef> Script { get; set; } = new();

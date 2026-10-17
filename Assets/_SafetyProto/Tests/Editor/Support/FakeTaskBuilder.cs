@@ -53,6 +53,8 @@ namespace SafetyProto.Tests.Editor.Support
             public List<PPEType> requiredPPE { get; set; } = new List<PPEType>();
             public string hintText { get; set; } = string.Empty;
             public string failureAdvice { get; set; } = string.Empty;
+            public string successAdvice { get; set; } = string.Empty;
+            public bool successAdviceNarrated { get; set; }
             public string ppeAdvice { get; set; } = string.Empty;
             public string omissionAdvice { get; set; } = string.Empty;
 

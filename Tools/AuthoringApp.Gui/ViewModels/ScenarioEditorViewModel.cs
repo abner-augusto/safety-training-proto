@@ -31,6 +31,8 @@ public sealed class ScenarioEditorViewModel : ViewModelBase
         _name = def.Name;
         _participantId = def.ParticipantId;
         _script = def.Script ?? new List<ScriptStepDef>();
+        FinishTips = new ObservableCollection<FinishTipViewModel>(
+            (def.FinishTips ?? new List<string>()).Select(tip => new FinishTipViewModel(tip)));
 
         BuildOptions(def, catalog, actionCatalog);
 
@@ -39,6 +41,7 @@ public sealed class ScenarioEditorViewModel : ViewModelBase
     }
 
     public ObservableCollection<GroupViewModel> Groups { get; }
+    public ObservableCollection<FinishTipViewModel> FinishTips { get; }
 
     /// <summary>Action dropdown source: equip-set sentinel + catalog ids ∪ ids already used.</summary>
     public List<string> ActionOptions { get; private set; } = new();
@@ -48,6 +51,13 @@ public sealed class ScenarioEditorViewModel : ViewModelBase
 
     public string Name { get => _name; set => SetField(ref _name, value); }
     public string ParticipantId { get => _participantId; set => SetField(ref _participantId, value); }
+
+    public void AddFinishTip() => FinishTips.Add(new FinishTipViewModel(string.Empty));
+
+    public void RemoveFinishTip(FinishTipViewModel tip)
+    {
+        if (tip != null) FinishTips.Remove(tip);
+    }
 
     /// <summary>Two-way bound to the TreeView selection; drives the detail panel.</summary>
     public object? SelectedNode { get => _selectedNode; set => SetField(ref _selectedNode, value); }
@@ -93,6 +103,7 @@ public sealed class ScenarioEditorViewModel : ViewModelBase
         Name = _name,
         ParticipantId = _participantId,
         Groups = Groups.Select(g => g.ToDef()).ToList(),
+        FinishTips = FinishTips.Select(tip => tip.Text ?? string.Empty).ToList(),
         Script = _script,
     };
 

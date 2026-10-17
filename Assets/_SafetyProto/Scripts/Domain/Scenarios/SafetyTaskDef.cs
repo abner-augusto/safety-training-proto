@@ -99,6 +99,12 @@ namespace SafetyProto.Domain.Scenarios
         [JsonProperty("failureAdvice")]
         public string failureAdvice { get; set; } = string.Empty;
 
+        [JsonProperty("successAdvice")]
+        public string successAdvice { get; set; } = string.Empty;
+
+        [JsonProperty("successAdviceNarrated")]
+        public bool successAdviceNarrated { get; set; }
+
         [JsonProperty("ppeAdvice")]
         public string ppeAdvice { get; set; } = string.Empty;
 

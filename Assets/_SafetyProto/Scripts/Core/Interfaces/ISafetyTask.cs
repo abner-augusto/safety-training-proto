@@ -61,6 +61,8 @@ namespace SafetyProto.Core.Interfaces
         IReadOnlyList<PPEType> requiredPPE { get; }
         string hintText { get; }
         string failureAdvice { get; }
+        string successAdvice { get; }
+        bool successAdviceNarrated { get; }
         string ppeAdvice { get; }
 
         /// <summary>Finish-screen advice for a task the participant did NOT perform —

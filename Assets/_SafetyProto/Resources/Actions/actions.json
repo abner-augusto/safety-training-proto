@@ -57,6 +57,21 @@
       "severity": 0
     },
     {
+      "actionId": "inspect_harness",
+      "displayName": "Inspecionar Cinturão Paraquedista",
+      "description": "Inspecionar costuras, fivelas e argolas do cinturão antes de vesti-lo.",
+      "category": "Safety",
+      "telemetryName": "inspecionar_cinturao",
+      "tags": [],
+      "regulatoryRefs": ["NR-35, item 35.6.9"],
+      "isSafetyCritical": true,
+      "isHiddenInUI": false,
+      "cooldownSeconds": 0.0,
+      "expectedDurationSeconds": 30.0,
+      "baseScore": 0,
+      "severity": 0
+    },
+    {
       "actionId": "flag_safety_net",
       "displayName": "Reportar Irregularidade na Tela Fachadeira",
       "description": "Identificar e reportar rasgos, partes soltas ou falhas de fixação na tela fachadeira.",

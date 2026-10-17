@@ -37,6 +37,8 @@ public sealed class TaskViewModel : ViewModelBase
     private RiskGradeOption _probability;
     private string _hintText;
     private string _failureAdvice;
+    private string _successAdvice;
+    private bool _successAdviceNarrated;
     private string _ppeAdvice;
     private string _omissionAdvice;
     private string _reportPopupTitle;
@@ -62,6 +64,8 @@ public sealed class TaskViewModel : ViewModelBase
         _probability = GradeFor(ProbabilityOptions, seeded.HasGrades ? seeded.Probability : SeedProbability(seeded.Level));
         _hintText = def.hintText;
         _failureAdvice = def.failureAdvice;
+        _successAdvice = def.successAdvice;
+        _successAdviceNarrated = def.successAdviceNarrated;
         _ppeAdvice = def.ppeAdvice;
         _omissionAdvice = def.omissionAdvice;
         _reportPopupTitle = def.reportPopupTitle;
@@ -164,6 +168,8 @@ public sealed class TaskViewModel : ViewModelBase
     }
     public string HintText { get => _hintText; set => SetField(ref _hintText, value); }
     public string FailureAdvice { get => _failureAdvice; set => SetField(ref _failureAdvice, value); }
+    public string SuccessAdvice { get => _successAdvice; set => SetField(ref _successAdvice, value); }
+    public bool SuccessAdviceNarrated { get => _successAdviceNarrated; set => SetField(ref _successAdviceNarrated, value); }
     public string PpeAdvice { get => _ppeAdvice; set => SetField(ref _ppeAdvice, value); }
     public string OmissionAdvice { get => _omissionAdvice; set => SetField(ref _omissionAdvice, value); }
 
@@ -215,6 +221,8 @@ public sealed class TaskViewModel : ViewModelBase
         Grades = new RiskGrades { Severity = _severity.Grade, Probability = _probability.Grade },
         hintText = _hintText,
         failureAdvice = _failureAdvice,
+        successAdvice = _successAdvice,
+        successAdviceNarrated = _successAdviceNarrated,
         ppeAdvice = _ppeAdvice,
         omissionAdvice = _omissionAdvice,
         RequiredPpeNames = PpeOptions.Where(p => p.IsSelected).Select(p => p.Name).ToList(),

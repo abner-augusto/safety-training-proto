@@ -104,6 +104,14 @@ public partial class MainWindow : Window
             task.RemoveDistractor(distractor);
     }
 
+    private void OnAddFinishTip(object? sender, RoutedEventArgs e) => Vm?.Editor?.AddFinishTip();
+
+    private void OnRemoveFinishTip(object? sender, RoutedEventArgs e)
+    {
+        if ((sender as Control)?.DataContext is FinishTipViewModel tip)
+            Vm?.Editor?.RemoveFinishTip(tip);
+    }
+
     private async void OnSave(object? sender, RoutedEventArgs e)
     {
         var path = await PickSaveJsonAsync();

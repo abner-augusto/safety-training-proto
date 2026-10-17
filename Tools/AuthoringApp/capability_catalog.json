@@ -3,6 +3,7 @@
   "actionIds": [
     "connect_harness",
     "flag_safety_net",
+    "inspect_harness",
     "install_guardrail",
     "install_toeboard"
   ],

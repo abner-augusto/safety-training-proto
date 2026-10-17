@@ -69,6 +69,13 @@ namespace SafetyProto.Domain.Scenarios
                     }
 
                     ValidateDistractors(task, group.groupName, hasAction, distractorIds, errors);
+
+                    if (task.successAdviceNarrated && string.IsNullOrWhiteSpace(task.successAdvice))
+                    {
+                        errors.Add(
+                            $"A tarefa '{task.taskName}' (grupo '{group.groupName}') declara narra\u00e7\u00e3o " +
+                            "de dica de sucesso sem 'successAdvice'.");
+                    }
                 }
             }
 
