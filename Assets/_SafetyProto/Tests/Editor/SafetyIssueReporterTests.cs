@@ -67,6 +67,9 @@ namespace SafetyProto.Tests.Editor
         [TearDown]
         public void TearDown()
         {
+            // A test that confirms without draining leaves its report queued, and the next test's
+            // ProcessEvents would count it.
+            EventBus.Instance.ProcessEvents(10);
             EventBus.Instance.Unsubscribe<ActionAttemptedEvent>(Capture);
             EventContext.Clear();
             if (_host != null) Object.DestroyImmediate(_host);
