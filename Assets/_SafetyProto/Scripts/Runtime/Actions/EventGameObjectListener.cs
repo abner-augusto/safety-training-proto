@@ -32,16 +32,16 @@ namespace SafetyProto.Runtime.Actions
         public GameObject[] targets;
         public bool enableOnEvent = true;
 
-        private UnityEngine.Events.UnityAction<SessionStartedEventArgs>   _onSessionStarted;
-        private UnityEngine.Events.UnityAction<SessionPausedEventArgs>    _onSessionPaused;
-        private UnityEngine.Events.UnityAction<SessionResumedEventArgs>   _onSessionResumed;
-        private UnityEngine.Events.UnityAction<SessionEndedEventArgs>     _onSessionEnded;
-        private UnityEngine.Events.UnityAction<TaskEventArgs>             _onTaskStarted;
-        private UnityEngine.Events.UnityAction<TaskEventArgs>             _onTaskCompleted;
-        private UnityEngine.Events.UnityAction<ScoreChangedEventArgs>     _onScoreChanged;
-        private UnityEngine.Events.UnityAction<PPEStateChangedEventArgs>  _onPpeStateChanged;
-        private UnityEngine.Events.UnityAction<ActionAttemptedEvent>      _onActionAttempt;
-        private UnityEngine.Events.UnityAction<SessionCompletedEventArgs> _onTasksCompleted;
+        private System.Action<SessionStartedEventArgs>   _onSessionStarted;
+        private System.Action<SessionPausedEventArgs>    _onSessionPaused;
+        private System.Action<SessionResumedEventArgs>   _onSessionResumed;
+        private System.Action<SessionEndedEventArgs>     _onSessionEnded;
+        private System.Action<TaskEventArgs>             _onTaskStarted;
+        private System.Action<TaskEventArgs>             _onTaskCompleted;
+        private System.Action<ScoreChangedEventArgs>     _onScoreChanged;
+        private System.Action<PPEStateChangedEventArgs>  _onPpeStateChanged;
+        private System.Action<ActionAttemptedEvent>      _onActionAttempt;
+        private System.Action<SessionCompletedEventArgs> _onTasksCompleted;
         private System.Action<ConsequenceStartedEventArgs> _onConsequenceStarted;
         private System.Action _onConsequenceEnded;
 
@@ -97,43 +97,43 @@ namespace SafetyProto.Runtime.Actions
             {
                 case EventType.SessionStarted:
                     _onSessionStarted = _ => Toggle();
-                    EventBus.Instance.onSessionStarted.AddListener(_onSessionStarted);
+                    EventBus.Instance.Subscribe<SessionStartedEventArgs>(_onSessionStarted);
                     break;
                 case EventType.SessionPaused:
                     _onSessionPaused = _ => Toggle();
-                    EventBus.Instance.onSessionPaused.AddListener(_onSessionPaused);
+                    EventBus.Instance.Subscribe<SessionPausedEventArgs>(_onSessionPaused);
                     break;
                 case EventType.SessionResumed:
                     _onSessionResumed = _ => Toggle();
-                    EventBus.Instance.onSessionResumed.AddListener(_onSessionResumed);
+                    EventBus.Instance.Subscribe<SessionResumedEventArgs>(_onSessionResumed);
                     break;
                 case EventType.SessionEnded:
                     _onSessionEnded = _ => Toggle();
-                    EventBus.Instance.onSessionEnded.AddListener(_onSessionEnded);
+                    EventBus.Instance.Subscribe<SessionEndedEventArgs>(_onSessionEnded);
                     break;
                 case EventType.TaskStarted:
-                    _onTaskStarted = _ => Toggle();
-                    EventBus.Instance.onTaskStarted.AddListener(_onTaskStarted);
+                    _onTaskStarted = t => { if (t.Phase == TaskPhase.Started) Toggle(); };
+                    EventBus.Instance.Subscribe<TaskEventArgs>(_onTaskStarted);
                     break;
                 case EventType.TaskCompleted:
-                    _onTaskCompleted = _ => Toggle();
-                    EventBus.Instance.onTaskCompleted.AddListener(_onTaskCompleted);
+                    _onTaskCompleted = t => { if (t.Phase == TaskPhase.Completed) Toggle(); };
+                    EventBus.Instance.Subscribe<TaskEventArgs>(_onTaskCompleted);
                     break;
                 case EventType.ScoreChanged:
                     _onScoreChanged = _ => Toggle();
-                    EventBus.Instance.onScoreChanged.AddListener(_onScoreChanged);
+                    EventBus.Instance.Subscribe<ScoreChangedEventArgs>(_onScoreChanged);
                     break;
                 case EventType.PpeStateChanged:
                     _onPpeStateChanged = _ => Toggle();
-                    EventBus.Instance.onPpeStateChanged.AddListener(_onPpeStateChanged);
+                    EventBus.Instance.Subscribe<PPEStateChangedEventArgs>(_onPpeStateChanged);
                     break;
                 case EventType.ActionAttempt:
                     _onActionAttempt = _ => Toggle();
-                    EventBus.Instance.onActionAttempt.AddListener(_onActionAttempt);
+                    EventBus.Instance.Subscribe<ActionAttemptedEvent>(_onActionAttempt);
                     break;
                 case EventType.TasksCompleted:
                     _onTasksCompleted = _ => Toggle();
-                    EventBus.Instance.onSessionCompleted.AddListener(_onTasksCompleted);
+                    EventBus.Instance.Subscribe<SessionCompletedEventArgs>(_onTasksCompleted);
                     break;
                 case EventType.ConsequenceStarted:
                     _onConsequenceStarted = _ => Toggle();
@@ -150,16 +150,16 @@ namespace SafetyProto.Runtime.Actions
         {
             if (EventBus.Instance != null)
             {
-                if (_onSessionStarted  != null) EventBus.Instance.onSessionStarted.RemoveListener(_onSessionStarted);
-                if (_onSessionPaused   != null) EventBus.Instance.onSessionPaused.RemoveListener(_onSessionPaused);
-                if (_onSessionResumed  != null) EventBus.Instance.onSessionResumed.RemoveListener(_onSessionResumed);
-                if (_onSessionEnded    != null) EventBus.Instance.onSessionEnded.RemoveListener(_onSessionEnded);
-                if (_onTaskStarted     != null) EventBus.Instance.onTaskStarted.RemoveListener(_onTaskStarted);
-                if (_onTaskCompleted   != null) EventBus.Instance.onTaskCompleted.RemoveListener(_onTaskCompleted);
-                if (_onScoreChanged    != null) EventBus.Instance.onScoreChanged.RemoveListener(_onScoreChanged);
-                if (_onPpeStateChanged != null) EventBus.Instance.onPpeStateChanged.RemoveListener(_onPpeStateChanged);
-                if (_onActionAttempt   != null) EventBus.Instance.onActionAttempt.RemoveListener(_onActionAttempt);
-                if (_onTasksCompleted  != null) EventBus.Instance.onSessionCompleted.RemoveListener(_onTasksCompleted);
+                if (_onSessionStarted  != null) EventBus.Instance.Unsubscribe<SessionStartedEventArgs>(_onSessionStarted);
+                if (_onSessionPaused   != null) EventBus.Instance.Unsubscribe<SessionPausedEventArgs>(_onSessionPaused);
+                if (_onSessionResumed  != null) EventBus.Instance.Unsubscribe<SessionResumedEventArgs>(_onSessionResumed);
+                if (_onSessionEnded    != null) EventBus.Instance.Unsubscribe<SessionEndedEventArgs>(_onSessionEnded);
+                if (_onTaskStarted     != null) EventBus.Instance.Unsubscribe<TaskEventArgs>(_onTaskStarted);
+                if (_onTaskCompleted   != null) EventBus.Instance.Unsubscribe<TaskEventArgs>(_onTaskCompleted);
+                if (_onScoreChanged    != null) EventBus.Instance.Unsubscribe<ScoreChangedEventArgs>(_onScoreChanged);
+                if (_onPpeStateChanged != null) EventBus.Instance.Unsubscribe<PPEStateChangedEventArgs>(_onPpeStateChanged);
+                if (_onActionAttempt   != null) EventBus.Instance.Unsubscribe<ActionAttemptedEvent>(_onActionAttempt);
+                if (_onTasksCompleted  != null) EventBus.Instance.Unsubscribe<SessionCompletedEventArgs>(_onTasksCompleted);
             }
             if (_onConsequenceStarted != null) DirectConsequenceChannel.OnConsequenceStarted -= _onConsequenceStarted;
             if (_onConsequenceEnded != null) DirectConsequenceChannel.OnConsequenceEnded -= _onConsequenceEnded;

@@ -79,7 +79,7 @@ namespace SafetyProto.UI
 
             if (!this.IsEventBusReady()) return;
 
-            EventBus.Instance.onSessionCompleted.AddListener(OnSessionCompleted);
+            EventBus.Instance.Subscribe<SessionCompletedEventArgs>(OnSessionCompleted);
 
             if (_cachedArgs.HasValue)
             {
@@ -104,7 +104,7 @@ namespace SafetyProto.UI
 
             _cachedArgs = null;
             if (EventBus.Instance != null)
-                EventBus.Instance.onSessionCompleted.RemoveListener(OnSessionCompleted);
+                EventBus.Instance.Unsubscribe<SessionCompletedEventArgs>(OnSessionCompleted);
         }
 
         private void OnSessionCompleted(SessionCompletedEventArgs args)

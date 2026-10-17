@@ -29,18 +29,18 @@ namespace SafetyProto.Runtime.Feedback
                 return;
             }
 
-            EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
-            EventBus.Instance.onSafetyViolation.AddListener(OnSafetyViolation);
-            EventBus.Instance.onActionAttempt.AddListener(CacheInteractor);
+            EventBus.Instance.Subscribe<TaskEventArgs>(OnTaskCompleted);
+            EventBus.Instance.Subscribe<SafetyViolationEventArgs>(OnSafetyViolation);
+            EventBus.Instance.Subscribe<ActionAttemptedEvent>(CacheInteractor);
         }
 
         private void OnDisable()
         {
             if (EventBus.Instance != null)
             {
-                EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
-                EventBus.Instance.onSafetyViolation.RemoveListener(OnSafetyViolation);
-                EventBus.Instance.onActionAttempt.RemoveListener(CacheInteractor);
+                EventBus.Instance.Unsubscribe<TaskEventArgs>(OnTaskCompleted);
+                EventBus.Instance.Unsubscribe<SafetyViolationEventArgs>(OnSafetyViolation);
+                EventBus.Instance.Unsubscribe<ActionAttemptedEvent>(CacheInteractor);
             }
         }
 
@@ -48,6 +48,7 @@ namespace SafetyProto.Runtime.Feedback
 
         private void OnTaskCompleted(TaskEventArgs args)
         {
+            if (args.Phase != TaskPhase.Completed) return;
             if (args.RuntimeTask == null) return;
 
             var state = args.RuntimeTask.State;

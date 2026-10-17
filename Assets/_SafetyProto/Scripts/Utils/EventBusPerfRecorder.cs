@@ -59,9 +59,9 @@ namespace SafetyProto.Utils
             _buffer = new FramePerfBuffer(capacityFrames);
             Current = this;
             EventBus.FlushProbe = this;
-            EventBus.Instance.onSessionStarted.AddListener(OnSessionStarted);
-            EventBus.Instance.onSessionCompleted.AddListener(StopBeforeSessionLoggerSummary);
-            EventBus.Instance.onSessionEnded.AddListener(OnSessionEnded);
+            EventBus.Instance.Subscribe<SessionStartedEventArgs>(OnSessionStarted);
+            EventBus.Instance.Subscribe<SessionCompletedEventArgs>(StopBeforeSessionLoggerSummary);
+            EventBus.Instance.Subscribe<SessionEndedEventArgs>(OnSessionEnded);
         }
 
         private void OnDestroy()
@@ -72,9 +72,9 @@ namespace SafetyProto.Utils
             if (Current == this) Current = null;
             if (EventBus.Instance != null)
             {
-                EventBus.Instance.onSessionStarted.RemoveListener(OnSessionStarted);
-                EventBus.Instance.onSessionCompleted.RemoveListener(StopBeforeSessionLoggerSummary);
-                EventBus.Instance.onSessionEnded.RemoveListener(OnSessionEnded);
+                EventBus.Instance.Unsubscribe<SessionStartedEventArgs>(OnSessionStarted);
+                EventBus.Instance.Unsubscribe<SessionCompletedEventArgs>(StopBeforeSessionLoggerSummary);
+                EventBus.Instance.Unsubscribe<SessionEndedEventArgs>(OnSessionEnded);
             }
 
             StopAndWrite(background: false);

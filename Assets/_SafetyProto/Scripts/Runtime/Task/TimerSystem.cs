@@ -58,22 +58,22 @@ namespace SafetyProto.Runtime.Task
                 }
             }
 
-            EventBus.Instance.onSessionStarted.AddListener(OnSessionStarted);
-            EventBus.Instance.onGroupStarted.AddListener(OnGroupStarted);
-            EventBus.Instance.onGroupCompleted.AddListener(OnGroupCompleted);
-            EventBus.Instance.onSessionCompleted.AddListener(OnSessionCompleted);
-            EventBus.Instance.onTaskStarted.AddListener(OnTaskStartedForFreeOrder);
+            EventBus.Instance.Subscribe<SessionStartedEventArgs>(OnSessionStarted);
+            EventBus.Instance.Subscribe<TaskGroupEventArgs>(OnGroupStarted);
+            EventBus.Instance.Subscribe<TaskGroupEventArgs>(OnGroupCompleted);
+            EventBus.Instance.Subscribe<SessionCompletedEventArgs>(OnSessionCompleted);
+            EventBus.Instance.Subscribe<TaskEventArgs>(OnTaskStartedForFreeOrder);
         }
 
         private void OnDestroy()
         {
             if (EventBus.Instance != null)
             {
-                EventBus.Instance.onSessionStarted.RemoveListener(OnSessionStarted);
-                EventBus.Instance.onGroupStarted.RemoveListener(OnGroupStarted);
-                EventBus.Instance.onGroupCompleted.RemoveListener(OnGroupCompleted);
-                EventBus.Instance.onSessionCompleted.RemoveListener(OnSessionCompleted);
-                EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStartedForFreeOrder);
+                EventBus.Instance.Unsubscribe<SessionStartedEventArgs>(OnSessionStarted);
+                EventBus.Instance.Unsubscribe<TaskGroupEventArgs>(OnGroupStarted);
+                EventBus.Instance.Unsubscribe<TaskGroupEventArgs>(OnGroupCompleted);
+                EventBus.Instance.Unsubscribe<SessionCompletedEventArgs>(OnSessionCompleted);
+                EventBus.Instance.Unsubscribe<TaskEventArgs>(OnTaskStartedForFreeOrder);
             }
 
             StopCurrentTimer();
@@ -91,6 +91,7 @@ namespace SafetyProto.Runtime.Task
 
         private void OnTaskStartedForFreeOrder(TaskEventArgs args)
         {
+            if (args.Phase != TaskPhase.Started) return;
             if (_timedGroup == null)
             {
                 ITaskGroup current = taskManager.GetCurrentGroup();
@@ -105,6 +106,7 @@ namespace SafetyProto.Runtime.Task
 
         private void OnGroupStarted(TaskGroupEventArgs args)
         {
+            if (args.Phase != TaskGroupPhase.Started) return;
             var group = args.Group;
             if (group == null) return;
 
@@ -116,6 +118,7 @@ namespace SafetyProto.Runtime.Task
 
         private void OnGroupCompleted(TaskGroupEventArgs args)
         {
+            if (args.Phase != TaskGroupPhase.Completed) return;
             var group = args.Group;
             if (group == null) return;
 

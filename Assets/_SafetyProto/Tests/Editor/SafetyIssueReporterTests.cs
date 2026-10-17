@@ -57,7 +57,7 @@ namespace SafetyProto.Tests.Editor
             _publishCount = 0;
 
             EventContext.StartSession("test-session", "player", "scene");
-            EventBus.Instance.onActionAttempt.AddListener(Capture);
+            EventBus.Instance.Subscribe<ActionAttemptedEvent>(Capture);
 
             _host = new GameObject("reporter");
             _reporter = _host.AddComponent<SafetyIssueReporter>();
@@ -66,7 +66,7 @@ namespace SafetyProto.Tests.Editor
         [TearDown]
         public void TearDown()
         {
-            EventBus.Instance.onActionAttempt.RemoveListener(Capture);
+            EventBus.Instance.Unsubscribe<ActionAttemptedEvent>(Capture);
             EventContext.Clear();
             if (_host != null) Object.DestroyImmediate(_host);
         }

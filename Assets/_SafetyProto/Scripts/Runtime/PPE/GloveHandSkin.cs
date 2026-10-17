@@ -27,7 +27,7 @@ namespace SafetyProto.Runtime.PPE
         [SerializeField] private HandSkin[] hands = Array.Empty<HandSkin>();
 
         private Material[] _originalMaterials;
-        private UnityAction<PPEStateChangedEventArgs> _onPpeStateChanged;
+        private System.Action<PPEStateChangedEventArgs> _onPpeStateChanged;
 
         private void Awake()
         {
@@ -49,13 +49,13 @@ namespace SafetyProto.Runtime.PPE
                 return;
 
             _onPpeStateChanged = OnPpeStateChanged;
-            EventBus.Instance.onPpeStateChanged.AddListener(_onPpeStateChanged);
+            EventBus.Instance.Subscribe<PPEStateChangedEventArgs>(_onPpeStateChanged);
         }
 
         private void OnDestroy()
         {
             if (_onPpeStateChanged != null && EventBus.Instance != null)
-                EventBus.Instance.onPpeStateChanged.RemoveListener(_onPpeStateChanged);
+                EventBus.Instance.Unsubscribe<PPEStateChangedEventArgs>(_onPpeStateChanged);
         }
 
         private void OnPpeStateChanged(PPEStateChangedEventArgs args)

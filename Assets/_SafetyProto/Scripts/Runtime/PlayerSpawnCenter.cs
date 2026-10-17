@@ -41,13 +41,13 @@ namespace SafetyProto.Runtime
                 SafetyLog.Warning("[PlayerSpawnCenter] startPoint não atribuído no Inspector.", this);
 
             if (!this.IsEventBusReady()) return;
-            EventBus.Instance.onSessionStarted.AddListener(OnSessionStarted);
+            EventBus.Instance.Subscribe<SessionStartedEventArgs>(OnSessionStarted);
         }
 
         private void OnDestroy()
         {
             if (EventBus.Instance != null)
-                EventBus.Instance.onSessionStarted.RemoveListener(OnSessionStarted);
+                EventBus.Instance.Unsubscribe<SessionStartedEventArgs>(OnSessionStarted);
         }
 
         private void OnSessionStarted(SessionStartedEventArgs _)

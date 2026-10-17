@@ -57,18 +57,18 @@ namespace SafetyProto.Runtime.Feedback
                 return;
             }
 
-            EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
-            EventBus.Instance.onSafetyViolation.AddListener(OnSafetyViolation);
-            EventBus.Instance.onCriticalSafetyFailure.AddListener(OnCriticalFailure);
+            EventBus.Instance.Subscribe<TaskEventArgs>(OnTaskCompleted);
+            EventBus.Instance.Subscribe<SafetyViolationEventArgs>(OnSafetyViolation);
+            EventBus.Instance.Subscribe<CriticalSafetyFailureEventArgs>(OnCriticalFailure);
         }
 
         public void UnsubscribeEvents()
         {
             if (EventBus.Instance != null)
             {
-                EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
-                EventBus.Instance.onSafetyViolation.RemoveListener(OnSafetyViolation);
-                EventBus.Instance.onCriticalSafetyFailure.RemoveListener(OnCriticalFailure);
+                EventBus.Instance.Unsubscribe<TaskEventArgs>(OnTaskCompleted);
+                EventBus.Instance.Unsubscribe<SafetyViolationEventArgs>(OnSafetyViolation);
+                EventBus.Instance.Unsubscribe<CriticalSafetyFailureEventArgs>(OnCriticalFailure);
             }
 
             _arbiter.Reset();
@@ -78,6 +78,7 @@ namespace SafetyProto.Runtime.Feedback
 
         private void OnTaskCompleted(TaskEventArgs args)
         {
+            if (args.Phase != TaskPhase.Completed) return;
             if (!ShouldRevealOutcome(SessionModeState.Current))
             {
                 _arbiter.Request(AudioFeedbackKind.Success);

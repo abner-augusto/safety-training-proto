@@ -41,8 +41,8 @@ namespace SafetyProto.Runtime.Task
         public RuntimeSafetyTask? CurrentRuntimeTask => _core?.CurrentRuntimeTask;
         public SessionCompletedEventArgs? LastSessionSummary => _core?.LastSessionSummary;
 
-        private UnityEngine.Events.UnityAction<SessionCompletedEventArgs>? _onSessionCompleted;
-        private UnityEngine.Events.UnityAction<SessionStartedEventArgs>? _onSessionStarted;
+        private System.Action<SessionCompletedEventArgs>? _onSessionCompleted;
+        private System.Action<SessionStartedEventArgs>? _onSessionStarted;
         private bool _tasksStarted;
 
         public static TaskManager? Instance { get; private set; }
@@ -104,7 +104,7 @@ namespace SafetyProto.Runtime.Task
         private void WireListeners()
         {
             _onSessionCompleted = _ => _core?.ForceCompleteAllPendingTasks();
-            EventBus.Instance!.onSessionCompleted.AddListener(_onSessionCompleted);
+            EventBus.Instance!.Subscribe<SessionCompletedEventArgs>(_onSessionCompleted);
 
             if (timerSystem != null)
             {
@@ -114,7 +114,7 @@ namespace SafetyProto.Runtime.Task
             if (startTasksAutomatically)
             {
                 _onSessionStarted = _ => StartTasksOnce();
-                EventBus.Instance!.onSessionStarted.AddListener(_onSessionStarted);
+                EventBus.Instance!.Subscribe<SessionStartedEventArgs>(_onSessionStarted);
             }
         }
 
@@ -132,10 +132,10 @@ namespace SafetyProto.Runtime.Task
                 Instance = null;
 
             if (EventBus.Instance != null && _onSessionCompleted != null)
-                EventBus.Instance.onSessionCompleted.RemoveListener(_onSessionCompleted);
+                EventBus.Instance.Unsubscribe<SessionCompletedEventArgs>(_onSessionCompleted);
 
             if (EventBus.Instance != null && _onSessionStarted != null)
-                EventBus.Instance.onSessionStarted.RemoveListener(_onSessionStarted);
+                EventBus.Instance.Unsubscribe<SessionStartedEventArgs>(_onSessionStarted);
 
             if (timerSystem != null)
             {

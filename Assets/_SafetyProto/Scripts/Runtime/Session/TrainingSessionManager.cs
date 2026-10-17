@@ -34,7 +34,7 @@ namespace SafetyProto.Runtime.Session
                 return;
             }
 
-            EventBus.Instance.onSessionEnded.AddListener(OnSessionEnded);
+            EventBus.Instance.Subscribe<SessionEndedEventArgs>(OnSessionEnded);
 
             if (autoStartOnStart)
             {
@@ -145,7 +145,7 @@ namespace SafetyProto.Runtime.Session
         {
             if (EventBus.Instance != null)
             {
-                EventBus.Instance.onSessionEnded.RemoveListener(OnSessionEnded);
+                EventBus.Instance.Unsubscribe<SessionEndedEventArgs>(OnSessionEnded);
                 if (!_sessionEnded)
                     RaiseAbortedSessionEnd();
             }

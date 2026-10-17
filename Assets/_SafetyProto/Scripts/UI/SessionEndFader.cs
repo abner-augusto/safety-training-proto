@@ -23,13 +23,13 @@ namespace SafetyProto.UI
         private void OnEnable()
         {
             if (!this.IsEventBusReady()) return;
-            EventBus.Instance.onSessionCompleted.AddListener(OnSessionCompleted);
+            EventBus.Instance.Subscribe<SessionCompletedEventArgs>(OnSessionCompleted);
         }
 
         private void OnDisable()
         {
             if (EventBus.Instance != null)
-                EventBus.Instance.onSessionCompleted.RemoveListener(OnSessionCompleted);
+                EventBus.Instance.Unsubscribe<SessionCompletedEventArgs>(OnSessionCompleted);
         }
 
         private void OnSessionCompleted(SessionCompletedEventArgs _)

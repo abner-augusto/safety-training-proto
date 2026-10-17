@@ -90,7 +90,7 @@ namespace SafetyProto.Runtime
         private Vector3[] _relocationOriginPositions;
         private Quaternion[] _relocationOriginRotations;
 
-        private UnityAction<SessionStartedEventArgs>? _onSessionStarted;
+        private System.Action<SessionStartedEventArgs>? _onSessionStarted;
 
         public bool IsSimulationTransitionProcessing => recenterService != null && recenterService.IsBusy;
         public bool SimulationTransitionCompleted => _simulationTransitionCompleted;
@@ -135,17 +135,17 @@ namespace SafetyProto.Runtime
             SetButtonsActive(false);
 
             _onSessionStarted = OnSessionStarted;
-            EventBus.Instance.onSessionStarted.AddListener(_onSessionStarted);
-            EventBus.Instance.onGroupCompleted.AddListener(OnGroupCompleted);
+            EventBus.Instance.Subscribe<SessionStartedEventArgs>(_onSessionStarted);
+            EventBus.Instance.Subscribe<TaskGroupEventArgs>(OnGroupCompleted);
         }
 
         private void OnDestroy()
         {
             if (EventBus.Instance != null)
             {
-                EventBus.Instance.onGroupCompleted.RemoveListener(OnGroupCompleted);
+                EventBus.Instance.Unsubscribe<TaskGroupEventArgs>(OnGroupCompleted);
                 if (_onSessionStarted != null)
-                    EventBus.Instance.onSessionStarted.RemoveListener(_onSessionStarted);
+                    EventBus.Instance.Unsubscribe<SessionStartedEventArgs>(_onSessionStarted);
             }
 
             if (recenterService != null)
@@ -288,6 +288,7 @@ namespace SafetyProto.Runtime
 
         private void OnGroupCompleted(TaskGroupEventArgs args)
         {
+            if (args.Phase != TaskGroupPhase.Completed) return;
             if (_transitionExecuted) return;
             if (string.IsNullOrEmpty(triggerGroupName) || args.Group == null ||
                 !string.Equals(args.Group.groupName, triggerGroupName, System.StringComparison.Ordinal))

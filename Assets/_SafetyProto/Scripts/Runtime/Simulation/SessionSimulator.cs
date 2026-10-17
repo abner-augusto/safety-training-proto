@@ -91,19 +91,19 @@ namespace SafetyProto.Runtime.Simulation
         private float _collapseBeatStartTime;
         private readonly SessionSimulationResult _result = new SessionSimulationResult();
 
-        private UnityAction<SessionStartedEventArgs>? _onSessionStarted;
-        private UnityAction<SessionCompletedEventArgs>? _onSessionCompleted;
-        private UnityAction<SessionEndedEventArgs>? _onSessionEnded;
-        private UnityAction<TaskGroupEventArgs>? _onGroupStarted;
-        private UnityAction<TaskGroupEventArgs>? _onGroupCompleted;
-        private UnityAction<TaskEventArgs>? _onTaskStarted;
-        private UnityAction<TaskEventArgs>? _onTaskCompleted;
-        private UnityAction<PPEStateChangedEventArgs>? _onPpeStateChanged;
-        private UnityAction<ActionAttemptedEvent>? _onActionAttempt;
-        private UnityAction<ScoreChangedEventArgs>? _onScoreChanged;
-        private UnityAction<SafetyViolationEventArgs>? _onSafetyViolation;
-        private UnityAction<CriticalSafetyFailureEventArgs>? _onCriticalFailure;
-        private UnityAction<SafetyErrorEventArgs>? _onSafetyError;
+        private System.Action<SessionStartedEventArgs>? _onSessionStarted;
+        private System.Action<SessionCompletedEventArgs>? _onSessionCompleted;
+        private System.Action<SessionEndedEventArgs>? _onSessionEnded;
+        private System.Action<TaskGroupEventArgs>? _onGroupStarted;
+        private System.Action<TaskGroupEventArgs>? _onGroupCompleted;
+        private System.Action<TaskEventArgs>? _onTaskStarted;
+        private System.Action<TaskEventArgs>? _onTaskCompleted;
+        private System.Action<PPEStateChangedEventArgs>? _onPpeStateChanged;
+        private System.Action<ActionAttemptedEvent>? _onActionAttempt;
+        private System.Action<ScoreChangedEventArgs>? _onScoreChanged;
+        private System.Action<SafetyViolationEventArgs>? _onSafetyViolation;
+        private System.Action<CriticalSafetyFailureEventArgs>? _onCriticalFailure;
+        private System.Action<SafetyErrorEventArgs>? _onSafetyError;
 
         public static SessionSimulator GetOrCreate()
         {
@@ -608,10 +608,10 @@ namespace SafetyProto.Runtime.Simulation
                 if (showSessionReportOnCompletion) _inspectionGate?.ShowSessionEndPanelsNow();
             };
             _onSessionEnded = _ => AddTranscript("SessionEnded");
-            _onGroupStarted = args => AddTranscript("GroupStarted: " + (args.Group?.id ?? "<null>"));
-            _onGroupCompleted = args => AddTranscript("GroupCompleted: " + (args.Group?.id ?? "<null>"));
-            _onTaskStarted = args => AddTranscript("TaskStarted: " + (args.Task?.taskName ?? "<null>"));
-            _onTaskCompleted = args => AddTranscript("TaskCompleted: " + (args.Task?.taskName ?? "<null>"));
+            _onGroupStarted = args => { if (args.Phase == TaskGroupPhase.Started) AddTranscript("GroupStarted: " + (args.Group?.id ?? "<null>")); };
+            _onGroupCompleted = args => { if (args.Phase == TaskGroupPhase.Completed) AddTranscript("GroupCompleted: " + (args.Group?.id ?? "<null>")); };
+            _onTaskStarted = args => { if (args.Phase == TaskPhase.Started) AddTranscript("TaskStarted: " + (args.Task?.taskName ?? "<null>")); };
+            _onTaskCompleted = args => { if (args.Phase == TaskPhase.Completed) AddTranscript("TaskCompleted: " + (args.Task?.taskName ?? "<null>")); };
             _onPpeStateChanged = args =>
             {
                 _inputObserved = true;
@@ -627,19 +627,19 @@ namespace SafetyProto.Runtime.Simulation
             _onCriticalFailure = args => AddTranscript("CriticalSafetyFailure: " + args.Reason);
             _onSafetyError = args => AddTranscript("SafetyError: " + args.Message);
 
-            bus.onSessionStarted.AddListener(_onSessionStarted);
-            bus.onSessionCompleted.AddListener(_onSessionCompleted);
-            bus.onSessionEnded.AddListener(_onSessionEnded);
-            bus.onGroupStarted.AddListener(_onGroupStarted);
-            bus.onGroupCompleted.AddListener(_onGroupCompleted);
-            bus.onTaskStarted.AddListener(_onTaskStarted);
-            bus.onTaskCompleted.AddListener(_onTaskCompleted);
-            bus.onPpeStateChanged.AddListener(_onPpeStateChanged);
-            bus.onActionAttempt.AddListener(_onActionAttempt);
-            bus.onScoreChanged.AddListener(_onScoreChanged);
-            bus.onSafetyViolation.AddListener(_onSafetyViolation);
-            bus.onCriticalSafetyFailure.AddListener(_onCriticalFailure);
-            bus.onSafetyError.AddListener(_onSafetyError);
+            bus.Subscribe<SessionStartedEventArgs>(_onSessionStarted);
+            bus.Subscribe<SessionCompletedEventArgs>(_onSessionCompleted);
+            bus.Subscribe<SessionEndedEventArgs>(_onSessionEnded);
+            bus.Subscribe<TaskGroupEventArgs>(_onGroupStarted);
+            bus.Subscribe<TaskGroupEventArgs>(_onGroupCompleted);
+            bus.Subscribe<TaskEventArgs>(_onTaskStarted);
+            bus.Subscribe<TaskEventArgs>(_onTaskCompleted);
+            bus.Subscribe<PPEStateChangedEventArgs>(_onPpeStateChanged);
+            bus.Subscribe<ActionAttemptedEvent>(_onActionAttempt);
+            bus.Subscribe<ScoreChangedEventArgs>(_onScoreChanged);
+            bus.Subscribe<SafetyViolationEventArgs>(_onSafetyViolation);
+            bus.Subscribe<CriticalSafetyFailureEventArgs>(_onCriticalFailure);
+            bus.Subscribe<SafetyErrorEventArgs>(_onSafetyError);
             DirectConsequenceChannel.OnConsequenceStarted += OnConsequenceStarted;
             DirectConsequenceChannel.OnConsequenceEnded += OnConsequenceEnded;
             ScaffoldCollapseSequence.OnBeat += OnCollapseBeat;
@@ -653,19 +653,19 @@ namespace SafetyProto.Runtime.Simulation
             var bus = EventBus.Instance;
             if (bus != null)
             {
-                if (_onSessionStarted != null) bus.onSessionStarted.RemoveListener(_onSessionStarted);
-                if (_onSessionCompleted != null) bus.onSessionCompleted.RemoveListener(_onSessionCompleted);
-                if (_onSessionEnded != null) bus.onSessionEnded.RemoveListener(_onSessionEnded);
-                if (_onGroupStarted != null) bus.onGroupStarted.RemoveListener(_onGroupStarted);
-                if (_onGroupCompleted != null) bus.onGroupCompleted.RemoveListener(_onGroupCompleted);
-                if (_onTaskStarted != null) bus.onTaskStarted.RemoveListener(_onTaskStarted);
-                if (_onTaskCompleted != null) bus.onTaskCompleted.RemoveListener(_onTaskCompleted);
-                if (_onPpeStateChanged != null) bus.onPpeStateChanged.RemoveListener(_onPpeStateChanged);
-                if (_onActionAttempt != null) bus.onActionAttempt.RemoveListener(_onActionAttempt);
-                if (_onScoreChanged != null) bus.onScoreChanged.RemoveListener(_onScoreChanged);
-                if (_onSafetyViolation != null) bus.onSafetyViolation.RemoveListener(_onSafetyViolation);
-                if (_onCriticalFailure != null) bus.onCriticalSafetyFailure.RemoveListener(_onCriticalFailure);
-                if (_onSafetyError != null) bus.onSafetyError.RemoveListener(_onSafetyError);
+                if (_onSessionStarted != null) bus.Unsubscribe<SessionStartedEventArgs>(_onSessionStarted);
+                if (_onSessionCompleted != null) bus.Unsubscribe<SessionCompletedEventArgs>(_onSessionCompleted);
+                if (_onSessionEnded != null) bus.Unsubscribe<SessionEndedEventArgs>(_onSessionEnded);
+                if (_onGroupStarted != null) bus.Unsubscribe<TaskGroupEventArgs>(_onGroupStarted);
+                if (_onGroupCompleted != null) bus.Unsubscribe<TaskGroupEventArgs>(_onGroupCompleted);
+                if (_onTaskStarted != null) bus.Unsubscribe<TaskEventArgs>(_onTaskStarted);
+                if (_onTaskCompleted != null) bus.Unsubscribe<TaskEventArgs>(_onTaskCompleted);
+                if (_onPpeStateChanged != null) bus.Unsubscribe<PPEStateChangedEventArgs>(_onPpeStateChanged);
+                if (_onActionAttempt != null) bus.Unsubscribe<ActionAttemptedEvent>(_onActionAttempt);
+                if (_onScoreChanged != null) bus.Unsubscribe<ScoreChangedEventArgs>(_onScoreChanged);
+                if (_onSafetyViolation != null) bus.Unsubscribe<SafetyViolationEventArgs>(_onSafetyViolation);
+                if (_onCriticalFailure != null) bus.Unsubscribe<CriticalSafetyFailureEventArgs>(_onCriticalFailure);
+                if (_onSafetyError != null) bus.Unsubscribe<SafetyErrorEventArgs>(_onSafetyError);
             }
             DirectConsequenceChannel.OnConsequenceStarted -= OnConsequenceStarted;
             DirectConsequenceChannel.OnConsequenceEnded -= OnConsequenceEnded;

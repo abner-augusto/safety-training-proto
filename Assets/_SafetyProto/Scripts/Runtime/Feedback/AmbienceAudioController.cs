@@ -95,8 +95,8 @@ namespace SafetyProto.Runtime.Feedback
         {
             if (this.IsEventBusReady())
             {
-                EventBus.Instance.onSessionPaused.AddListener(OnSessionPaused);
-                EventBus.Instance.onSessionResumed.AddListener(OnSessionResumed);
+                EventBus.Instance.Subscribe<SessionPausedEventArgs>(OnSessionPaused);
+                EventBus.Instance.Subscribe<SessionResumedEventArgs>(OnSessionResumed);
             }
         }
 
@@ -104,8 +104,8 @@ namespace SafetyProto.Runtime.Feedback
         {
             if (EventBus.Instance != null)
             {
-                EventBus.Instance.onSessionPaused.RemoveListener(OnSessionPaused);
-                EventBus.Instance.onSessionResumed.RemoveListener(OnSessionResumed);
+                EventBus.Instance.Unsubscribe<SessionPausedEventArgs>(OnSessionPaused);
+                EventBus.Instance.Unsubscribe<SessionResumedEventArgs>(OnSessionResumed);
             }
         }
 

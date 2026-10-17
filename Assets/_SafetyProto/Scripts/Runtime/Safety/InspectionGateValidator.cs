@@ -143,7 +143,7 @@ namespace SafetyProto.Runtime.Safety
                 SafetyLog.Error("[InspectionGateValidator] TaskManager not found.", this);
 
             _popupFeedback = popupFeedbackProvider as IPopupFeedback;
-            EventBus.Instance?.onSessionCompleted.AddListener(OnSessionCompletedEvent);
+            EventBus.Instance?.Subscribe<SessionCompletedEventArgs>(OnSessionCompletedEvent);
 
             FailedAttemptCount = 0;
             _chargedTaskIds.Clear();
@@ -650,7 +650,7 @@ namespace SafetyProto.Runtime.Safety
         private void OnDestroy()
         {
             if (EventBus.Instance != null)
-                EventBus.Instance.onSessionCompleted.RemoveListener(OnSessionCompletedEvent);
+                EventBus.Instance.Unsubscribe<SessionCompletedEventArgs>(OnSessionCompletedEvent);
             StopAllCoroutines();
         }
 

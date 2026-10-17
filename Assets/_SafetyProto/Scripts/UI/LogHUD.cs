@@ -31,26 +31,26 @@ namespace SafetyProto.UI
 
             if (EventBus.Instance != null)
             {
-                EventBus.Instance.onSessionStarted.AddListener(OnSessionStarted);
-                EventBus.Instance.onSessionPaused.AddListener(OnSessionPaused);
-                EventBus.Instance.onSessionResumed.AddListener(OnSessionResumed);
-                EventBus.Instance.onSessionEnded.AddListener(OnSessionEnded);
+                EventBus.Instance.Subscribe<SessionStartedEventArgs>(OnSessionStarted);
+                EventBus.Instance.Subscribe<SessionPausedEventArgs>(OnSessionPaused);
+                EventBus.Instance.Subscribe<SessionResumedEventArgs>(OnSessionResumed);
+                EventBus.Instance.Subscribe<SessionEndedEventArgs>(OnSessionEnded);
 
-                EventBus.Instance.onActionAttempt.AddListener(OnActionAttempt);
-                EventBus.Instance.onPpeStateChanged.AddListener(OnPpeStateChanged);
+                EventBus.Instance.Subscribe<ActionAttemptedEvent>(OnActionAttempt);
+                EventBus.Instance.Subscribe<PPEStateChangedEventArgs>(OnPpeStateChanged);
 
-                EventBus.Instance.onTaskStarted.AddListener(OnTaskStarted);
-                EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
+                EventBus.Instance.Subscribe<TaskEventArgs>(OnTaskStarted);
+                EventBus.Instance.Subscribe<TaskEventArgs>(OnTaskCompleted);
 
-                EventBus.Instance.onScoreChanged.AddListener(OnScoreChanged);
+                EventBus.Instance.Subscribe<ScoreChangedEventArgs>(OnScoreChanged);
 
-                EventBus.Instance.onGroupStarted.AddListener(OnGroupStarted);
-                EventBus.Instance.onGroupCompleted.AddListener(OnGroupCompleted);
+                EventBus.Instance.Subscribe<TaskGroupEventArgs>(OnGroupStarted);
+                EventBus.Instance.Subscribe<TaskGroupEventArgs>(OnGroupCompleted);
 
-                EventBus.Instance.onSafetyViolation.AddListener(OnSafetyViolation);
-                EventBus.Instance.onCriticalSafetyFailure.AddListener(OnCriticalSafetyFailure);
-                EventBus.Instance.onSafetyError.AddListener(OnSafetyError);
-                EventBus.Instance.onSessionCompleted.AddListener(OnSessionCompleted);
+                EventBus.Instance.Subscribe<SafetyViolationEventArgs>(OnSafetyViolation);
+                EventBus.Instance.Subscribe<CriticalSafetyFailureEventArgs>(OnCriticalSafetyFailure);
+                EventBus.Instance.Subscribe<SafetyErrorEventArgs>(OnSafetyError);
+                EventBus.Instance.Subscribe<SessionCompletedEventArgs>(OnSessionCompleted);
             }
         }
 
@@ -58,26 +58,26 @@ namespace SafetyProto.UI
         {
             if (EventBus.Instance != null)
             {
-                EventBus.Instance.onSessionStarted.RemoveListener(OnSessionStarted);
-                EventBus.Instance.onSessionPaused.RemoveListener(OnSessionPaused);
-                EventBus.Instance.onSessionResumed.RemoveListener(OnSessionResumed);
-                EventBus.Instance.onSessionEnded.RemoveListener(OnSessionEnded);
+                EventBus.Instance.Unsubscribe<SessionStartedEventArgs>(OnSessionStarted);
+                EventBus.Instance.Unsubscribe<SessionPausedEventArgs>(OnSessionPaused);
+                EventBus.Instance.Unsubscribe<SessionResumedEventArgs>(OnSessionResumed);
+                EventBus.Instance.Unsubscribe<SessionEndedEventArgs>(OnSessionEnded);
 
-                EventBus.Instance.onActionAttempt.RemoveListener(OnActionAttempt);
-                EventBus.Instance.onPpeStateChanged.RemoveListener(OnPpeStateChanged);
+                EventBus.Instance.Unsubscribe<ActionAttemptedEvent>(OnActionAttempt);
+                EventBus.Instance.Unsubscribe<PPEStateChangedEventArgs>(OnPpeStateChanged);
 
-                EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStarted);
-                EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
+                EventBus.Instance.Unsubscribe<TaskEventArgs>(OnTaskStarted);
+                EventBus.Instance.Unsubscribe<TaskEventArgs>(OnTaskCompleted);
 
-                EventBus.Instance.onScoreChanged.RemoveListener(OnScoreChanged);
+                EventBus.Instance.Unsubscribe<ScoreChangedEventArgs>(OnScoreChanged);
 
-                EventBus.Instance.onGroupStarted.RemoveListener(OnGroupStarted);
-                EventBus.Instance.onGroupCompleted.RemoveListener(OnGroupCompleted);
+                EventBus.Instance.Unsubscribe<TaskGroupEventArgs>(OnGroupStarted);
+                EventBus.Instance.Unsubscribe<TaskGroupEventArgs>(OnGroupCompleted);
 
-                EventBus.Instance.onSafetyViolation.RemoveListener(OnSafetyViolation);
-                EventBus.Instance.onCriticalSafetyFailure.RemoveListener(OnCriticalSafetyFailure);
-                EventBus.Instance.onSafetyError.RemoveListener(OnSafetyError);
-                EventBus.Instance.onSessionCompleted.RemoveListener(OnSessionCompleted);
+                EventBus.Instance.Unsubscribe<SafetyViolationEventArgs>(OnSafetyViolation);
+                EventBus.Instance.Unsubscribe<CriticalSafetyFailureEventArgs>(OnCriticalSafetyFailure);
+                EventBus.Instance.Unsubscribe<SafetyErrorEventArgs>(OnSafetyError);
+                EventBus.Instance.Unsubscribe<SessionCompletedEventArgs>(OnSessionCompleted);
             }
         }
 
@@ -117,24 +117,28 @@ namespace SafetyProto.UI
 
         private void OnGroupStarted(TaskGroupEventArgs args)
         {
+            if (args.Phase != TaskGroupPhase.Started) return;
             string groupName = args.Group != null ? args.Group.groupName : "<Grupo sem nome>";
             AppendLog($"[Grupo] Iniciado '{groupName}'");
         }
 
         private void OnGroupCompleted(TaskGroupEventArgs args)
         {
+            if (args.Phase != TaskGroupPhase.Completed) return;
             string groupName = args.Group != null ? args.Group.groupName : "<Grupo sem nome>";
             AppendLog($"[Grupo] Concluído '{groupName}'");
         }
 
         private void OnTaskStarted(TaskEventArgs args)
         {
+            if (args.Phase != TaskPhase.Started) return;
             string taskName = args.Task != null ? args.Task.taskName : "<Tarefa sem nome>";
             AppendLog($"[Tarefa] Iniciada '{taskName}'");
         }
 
         private void OnTaskCompleted(TaskEventArgs args)
         {
+            if (args.Phase != TaskPhase.Completed) return;
             string taskName = args.Task != null ? args.Task.taskName : "<Tarefa sem nome>";
             AppendLog($"[Tarefa] Concluída '{taskName}'");
         }

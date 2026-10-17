@@ -47,7 +47,7 @@ namespace SafetyProto.Runtime.Scaffolding
         private Grabbable _grabbable;
         private Transform _resolvedOrigin;
         private MaterialPropertyBlock _mpb;
-        private UnityAction<SessionStartedEventArgs> _onSessionStarted;
+        private System.Action<SessionStartedEventArgs> _onSessionStarted;
         private bool _consumed;
         private float _amount = -1f;
 
@@ -79,7 +79,7 @@ namespace SafetyProto.Runtime.Scaffolding
         {
             if (EventBus.Instance == null) return;
             _onSessionStarted = _ => _consumed = false;
-            EventBus.Instance.onSessionStarted.AddListener(_onSessionStarted);
+            EventBus.Instance.Subscribe<SessionStartedEventArgs>(_onSessionStarted);
         }
 
         private void OnDisable()
@@ -92,7 +92,7 @@ namespace SafetyProto.Runtime.Scaffolding
         private void OnDestroy()
         {
             if (EventBus.Instance != null && _onSessionStarted != null)
-                EventBus.Instance.onSessionStarted.RemoveListener(_onSessionStarted);
+                EventBus.Instance.Unsubscribe<SessionStartedEventArgs>(_onSessionStarted);
         }
 
         private void LateUpdate()

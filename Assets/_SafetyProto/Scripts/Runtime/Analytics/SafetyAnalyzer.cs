@@ -33,14 +33,14 @@ namespace SafetyProto.Runtime.Analytics
                 return;
             }
 
-            EventBus.Instance.onSafetyViolation.AddListener(OnSafetyViolation);
+            EventBus.Instance.Subscribe<SafetyViolationEventArgs>(OnSafetyViolation);
         }
 
         private void OnDestroy()
         {
             if (EventBus.Instance != null)
             {
-                EventBus.Instance.onSafetyViolation.RemoveListener(OnSafetyViolation);
+                EventBus.Instance.Unsubscribe<SafetyViolationEventArgs>(OnSafetyViolation);
             }
         }
 

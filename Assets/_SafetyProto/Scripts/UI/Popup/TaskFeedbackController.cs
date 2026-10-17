@@ -32,8 +32,8 @@ namespace SafetyProto.UI
 
             if (!this.IsEventBusReady()) return;
 
-            EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
-            EventBus.Instance.onSafetyViolation.AddListener(OnSafetyViolation);
+            EventBus.Instance.Subscribe<TaskEventArgs>(OnTaskCompleted);
+            EventBus.Instance.Subscribe<SafetyViolationEventArgs>(OnSafetyViolation);
 
             foreach (var slot in snapSlots)
                 if (slot != null)
@@ -47,8 +47,8 @@ namespace SafetyProto.UI
         {
             if (EventBus.Instance != null)
             {
-                EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
-                EventBus.Instance.onSafetyViolation.RemoveListener(OnSafetyViolation);
+                EventBus.Instance.Unsubscribe<TaskEventArgs>(OnTaskCompleted);
+                EventBus.Instance.Unsubscribe<SafetyViolationEventArgs>(OnSafetyViolation);
             }
 
             foreach (var slot in snapSlots)
@@ -61,6 +61,7 @@ namespace SafetyProto.UI
 
         private void OnTaskCompleted(TaskEventArgs args)
         {
+            if (args.Phase != TaskPhase.Completed) return;
             if (args.RuntimeTask == null) return;
 
             if (args.RuntimeTask.State == TaskState.CompletedSuccessButUnsafe)

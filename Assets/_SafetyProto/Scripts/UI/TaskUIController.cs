@@ -59,9 +59,9 @@ namespace SafetyProto.UI
                 return;
             }
 
-            EventBus.Instance.onGroupStarted.AddListener(OnGroupStarted);
-            EventBus.Instance.onTaskStarted.AddListener(OnTaskStarted);
-            EventBus.Instance.onTaskCompleted.AddListener(OnTaskCompleted);
+            EventBus.Instance.Subscribe<TaskGroupEventArgs>(OnGroupStarted);
+            EventBus.Instance.Subscribe<TaskEventArgs>(OnTaskStarted);
+            EventBus.Instance.Subscribe<TaskEventArgs>(OnTaskCompleted);
         }
 
         private void Start()
@@ -91,13 +91,14 @@ namespace SafetyProto.UI
         private void OnDestroy()
         {
             if (EventBus.Instance == null) return;
-            EventBus.Instance.onGroupStarted.RemoveListener(OnGroupStarted);
-            EventBus.Instance.onTaskStarted.RemoveListener(OnTaskStarted);
-            EventBus.Instance.onTaskCompleted.RemoveListener(OnTaskCompleted);
+            EventBus.Instance.Unsubscribe<TaskGroupEventArgs>(OnGroupStarted);
+            EventBus.Instance.Unsubscribe<TaskEventArgs>(OnTaskStarted);
+            EventBus.Instance.Unsubscribe<TaskEventArgs>(OnTaskCompleted);
         }
 
         private void OnGroupStarted(TaskGroupEventArgs args)
         {
+            if (args.Phase != TaskGroupPhase.Started) return;
             if (args.Group is not { } group) return;
 
             bool evaluation = SessionModeState.Current == SessionMode.Evaluation;
@@ -174,6 +175,7 @@ namespace SafetyProto.UI
 
         private void OnTaskStarted(TaskEventArgs args)
         {
+            if (args.Phase != TaskPhase.Started) return;
             if (args.Task is not { } task) return;
             if (_activeGroup == null || _activeGroup.executionMode != TaskExecutionModeShared.Sequential) return;
 
@@ -209,6 +211,7 @@ namespace SafetyProto.UI
 
         private void OnTaskCompleted(TaskEventArgs args)
         {
+            if (args.Phase != TaskPhase.Completed) return;
             if (args.Task is not { } task) return;
 
             if (_prerequisitePending && _activeGroup != null && IsPrerequisite(task))

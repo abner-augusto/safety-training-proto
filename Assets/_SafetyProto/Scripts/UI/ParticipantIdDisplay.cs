@@ -37,7 +37,7 @@ namespace SafetyProto.UI
 
             if (this.IsEventBusReady())
             {
-                EventBus.Instance.onSessionStarted.AddListener(OnSessionStarted);
+                EventBus.Instance.Subscribe<SessionStartedEventArgs>(OnSessionStarted);
                 _subscribed = true;
             }
         }
@@ -45,7 +45,7 @@ namespace SafetyProto.UI
         private void OnDisable()
         {
             if (_subscribed && EventBus.Instance != null)
-                EventBus.Instance.onSessionStarted.RemoveListener(OnSessionStarted);
+                EventBus.Instance.Unsubscribe<SessionStartedEventArgs>(OnSessionStarted);
             _subscribed = false;
         }
 
