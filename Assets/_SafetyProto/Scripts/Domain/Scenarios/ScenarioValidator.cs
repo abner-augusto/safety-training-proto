@@ -35,6 +35,7 @@ namespace SafetyProto.Domain.Scenarios
 
             var actions = new HashSet<string>(catalog.ActionIds ?? new List<string>(), StringComparer.OrdinalIgnoreCase);
             var ppe = new HashSet<string>(catalog.PpeTypes ?? new List<string>(), StringComparer.OrdinalIgnoreCase);
+            var distractorIds = new HashSet<string>(StringComparer.Ordinal);
 
             foreach (var group in scenario.Groups)
             {
@@ -66,10 +67,47 @@ namespace SafetyProto.Domain.Scenarios
                             $"Tarefa '{task.taskName}' (grupo '{group.groupName}') não define ação " +
                             $"nem EPI requerido — nunca poderá ser concluída.");
                     }
+
+                    ValidateDistractors(task, group.groupName, hasAction, distractorIds, errors);
                 }
             }
 
             return errors;
+        }
+
+        private static void ValidateDistractors(
+            SafetyTaskDef task, string groupName, bool hasAction, HashSet<string> seenIds, List<string> errors)
+        {
+            if (task.Distractors.Count == 0) return;
+
+            if (hasAction || task.RequiredPpeNames.Count == 0)
+            {
+                errors.Add(
+                    $"Distratores só podem ser declarados em tarefas de equipar EPI (com EPI requerido e sem ação): " +
+                    $"tarefa '{task.taskName}', grupo '{groupName}'.");
+            }
+
+            foreach (var distractor in task.Distractors)
+            {
+                var id = distractor.Id?.Trim() ?? string.Empty;
+                if (id.Length == 0)
+                {
+                    errors.Add($"Distrator sem 'id' na tarefa '{task.taskName}' (grupo '{groupName}').");
+                }
+                else if (!seenIds.Add(id))
+                {
+                    errors.Add(
+                        $"O id de distrator '{id}' se repete (tarefa '{task.taskName}', grupo '{groupName}'); " +
+                        $"cada id deve ser único no cenário.");
+                }
+
+                if (string.IsNullOrWhiteSpace(distractor.RejectionAdvice))
+                {
+                    errors.Add(
+                        $"O distrator '{id}' da tarefa '{task.taskName}' (grupo '{groupName}') " +
+                        $"não tem 'rejectionAdvice'.");
+                }
+            }
         }
     }
 }

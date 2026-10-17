@@ -75,6 +75,9 @@ public sealed class TaskViewModel : ViewModelBase
 
         ReportOptions = new ObservableCollection<ReportOptionViewModel>(
             def.ReportOptions.Select(o => new ReportOptionViewModel(o)));
+
+        Distractors = new ObservableCollection<DistractorViewModel>(
+            def.Distractors.Select(d => new DistractorViewModel(d)));
     }
 
     /// <summary>The group this task belongs to (for add/remove and re-parenting).</summary>
@@ -169,6 +172,10 @@ public sealed class TaskViewModel : ViewModelBase
     /// confirm/cancel report flow at runtime.</summary>
     public ObservableCollection<ReportOptionViewModel> ReportOptions { get; }
 
+    /// <summary>Decoy items for this equip task (wrong-but-plausible equipment the scene offers).
+    /// Leave empty for every task that is not an equip task.</summary>
+    public ObservableCollection<DistractorViewModel> Distractors { get; }
+
     public string ReportPopupTitle { get => _reportPopupTitle; set => SetField(ref _reportPopupTitle, value); }
     public string ReportPopupBody { get => _reportPopupBody; set => SetField(ref _reportPopupBody, value); }
     public string ReportConfirmLabel { get => _reportConfirmLabel; set => SetField(ref _reportConfirmLabel, value); }
@@ -179,6 +186,13 @@ public sealed class TaskViewModel : ViewModelBase
     public void RemoveReportOption(ReportOptionViewModel option)
     {
         if (option != null) ReportOptions.Remove(option);
+    }
+
+    public void AddDistractor() => Distractors.Add(new DistractorViewModel(string.Empty, string.Empty, string.Empty));
+
+    public void RemoveDistractor(DistractorViewModel distractor)
+    {
+        if (distractor != null) Distractors.Remove(distractor);
     }
 
     /// <summary>Label shown in the tree.</summary>
@@ -205,6 +219,7 @@ public sealed class TaskViewModel : ViewModelBase
         omissionAdvice = _omissionAdvice,
         RequiredPpeNames = PpeOptions.Where(p => p.IsSelected).Select(p => p.Name).ToList(),
         ReportOptions = ReportOptions.Select(o => o.ToDef()).ToList(),
+        Distractors = Distractors.Select(d => d.ToDef()).ToList(),
         reportPopupTitle = _reportPopupTitle,
         reportPopupBody = _reportPopupBody,
         reportConfirmLabel = _reportConfirmLabel,

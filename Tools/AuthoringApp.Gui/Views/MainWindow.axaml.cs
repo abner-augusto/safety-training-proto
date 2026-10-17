@@ -94,6 +94,16 @@ public partial class MainWindow : Window
             task.RemoveReportOption(option);
     }
 
+    private void OnAddDistractor(object? sender, RoutedEventArgs e) =>
+        (Vm?.Editor?.SelectedNode as TaskViewModel)?.AddDistractor();
+
+    private void OnRemoveDistractor(object? sender, RoutedEventArgs e)
+    {
+        if ((Vm?.Editor?.SelectedNode as TaskViewModel) is not { } task) return;
+        if ((sender as Control)?.DataContext is DistractorViewModel distractor)
+            task.RemoveDistractor(distractor);
+    }
+
     private async void OnSave(object? sender, RoutedEventArgs e)
     {
         var path = await PickSaveJsonAsync();

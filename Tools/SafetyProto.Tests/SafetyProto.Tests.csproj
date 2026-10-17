@@ -80,6 +80,11 @@
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\SessionClockTests.cs"              Link="SessionClockTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\AssemblyLayeringTests.cs"      Link="AssemblyLayeringTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\ArchitectureFactsTests.cs"      Link="ArchitectureFactsTests.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\DistractorTests.cs"                Link="DistractorTests.cs" />
+    <!-- The authoring app's view models have no Avalonia dependency, so they compile here and a
+         round-trip test can guard the field-by-field ToDef() rebuild without a UI test project. -->
+    <Compile Include="..\AuthoringApp.Gui\ViewModels\*.cs" Exclude="..\AuthoringApp.Gui\ViewModels\MainWindowViewModel.cs"
+             Link="AuthoringViewModels\%(Filename)%(Extension)" />
     <!-- Excluded (Unity-coupled): SafetyTrainingTests uses the Unity EventBus singleton + static
          event facades (SessionEvents/TaskEvents/...), which live in the Unity assemblies, not
          SafetyProto.Shared. SafetyPatternTests uses Runtime.Analytics. Both stay Unity-only and are intentionally excluded. -->

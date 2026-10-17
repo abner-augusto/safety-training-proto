@@ -37,22 +37,28 @@ namespace SafetyProto.Domain.Scoring
         /// <summary>A distractor item was snapped. The violation is always published (decoy
         /// selection is a retention measure the log must keep); the charge applies only when
         /// <paramref name="firstAttemptForItem"/> — the host tracks which items it already
-        /// charged, so fumbling the same decoy repeatedly cannot spiral.</summary>
+        /// charged, so fumbling the same decoy repeatedly cannot spiral.
+        /// <paramref name="ppeLabel"/> is what the message names (the decoy's authored name when
+        /// it resolved); <paramref name="taskId"/> is the equip task that authored the decoy, empty
+        /// when it did not resolve, and <paramref name="taskName"/> is that task's name (the item's
+        /// own name stands in when it is omitted).</summary>
         public static int ChargeWrongPpeSelected(IEventBus bus, IScoreService scoreService, ScoringConfig scoring,
-                                                 string ppeLabel, string itemName, bool firstAttemptForItem)
+                                                 string ppeLabel, string itemName, bool firstAttemptForItem,
+                                                 string taskId = "", string? taskName = null)
         {
+            taskId ??= string.Empty;
             bus.Publish(new SafetyViolationEventArgs
             {
                 ViolationCode = ViolationCodes.WrongPpeSelected,
                 Message = $"Selecionou equipamento inadequado: {ppeLabel}",
-                TaskId = string.Empty,
+                TaskId = taskId,
                 GroupId = string.Empty,
-                TaskName = itemName ?? string.Empty,
+                TaskName = taskName ?? itemName ?? string.Empty,
                 GroupName = string.Empty
             });
             if (!firstAttemptForItem) return 0;
             int charge = scoring.BasePenaltyFor(RiskLevels.IncidentalChargeTier);
-            if (charge > 0) scoreService.SubtractPoints(charge, ViolationCodes.WrongPpeSelected, string.Empty);
+            if (charge > 0) scoreService.SubtractPoints(charge, ViolationCodes.WrongPpeSelected, taskId);
             return charge;
         }
 

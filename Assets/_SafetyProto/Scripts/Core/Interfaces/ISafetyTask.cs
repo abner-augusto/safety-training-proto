@@ -15,6 +15,23 @@ namespace SafetyProto.Core.Interfaces
     }
 
     /// <summary>
+    /// A wrong-but-plausible equipment item the participant can pick instead of the task's
+    /// required PPE (e.g. flip-flops on the boots task). Authored on the equip task it
+    /// decoys for; a scene item links to it by <see cref="Id"/>.
+    /// </summary>
+    public interface IDistractor
+    {
+        /// <summary>Stable id, unique across the scenario; the scene item's <c>distractorId</c>.</summary>
+        string Id { get; }
+
+        /// <summary>Participant-facing name of the item (e.g. "Chinelo").</summary>
+        string Name { get; }
+
+        /// <summary>Why this item is wrong, shown when the participant tries to equip it.</summary>
+        string RejectionAdvice { get; }
+    }
+
+    /// <summary>
     /// Engine-independent view of a safety training task.
     /// Implemented by the Unity <c>SafetyTask</c> ScriptableObject and by pure-C#
     /// records used in the CLI harness.
@@ -64,6 +81,12 @@ namespace SafetyProto.Core.Interfaces
         /// report flow unchanged.
         /// </summary>
         IReadOnlyList<IReportOption> reportOptions { get; }
+
+        /// <summary>
+        /// Decoy items for an equip task (<see cref="requiredPPE"/> without an action).
+        /// Empty for every other task.
+        /// </summary>
+        IReadOnlyList<IDistractor> distractors { get; }
 
         /// <summary>Report-popup copy, authored alongside <see cref="reportOptions"/>.
         /// Empty when the task has none; a reporter falls back to its own defaults.</summary>

@@ -18,6 +18,10 @@ namespace SafetyProto.Runtime.PPE
                  "Distradores disparam popup educativo ao tentar encaixar num slot.")]
         public bool isDistractor = false;
 
+        [Tooltip("Id do distrator no cenário (campo 'distractors' da tarefa de equipar). Define qual " +
+                 "explicação o popup mostra e a qual tarefa o desconto é atribuído. Só vale com isDistractor.")]
+        public string distractorId = string.Empty;
+
         private void Awake()
         {
             if (ppeType == PPEType.None)

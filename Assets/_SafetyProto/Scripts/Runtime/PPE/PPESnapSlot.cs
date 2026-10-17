@@ -31,8 +31,8 @@ namespace SafetyProto.Runtime.PPE
 
         [Header("Events")]
         [Tooltip("Disparado quando um item distrator tenta encaixar neste slot. " +
-                 "Passa o PPEType tentado para o TaskFeedbackController.")]
-        public UnityEvent<PPEType> onDistractorSnapAttempted;
+                 "Passa o PPEType tentado e o distractorId do item para o TaskFeedbackController.")]
+        public UnityEvent<PPEType, string> onDistractorSnapAttempted;
 
         [Tooltip("Raised when a valid item is snapped out of the task's expected order. " +
                  "Passes the attempted PPEType so the TaskFeedbackController can nudge the player.")]
@@ -163,11 +163,11 @@ namespace SafetyProto.Runtime.PPE
             UpdateHighlight();
         }
 
-        private bool RejectDistractor(PPESnapItem item)
+        private bool RejectDistractor(PPESnapItem item, string distractorId)
         {
-            onDistractorSnapAttempted?.Invoke(item.PpeType);
+            onDistractorSnapAttempted?.Invoke(item.PpeType, distractorId);
             SafetyLog.Info($"PPESnapSlot [{name}]: distrator '{item.name}' ({item.PpeType}) rejeitado.", this);
-            _ppeManager?.ReportDistractorAttempt(item.PpeType, item.name);
+            _ppeManager?.ReportDistractorAttempt(item.PpeType, item.name, distractorId);
             return false;
         }
 
@@ -186,7 +186,7 @@ namespace SafetyProto.Runtime.PPE
             var ppeItem = item.GetComponent<PPEItem>();
 
             if (ppeItem != null && ppeItem.isDistractor)
-                return RejectDistractor(item);
+                return RejectDistractor(item, ppeItem.distractorId);
 
             if (!Accepts(item.PpeType)) return false;
             if (!HasAvailableSpace) return false;

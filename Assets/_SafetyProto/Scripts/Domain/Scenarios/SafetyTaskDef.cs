@@ -19,6 +19,17 @@ namespace SafetyProto.Domain.Scenarios
     }
 
     /// <summary>
+    /// JSON-backed decoy item of an equip task
+    /// (<c>"distractors": [{ "id": ..., "name": ..., "rejectionAdvice": ... }]</c>).
+    /// </summary>
+    public sealed class DistractorDef : IDistractor
+    {
+        [JsonProperty("id")] public string Id { get; set; } = string.Empty;
+        [JsonProperty("name")] public string Name { get; set; } = string.Empty;
+        [JsonProperty("rejectionAdvice")] public string RejectionAdvice { get; set; } = string.Empty;
+    }
+
+    /// <summary>
     /// The two graded axes of a task's risk, as authored. Kept as its own object in the JSON
     /// (<c>"risk": { "severity": 5, "probability": 5 }</c>) so the grades read as a pair and
     /// cannot be mistaken for the retired flat <c>"severity"</c> string.
@@ -100,6 +111,11 @@ namespace SafetyProto.Domain.Scenarios
         [JsonProperty("reportOptions")]
         public List<ReportOptionDef> ReportOptions { get; set; } = new();
 
+        /// <summary>Decoy items for an equip task. Empty for every other task; see
+        /// <see cref="ScenarioValidator"/> for the placement and uniqueness rules.</summary>
+        [JsonProperty("distractors")]
+        public List<DistractorDef> Distractors { get; set; } = new();
+
         /// <summary>Report-popup copy, authored alongside <see cref="ReportOptions"/>. Moved
         /// here from the scene's <c>SafetyIssueReporter</c> inspector fields so the scenario
         /// stays the single source of participant-facing text.</summary>
@@ -123,6 +139,9 @@ namespace SafetyProto.Domain.Scenarios
 
         [JsonIgnore]
         IReadOnlyList<IReportOption> ISafetyTask.reportOptions => ReportOptions;
+
+        [JsonIgnore]
+        IReadOnlyList<IDistractor> ISafetyTask.distractors => Distractors;
 
         public string ResolveExpectedActionId() =>
             string.IsNullOrWhiteSpace(ActionId) ? string.Empty : ActionId.Trim();

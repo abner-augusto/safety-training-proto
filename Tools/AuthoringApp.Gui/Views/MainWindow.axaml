@@ -200,6 +200,32 @@
                 </StackPanel>
 
                 <StackPanel Spacing="4">
+                  <TextBlock Text="Distratores (EPIs errados) — opcional" Classes="label"/>
+                  <TextBlock Text="Só para tarefas de equipar EPI. Cada distrator é um item errado oferecido na cena; o id deve coincidir com o 'distractorId' do prefab e ser único no cenário. A explicação aparece quando o participante tenta equipá-lo."
+                             TextWrapping="Wrap" Opacity="0.8"/>
+                  <Border Classes="panel" Padding="8">
+                    <StackPanel Spacing="4">
+                      <ItemsControl ItemsSource="{Binding Distractors}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate DataType="vm:DistractorViewModel">
+                            <StackPanel Spacing="2" Margin="0,2,0,6">
+                              <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBox Text="{Binding Id}" Watermark="id" MinWidth="140"/>
+                                <TextBox Text="{Binding Name}" Watermark="nome (pt-BR)" MinWidth="220"/>
+                                <Button Content="Remover" Click="OnRemoveDistractor"/>
+                              </StackPanel>
+                              <TextBox Text="{Binding RejectionAdvice}" Watermark="por que está errado"
+                                       AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
+                            </StackPanel>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                      <Button Content="+ Distrator" Click="OnAddDistractor" HorizontalAlignment="Left"/>
+                    </StackPanel>
+                  </Border>
+                </StackPanel>
+
+                <StackPanel Spacing="4">
                   <TextBlock Text="Classificação (popup de reporte) — opcional" Classes="label"/>
                   <TextBlock Text="Deixe vazio para o reporte de confirmar/cancelar de sempre. Preencha para pedir ao participante que classifique o que encontrou; exatamente uma opção deve ser 'correct'."
                              TextWrapping="Wrap" Opacity="0.8"/>

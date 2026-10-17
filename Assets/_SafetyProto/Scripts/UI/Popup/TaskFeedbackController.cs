@@ -1,5 +1,6 @@
 using SafetyProto.Core;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Safety;
 using SafetyProto.Runtime.PPE;
 using SafetyProto.Runtime.Task;
 using SafetyProto.Utils;
@@ -87,18 +88,22 @@ namespace SafetyProto.UI
                 ViolationCodes.PrerequisitePending);
         }
 
-        private void OnDistractorSnapAttempted(PPEType attempted)
+        private void OnDistractorSnapAttempted(PPEType attempted, string distractorId)
         {
-            var task = _taskManager?.CurrentRuntimeTask?.TaskData;
+            var match = DistractorResolver.Resolve(_taskManager != null ? _taskManager.RuntimeGroups : null, distractorId);
 
-            var advice = task?.ppeAdvice;
-            var body = !string.IsNullOrWhiteSpace(advice)
-                ? advice
-                : "Este equipamento não é adequado para trabalho em altura.";
-
-            var hint = task?.hintText;
-            if (!string.IsNullOrWhiteSpace(hint))
-                body += $"\n\nDica: {hint}";
+            string body;
+            if (match != null)
+            {
+                body = DistractorResolver.BuildRejectionBody(match);
+            }
+            else
+            {
+                SafetyLog.Warning(
+                    $"[TaskFeedbackController] No distractor with id '{distractorId}' is authored in the scenario ({attempted}); showing the generic rejection.",
+                    this);
+                body = "Este equipamento não é adequado para trabalho em altura.";
+            }
 
             PopupService.Instance?.ShowWarning(ppeTitle, body, autoCloseSeconds);
         }

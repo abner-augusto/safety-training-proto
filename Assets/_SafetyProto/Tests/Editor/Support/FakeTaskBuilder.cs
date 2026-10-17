@@ -66,6 +66,9 @@ namespace SafetyProto.Tests.Editor.Support
 
             IReadOnlyList<PPEType> ISafetyTask.requiredPPE => requiredPPE;
             IReadOnlyList<IReportOption> ISafetyTask.reportOptions => ReportOptions;
+
+            public List<IDistractor> Distractors { get; set; } = new List<IDistractor>();
+            IReadOnlyList<IDistractor> ISafetyTask.distractors => Distractors;
             public string ResolveExpectedActionId() => ExpectedActionId;
         }
 
@@ -75,6 +78,14 @@ namespace SafetyProto.Tests.Editor.Support
             public string Id { get; set; } = string.Empty;
             public string Label { get; set; } = string.Empty;
             public bool Correct { get; set; }
+        }
+
+        /// <summary>Minimal <see cref="IDistractor"/> for fixtures.</summary>
+        public sealed class FakeDistractor : IDistractor
+        {
+            public string Id { get; set; } = string.Empty;
+            public string Name { get; set; } = string.Empty;
+            public string RejectionAdvice { get; set; } = string.Empty;
         }
 
         public sealed class FakeTaskGroup : ITaskGroup

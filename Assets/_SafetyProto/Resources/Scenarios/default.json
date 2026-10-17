@@ -54,7 +54,10 @@
           "hintText": "Escolha um calçado de segurança fechado, adequado aos riscos do canteiro e com CA válido.",
           "failureAdvice": "A botina de segurança protege contra perfurações e quedas de objetos nos pés. O uso de calçado de proteção em canteiro é obrigatório (NR-06).",
           "ppeAdvice": "",
-          "omissionAdvice": "Você não calçou a botina de segurança. Em canteiro, pisos com pregos, entulho e quedas de material tornam o calçado de proteção obrigatório (NR-06)."
+          "omissionAdvice": "Você não calçou a botina de segurança. Em canteiro, pisos com pregos, entulho e quedas de material tornam o calçado de proteção obrigatório (NR-06).",
+          "distractors": [
+            { "id": "flip_flops", "name": "Chinelo", "rejectionAdvice": "O chinelo deixa os pés expostos a perfurações, cortes e queda de objetos. Não é calçado de segurança e não pode ser usado no canteiro (NR-06)." }
+          ]
         },
         {
           "id": "equip_harness",
@@ -71,7 +74,10 @@
           "hintText": "Para retenção de queda, escolha o cinturão de segurança tipo paraquedista; o cinto abdominal não é adequado a esse sistema.",
           "failureAdvice": "No sistema de retenção de queda, o EPI deve ser o cinturão de segurança tipo paraquedista (NR-35, item 35.6.9). Cintos abdominais não são aceitos para retenção de queda.",
           "ppeAdvice": "",
-          "omissionAdvice": "Você não vestiu o cinturão tipo paraquedista. Sem ele não existe sistema de retenção de queda — é o EPI central do trabalho em altura (NR-35, item 35.6.9)."
+          "omissionAdvice": "Você não vestiu o cinturão tipo paraquedista. Sem ele não existe sistema de retenção de queda — é o EPI central do trabalho em altura (NR-35, item 35.6.9).",
+          "distractors": [
+            { "id": "abdominal_belt", "name": "Cinto abdominal", "rejectionAdvice": "O cinto abdominal não retém uma queda: no impacto, a força se concentra na cintura e o corpo pode escapar. Para retenção de queda, a NR-35 exige o cinturão tipo paraquedista (item 35.6.9)." }
+          ]
         },
         {
           "id": "equip_helmet",
@@ -123,7 +129,10 @@
           "hintText": "Escolha luvas adequadas ao manuseio de estruturas metálicas e proteja as duas mãos.",
           "failureAdvice": "Luvas de raspa de couro são obrigatórias para manuseio de estruturas metálicas em altura.",
           "ppeAdvice": "",
-          "omissionAdvice": "Você não vestiu as luvas. O manuseio de estruturas metálicas sem proteção expõe as mãos a cortes e esmagamentos (NR-06)."
+          "omissionAdvice": "Você não vestiu as luvas. O manuseio de estruturas metálicas sem proteção expõe as mãos a cortes e esmagamentos (NR-06).",
+          "distractors": [
+            { "id": "rubber_gloves", "name": "Luva de borracha", "rejectionAdvice": "A luva de borracha protege contra umidade e produtos químicos, mas não contra cortes e esmagamentos no manuseio de peças metálicas. Para montar o andaime, use luvas de raspa de couro (NR-06)." }
+          ]
         }
       ],
       "requiredGroups": []
