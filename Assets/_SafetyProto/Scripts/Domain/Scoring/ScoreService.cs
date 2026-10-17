@@ -23,11 +23,21 @@ namespace SafetyProto.Domain.Scoring
             _instance = null!;
         }
 
+        /// <summary>Reason published by <see cref="ResetSession"/>; consumers of
+        /// <see cref="ScoreChanged"/> must not read its delta as a penalty.</summary>
+        public const string ResetReason = "Point reset";
+
         public int CurrentScore { get; private set; }
 
         public event Action<int, int, string, string> ScoreChanged = delegate { };
 
-        public ScoreService() { }
+        /// <summary>Penalties taken off this service's score since the last reset.</summary>
+        public ScoreLedger Ledger { get; }
+
+        public ScoreService()
+        {
+            Ledger = new ScoreLedger(this);
+        }
 
         public void AddPoints(int amount, string reason, string taskId)
         {
@@ -51,7 +61,7 @@ namespace SafetyProto.Domain.Scoring
         {
             var old = CurrentScore;
             CurrentScore = 0;
-            ScoreChanged.Invoke(0, -old, "Point reset", string.Empty);
+            ScoreChanged.Invoke(0, -old, ResetReason, string.Empty);
         }
     }
 }
