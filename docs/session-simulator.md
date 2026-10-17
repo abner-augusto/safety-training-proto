@@ -181,7 +181,9 @@ contract:
 
 ## On the headset
 
-Development builds compile the simulator in; release builds do not. Launching a
+Development builds compile the simulator in; release builds do not. Build one with
+`scripts/build-android.ps1 -Development` (`Builds/Android/SafetyTraining_dev.apk`) and
+`adb install -r` it. Launching a
 Development build with a `safety_sim` intent extra skips the identification,
 mode and onboarding popups and replays the script as soon as the scenario loads:
 
@@ -195,6 +197,11 @@ in focus, launches one run per app start, and saves to `dist/quest-sim/` each
 run's session log, perf CSV, `[SafetyProto]` logcat lines, per-second VrApi lines
 and, with `-MetricsCsv`, the OVR Metrics CSV. It restores the sensor and Guardian
 when it finishes. `-Script <file.json>` pushes and plays a variant script.
+
+The script wakes the screen, but an OS dialog on the headset (typically Quest Link
+"available" while the cable is on a PC) holds every launch until someone dismisses it
+with the headset on. The script detects "Launch is blocked" in logcat, stops, and says
+so. Disabling Guardian is already part of the script; it does not clear that dialog.
 
 By hand: `adb shell am start -n <package>/<launcher activity> --es safety_sim
 guiado|avaliacao [--es safety_sim_script <device path>]`. The launcher logs the
