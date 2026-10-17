@@ -103,6 +103,7 @@ Write-Host "  device clock: $(Invoke-Adb shell date)"
 $guardianPause = ((Invoke-Adb shell getprop debug.oculus.guardian_pause) -join "").Trim()
 Invoke-Adb shell setprop debug.oculus.guardian_pause 1 | Out-Null
 Invoke-Adb shell am broadcast -a com.oculus.vrpowermanager.prox_close | Out-Null
+Invoke-Adb shell input keyevent KEYCODE_WAKEUP | Out-Null
 if ($MetricsCsv) {
     Invoke-Adb shell am broadcast -n $metricsReceiver -a com.oculus.ovrmonitormetricsservice.ENABLE_CSV | Out-Null
 }
@@ -126,10 +127,13 @@ try {
         Write-Host "[run $run] launched at $(Invoke-Adb shell date '+%H:%M:%S')"
 
         $verdict = $null
+        $blocked = $null
         $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
-        while (-not $verdict -and (Get-Date) -lt $deadline) {
+        while (-not $verdict -and -not $blocked -and (Get-Date) -lt $deadline) {
             Start-Sleep -Seconds 5
             $verdict = & adb @adbPrefix logcat -d -s Unity:* | Select-String -Pattern "\[DeviceSimulationLauncher\] (Completed|Failed|Cancelled)" | Select-Object -Last 1
+            # An OS dialog (Quest Link available, update prompts) holds the launch until someone dismisses it.
+            $blocked = & adb @adbPrefix logcat -d | Select-String -Pattern "Launch is blocked because" | Select-Object -Last 1
         }
 
         # Let the background perf write and the session log land before stopping the app.
@@ -154,6 +158,10 @@ try {
         if ($verdict) {
             Write-Host "[run $run] $($verdict.Line -replace '^.*\[DeviceSimulationLauncher\] ', '')"
             if ($verdict.Line -notmatch "\] Completed") { $failed++ }
+        } elseif ($blocked) {
+            Write-Host "[run $run] launch blocked by an OS dialog on the headset ($($blocked.Line -replace '^.*Launch is blocked because: ', '')). Dismiss it with the headset on, then rerun." -ForegroundColor Yellow
+            $failed++
+            break
         } else {
             Write-Host "[run $run] no result within $TimeoutSeconds s" -ForegroundColor Yellow
             $failed++

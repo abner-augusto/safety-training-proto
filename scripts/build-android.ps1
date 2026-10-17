@@ -4,6 +4,7 @@ param(
     [string]$NewVersion,
     [int]$NewVersionCode,
     [switch]$NoCommit,
+    [switch]$Development,
     [int]$PollIntervalSeconds = 15,
     [int]$MaxPollAttempts = 80,
     [switch]$Help
@@ -28,6 +29,9 @@ Options:
   -NoCommit                   With -BumpVersion, leave the bump uncommitted (the APK is
                               then stamped <commit>-dirty). By default the bump is
                               committed on its own before the build.
+  -Development                Build a Development APK (SafetyTraining_dev.apk, debuggable, with the
+                              session simulator) for scripts/quest-sim-run.ps1. It is not copied to
+                              the output directory.
   -PollIntervalSeconds <int>  Seconds between build status polls (default: 15)
   -MaxPollAttempts <int>      Poll attempts before giving up (default: 80)
   -Help, --help               Show this help and exit
@@ -51,7 +55,8 @@ if ($Help -or $PSBoundParameters.Values -contains '--help') {
 }
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$relativeApkPath = "Builds/Android/SafetyTraining.apk"
+$relativeApkPath = if ($Development) { "Builds/Android/SafetyTraining_dev.apk" } else { "Builds/Android/SafetyTraining.apk" }
+$buildOptionArgs = if ($Development) { @("--options", '["Development","AllowDebugging"]') } else { @() }
 $apkPath = Join-Path $repoRoot $relativeApkPath
 
 . (Join-Path $PSScriptRoot "lib/Load-DotEnv.ps1")
@@ -149,19 +154,19 @@ try {
     $bundleVersion = Invoke-UnityEval -Code 'return UnityEditor.PlayerSettings.bundleVersion;'
     Write-Host "=== Building Android (version $bundleVersion) ===" -ForegroundColor Cyan
 
-    $dryRun = Invoke-UnityCommand -Arguments @(
+    $dryRun = Invoke-UnityCommand -Arguments (@(
         "command", "build", "--target", "Android",
         "--outputPath", $relativeApkPath, "--dry_run"
-    )
+    ) + $buildOptionArgs)
     if (-not $dryRun.data.result.valid) {
         $errs = ($dryRun.data.result.validationErrors -join "; ")
         throw "Build validation failed: $errs"
     }
 
-    $build = Invoke-UnityCommand -Arguments @(
+    $build = Invoke-UnityCommand -Arguments (@(
         "command", "build", "--target", "Android",
         "--outputPath", $relativeApkPath, "--confirm"
-    )
+    ) + $buildOptionArgs)
     $buildId = $build.data.result.buildId
     Write-Host "  build queued: $buildId"
 
@@ -188,13 +193,24 @@ try {
         throw "Build did not complete within the polling window."
     }
     if ($finalStatus.result -ne "Succeeded") {
-        throw "Build finished with result '$($finalStatus.result)': $($finalStatus | ConvertTo-Json -Depth 3)"
+        # The full report is hundreds of KB; surface the first real errors and point at the rest.
+        $report = $finalStatus | ConvertTo-Json -Depth 8 -Compress
+        $errors = [regex]::Matches($report, '"message":"((?:[^"\]|\.){0,400})') |
+            ForEach-Object { $_.Groups[1].Value } |
+            Where-Object { $_ -match 'error|FAILURE|failed|Exception' } |
+            Select-Object -First 5
+        throw "Build finished with result '$($finalStatus.result)' ($($finalStatus.totalErrors) errors). First errors:`n$($errors -join "`n")`nFull report: unity --format json command build_status"
     }
 
     Write-Host "=== Build succeeded ($($finalStatus.totalErrors) errors, $($finalStatus.totalWarnings) warnings) ===" -ForegroundColor Green
 
     if (-not (Test-Path $apkPath)) {
         throw "Expected APK not found at $apkPath"
+    }
+
+    if ($Development) {
+        Write-Host "=== Development APK at $apkPath ===" -ForegroundColor Green
+        return
     }
 
     New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
