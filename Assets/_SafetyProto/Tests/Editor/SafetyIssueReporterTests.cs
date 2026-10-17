@@ -48,6 +48,7 @@ namespace SafetyProto.Tests.Editor
             public void ShowChoice(string title, string body, IReadOnlyList<IReportOption> options,
                                     UnityAction<IReportOption> onChosen) { }
             public void Hide() { }
+            public bool IsDisplayed => false;
         }
 
         [SetUp]

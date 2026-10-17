@@ -7,6 +7,7 @@ using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Domain.Scoring;
+using SafetyProto.Domain.Sessions;
 using SafetyProto.Runtime.Task;
 using RuntimeSafetyTask = SafetyProto.Core.RuntimeSafetyTask;
 using ConsequenceType = SafetyProto.Core.Events.ConsequenceType;
@@ -666,6 +667,23 @@ namespace SafetyProto.Runtime.Safety
 
             _showSessionEndPanels = false;
             if (sessionEndPanels == null) return;
+            StartCoroutine(ActivateSessionEndPanelsWhenPopupGone());
+        }
+
+        /// <summary>
+        /// The paths that end the session hide a popup (the consequence or success notice) in the
+        /// same frame they raise the report. Showing the report then draws it over a popup that is
+        /// still fading out, so wait for the popup to be gone.
+        /// </summary>
+        private IEnumerator ActivateSessionEndPanelsWhenPopupGone()
+        {
+            float waited = 0f;
+            while (!ReportRevealPolicy.ShouldReveal(_popupFeedback != null && _popupFeedback.IsDisplayed, waited))
+            {
+                yield return null;
+                waited += Time.unscaledDeltaTime;
+            }
+
             foreach (var panel in sessionEndPanels)
                 if (panel != null) panel.SetActive(true);
         }

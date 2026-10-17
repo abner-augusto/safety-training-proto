@@ -110,6 +110,8 @@ namespace SafetyProto.UI
             return null;
         }
 
+        public bool IsDisplayed => popupPanel != null && popupPanel.gameObject.activeSelf;
+
         public void Hide()
         {
             if (popupPanel == null) return;

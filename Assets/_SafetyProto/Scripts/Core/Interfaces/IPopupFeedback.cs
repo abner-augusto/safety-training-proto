@@ -33,5 +33,9 @@ namespace SafetyProto.Core.Interfaces
                         UnityAction<IReportOption> onChosen);
 
         void Hide();
+
+        /// <summary>True while the popup is on screen, including the fade-out that follows
+        /// <see cref="Hide"/>. A UI that must not draw over the popup waits for this to turn false.</summary>
+        bool IsDisplayed { get; }
     }
 }
