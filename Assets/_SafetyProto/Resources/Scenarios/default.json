@@ -94,7 +94,10 @@
           "hintText": "Escolha o capacete com jugular para mantê-lo preso à cabeça durante o trabalho em altura.",
           "failureAdvice": "Para trabalho em altura, o capacete deve possuir sistema de fixação (jugular) que impeça sua queda durante a atividade (seleção de EPI — NR-06 e NR-35).",
           "ppeAdvice": "",
-          "omissionAdvice": "Você não colocou o capacete com jugular. Para trabalho em altura o capacete deve permanecer preso à cabeça — sem ele, a queda de um objeto pode ser fatal (NR-06 e NR-35)."
+          "omissionAdvice": "Você não colocou o capacete com jugular. Para trabalho em altura o capacete deve permanecer preso à cabeça — sem ele, a queda de um objeto pode ser fatal (NR-06 e NR-35).",
+          "distractors": [
+            { "id": "helmet_no_chinstrap", "name": "Capacete sem jugular", "rejectionAdvice": "Este capacete não tem jugular. Em altura, um movimento brusco ou um impacto pode derrubá-lo e deixar a cabeça sem proteção. Para trabalho em altura, use o capacete com jugular (NR-06 e NR-35)." }
+          ]
         },
         {
           "id": "equip_goggles",

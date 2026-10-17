@@ -64355,7 +64355,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1382241779439910191, guid: 7ba70831d1b548345a0a702c1ae5c3f1, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2814252796813588660, guid: 7ba70831d1b548345a0a702c1ae5c3f1, type: 3}
+      propertyPath: distractorId
+      value: helmet_no_chinstrap
       objectReference: {fileID: 0}
     - target: {fileID: 2814252796813588660, guid: 7ba70831d1b548345a0a702c1ae5c3f1, type: 3}
       propertyPath: isDistractor

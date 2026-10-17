@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using SafetyProto.Domain.Scenarios;
 using SafetyProto.Runtime.PPE;
@@ -16,6 +18,12 @@ namespace SafetyProto.Tests.Editor
     {
         private const string ScenarioPath = "Assets/_SafetyProto/Resources/Scenarios/default.json";
         private const string PrefabRoot = "Assets/_SafetyProto/Prefabs";
+        private const string ScenePath = "Assets/_SafetyProto/Scene/SafetyTraining.unity";
+
+        // A decoy can also be a scene instance of a real PPE prefab with the id set as an
+        // override (the helmet without chinstrap). Reading the YAML avoids opening the 2 MB scene.
+        private static readonly Regex SceneDistractorOverride =
+            new Regex(@"propertyPath: distractorId\r?\n\s+value: (\S+)");
 
         private static HashSet<string> ScenarioDistractorIds()
         {
@@ -68,9 +76,11 @@ namespace SafetyProto.Tests.Editor
                 foreach (var item in prefab.GetComponentsInChildren<PPEItem>(true))
                     if (item.isDistractor) linked.Add(item.distractorId);
             }
+            foreach (Match match in SceneDistractorOverride.Matches(File.ReadAllText(ScenePath)))
+                linked.Add(match.Groups[1].Value);
 
             foreach (var id in ScenarioDistractorIds())
-                Assert.IsTrue(linked.Contains(id), $"Distractor '{id}' is authored but no prefab links to it.");
+                Assert.IsTrue(linked.Contains(id), $"Distractor '{id}' is authored but no prefab or scene instance links to it.");
         }
     }
 }
