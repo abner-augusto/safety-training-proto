@@ -153,6 +153,10 @@ namespace SafetyProto.Runtime.Safety
 
             _confirmationOpen = true;
 
+            // The button is world-space and stays pressable while the dialog is up; left visible it
+            // also draws over the dialog.
+            HideButton();
+
             if (options != null && options.Count > 0)
             {
                 string title = NonEmpty(task.reportPopupTitle, _popupTitle);
@@ -176,6 +180,7 @@ namespace SafetyProto.Runtime.Safety
                     onCancel: () =>
                     {
                         _confirmationOpen = false;
+                        ShowButton();
                         CancelledReportCount++;
                         SafetyLog.Info($"[SafetyIssueReporter] Reporte cancelado ({CancelledReportCount}x).", this);
                     });

@@ -134,5 +134,76 @@ namespace SafetyProto.Tests.Editor
             Assert.IsFalse(_reporter.HasReported);
             Assert.AreEqual(0, _reporter.CancelledReportCount);
         }
+
+        /// <summary>Keeps the dialog open until the test answers it.</summary>
+        private class HoldingPopup : IPopupFeedback
+        {
+            public UnityAction OnConfirm;
+            public UnityAction OnCancel;
+
+            public void ShowConfirmation(string title, string body, string confirmLabel,
+                                         string cancelLabel, UnityAction onConfirm, UnityAction onCancel = null)
+            {
+                OnConfirm = onConfirm;
+                OnCancel = onCancel;
+            }
+
+            public void ShowSuccess(string title, string body) { }
+            public void ShowWarning(string title, string body) { }
+            public bool TryShowIfIdle(string title, string body, float autoCloseSeconds) => true;
+            public void ShowInteractive(string title, string body, string buttonLabel, UnityAction onAction) { }
+            public void ShowChoice(string title, string body, IReadOnlyList<IReportOption> options,
+                                    UnityAction<IReportOption> onChosen) { }
+            public void Hide() { }
+            public bool IsDisplayed => false;
+        }
+
+        private GameObject WireVisibleButtonRoot()
+        {
+            var root = new GameObject("button root");
+            root.transform.SetParent(_host.transform);
+            var so = new UnityEditor.SerializedObject(_reporter);
+            so.FindProperty("_reportButtonRoot").objectReferenceValue = root;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            root.SetActive(true);
+            return root;
+        }
+
+        [Test]
+        public void ReportButtonHidesWhileTheDialogIsOpen()
+        {
+            var root = WireVisibleButtonRoot();
+            _reporter.PopupFeedback = new HoldingPopup();
+
+            _reporter.Report();
+
+            Assert.IsFalse(root.activeSelf, "The button must not stay over the dialog it opened.");
+        }
+
+        [Test]
+        public void ReportButtonReturnsWhenTheDialogIsCancelled()
+        {
+            var root = WireVisibleButtonRoot();
+            var popup = new HoldingPopup();
+            _reporter.PopupFeedback = popup;
+            _reporter.Report();
+
+            popup.OnCancel.Invoke();
+
+            Assert.IsTrue(root.activeSelf, "A cancelled report leaves the button for another try.");
+        }
+
+        [Test]
+        public void ReportButtonStaysHiddenAfterConfirming()
+        {
+            var root = WireVisibleButtonRoot();
+            var popup = new HoldingPopup();
+            _reporter.PopupFeedback = popup;
+            _reporter.Report();
+
+            popup.OnConfirm.Invoke();
+
+            Assert.IsFalse(root.activeSelf);
+        }
     }
 }
