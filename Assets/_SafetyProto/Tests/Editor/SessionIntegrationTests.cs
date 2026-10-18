@@ -40,7 +40,8 @@ namespace SafetyProto.Tests.Editor
             _tasks = new FakeTaskBuilder();
         }
 
-        // Identical scenario and script must yield 9/9 tasks, score 1500 and the exact milestone order.
+        // Identical scenario and script must complete every task, score the sum of the scenario's own
+        // per-risk points, and keep the exact milestone order.
         [Test]
         public void HappyPath_FullPpeInspectionScenario_MatchesCliParity()
         {
@@ -53,13 +54,16 @@ namespace SafetyProto.Tests.Editor
             h.StartSession();
             h.ReplayScript(scenario.Script);
 
-            // 1 intolerable x 250 + 3 substantial x 200 + 3 moderate x 150 + 2 tolerable x 100 = 1500; no penalties under full PPE compliance.
-            Assert.AreEqual(1500, h.Score.CurrentScore, "Final score should match the CLI parity run.");
+            // Derived from the scenario and the production ScoringConfig, so retuning either
+            // does not stale this test. No penalties under full PPE compliance.
+            var tasks = scenario.Groups.SelectMany(g => g.TaskDefs).ToList();
+            var expectedScore = tasks.Sum(t => scenario.Scoring.PointsFor(t.riskLevel));
+            Assert.AreEqual(expectedScore, h.Score.CurrentScore, "Final score should match the CLI parity run.");
 
             var summary = h.TaskManager.LastSessionSummary;
             Assert.IsTrue(summary.HasValue, "Session should have completed and produced a summary.");
-            Assert.AreEqual(9, summary!.Value.totalTasks);
-            Assert.AreEqual(9, summary.Value.tasksCompleted, "All 9 tasks should complete successfully.");
+            Assert.AreEqual(tasks.Count, summary!.Value.totalTasks);
+            Assert.AreEqual(tasks.Count, summary.Value.tasksCompleted, "Every task should complete successfully.");
 
             Assert.IsTrue(h.SessionTasks.All(t => t.State == TaskState.CompletedSuccess),
                 "Every task should be CompletedSuccess in a fully compliant run.");
