@@ -37,7 +37,7 @@ namespace SafetyProto.Core.Events
         public string? Context;
 
         /// <summary>Spatial position as (X, Y, Z), engine-independent.</summary>
-        public (float X, float Y, float Z)? Position;
+        [NonSerialized] public (float X, float Y, float Z)? Position;
 
         public int InteractorId;
 

@@ -112,6 +112,15 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
+        public void SummaryJson_WritesMainThreadWhenMeasured()
+        {
+            var measured = new PerfSummary { mainThreadMedianMs = 10d, mainThreadP95Ms = 19d };
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(measured);
+            StringAssert.Contains("\"mainThreadMedianMs\":10", json);
+            StringAssert.Contains("\"mainThreadP95Ms\":19", json);
+        }
+
+        [Test]
         public void Buffer_DropsRowsOnceFullAndReportsTruncation()
         {
             var buffer = new FramePerfBuffer(2);

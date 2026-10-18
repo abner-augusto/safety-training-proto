@@ -73,7 +73,7 @@ namespace SafetyProto.Core
         }
 
         public ISafetyTask Task;
-        public RuntimeSafetyTask? RuntimeTask;
+        [System.NonSerialized] public RuntimeSafetyTask? RuntimeTask;
         public TaskPhase Phase;
 
         /// <summary>

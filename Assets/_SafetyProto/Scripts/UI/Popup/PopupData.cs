@@ -36,7 +36,7 @@ namespace SafetyProto.UI
 
         public float autoCloseSeconds = 0f;
 
-        public IReadOnlyList<IReportOption> choiceOptions;
+        [System.NonSerialized] public IReadOnlyList<IReportOption> choiceOptions;
         public UnityAction<IReportOption> onChoiceSelected;
     }
 }

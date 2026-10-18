@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿#nullable enable annotations
+
+using System.Collections;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
@@ -128,7 +130,7 @@ namespace SafetyProto.Runtime
             CacheRelocationOrigins();
 
             if (taskManager == null)
-                taskManager = TaskManager.Instance != null ? TaskManager.Instance : FindFirstObjectByType<TaskManager>();
+                taskManager = TaskManager.Instance != null ? TaskManager.Instance : FindAnyObjectByType<TaskManager>();
 
             _popupFeedback = popupFeedbackProvider as SafetyProto.Core.Interfaces.IPopupFeedback;
 

@@ -1,3 +1,5 @@
+#nullable enable annotations
+
 using System;
 
 namespace SafetyProto.Domain.Dashboard
