@@ -36,7 +36,7 @@ namespace SafetyProto.Runtime.PPE
 
         private void UnregisterFromManager()
         {
-            FindFirstObjectByType<PPEManager>()?.UnregisterIfOwned(ppeType, gameObject);
+            FindAnyObjectByType<PPEManager>()?.UnregisterIfOwned(ppeType, gameObject);
         }
     }
 }

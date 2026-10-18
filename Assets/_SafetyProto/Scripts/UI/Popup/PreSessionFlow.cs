@@ -21,17 +21,14 @@ namespace SafetyProto.UI
             if (popupService != null)
                 popupService.Hide();
 
-            foreach (var controller in Object.FindObjectsByType<NameEntryController>(FindObjectsInactive.Include,
-                         FindObjectsSortMode.None))
+            foreach (var controller in Object.FindObjectsByType<NameEntryController>(FindObjectsInactive.Include))
             {
                 controller.StopAllCoroutines();
                 controller.enabled = false;
             }
-            foreach (var controller in Object.FindObjectsByType<SessionModeSelectionController>(FindObjectsInactive.Include,
-                         FindObjectsSortMode.None))
+            foreach (var controller in Object.FindObjectsByType<SessionModeSelectionController>(FindObjectsInactive.Include))
                 controller.enabled = false;
-            foreach (var controller in Object.FindObjectsByType<OnboardingController>(FindObjectsInactive.Include,
-                         FindObjectsSortMode.None))
+            foreach (var controller in Object.FindObjectsByType<OnboardingController>(FindObjectsInactive.Include))
             {
                 controller.StopAllCoroutines();
                 controller.enabled = false;

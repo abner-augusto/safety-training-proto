@@ -21,7 +21,7 @@ namespace SafetyProto.Editor
             var problems = new List<string>();
             var seenIds = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
 
-            foreach (var behaviour in Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var behaviour in Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include))
             {
                 ScanObject(behaviour, GetScenePath(behaviour), knownIds, seenIds, problems);
             }

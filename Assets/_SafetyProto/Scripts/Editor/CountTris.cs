@@ -109,7 +109,7 @@ public class TriangleCounterWindow : EditorWindow
 
         if (countMesh)
         {
-            foreach (var mf in Object.FindObjectsByType<MeshFilter>(FindObjectsSortMode.None))
+            foreach (var mf in Object.FindObjectsByType<MeshFilter>())
             {
                 if (mf.sharedMesh == null) continue;
                 int tris = mf.sharedMesh.triangles.Length / 3;
@@ -120,7 +120,7 @@ public class TriangleCounterWindow : EditorWindow
 
         if (countSkinned)
         {
-            foreach (var smr in Object.FindObjectsByType<SkinnedMeshRenderer>(FindObjectsSortMode.None))
+            foreach (var smr in Object.FindObjectsByType<SkinnedMeshRenderer>())
             {
                 if (smr.sharedMesh == null) continue;
                 int tris = smr.sharedMesh.triangles.Length / 3;

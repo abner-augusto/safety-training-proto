@@ -108,7 +108,7 @@ namespace SafetyProto.Runtime.Simulation
         public static SessionSimulator GetOrCreate()
         {
             if (_instance != null) return _instance;
-            _instance = FindFirstObjectByType<SessionSimulator>();
+            _instance = FindAnyObjectByType<SessionSimulator>();
             if (_instance != null) return _instance;
 
             var go = new GameObject("Session Simulator")
@@ -177,7 +177,7 @@ namespace SafetyProto.Runtime.Simulation
 
         private IEnumerator CollapseRehearsalCoroutine()
         {
-            var collapse = FindFirstObjectByType<ScaffoldCollapseSequence>();
+            var collapse = FindAnyObjectByType<ScaffoldCollapseSequence>();
             if (collapse == null)
             {
                 _result.lastDiagnostic = "ScaffoldCollapseSequence não encontrado na cena ativa.";
@@ -232,7 +232,7 @@ namespace SafetyProto.Runtime.Simulation
         }
 
         private static void CancelScaffoldCollapse() =>
-            FindFirstObjectByType<ScaffoldCollapseSequence>()?.ResetSession();
+            FindAnyObjectByType<ScaffoldCollapseSequence>()?.ResetSession();
 
         /// <summary>
         /// A rehearsal needs only the beat handler. It deliberately avoids <see cref="Subscribe"/>,
@@ -320,10 +320,10 @@ namespace SafetyProto.Runtime.Simulation
         {
             _result.status = SimulationStatus.Running;
             _result.lastDiagnostic = "Preparando sessão simulada...";
-            _sessionManager = FindFirstObjectByType<TrainingSessionManager>();
-            _taskManager = TaskManager.Instance != null ? TaskManager.Instance : FindFirstObjectByType<TaskManager>();
-            _phaseController = FindFirstObjectByType<PhaseController>();
-            _inspectionGate = FindFirstObjectByType<InspectionGateValidator>();
+            _sessionManager = FindAnyObjectByType<TrainingSessionManager>();
+            _taskManager = TaskManager.Instance != null ? TaskManager.Instance : FindAnyObjectByType<TaskManager>();
+            _phaseController = FindAnyObjectByType<PhaseController>();
+            _inspectionGate = FindAnyObjectByType<InspectionGateValidator>();
             _scenario = string.IsNullOrWhiteSpace(externalScenarioPath)
                 ? _taskManager?.LoadedScenario
                 : ScenarioSource.LoadFile(externalScenarioPath);

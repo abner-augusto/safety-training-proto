@@ -138,7 +138,7 @@ namespace SafetyProto.Runtime.Safety
         private void Start()
         {
             if (taskManager == null)
-                taskManager = TaskManager.Instance != null ? TaskManager.Instance : FindFirstObjectByType<TaskManager>();
+                taskManager = TaskManager.Instance != null ? TaskManager.Instance : FindAnyObjectByType<TaskManager>();
 
             if (taskManager == null)
                 SafetyLog.Error("[InspectionGateValidator] TaskManager not found.", this);

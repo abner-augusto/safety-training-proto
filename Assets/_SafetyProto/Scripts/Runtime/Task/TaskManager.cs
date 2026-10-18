@@ -77,7 +77,7 @@ namespace SafetyProto.Runtime.Task
 
             if (timerSystem == null)
             {
-                timerSystem = FindFirstObjectByType<TimerSystem>();
+                timerSystem = FindAnyObjectByType<TimerSystem>();
             }
 
             ITimerSource? timerSource = timerSystem != null

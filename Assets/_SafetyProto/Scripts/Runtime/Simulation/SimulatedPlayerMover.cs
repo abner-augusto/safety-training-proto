@@ -44,7 +44,7 @@ namespace SafetyProto.Runtime.Simulation
         }
 
         public static ISimulationWaypoints? FindWaypoints() =>
-            Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<ISimulationWaypoints>().FirstOrDefault();
+            Object.FindObjectsByType<MonoBehaviour>().OfType<ISimulationWaypoints>().FirstOrDefault();
 
         /// <summary>Moves the player to <paramref name="target"/>. On failure, <paramref name="error"/>
         /// is a Portuguese message for the simulator window.</summary>
@@ -91,9 +91,9 @@ namespace SafetyProto.Runtime.Simulation
 
         private static void DisableLocomotion()
         {
-            foreach (var locomotor in Object.FindObjectsByType<FirstPersonLocomotor>(FindObjectsSortMode.None))
+            foreach (var locomotor in Object.FindObjectsByType<FirstPersonLocomotor>())
                 locomotor.enabled = false;
-            foreach (var controller in Object.FindObjectsByType<Oculus.Interaction.Locomotion.CharacterController>(FindObjectsSortMode.None))
+            foreach (var controller in Object.FindObjectsByType<Oculus.Interaction.Locomotion.CharacterController>())
                 controller.enabled = false;
         }
     }

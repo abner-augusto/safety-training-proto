@@ -36,7 +36,7 @@ namespace SafetyProto.Networking.Dashboard
             }
 
             if (sceneLoader == null)
-                sceneLoader = FindFirstObjectByType<SceneLoader>(FindObjectsInactive.Include);
+                sceneLoader = FindAnyObjectByType<SceneLoader>(FindObjectsInactive.Include);
             if (sceneLoader == null)
             {
                 SafetyLog.Warning("[ResetSessionCommandHandler] SceneLoader não encontrado na cena.", this);

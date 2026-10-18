@@ -107,7 +107,7 @@ namespace SafetyProto.Runtime.PPE
 
         private void Start()
         {
-            _ppeManager = FindFirstObjectByType<PPEManager>();
+            _ppeManager = FindAnyObjectByType<PPEManager>();
 
             if (_ppeManager == null)
             {
@@ -115,7 +115,7 @@ namespace SafetyProto.Runtime.PPE
                 enabled = false;
             }
 
-            _taskManager = TaskManager.Instance != null ? TaskManager.Instance : FindFirstObjectByType<TaskManager>();
+            _taskManager = TaskManager.Instance != null ? TaskManager.Instance : FindAnyObjectByType<TaskManager>();
             if (_taskManager == null)
                 SafetyLog.Warning($"PPESnapSlot on {name}: TaskManager not found — verificação de ordem desativada.", this);
         }

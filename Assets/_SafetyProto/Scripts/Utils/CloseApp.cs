@@ -37,7 +37,7 @@ namespace SafetyProto.Core
 
         private static IPopupFeedback FindPopupService()
         {
-            foreach (var mb in FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var mb in FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include))
                 if (mb is IPopupFeedback popup)
                     return popup;
             return null;

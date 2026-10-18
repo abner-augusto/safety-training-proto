@@ -89,7 +89,7 @@ namespace SafetyProto.Runtime
                 return;
 
             // Meta's hand branches stay inactive until the hand is tracked, so include inactive objects.
-            var renderers = Object.FindObjectsByType<MeshRenderer>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var renderers = Object.FindObjectsByType<MeshRenderer>(FindObjectsInactive.Include);
             int disabled = 0;
             foreach (var mr in renderers)
             {

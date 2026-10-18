@@ -127,7 +127,7 @@ public class ComponentFinderWindow : EditorWindow
             return;
         }
 
-        var components = (Component[])FindObjectsByType(type, FindObjectsSortMode.None);
+        var components = (Component[])FindObjectsByType(type);
         foreach (var c in components)
             _results.Add(c.gameObject);
 

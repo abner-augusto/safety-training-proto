@@ -71,7 +71,7 @@ namespace SafetyProto.Networking.Dashboard
         private void AttachSessionLogger()
         {
             if (_sessionLogger != null) return;
-            _sessionLogger = FindFirstObjectByType<SessionLogger>();
+            _sessionLogger = FindAnyObjectByType<SessionLogger>();
             if (_sessionLogger != null)
                 _sessionLogger.CompletedLogWritten += OnCompletedLogWritten;
         }
@@ -103,7 +103,7 @@ namespace SafetyProto.Networking.Dashboard
         private void RegisterCommandHandlers()
         {
             _commandHandlers.Clear();
-            foreach (var behaviour in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+            foreach (var behaviour in FindObjectsByType<MonoBehaviour>())
             {
                 if (behaviour is not IDashboardCommandHandler handler) continue;
                 if (_commandHandlers.ContainsKey(handler.Command))
@@ -279,7 +279,7 @@ namespace SafetyProto.Networking.Dashboard
 
         private void HandleRequestSync(EvaluatorWebSocketServer.ClientConnection client)
         {
-            var sceneLayout = FindFirstObjectByType<DashboardSceneLayout>();
+            var sceneLayout = FindAnyObjectByType<DashboardSceneLayout>();
             if (sceneLayout != null)
                 _wsServer.SendToClient(client, "SceneLayout", sceneLayout.Build());
 

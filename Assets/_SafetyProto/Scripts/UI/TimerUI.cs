@@ -34,7 +34,7 @@ namespace SafetyProto.UI
             _timerText = GetComponent<TextMeshProUGUI>();
             if (timerSystem == null)
             {
-                timerSystem = Object.FindFirstObjectByType<TimerSystem>();
+                timerSystem = Object.FindAnyObjectByType<TimerSystem>();
                 if (timerSystem == null)
                 {
                     SafetyLog.Error("TimerUI: No TimerSystem found!", this);

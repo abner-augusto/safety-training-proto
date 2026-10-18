@@ -29,7 +29,7 @@ namespace SafetyProto.Runtime
 
         public void ResetManagers()
         {
-            var resettableObjects = Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
+            var resettableObjects = Object.FindObjectsByType<MonoBehaviour>()
                 .OfType<ISessionResettable>()
                 .ToList();
 

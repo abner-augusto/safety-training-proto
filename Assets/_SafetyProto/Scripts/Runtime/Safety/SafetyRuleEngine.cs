@@ -31,7 +31,7 @@ namespace SafetyProto.Runtime.Safety
 
             if (timerSystem == null)
             {
-                timerSystem = FindFirstObjectByType<TimerSystem>();
+                timerSystem = FindAnyObjectByType<TimerSystem>();
             }
 
             ITimerSource? timerSource = timerSystem != null

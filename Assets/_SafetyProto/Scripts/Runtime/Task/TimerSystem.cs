@@ -43,7 +43,7 @@ namespace SafetyProto.Runtime.Task
 
             if (taskManager == null)
             {
-                taskManager = TaskManager.Instance != null ? TaskManager.Instance : FindFirstObjectByType<TaskManager>();
+                taskManager = TaskManager.Instance != null ? TaskManager.Instance : FindAnyObjectByType<TaskManager>();
                 if (taskManager == null)
                 {
                     SafetyLog.Error("TimerSystem: No TaskManager found in scene!", this);

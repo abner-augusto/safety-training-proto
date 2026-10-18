@@ -64,7 +64,7 @@ namespace SafetyProto.Runtime.Scaffolding
             }
 
             if (phaseController == null)
-                phaseController = FindFirstObjectByType<PhaseController>();
+                phaseController = FindAnyObjectByType<PhaseController>();
             if (phaseController == null)
                 SafetyLog.Warning($"[ScaffoldPiecePulseHighlight] '{name}': PhaseController não encontrado — o pulso fica limitado apenas pela distância.", this);
         }

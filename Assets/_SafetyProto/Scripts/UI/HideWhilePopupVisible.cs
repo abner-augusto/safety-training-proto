@@ -30,7 +30,7 @@ namespace SafetyProto.UI
         private void OnEnable()
         {
             if (popupPanel == null)
-                popupPanel = FindFirstObjectByType<PopupPanel>(FindObjectsInactive.Include);
+                popupPanel = FindAnyObjectByType<PopupPanel>(FindObjectsInactive.Include);
 
             if (popupPanel == null || _subscribed)
                 return;
