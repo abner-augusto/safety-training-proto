@@ -4,6 +4,7 @@ using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Runtime.Actions;
+using SafetyProto.Runtime.Interaction;
 using SafetyProto.Runtime.Task;
 using UnityEngine;
 using UnityEngine.Events;
@@ -444,11 +445,7 @@ namespace SafetyProto.Runtime.PPE
             var pose = item.SnapPoseOverride;
             if (pose == null) return;
 
-            Vector3 overrideLocalPos = root.InverseTransformPoint(pose.position);
-            Quaternion overrideLocalRot = Quaternion.Inverse(root.rotation) * pose.rotation;
-
-            targetRotation = slotRotation * Quaternion.Inverse(overrideLocalRot);
-            targetPosition = slotPosition - (targetRotation * overrideLocalPos);
+            SocketPoseMath.ComputeRootPose(root, pose, slotPosition, slotRotation, out targetPosition, out targetRotation);
         }
 
         public PPESnapItem[] EditorPreviewItems => editorPreviewItems;

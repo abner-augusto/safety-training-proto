@@ -5,6 +5,7 @@ using SafetyProto.Core;
 using SafetyProto.Core.Logging;
 using SafetyProto.Runtime.Analytics;
 using SafetyProto.Runtime.Feedback;
+using SafetyProto.Runtime.Interaction;
 using UnityEngine;
 
 namespace SafetyProto.Runtime.PPE
@@ -348,9 +349,13 @@ namespace SafetyProto.Runtime.PPE
 
             if (_useSnapPoseOverride)
             {
-                targetRot = slotRotation * Quaternion.Inverse(_snapOverrideLocalRot);
-
-                targetPos = slotPosition - (targetRot * _snapOverrideLocalPos);
+                SocketPoseMath.ComputeRootPoseFromLocalOffset(
+                    _snapOverrideLocalPos,
+                    _snapOverrideLocalRot,
+                    slotPosition,
+                    slotRotation,
+                    out targetPos,
+                    out targetRot);
             }
 
             if (instant || followSpeed <= 0f)

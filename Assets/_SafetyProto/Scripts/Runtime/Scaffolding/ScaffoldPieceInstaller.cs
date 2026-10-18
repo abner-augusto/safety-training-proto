@@ -1,11 +1,13 @@
-﻿using Oculus.Interaction;
+using Oculus.Interaction;
 using Oculus.Interaction.HandGrab;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
+using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Domain.Safety;
 using SafetyProto.Runtime.Actions;
 using SafetyProto.Runtime.Feedback;
+using SafetyProto.Runtime.Interaction;
 using SafetyProto.Utils;
 using UnityEngine;
 using UnityEngine.Events;
@@ -23,7 +25,7 @@ namespace SafetyProto.Runtime.Scaffolding
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(Grabbable))]
-    public class ScaffoldPieceInstaller : MonoBehaviour
+    public class ScaffoldPieceInstaller : MonoBehaviour, ISessionResettable
     {
         public enum InstallMode { SingleSocket, TwoSockets }
 
@@ -279,6 +281,8 @@ namespace SafetyProto.Runtime.Scaffolding
             SafetyLog.Info($"[ScaffoldPieceInstaller] '{name}' desinstalado — tentativa recusada pelas regras de segurança.", this);
         }
 
+        public void ResetSession() => ResetInstall();
+
         public void ResetInstall()
         {
             _refusalTracker.Reset();
@@ -473,22 +477,14 @@ namespace SafetyProto.Runtime.Scaffolding
         {
             if (_activeAnchor == null || _activeSocket == null) return;
 
-            Quaternion targetRotation = _activeSocket.rotation;
-            if (allow180Rotation)
-            {
-                Quaternion flipped = _activeSocket.rotation * Quaternion.Euler(0, 180, 0);
-                if (Quaternion.Angle(_activeAnchor.rotation, flipped) <
-                    Quaternion.Angle(_activeAnchor.rotation, _activeSocket.rotation))
-                {
-                    targetRotation = flipped;
-                }
-            }
-
-            Vector3    anchorLocalPos = transform.InverseTransformPoint(_activeAnchor.position);
-            Quaternion anchorLocalRot = Quaternion.Inverse(transform.rotation) * _activeAnchor.rotation;
-
-            Quaternion targetRootRot = targetRotation * Quaternion.Inverse(anchorLocalRot);
-            Vector3    targetRootPos = _activeSocket.position - targetRootRot * anchorLocalPos;
+            SocketPoseMath.ComputeRootPose(
+                transform,
+                _activeAnchor,
+                _activeSocket.position,
+                _activeSocket.rotation,
+                allow180Rotation,
+                out var targetRootPos,
+                out var targetRootRot);
 
             transform.SetPositionAndRotation(targetRootPos, targetRootRot);
         }

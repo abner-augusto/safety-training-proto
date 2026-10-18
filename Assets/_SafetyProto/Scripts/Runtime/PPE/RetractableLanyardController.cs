@@ -5,6 +5,7 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
 using SafetyProto.Runtime.Actions;
+using SafetyProto.Runtime.Feedback;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -476,20 +477,7 @@ namespace SafetyProto.Runtime.PPE
 
         private void EnsureAudioSource()
         {
-            if (audioSource == null)
-            {
-                audioSource = GetComponent<AudioSource>();
-                if (audioSource == null)
-                {
-                    audioSource = gameObject.AddComponent<AudioSource>();
-                    audioSource.spatialBlend = 1f;
-                    audioSource.spatialize = true;
-                    audioSource.playOnAwake = false;
-                    audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
-                    audioSource.minDistance = 0.3f;
-                    audioSource.maxDistance = 6f;
-                }
-            }
+            audioSource = AudioSourceDefaults.EnsureSpatial(this, audioSource, 0.3f, 6f);
         }
 
         private AnchorPoint FindNearestAnchor() => FindNearestAnchor(anchorSearchRadius);

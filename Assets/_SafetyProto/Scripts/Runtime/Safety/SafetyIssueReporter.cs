@@ -6,6 +6,7 @@ using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Domain.Safety;
 using SafetyProto.Domain.Scoring;
+using SafetyProto.Runtime.Actions;
 using SafetyProto.Runtime.Feedback;
 using SafetyProto.Runtime.Interaction;
 using SafetyProto.Runtime.Task;
@@ -31,7 +32,7 @@ namespace SafetyProto.Runtime.Safety
     {
         [Header("Action")]
         [Tooltip("ActionId published on confirmation. Must exist in Resources/Actions/actions.json.")]
-        [SerializeField] private string _actionId = "flag_safety_net";
+        [SerializeField, ActionId] private string _actionId = "flag_safety_net";
 
         [Tooltip("Free-form context recorded with the action attempt, for session log and dashboard.")]
         [SerializeField] private string _actionContext = "gaze_dwell";
