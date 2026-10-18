@@ -1,19 +1,19 @@
 using NUnit.Framework;
-using SafetyProto.Runtime.Scaffolding;
+using SafetyProto.Runtime.Feedback;
 using UnityEngine;
 
 namespace SafetyProto.Tests.Editor
 {
     /// <summary>
-    /// Covers the view-cone rule that decides when a scaffold piece counts as seen.
+    /// Covers the view-cone rule that decides when an interactable object counts as seen.
     /// </summary>
-    public class ScaffoldPiecePulseHighlightTests
+    public class PulseHighlightTests
     {
         private const float HalfAngle = 35f;
         private const float MaxDistance = 5f;
 
         private static bool InView(Vector3 forward, Vector3 target) =>
-            ScaffoldPiecePulseHighlight.IsInView(Vector3.zero, forward, target, HalfAngle, MaxDistance);
+            PulseHighlight.IsInView(Vector3.zero, forward, target, HalfAngle, MaxDistance);
 
         [Test]
         public void StraightAheadWithinRangeIsInView()

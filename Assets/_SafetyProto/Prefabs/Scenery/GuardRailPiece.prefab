@@ -351,7 +351,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 471c6e5a94f5e72448d311853e16c297, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Scaffolding.ScaffoldPiecePulseHighlight
+  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Feedback.PulseHighlight
   targetRenderers:
   - {fileID: 5313489545297829222}
   viewOrigin: {fileID: 0}

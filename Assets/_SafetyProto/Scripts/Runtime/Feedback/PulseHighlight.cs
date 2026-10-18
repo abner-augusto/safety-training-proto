@@ -1,23 +1,25 @@
 using Oculus.Interaction;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
+using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
+using SafetyProto.Runtime.PPE;
+using SafetyProto.Runtime.Scaffolding;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace SafetyProto.Runtime.Scaffolding
+namespace SafetyProto.Runtime.Feedback
 {
     /// <summary>
-    /// Pulses a scaffold piece between its own colour and yellow while the participant, already
-    /// on the andaime, has it in view. The first grab (or an install) switches the pulse off for
+    /// Pulses an interactable object between its own colour and yellow while the participant, already
+    /// in the target phase, has it in view. The first grab (or an install/snap/trigger) switches the pulse off for
     /// the rest of the session: the piece has been found, so the cue has done its job.
     ///
     /// The renderers need a material using the <c>SafetyProto/PulseHighlight</c> shader. This
     /// component only writes <c>_PulseAmount</c> through a MaterialPropertyBlock; the oscillation
     /// itself runs in the shader.
     /// </summary>
-    [RequireComponent(typeof(ScaffoldPieceInstaller))]
-    public class ScaffoldPiecePulseHighlight : MonoBehaviour
+    public class PulseHighlight : MonoBehaviour, ISessionResettable
     {
         private static readonly int PulseAmountId = Shader.PropertyToID("_PulseAmount");
 
@@ -29,8 +31,11 @@ namespace SafetyProto.Runtime.Scaffolding
         [Tooltip("HMD centre eye. Leave empty to use the MainCamera-tagged camera.")]
         [SerializeField] private Transform viewOrigin;
 
-        [Tooltip("Pulses only after the teleport to the andaime. Auto-found if empty.")]
+        [Tooltip("Pulses only after the teleport to the andaime when enabled. Auto-found if empty.")]
         [SerializeField] private PhaseController phaseController;
+
+        [Tooltip("When enabled, only pulses after entering the andaime phase. Disable for items in earlier phases.")]
+        [SerializeField] private bool requireAndaimePhase = true;
 
         [Tooltip("Half-angle in degrees of the cone around the head's forward axis that counts as " +
                  "'seeing' the piece. ~35 covers most of the Quest's field of view.")]
@@ -44,6 +49,8 @@ namespace SafetyProto.Runtime.Scaffolding
         [SerializeField, Range(0f, 1f)] private float fadeDuration = 0.25f;
 
         private ScaffoldPieceInstaller _installer;
+        private SimpleActionTrigger _simpleTrigger;
+        private PPESnapItem _ppeSnapItem;
         private Grabbable _grabbable;
         private Transform _resolvedOrigin;
         private MaterialPropertyBlock _mpb;
@@ -54,6 +61,8 @@ namespace SafetyProto.Runtime.Scaffolding
         private void Awake()
         {
             _installer = GetComponent<ScaffoldPieceInstaller>();
+            _simpleTrigger = GetComponent<SimpleActionTrigger>();
+            _ppeSnapItem = GetComponent<PPESnapItem>();
             _grabbable = GetComponent<Grabbable>();
             _mpb = new MaterialPropertyBlock();
 
@@ -63,10 +72,10 @@ namespace SafetyProto.Runtime.Scaffolding
                 if (own != null) targetRenderers = new[] { own };
             }
 
-            if (phaseController == null)
+            if (requireAndaimePhase && phaseController == null)
                 phaseController = FindAnyObjectByType<PhaseController>();
-            if (phaseController == null)
-                SafetyLog.Warning($"[ScaffoldPiecePulseHighlight] '{name}': PhaseController não encontrado — o pulso fica limitado apenas pela distância.", this);
+            if (requireAndaimePhase && phaseController == null)
+                SafetyLog.Warning($"[PulseHighlight] '{name}': PhaseController não encontrado — o pulso fica limitado apenas pela distância.", this);
         }
 
         private void OnEnable()
@@ -95,12 +104,19 @@ namespace SafetyProto.Runtime.Scaffolding
                 EventBus.Instance.Unsubscribe<SessionStartedEventArgs>(_onSessionStarted);
         }
 
+        public void ResetSession() => _consumed = false;
+
         private void LateUpdate()
         {
-            if (_installer.IsInstalled) _consumed = true;
+            if ((_installer != null && _installer.IsInstalled) ||
+                (_simpleTrigger != null && _simpleTrigger.IsTriggered) ||
+                (_ppeSnapItem != null && _ppeSnapItem.IsSnapped))
+            {
+                _consumed = true;
+            }
 
-            bool onScaffold = phaseController == null || phaseController.IsInAndaimePhase;
-            bool active = !_consumed && onScaffold && TryGetViewOrigin(out var origin) &&
+            bool phaseValid = !requireAndaimePhase || phaseController == null || phaseController.IsInAndaimePhase;
+            bool active = !_consumed && phaseValid && TryGetViewOrigin(out var origin) &&
                           IsInView(origin.position, origin.forward, PieceCenter(), viewHalfAngle, maxViewDistance);
 
             float target = active ? 1f : 0f;
