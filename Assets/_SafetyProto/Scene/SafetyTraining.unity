@@ -8614,11 +8614,6 @@ MonoBehaviour:
   _hapticManager: {fileID: 7322035375745015846}
   _dwellHapticAmplitude: 0.25
   _dwellHapticDuration: 0.06
-  _popupTitle: Comunicar Irregularidade
-  _popupBody: "Voc\xEA identificou uma irregularidade na tela fachadeira. Deseja
-    comunic\xE1-la?"
-  _confirmLabel: Comunicar
-  _cancelLabel: Cancelar
 --- !u!82 &340938061
 AudioSource:
   m_ObjectHideFlags: 0

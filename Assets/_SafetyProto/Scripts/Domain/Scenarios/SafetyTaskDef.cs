@@ -137,20 +137,13 @@ namespace SafetyProto.Domain.Scenarios
         [JsonIgnore]
         public List<DistractorDef> Distractors { get; } = new();
 
-        /// <summary>Report-popup copy, authored alongside <see cref="ReportOptions"/>. Moved
-        /// here from the scene's <c>SafetyIssueReporter</c> inspector fields so the scenario
-        /// stays the single source of participant-facing text.</summary>
+        /// <summary>Report-popup copy, authored alongside <see cref="ReportOptions"/>. The scene
+        /// holds no copy of its own, so the scenario is the single source of this text.</summary>
         [JsonProperty("reportPopupTitle")]
         public string reportPopupTitle { get; set; } = string.Empty;
 
         [JsonProperty("reportPopupBody")]
         public string reportPopupBody { get; set; } = string.Empty;
-
-        [JsonProperty("reportConfirmLabel")]
-        public string reportConfirmLabel { get; set; } = string.Empty;
-
-        [JsonProperty("reportCancelLabel")]
-        public string reportCancelLabel { get; set; } = string.Empty;
 
         [JsonIgnore]
         private readonly List<PPEType> _requiredPpe = new();

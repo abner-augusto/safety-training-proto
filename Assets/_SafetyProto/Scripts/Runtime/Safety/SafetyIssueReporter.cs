@@ -19,8 +19,12 @@ namespace SafetyProto.Runtime.Safety
     /// Turns a completed gaze dwell on a hazard into a reportable action.
     ///
     /// Flow: dwell completes -> the report button materialises next to the defect and stays there
-    /// for the rest of the session -> pressing it asks for confirmation -> confirming publishes the
-    /// authored ActionId.
+    /// for the rest of the session -> pressing it publishes the authored ActionId. When the scenario
+    /// task matching that ActionId authors a report popup (<c>reportOptions</c>), the press opens it
+    /// first and the chosen alternative travels with the report.
+    ///
+    /// The popup's title, question and buttons live only in the scenario, edited in the authoring
+    /// app; the scene carries none of that copy, so there is one place to change it.
     ///
     /// The button is revealed regardless of whether the participant is wearing the PPE the task
     /// requires. TaskManager already validates requiredPPE on the attempt, and the scenario already
@@ -31,7 +35,8 @@ namespace SafetyProto.Runtime.Safety
     public class SafetyIssueReporter : MonoBehaviour, ISessionResettable
     {
         [Header("Action")]
-        [Tooltip("ActionId published on confirmation. Must exist in Resources/Actions/actions.json.")]
+        [Tooltip("ActionId published by the report. Must exist in Resources/Actions/actions.json; " +
+                 "the scenario task with this ActionId supplies the report popup.")]
         [SerializeField, ActionId] private string _actionId = "flag_safety_net";
 
         [Tooltip("Free-form context recorded with the action attempt, for session log and dashboard.")]
@@ -41,7 +46,7 @@ namespace SafetyProto.Runtime.Safety
         [Tooltip("Dwell that reveals the button when it completes.")]
         [SerializeField] private GazeDwellTarget _dwellTarget;
 
-        [Tooltip("Button the participant presses to open the confirmation. Subscribed in code — do " +
+        [Tooltip("Button the participant presses to report. Subscribed in code — do " +
                  "not also wire its OnClick to Report(), or the popup opens twice.")]
         [SerializeField] private Button _reportButton;
 
@@ -68,32 +73,23 @@ namespace SafetyProto.Runtime.Safety
         [SerializeField, Range(0f, 1f)] private float _dwellHapticAmplitude = 0.25f;
         [SerializeField, Range(0f, 0.5f)] private float _dwellHapticDuration = 0.06f;
 
-        [Header("Popup copy — participant facing, Portuguese")]
-        [Tooltip("Fallback only. The scenario task's reportPopupTitle/Body/ConfirmLabel/" +
-                 "CancelLabel win when a task matching ActionId is found; these serve tests " +
-                 "and any scene where no TaskManager is wired.")]
-        [SerializeField] private string _popupTitle = "Comunicar Irregularidade";
-
-        [TextArea(2, 4)]
-        [SerializeField] private string _popupBody =
-            "Você identificou uma irregularidade na tela fachadeira. Deseja comunicá-la?";
-
-        [SerializeField] private string _confirmLabel = "Comunicar";
-        [SerializeField] private string _cancelLabel = "Cancelar";
-
         /// <summary>
         /// Injectable popup dependency. Falls back to the serialized provider when unset, which is
         /// how the scene wires it; tests set it directly.
         /// </summary>
         public IPopupFeedback PopupFeedback { get; set; }
 
-        /// <summary>True once the participant has confirmed the report.</summary>
+        /// <summary>
+        /// Injectable scenario task supplying the popup. Falls back to the session task whose
+        /// expected action is this reporter's ActionId; tests set it directly because EditMode has
+        /// no TaskManager.
+        /// </summary>
+        public ISafetyTask ReportTask { get; set; }
+
+        /// <summary>True once the participant has filed the report.</summary>
         public bool HasReported { get; private set; }
 
-        /// <summary>How many times the confirmation was opened and backed out of.</summary>
-        public int CancelledReportCount { get; private set; }
-
-        private bool _confirmationOpen;
+        private bool _choiceOpen;
 
         private readonly RefusedAttemptTracker _refusalTracker = new RefusedAttemptTracker();
         private System.Action<ActionRefusedEventArgs> _onActionRefused;
@@ -134,62 +130,42 @@ namespace SafetyProto.Runtime.Safety
             SafetyLog.Info($"[SafetyIssueReporter] Dwell completo em '{name}'; botão de reporte disponível.", this);
         }
 
-        /// <summary>Opens the confirmation (or, for a task with authored <c>reportOptions</c>,
-        /// the classification choice). Raised by the report button.</summary>
+        /// <summary>Files the report, or first opens the scenario task's report popup when it
+        /// authors one. Raised by the report button.</summary>
         public void Report()
         {
-            if (HasReported || _confirmationOpen) return;
+            if (HasReported || _choiceOpen) return;
 
-            var popup = PopupFeedback ?? _popupFeedbackProvider as IPopupFeedback;
-            if (popup == null)
+            var task = ResolveTask();
+            var options = task?.reportOptions;
+            if (options == null || options.Count == 0)
             {
-                SafetyLog.Warning("[SafetyIssueReporter] IPopupFeedback indisponível; publicando o reporte sem confirmação.", this);
                 PublishReport(null);
                 return;
             }
 
-            var runtimeTask = ResolveRuntimeTask();
-            var task = runtimeTask?.TaskData;
-            var options = task?.reportOptions;
+            var popup = PopupFeedback ?? _popupFeedbackProvider as IPopupFeedback;
+            if (popup == null)
+            {
+                SafetyLog.Warning("[SafetyIssueReporter] IPopupFeedback indisponível; publicando o reporte sem classificação.", this);
+                PublishReport(null);
+                return;
+            }
 
-            _confirmationOpen = true;
+            _choiceOpen = true;
 
             // The button is world-space and stays pressable while the dialog is up; left visible it
             // also draws over the dialog.
             HideButton();
 
-            if (options != null && options.Count > 0)
+            popup.ShowChoice(task.reportPopupTitle, task.reportPopupBody, options, onChosen: option =>
             {
-                string title = NonEmpty(task.reportPopupTitle, _popupTitle);
-                string body = NonEmpty(task.reportPopupBody, _popupBody);
-
-                popup.ShowChoice(title, body, options, onChosen: option =>
-                {
-                    _confirmationOpen = false;
-                    PublishReport(option);
-                });
-            }
-            else
-            {
-                string title = NonEmpty(task?.reportPopupTitle, _popupTitle);
-                string body = NonEmpty(task?.reportPopupBody, _popupBody);
-                string confirm = NonEmpty(task?.reportConfirmLabel, _confirmLabel);
-                string cancel = NonEmpty(task?.reportCancelLabel, _cancelLabel);
-
-                popup.ShowConfirmation(title, body, confirm, cancel,
-                    onConfirm: () => { _confirmationOpen = false; PublishReport(null); },
-                    onCancel: () =>
-                    {
-                        _confirmationOpen = false;
-                        ShowButton();
-                        CancelledReportCount++;
-                        SafetyLog.Info($"[SafetyIssueReporter] Reporte cancelado ({CancelledReportCount}x).", this);
-                    });
-            }
+                _choiceOpen = false;
+                PublishReport(option);
+            });
         }
 
-        private static string NonEmpty(string authored, string fallback) =>
-            string.IsNullOrWhiteSpace(authored) ? fallback : authored;
+        private ISafetyTask ResolveTask() => ReportTask ?? ResolveRuntimeTask()?.TaskData;
 
         /// <summary>The scenario task this reporter files against, found by matching
         /// <see cref="_actionId"/> against every session task's expected action — not just
@@ -224,7 +200,7 @@ namespace SafetyProto.Runtime.Safety
                 var runtimeTask = ResolveRuntimeTask();
                 if (runtimeTask != null) runtimeTask.ReportedOptionId = chosenOption.Id;
 
-                if (!chosenOption.Correct) ChargeMisclassification(runtimeTask);
+                if (!chosenOption.Correct) ChargeMisclassification(ResolveTask());
             }
 
             HideButton();
@@ -232,9 +208,8 @@ namespace SafetyProto.Runtime.Safety
 
         /// <summary>Delegates to the pure <see cref="HazardClassificationPolicy"/> so the
         /// scoring/violation logic is unit-testable without a MonoBehaviour.</summary>
-        private void ChargeMisclassification(RuntimeSafetyTask runtimeTask)
+        private void ChargeMisclassification(ISafetyTask task)
         {
-            var task = runtimeTask?.TaskData;
             var manager = _taskManager != null ? _taskManager : TaskManager.Instance;
             var group = manager?.GetCurrentGroup();
             var scoring = manager != null ? manager.Scoring : ScoringConfig.Default;
@@ -278,8 +253,7 @@ namespace SafetyProto.Runtime.Safety
         public void ResetSession()
         {
             HasReported = false;
-            CancelledReportCount = 0;
-            _confirmationOpen = false;
+            _choiceOpen = false;
             _refusalTracker.Reset();
             if (_dwellTarget != null) _dwellTarget.ResetDwell();
             HideButton();

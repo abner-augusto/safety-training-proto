@@ -91,10 +91,8 @@ namespace SafetyProto.Core.Interfaces
         IReadOnlyList<IDistractor> distractors { get; }
 
         /// <summary>Report-popup copy, authored alongside <see cref="reportOptions"/>.
-        /// Empty when the task has none; a reporter falls back to its own defaults.</summary>
+        /// Empty when the task has no report popup.</summary>
         string reportPopupTitle { get; }
         string reportPopupBody { get; }
-        string reportConfirmLabel { get; }
-        string reportCancelLabel { get; }
     }
 }

@@ -174,6 +174,13 @@ namespace SafetyProto.Domain.Scenarios
                     $"{MinReportOptions} a {MaxReportOptions} alternativas (encontradas: {options.Count}).");
             }
 
+            if (string.IsNullOrWhiteSpace(task.reportPopupTitle) || string.IsNullOrWhiteSpace(task.reportPopupBody))
+            {
+                errors.Add(
+                    $"O popup de reporte da tarefa '{task.taskName}' (grupo '{groupName}') precisa de título " +
+                    "e pergunta; a cena não tem texto próprio para o popup.");
+            }
+
             if (options.Any(o => string.IsNullOrWhiteSpace(o.Label)))
             {
                 errors.Add(

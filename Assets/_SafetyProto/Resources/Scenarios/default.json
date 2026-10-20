@@ -263,9 +263,7 @@
             { "id": "no_irregularity", "label": "Sem irregularidade",   "correct": false }
           ],
           "reportPopupTitle": "Comunicar Irregularidade",
-          "reportPopupBody": "Você identificou uma irregularidade na tela fachadeira. Como ela deve ser classificada?",
-          "reportConfirmLabel": "Comunicar",
-          "reportCancelLabel": "Cancelar"
+          "reportPopupBody": "Você identificou uma irregularidade na tela fachadeira. Como ela deve ser classificada?"
         }
       ],
       "requiredGroups": [

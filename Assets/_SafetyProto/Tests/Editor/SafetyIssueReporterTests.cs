@@ -4,14 +4,16 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Runtime.Safety;
+using SafetyProto.Tests.Editor.Support;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace SafetyProto.Tests.Editor
 {
     /// <summary>
-    /// Covers the report decision: confirming publishes the authored action exactly once, and
-    /// cancelling publishes nothing but is still counted as hesitation.
+    /// Covers the report decision: a task without a report popup files the authored action at
+    /// once; a task with one opens it with the scenario's copy and files after a choice, exactly
+    /// once either way.
     ///
     /// The reporter's reaction to <c>ActionRefusedEventArgs</c> is deliberately absent here. It
     /// subscribes in <c>OnEnable</c>, which Unity never runs on a MonoBehaviour added outside
@@ -26,27 +28,34 @@ namespace SafetyProto.Tests.Editor
         private GameObject _host;
         private SafetyIssueReporter _reporter;
         private string _publishedActionId;
+        private string _publishedContext;
         private int _publishCount;
 
-        /// <summary>Answers every confirmation the same way, without any UI.</summary>
-        private class ScriptedPopup : IPopupFeedback
+        /// <summary>Records the choice popup and keeps it open until the test answers it.</summary>
+        private class HoldingPopup : IPopupFeedback
         {
-            private readonly bool _confirm;
-            public ScriptedPopup(bool confirm) => _confirm = confirm;
+            public string Title;
+            public string Body;
+            public IReadOnlyList<IReportOption> Options;
+            public UnityAction<IReportOption> OnChosen;
+            public int ChoiceCount;
 
-            public void ShowConfirmation(string title, string body, string confirmLabel,
-                                         string cancelLabel, UnityAction onConfirm, UnityAction onCancel = null)
+            public void ShowChoice(string title, string body, IReadOnlyList<IReportOption> options,
+                                   UnityAction<IReportOption> onChosen)
             {
-                if (_confirm) onConfirm?.Invoke();
-                else onCancel?.Invoke();
+                Title = title;
+                Body = body;
+                Options = options;
+                OnChosen = onChosen;
+                ChoiceCount++;
             }
 
+            public void ShowConfirmation(string title, string body, string confirmLabel,
+                                         string cancelLabel, UnityAction onConfirm, UnityAction onCancel = null) { }
             public void ShowSuccess(string title, string body) { }
             public void ShowWarning(string title, string body) { }
             public bool TryShowIfIdle(string title, string body, float autoCloseSeconds) => true;
             public void ShowInteractive(string title, string body, string buttonLabel, UnityAction onAction) { }
-            public void ShowChoice(string title, string body, IReadOnlyList<IReportOption> options,
-                                    UnityAction<IReportOption> onChosen) { }
             public void Hide() { }
             public bool IsDisplayed => false;
         }
@@ -55,6 +64,7 @@ namespace SafetyProto.Tests.Editor
         public void SetUp()
         {
             _publishedActionId = null;
+            _publishedContext = null;
             _publishCount = 0;
 
             EventContext.StartSession("test-session", "player", "scene");
@@ -67,7 +77,7 @@ namespace SafetyProto.Tests.Editor
         [TearDown]
         public void TearDown()
         {
-            // A test that confirms without draining leaves its report queued, and the next test's
+            // A test that reports without draining leaves its report queued, and the next test's
             // ProcessEvents would count it.
             EventBus.Instance.ProcessEvents(10);
             EventBus.Instance.Unsubscribe<ActionAttemptedEvent>(Capture);
@@ -78,39 +88,84 @@ namespace SafetyProto.Tests.Editor
         private void Capture(ActionAttemptedEvent evt)
         {
             _publishedActionId = evt.ActionId;
+            _publishedContext = evt.Context;
             _publishCount++;
         }
 
-        [Test]
-        public void ConfirmingPublishesTheAuthoredAction()
+        private static FakeTaskBuilder.FakeSafetyTask MeshTask()
         {
-            _reporter.PopupFeedback = new ScriptedPopup(confirm: true);
+            var task = new FakeTaskBuilder().Task("Comunicar Irregularidade na Tela Fachadeira", "flag_safety_net");
+            task.reportPopupTitle = "Comunicar Irregularidade";
+            task.reportPopupBody = "Como ela deve ser classificada?";
+            task.ReportOptions.Add(new FakeTaskBuilder.FakeReportOption { Id = "torn_mesh", Label = "Tela rasgada", Correct = true });
+            task.ReportOptions.Add(new FakeTaskBuilder.FakeReportOption { Id = "loose_fixing", Label = "Fixação inadequada" });
+            task.ReportOptions.Add(new FakeTaskBuilder.FakeReportOption { Id = "no_irregularity", Label = "Sem irregularidade" });
+            return task;
+        }
+
+        [Test]
+        public void WithoutAReportPopup_TheActionIsFiledAtOnce()
+        {
+            var popup = new HoldingPopup();
+            _reporter.PopupFeedback = popup;
 
             _reporter.Report();
             EventBus.Instance.ProcessEvents(10);
 
             Assert.AreEqual("flag_safety_net", _publishedActionId);
             Assert.IsTrue(_reporter.HasReported);
+            Assert.AreEqual(0, popup.ChoiceCount, "A task without alternatives opens no popup.");
         }
 
         [Test]
-        public void CancellingPublishesNothingButIsCounted()
+        public void WithAReportPopup_TheScenarioCopyAndAlternativesAreShown()
         {
-            _reporter.PopupFeedback = new ScriptedPopup(confirm: false);
+            var popup = new HoldingPopup();
+            _reporter.PopupFeedback = popup;
+            _reporter.ReportTask = MeshTask();
 
             _reporter.Report();
             EventBus.Instance.ProcessEvents(10);
 
-            Assert.AreEqual(0, _publishCount);
-            Assert.IsFalse(_reporter.HasReported);
-            Assert.AreEqual(1, _reporter.CancelledReportCount,
-                "A cancelled report is evidence of hesitation and must be observable.");
+            Assert.AreEqual(0, _publishCount, "Nothing is filed before a choice.");
+            Assert.AreEqual("Comunicar Irregularidade", popup.Title);
+            Assert.AreEqual("Como ela deve ser classificada?", popup.Body);
+            Assert.AreEqual(3, popup.Options.Count);
+        }
+
+        [Test]
+        public void ChoosingAnAlternative_FilesTheActionWithTheChoice()
+        {
+            var popup = new HoldingPopup();
+            _reporter.PopupFeedback = popup;
+            _reporter.ReportTask = MeshTask();
+            _reporter.Report();
+
+            popup.OnChosen(popup.Options[0]);
+            EventBus.Instance.ProcessEvents(10);
+
+            Assert.AreEqual("flag_safety_net", _publishedActionId);
+            StringAssert.EndsWith(":option=torn_mesh", _publishedContext);
+            Assert.IsTrue(_reporter.HasReported);
+        }
+
+        [Test]
+        public void PressingAgainWhileThePopupIsOpen_OpensItOnce()
+        {
+            var popup = new HoldingPopup();
+            _reporter.PopupFeedback = popup;
+            _reporter.ReportTask = MeshTask();
+
+            _reporter.Report();
+            _reporter.Report();
+
+            Assert.AreEqual(1, popup.ChoiceCount);
         }
 
         [Test]
         public void ReportingTwicePublishesOnce()
         {
-            _reporter.PopupFeedback = new ScriptedPopup(confirm: true);
+            _reporter.PopupFeedback = new HoldingPopup();
 
             _reporter.Report();
             _reporter.Report();
@@ -121,44 +176,15 @@ namespace SafetyProto.Tests.Editor
 
         [Test]
         public void ResetSessionClearsReportedState()
-        {            _reporter.PopupFeedback = new ScriptedPopup(confirm: false);
+        {
+            _reporter.PopupFeedback = new HoldingPopup();
             _reporter.Report();
             EventBus.Instance.ProcessEvents(10);
-
-            _reporter.PopupFeedback = new ScriptedPopup(confirm: true);
-            _reporter.Report();
-            EventBus.Instance.ProcessEvents(10);
-
-            Assert.AreEqual(1, _reporter.CancelledReportCount, "Setup check: cancel should have counted.");
-            Assert.IsTrue(_reporter.HasReported, "Setup check: confirm should have reported.");
+            Assert.IsTrue(_reporter.HasReported, "Setup check: the report should have been filed.");
 
             _reporter.ResetSession();
 
             Assert.IsFalse(_reporter.HasReported);
-            Assert.AreEqual(0, _reporter.CancelledReportCount);
-        }
-
-        /// <summary>Keeps the dialog open until the test answers it.</summary>
-        private class HoldingPopup : IPopupFeedback
-        {
-            public UnityAction OnConfirm;
-            public UnityAction OnCancel;
-
-            public void ShowConfirmation(string title, string body, string confirmLabel,
-                                         string cancelLabel, UnityAction onConfirm, UnityAction onCancel = null)
-            {
-                OnConfirm = onConfirm;
-                OnCancel = onCancel;
-            }
-
-            public void ShowSuccess(string title, string body) { }
-            public void ShowWarning(string title, string body) { }
-            public bool TryShowIfIdle(string title, string body, float autoCloseSeconds) => true;
-            public void ShowInteractive(string title, string body, string buttonLabel, UnityAction onAction) { }
-            public void ShowChoice(string title, string body, IReadOnlyList<IReportOption> options,
-                                    UnityAction<IReportOption> onChosen) { }
-            public void Hide() { }
-            public bool IsDisplayed => false;
         }
 
         private GameObject WireVisibleButtonRoot()
@@ -173,38 +199,38 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
-        public void ReportButtonHidesWhileTheDialogIsOpen()
+        public void ReportButtonHidesWhileThePopupIsOpen()
+        {
+            var root = WireVisibleButtonRoot();
+            _reporter.PopupFeedback = new HoldingPopup();
+            _reporter.ReportTask = MeshTask();
+
+            _reporter.Report();
+
+            Assert.IsFalse(root.activeSelf, "The button must not stay over the popup it opened.");
+        }
+
+        [Test]
+        public void ReportButtonStaysHiddenAfterChoosing()
+        {
+            var root = WireVisibleButtonRoot();
+            var popup = new HoldingPopup();
+            _reporter.PopupFeedback = popup;
+            _reporter.ReportTask = MeshTask();
+            _reporter.Report();
+
+            popup.OnChosen(popup.Options[0]);
+
+            Assert.IsFalse(root.activeSelf);
+        }
+
+        [Test]
+        public void ReportButtonHidesAfterAFilingWithoutPopup()
         {
             var root = WireVisibleButtonRoot();
             _reporter.PopupFeedback = new HoldingPopup();
 
             _reporter.Report();
-
-            Assert.IsFalse(root.activeSelf, "The button must not stay over the dialog it opened.");
-        }
-
-        [Test]
-        public void ReportButtonReturnsWhenTheDialogIsCancelled()
-        {
-            var root = WireVisibleButtonRoot();
-            var popup = new HoldingPopup();
-            _reporter.PopupFeedback = popup;
-            _reporter.Report();
-
-            popup.OnCancel.Invoke();
-
-            Assert.IsTrue(root.activeSelf, "A cancelled report leaves the button for another try.");
-        }
-
-        [Test]
-        public void ReportButtonStaysHiddenAfterConfirming()
-        {
-            var root = WireVisibleButtonRoot();
-            var popup = new HoldingPopup();
-            _reporter.PopupFeedback = popup;
-            _reporter.Report();
-
-            popup.OnConfirm.Invoke();
 
             Assert.IsFalse(root.activeSelf);
         }
