@@ -3,6 +3,7 @@ using System.Text;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Safety;
 using SafetyProto.Utils;
 using TMPro;
 using UnityEngine;
@@ -151,7 +152,7 @@ namespace SafetyProto.UI
 
         private void OnPpeStateChanged(PPEStateChangedEventArgs args)
         {
-            AppendLog($"[EPI] {GetPpeLabel(args.PpeType)}: {(args.IsWearing ? "EQUIPADO" : "REMOVIDO")}");
+            AppendLog($"[EPI] {PpeLabels.DisplayName(args.PpeType)}: {(args.IsWearing ? "EQUIPADO" : "REMOVIDO")}");
         }
 
         private void OnActionAttempt(ActionAttemptedEvent args)
@@ -181,21 +182,6 @@ namespace SafetyProto.UI
         {
             string source = string.IsNullOrEmpty(args.Source) ? "Origem desconhecida" : args.Source;
             AppendLog($"[Segurança] ERRO INTERNO DO SISTEMA | Origem={source}");
-        }
-
-        private static string GetPpeLabel(PPEType ppeType)
-        {
-            return ppeType switch
-            {
-                PPEType.Helmet => "Capacete",
-                PPEType.Goggles => "Óculos de proteção",
-                PPEType.Harness => "Cinto paraquedista",
-                PPEType.Vest => "Colete de segurança",
-                PPEType.Boots => "Botina de segurança",
-                PPEType.GloveLeft => "Luva esquerda",
-                PPEType.GloveRight => "Luva direita",
-                _ => "EPI não identificado"
-            };
         }
 
         private static string GetActionLabel(string actionId)

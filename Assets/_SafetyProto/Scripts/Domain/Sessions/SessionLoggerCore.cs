@@ -6,6 +6,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Threading;
 using SafetyProto.Core;
+using SafetyProto.Domain.Safety;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
@@ -241,7 +242,7 @@ namespace SafetyProto.Domain.Sessions
                 LogEvent("ActionAttempt", details, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                     new LogData { actionId = actionId, context = args.Context ?? string.Empty });
             };
-            _onPpeStateChanged       = args => LogEvent("PpeStateChanged",   $"EPI={GetPpeLabel(args.PpeType)}, Equipado={(args.IsWearing ? "Sim" : "Não")}", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+            _onPpeStateChanged       = args => LogEvent("PpeStateChanged",   $"EPI={PpeLabels.DisplayName(args.PpeType)}, Equipado={(args.IsWearing ? "Sim" : "Não")}", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                 new LogData { ppeType = args.PpeType.ToString(), wearing = args.IsWearing });
             _onTaskLifecycle = args =>
             {
@@ -414,21 +415,6 @@ namespace SafetyProto.Domain.Sessions
                 scenarioId = scenarioId ?? string.Empty,
                 timestampMs = actualTimestamp
             });
-        }
-
-        private static string GetPpeLabel(PPEType ppeType)
-        {
-            return ppeType switch
-            {
-                PPEType.Helmet => "Capacete",
-                PPEType.Goggles => "Óculos de proteção",
-                PPEType.Harness => "Cinto paraquedista",
-                PPEType.Vest => "Colete de segurança",
-                PPEType.Boots => "Botina de segurança",
-                PPEType.GloveLeft => "Luva esquerda",
-                PPEType.GloveRight => "Luva direita",
-                _ => "EPI não identificado"
-            };
         }
 
         private void ResetTallies(long timestampMs)

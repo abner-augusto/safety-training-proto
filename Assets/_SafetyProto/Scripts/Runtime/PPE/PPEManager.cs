@@ -123,25 +123,10 @@ namespace SafetyProto.Runtime.PPE
 
             IncidentalChargePolicy.ChargeWrongPpeSelected(
                 EventBus.Instance, ScoreService.Instance, scoring,
-                match != null ? match.Distractor.Name : GetPpeLabel(ppeType), itemName,
+                match != null ? match.Distractor.Name : PpeLabels.DisplayName(ppeType), itemName,
                 firstAttemptForItem: _chargedDistractors.Add(DistractorResolver.ChargeKey(distractorId, itemName)),
                 taskId: match?.Task.id ?? string.Empty,
                 taskName: match?.Task.taskName);
-        }
-
-        private static string GetPpeLabel(PPEType ppeType)
-        {
-            return ppeType switch
-            {
-                PPEType.Helmet => "Capacete",
-                PPEType.Goggles => "Óculos de proteção",
-                PPEType.Harness => "Cinto paraquedista",
-                PPEType.Vest => "Colete de segurança",
-                PPEType.Boots => "Botina de segurança",
-                PPEType.GloveLeft => "Luva esquerda",
-                PPEType.GloveRight => "Luva direita",
-                _ => "EPI não identificado"
-            };
         }
 
         public void ResetSession()
