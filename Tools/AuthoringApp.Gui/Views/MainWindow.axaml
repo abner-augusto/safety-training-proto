@@ -62,24 +62,6 @@
             <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Editor.ParticipantId}"/>
           </Grid>
 
-          <StackPanel Spacing="4">
-            <TextBlock Text="Dicas da tela final" Classes="label"/>
-            <ScrollViewer MaxHeight="112" VerticalScrollBarVisibility="Auto">
-              <ItemsControl ItemsSource="{Binding Editor.FinishTips}">
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate DataType="vm:FinishTipViewModel">
-                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,0,4">
-                      <TextBox Text="{Binding Text}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="40"
-                               HorizontalAlignment="Stretch" Width="280"/>
-                      <Button Content="Remover" Click="OnRemoveFinishTip" VerticalAlignment="Top"/>
-                    </StackPanel>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
-            </ScrollViewer>
-            <Button Content="+ Dica" Click="OnAddFinishTip" HorizontalAlignment="Left"/>
-          </StackPanel>
-
           <StackPanel Orientation="Horizontal" Spacing="6">
             <Button Content="+ Grupo" Click="OnAddGroup"/>
             <Button Content="+ Tarefa" Click="OnAddTask"/>
@@ -142,152 +124,173 @@
               </StackPanel>
             </DataTemplate>
 
-            <!-- Task editor -->
+            <!-- Task editor. Each card is one concern, so an author scanning for "the decoys" or
+                 "the report popup" finds a title instead of reading every caption. -->
             <DataTemplate DataType="vm:TaskViewModel">
-              <StackPanel Spacing="8">
+              <StackPanel Spacing="10">
                 <TextBlock Text="Tarefa" Classes="heading"/>
-                <StackPanel Spacing="2">
-                  <TextBlock Text="Id (opcional — usa o nome se vazio)" Classes="label"/>
-                  <TextBox Text="{Binding TaskId}" Watermark="ex.: equip_helmet"/>
-                </StackPanel>
-                <StackPanel Spacing="2">
-                  <TextBlock Text="Nome" Classes="label"/>
-                  <TextBox Text="{Binding TaskName}"/>
-                </StackPanel>
-                <StackPanel Spacing="2">
-                  <TextBlock Text="Descrição" Classes="label"/>
-                  <TextBox Text="{Binding TaskDescription}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
-                </StackPanel>
-                <StackPanel Spacing="2">
-                  <TextBlock Text="Ação" Classes="label"/>
-                  <ComboBox ItemsSource="{Binding ActionOptions}" SelectedItem="{Binding SelectedAction}"
-                            HorizontalAlignment="Left" MinWidth="260"/>
-                </StackPanel>
 
-                <StackPanel Spacing="4">
-                  <TextBlock Text="Avaliação de risco ocupacional (NR-01)" Classes="label"/>
-                  <StackPanel Spacing="2">
-                    <TextBlock Text="Severidade — magnitude da consequência mais grave possível"/>
-                    <ComboBox ItemsSource="{Binding SeverityOptions}"
-                              SelectedItem="{Binding SelectedSeverity}"
-                              HorizontalAlignment="Left" MinWidth="460"/>
-                  </StackPanel>
-                  <StackPanel Spacing="2">
-                    <TextBlock Text="Probabilidade — chance da lesão, dada a exposição e a eficácia das medidas"/>
-                    <ComboBox ItemsSource="{Binding ProbabilityOptions}"
-                              SelectedItem="{Binding SelectedProbability}"
-                              HorizontalAlignment="Left" MinWidth="460"/>
-                  </StackPanel>
-                  <Border Classes="panel" Padding="8">
+                <Border Classes="panel" Padding="12">
+                  <StackPanel Spacing="8">
+                    <TextBlock Text="Identificação" Classes="section"/>
+                    <Grid ColumnDefinitions="*,8,2*">
+                      <StackPanel Grid.Column="0" Spacing="2">
+                        <TextBlock Text="Id (opcional)" Classes="label"/>
+                        <TextBox Text="{Binding TaskId}" Watermark="ex.: equip_helmet"/>
+                      </StackPanel>
+                      <StackPanel Grid.Column="2" Spacing="2">
+                        <TextBlock Text="Nome" Classes="label"/>
+                        <TextBox Text="{Binding TaskName}"/>
+                      </StackPanel>
+                    </Grid>
                     <StackPanel Spacing="2">
-                      <TextBlock Text="Nível de risco" Classes="label"/>
-                      <TextBlock Text="{Binding RiskLevelDisplay}" FontWeight="Bold"/>
-                      <TextBlock Text="{Binding RiskDecisionHint}" TextWrapping="Wrap" Opacity="0.8"/>
+                      <TextBlock Text="Descrição" Classes="label"/>
+                      <TextBox Text="{Binding TaskDescription}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
                     </StackPanel>
-                  </Border>
-                </StackPanel>
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="Ação" Classes="label"/>
+                      <ComboBox ItemsSource="{Binding ActionOptions}" SelectedItem="{Binding SelectedAction}"
+                                HorizontalAlignment="Left" MinWidth="260"/>
+                    </StackPanel>
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="EPIs requeridos" Classes="label"/>
+                      <ItemsControl ItemsSource="{Binding PpeOptions}">
+                        <ItemsControl.ItemsPanel>
+                          <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" ItemSpacing="16"/>
+                          </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate DataType="vm:PpeToggleViewModel">
+                            <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}"/>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </StackPanel>
+                  </StackPanel>
+                </Border>
 
-                <StackPanel Spacing="2">
-                  <TextBlock Text="EPIs requeridos" Classes="label"/>
-                  <Border Classes="panel" Padding="8">
-                    <ItemsControl ItemsSource="{Binding PpeOptions}">
-                      <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="vm:PpeToggleViewModel">
-                          <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}"/>
-                        </DataTemplate>
-                      </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                  </Border>
-                </StackPanel>
+                <Border Classes="panel" Padding="12">
+                  <StackPanel Spacing="8">
+                    <TextBlock Text="Avaliação de risco ocupacional (NR-01)" Classes="section"/>
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="Severidade — magnitude da consequência mais grave possível" Classes="label"/>
+                      <ComboBox ItemsSource="{Binding SeverityOptions}"
+                                SelectedItem="{Binding SelectedSeverity}"
+                                HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="Probabilidade — chance da lesão, dada a exposição e a eficácia das medidas" Classes="label"/>
+                      <ComboBox ItemsSource="{Binding ProbabilityOptions}"
+                                SelectedItem="{Binding SelectedProbability}"
+                                HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="{Binding RiskLevelDisplay, StringFormat='Nível de risco: {0}'}" FontWeight="Bold"/>
+                      <TextBlock Text="{Binding RiskDecisionHint}" Classes="hint"/>
+                    </StackPanel>
+                  </StackPanel>
+                </Border>
 
-                <StackPanel Spacing="2">
-                  <TextBlock Text="Dica (hint)" Classes="label"/>
-                  <TextBox Text="{Binding HintText}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
-                </StackPanel>
-                <StackPanel Spacing="2">
-                  <TextBlock Text="Conselho de omissão (modo Avaliação)" Classes="label"/>
-                  <TextBox Text="{Binding OmissionAdvice}" AcceptsReturn="True" MinHeight="48" TextWrapping="Wrap"/>
-                </StackPanel>
-                <StackPanel Spacing="2">
-                  <TextBlock Text="Conselho em caso de falha" Classes="label"/>
-                  <TextBox Text="{Binding FailureAdvice}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
-                </StackPanel>
-                <StackPanel Spacing="2">
-                  <TextBlock Text="Conselho de EPI" Classes="label"/>
-                  <TextBox Text="{Binding PpeAdvice}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
-                </StackPanel>
-                <StackPanel Spacing="2">
-                  <TextBlock Text="Dica adicional (sucesso)" Classes="label"/>
-                  <TextBox Text="{Binding SuccessAdvice}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
-                  <CheckBox Content="Narrar com voz" IsChecked="{Binding SuccessAdviceNarrated}"/>
-                </StackPanel>
+                <Border Classes="panel" Padding="12">
+                  <StackPanel Spacing="8">
+                    <TextBlock Text="Textos para o participante" Classes="section"/>
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="Dica (hint)" Classes="label"/>
+                      <TextBox Text="{Binding HintText}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
+                    </StackPanel>
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="Conselho de omissão (modo Avaliação)" Classes="label"/>
+                      <TextBox Text="{Binding OmissionAdvice}" AcceptsReturn="True" MinHeight="48" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="Conselho em caso de falha" Classes="label"/>
+                      <TextBox Text="{Binding FailureAdvice}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
+                    </StackPanel>
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="Conselho de EPI" Classes="label"/>
+                      <TextBox Text="{Binding PpeAdvice}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
+                    </StackPanel>
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="Dica adicional (sucesso)" Classes="label"/>
+                      <TextBox Text="{Binding SuccessAdvice}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
+                      <CheckBox Content="Narrar com voz" IsChecked="{Binding SuccessAdviceNarrated}"/>
+                    </StackPanel>
+                  </StackPanel>
+                </Border>
 
-                <StackPanel Spacing="4">
-                  <TextBlock Text="Distratores (EPIs errados) — opcional" Classes="label"/>
-                  <TextBlock Text="Só para tarefas de equipar EPI. Cada distrator é um item errado oferecido na cena; o id deve coincidir com o 'distractorId' do prefab e ser único no cenário. A explicação aparece quando o participante tenta equipá-lo."
-                             TextWrapping="Wrap" Opacity="0.8"/>
-                  <Border Classes="panel" Padding="8">
-                    <StackPanel Spacing="4">
-                      <ItemsControl ItemsSource="{Binding Distractors}">
+                <Border Classes="panel" Padding="12">
+                  <StackPanel Spacing="8">
+                    <TextBlock Text="Distratores (EPIs errados)" Classes="section"/>
+                    <TextBlock IsVisible="{Binding !IsEquipTask}" Classes="hint"
+                               Text="Só tarefas de equipar EPI (sem ação e com EPI requerido) oferecem distratores."/>
+                    <StackPanel IsVisible="{Binding IsEquipTask}" Spacing="6">
+                      <TextBlock Classes="hint"
+                                 Text="Escolha itens do catálogo do cenário. Para cadastrar ou editar um distrator, use a aba Distratores."/>
+                      <ItemsControl ItemsSource="{Binding LinkedDistractors}">
                         <ItemsControl.ItemTemplate>
                           <DataTemplate DataType="vm:DistractorViewModel">
-                            <StackPanel Spacing="2" Margin="0,2,0,6">
-                              <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBox Text="{Binding Id}" Watermark="id" MinWidth="140"/>
-                                <TextBox Text="{Binding Name}" Watermark="nome (pt-BR)" MinWidth="220"/>
-                                <Button Content="Remover" Click="OnRemoveDistractor"/>
-                              </StackPanel>
-                              <TextBox Text="{Binding RejectionAdvice}" Watermark="por que está errado"
-                                       AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
-                            </StackPanel>
+                            <DockPanel Margin="0,0,0,4">
+                              <Button DockPanel.Dock="Right" Content="Remover" Click="OnUnlinkDistractor"/>
+                              <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"
+                                         TextTrimming="CharacterEllipsis"/>
+                            </DockPanel>
                           </DataTemplate>
                         </ItemsControl.ItemTemplate>
                       </ItemsControl>
-                      <Button Content="+ Distrator" Click="OnAddDistractor" HorizontalAlignment="Left"/>
+                      <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="Adicionar" Click="OnLinkDistractor" Margin="6,0,0,0"
+                                IsEnabled="{Binding DistractorToLink, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                        <ComboBox ItemsSource="{Binding DistractorCatalog}" SelectedItem="{Binding DistractorToLink}"
+                                  PlaceholderText="Escolha um distrator do catálogo…" HorizontalAlignment="Stretch">
+                          <ComboBox.ItemTemplate>
+                            <DataTemplate DataType="vm:DistractorViewModel">
+                              <TextBlock Text="{Binding DisplayName}"/>
+                            </DataTemplate>
+                          </ComboBox.ItemTemplate>
+                        </ComboBox>
+                      </DockPanel>
                     </StackPanel>
-                  </Border>
-                </StackPanel>
+                  </StackPanel>
+                </Border>
 
-                <StackPanel Spacing="4">
-                  <TextBlock Text="Classificação (popup de reporte) — opcional" Classes="label"/>
-                  <TextBlock Text="Deixe vazio para o reporte de confirmar/cancelar de sempre. Preencha para pedir ao participante que classifique o que encontrou; exatamente uma opção deve ser 'correct'."
-                             TextWrapping="Wrap" Opacity="0.8"/>
-                  <Border Classes="panel" Padding="8">
-                    <StackPanel Spacing="4">
-                      <ItemsControl ItemsSource="{Binding ReportOptions}">
-                        <ItemsControl.ItemTemplate>
-                          <DataTemplate DataType="vm:ReportOptionViewModel">
-                            <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
-                              <TextBox Text="{Binding Id}" Watermark="id" MinWidth="140"/>
-                              <TextBox Text="{Binding Label}" Watermark="rótulo (pt-BR)" MinWidth="220"/>
-                              <CheckBox Content="Correta" IsChecked="{Binding Correct}"/>
-                              <Button Content="Remover" Click="OnRemoveReportOption"/>
-                            </StackPanel>
-                          </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                      </ItemsControl>
-                      <Button Content="+ Opção" Click="OnAddReportOption" HorizontalAlignment="Left"/>
-                    </StackPanel>
-                  </Border>
-                  <StackPanel Spacing="2">
-                    <TextBlock Text="Título do popup"/>
-                    <TextBox Text="{Binding ReportPopupTitle}"/>
-                  </StackPanel>
-                  <StackPanel Spacing="2">
-                    <TextBlock Text="Corpo do popup"/>
-                    <TextBox Text="{Binding ReportPopupBody}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"/>
-                  </StackPanel>
-                  <StackPanel Orientation="Horizontal" Spacing="12">
-                    <StackPanel Spacing="2">
-                      <TextBlock Text="Rótulo confirmar"/>
-                      <TextBox Text="{Binding ReportConfirmLabel}" MinWidth="140"/>
-                    </StackPanel>
-                    <StackPanel Spacing="2">
-                      <TextBlock Text="Rótulo cancelar"/>
-                      <TextBox Text="{Binding ReportCancelLabel}" MinWidth="140"/>
+                <Border Classes="panel" Padding="12">
+                  <StackPanel Spacing="8">
+                    <TextBlock Text="Popup de reporte" Classes="section"/>
+                    <CheckBox Content="Esta tarefa abre um popup de reporte com alternativas"
+                              IsChecked="{Binding HasReportPopup}"/>
+                    <StackPanel IsVisible="{Binding HasReportPopup}" Spacing="8">
+                      <StackPanel Spacing="2">
+                        <TextBlock Text="Título do popup" Classes="label"/>
+                        <TextBox Text="{Binding ReportPopupTitle}"/>
+                      </StackPanel>
+                      <StackPanel Spacing="2">
+                        <TextBlock Text="Pergunta (corpo do popup)" Classes="label"/>
+                        <TextBox Text="{Binding ReportPopupBody}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="48"
+                                 Watermark="ex.: Como esta irregularidade deve ser classificada?"/>
+                      </StackPanel>
+                      <StackPanel Spacing="4">
+                        <TextBlock Text="Alternativas (botões do popup) — de 2 a 4; marque a correta" Classes="label"/>
+                        <ItemsControl ItemsSource="{Binding ReportOptions}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:ReportOptionViewModel">
+                              <Grid ColumnDefinitions="Auto,*,8,140,8,Auto" Margin="0,0,0,4">
+                                <RadioButton Grid.Column="0" Content="Correta" IsChecked="{Binding Correct}"
+                                             VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBox Grid.Column="1" Text="{Binding Label}" Watermark="texto do botão"/>
+                                <TextBox Grid.Column="3" Text="{Binding Id}" Watermark="id (automático)"
+                                         ToolTip.Tip="Chave de análise. Deixe vazio para gerar a partir do texto; não mude depois de coletar dados."/>
+                                <Button Grid.Column="5" Content="Remover" Click="OnRemoveReportOption"/>
+                              </Grid>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Button Content="+ Alternativa" Click="OnAddReportOption" HorizontalAlignment="Left"
+                                IsEnabled="{Binding CanAddReportOption}"/>
+                      </StackPanel>
                     </StackPanel>
                   </StackPanel>
-                </StackPanel>
+                </Border>
               </StackPanel>
             </DataTemplate>
 
@@ -295,6 +298,101 @@
         </ContentControl>
       </ScrollViewer>
     </Grid>
+      </TabItem>
+
+      <TabItem Header="Distratores">
+        <Grid ColumnDefinitions="2*,Auto,3*">
+          <DockPanel Grid.Column="0">
+            <TextBlock DockPanel.Dock="Top" IsVisible="{Binding !HasScenario}"
+                       Text="Nenhum cenário aberto.&#x0a;Use Novo ou Abrir…"
+                       Foreground="{DynamicResource SpTextDim}" Margin="4,12"/>
+
+            <StackPanel DockPanel.Dock="Top" IsVisible="{Binding HasScenario}" Spacing="6" Margin="0,0,8,8">
+              <TextBlock Classes="hint"
+                         Text="Itens errados que a cena oferece. Cadastre aqui e vincule cada um a uma tarefa de equipar EPI, na aba Cenário."/>
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button Content="+ Distrator" Click="OnAddDistractor"/>
+                <Button Content="Remover" Click="OnRemoveDistractor"
+                        IsEnabled="{Binding Editor.SelectedDistractor, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+              </StackPanel>
+            </StackPanel>
+
+            <Border Classes="panel" Margin="0,0,8,0" IsVisible="{Binding HasScenario}">
+              <ListBox ItemsSource="{Binding Editor.Distractors}"
+                       SelectedItem="{Binding Editor.SelectedDistractor, Mode=TwoWay}">
+                <ListBox.ItemTemplate>
+                  <DataTemplate DataType="vm:DistractorViewModel">
+                    <StackPanel Spacing="1">
+                      <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/>
+                      <TextBlock Text="{Binding UsedBy, StringFormat='Usado em: {0}'}" FontSize="11"
+                                 Foreground="{DynamicResource SpTextDim}" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </Border>
+          </DockPanel>
+
+          <GridSplitter Grid.Column="1" Width="4" ResizeDirection="Columns"/>
+
+          <ScrollViewer Grid.Column="2" Margin="8,0,0,0">
+            <ContentControl Content="{Binding Editor.SelectedDistractor}">
+              <ContentControl.DataTemplates>
+                <DataTemplate DataType="vm:DistractorViewModel">
+                  <StackPanel Spacing="8">
+                    <TextBlock Text="Distrator" Classes="heading"/>
+                    <Grid ColumnDefinitions="*,8,2*">
+                      <StackPanel Grid.Column="0" Spacing="2">
+                        <TextBlock Text="Id" Classes="label"/>
+                        <TextBox Text="{Binding Id}" Watermark="ex.: flip_flops"/>
+                      </StackPanel>
+                      <StackPanel Grid.Column="2" Spacing="2">
+                        <TextBlock Text="Nome" Classes="label"/>
+                        <TextBox Text="{Binding Name}" Watermark="ex.: Chinelo"/>
+                      </StackPanel>
+                    </Grid>
+                    <TextBlock Classes="hint"
+                               Text="O id deve ser único e igual ao 'distractorId' do prefab na cena; mudá-lo desliga o item da cena."/>
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="Por que está errado" Classes="label"/>
+                      <TextBox Text="{Binding RejectionAdvice}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72"
+                               Watermark="Aparece quando o participante tenta equipar este item."/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding UsedBy, StringFormat='Usado em: {0}'}" Classes="hint"/>
+                  </StackPanel>
+                </DataTemplate>
+              </ContentControl.DataTemplates>
+            </ContentControl>
+          </ScrollViewer>
+        </Grid>
+      </TabItem>
+
+      <TabItem Header="Dicas finais">
+        <DockPanel>
+          <TextBlock DockPanel.Dock="Top" IsVisible="{Binding !HasScenario}"
+                     Text="Nenhum cenário aberto.&#x0a;Use Novo ou Abrir…"
+                     Foreground="{DynamicResource SpTextDim}" Margin="4,12"/>
+
+          <StackPanel DockPanel.Dock="Top" IsVisible="{Binding HasScenario}" Spacing="6" Margin="0,0,0,8">
+            <TextBlock Classes="hint"
+                       Text="A tela final mostra uma dica sorteada desta lista."/>
+            <Button Content="+ Dica" Click="OnAddFinishTip" HorizontalAlignment="Left"/>
+          </StackPanel>
+
+          <ScrollViewer IsVisible="{Binding HasScenario}">
+            <ItemsControl ItemsSource="{Binding Editor.FinishTips}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="vm:FinishTipViewModel">
+                  <DockPanel Margin="0,0,0,6">
+                    <Button DockPanel.Dock="Right" Content="Remover" Click="OnRemoveFinishTip"
+                            VerticalAlignment="Top" Margin="6,0,0,0"/>
+                    <TextBox Text="{Binding Text}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="40"/>
+                  </DockPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </DockPanel>
       </TabItem>
 
       <TabItem Header="Ações">

@@ -94,14 +94,18 @@ public partial class MainWindow : Window
             task.RemoveReportOption(option);
     }
 
-    private void OnAddDistractor(object? sender, RoutedEventArgs e) =>
-        (Vm?.Editor?.SelectedNode as TaskViewModel)?.AddDistractor();
+    private void OnAddDistractor(object? sender, RoutedEventArgs e) => Vm?.Editor?.AddDistractor();
 
-    private void OnRemoveDistractor(object? sender, RoutedEventArgs e)
+    private void OnRemoveDistractor(object? sender, RoutedEventArgs e) => Vm?.Editor?.RemoveSelectedDistractor();
+
+    private void OnLinkDistractor(object? sender, RoutedEventArgs e) =>
+        (Vm?.Editor?.SelectedNode as TaskViewModel)?.LinkDistractor();
+
+    private void OnUnlinkDistractor(object? sender, RoutedEventArgs e)
     {
         if ((Vm?.Editor?.SelectedNode as TaskViewModel) is not { } task) return;
         if ((sender as Control)?.DataContext is DistractorViewModel distractor)
-            task.RemoveDistractor(distractor);
+            task.UnlinkDistractor(distractor);
     }
 
     private void OnAddFinishTip(object? sender, RoutedEventArgs e) => Vm?.Editor?.AddFinishTip();

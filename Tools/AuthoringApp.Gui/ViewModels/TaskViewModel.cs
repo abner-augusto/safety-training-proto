@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
+using System.Text;
 using SafetyProto.Core;
 using SafetyProto.Domain.Scenarios;
 
@@ -41,10 +43,10 @@ public sealed class TaskViewModel : ViewModelBase
     private bool _successAdviceNarrated;
     private string _ppeAdvice;
     private string _omissionAdvice;
+    private bool _hasReportPopup;
     private string _reportPopupTitle;
     private string _reportPopupBody;
-    private string _reportConfirmLabel;
-    private string _reportCancelLabel;
+    private DistractorViewModel? _distractorToLink;
 
     public TaskViewModel(SafetyTaskDef def, GroupViewModel group, ScenarioEditorViewModel editor)
     {
@@ -70,18 +72,20 @@ public sealed class TaskViewModel : ViewModelBase
         _omissionAdvice = def.omissionAdvice;
         _reportPopupTitle = def.reportPopupTitle;
         _reportPopupBody = def.reportPopupBody;
-        _reportConfirmLabel = def.reportConfirmLabel;
-        _reportCancelLabel = def.reportCancelLabel;
+        _hasReportPopup = def.ReportOptions.Count > 0;
 
         var selected = new HashSet<string>(def.RequiredPpeNames, System.StringComparer.OrdinalIgnoreCase);
         PpeOptions = new ObservableCollection<PpeToggleViewModel>(
             editor.PpeOptionNames.Select(n => new PpeToggleViewModel(n, selected.Contains(n))));
+        foreach (var ppe in PpeOptions)
+            ppe.PropertyChanged += (_, _) => OnPropertyChanged(nameof(IsEquipTask));
 
-        ReportOptions = new ObservableCollection<ReportOptionViewModel>(
-            def.ReportOptions.Select(o => new ReportOptionViewModel(o)));
+        ReportOptions = new ObservableCollection<ReportOptionViewModel>();
+        foreach (var option in def.ReportOptions) AttachReportOption(new ReportOptionViewModel(option));
+        ReportOptions.CollectionChanged += (_, _) => OnPropertyChanged(nameof(CanAddReportOption));
 
-        Distractors = new ObservableCollection<DistractorViewModel>(
-            def.Distractors.Select(d => new DistractorViewModel(d)));
+        LinkedDistractors = new ObservableCollection<DistractorViewModel>(
+            def.DistractorIds.Select(editor.FindOrRegisterDistractor).Distinct());
     }
 
     /// <summary>The group this task belongs to (for add/remove and re-parenting).</summary>
@@ -113,7 +117,9 @@ public sealed class TaskViewModel : ViewModelBase
         set
         {
             var id = value == NoActionLabel ? string.Empty : value;
-            if (SetField(ref _actionId, id, nameof(SelectedAction))) OnPropertyChanged(nameof(DisplayName));
+            if (!SetField(ref _actionId, id, nameof(SelectedAction))) return;
+            OnPropertyChanged(nameof(DisplayName));
+            OnPropertyChanged(nameof(IsEquipTask));
         }
     }
 
@@ -173,32 +179,86 @@ public sealed class TaskViewModel : ViewModelBase
     public string PpeAdvice { get => _ppeAdvice; set => SetField(ref _ppeAdvice, value); }
     public string OmissionAdvice { get => _omissionAdvice; set => SetField(ref _omissionAdvice, value); }
 
-    /// <summary>Classification choices offered by this task's report popup. Empty for every
-    /// task except a hazard-classification one — leaving it empty keeps the plain
-    /// confirm/cancel report flow at runtime.</summary>
+    /// <summary>An equip task has no action and requires PPE — the only kind that may offer decoys.</summary>
+    public bool IsEquipTask => string.IsNullOrEmpty(_actionId) && PpeOptions.Any(p => p.IsSelected);
+
+    public const string DefaultReportPopupTitle = "Comunicar Irregularidade";
+
+    /// <summary>
+    /// Whether reporting this task opens a popup of alternatives. Off by default; switching it on
+    /// seeds two blank alternatives so the author starts from a valid shape. Switching it off keeps
+    /// the alternatives in memory (toggling back restores them) but saves none of them.
+    /// </summary>
+    public bool HasReportPopup
+    {
+        get => _hasReportPopup;
+        set
+        {
+            if (!SetField(ref _hasReportPopup, value) || !value) return;
+
+            if (string.IsNullOrWhiteSpace(_reportPopupTitle)) ReportPopupTitle = DefaultReportPopupTitle;
+            while (ReportOptions.Count < ScenarioValidator.MinReportOptions) AddReportOption();
+            if (!ReportOptions.Any(o => o.Correct)) ReportOptions[0].Correct = true;
+        }
+    }
+
+    /// <summary>The buttons of this task's report popup; exactly one is correct.</summary>
     public ObservableCollection<ReportOptionViewModel> ReportOptions { get; }
 
-    /// <summary>Decoy items for this equip task (wrong-but-plausible equipment the scene offers).
-    /// Leave empty for every task that is not an equip task.</summary>
-    public ObservableCollection<DistractorViewModel> Distractors { get; }
+    public bool CanAddReportOption => ReportOptions.Count < ScenarioValidator.MaxReportOptions;
 
     public string ReportPopupTitle { get => _reportPopupTitle; set => SetField(ref _reportPopupTitle, value); }
     public string ReportPopupBody { get => _reportPopupBody; set => SetField(ref _reportPopupBody, value); }
-    public string ReportConfirmLabel { get => _reportConfirmLabel; set => SetField(ref _reportConfirmLabel, value); }
-    public string ReportCancelLabel { get => _reportCancelLabel; set => SetField(ref _reportCancelLabel, value); }
 
-    public void AddReportOption() => ReportOptions.Add(new ReportOptionViewModel(string.Empty, string.Empty, false));
+    public void AddReportOption()
+    {
+        if (!CanAddReportOption) return;
+        AttachReportOption(new ReportOptionViewModel(string.Empty, string.Empty, ReportOptions.Count == 0));
+    }
 
     public void RemoveReportOption(ReportOptionViewModel option)
     {
-        if (option != null) ReportOptions.Remove(option);
+        if (option == null || !ReportOptions.Remove(option)) return;
+        option.MarkedCorrect -= OnOptionMarkedCorrect;
+        if (option.Correct && ReportOptions.Count > 0) ReportOptions[0].Correct = true;
     }
 
-    public void AddDistractor() => Distractors.Add(new DistractorViewModel(string.Empty, string.Empty, string.Empty));
-
-    public void RemoveDistractor(DistractorViewModel distractor)
+    private void AttachReportOption(ReportOptionViewModel option)
     {
-        if (distractor != null) Distractors.Remove(distractor);
+        option.MarkedCorrect += OnOptionMarkedCorrect;
+        ReportOptions.Add(option);
+    }
+
+    private void OnOptionMarkedCorrect(ReportOptionViewModel chosen)
+    {
+        foreach (var other in ReportOptions)
+        {
+            if (!ReferenceEquals(other, chosen)) other.Correct = false;
+        }
+    }
+
+    /// <summary>Catalog decoys this equip task offers. They are references into the scenario's
+    /// catalog, so a decoy's text is edited once, on the Distratores tab.</summary>
+    public ObservableCollection<DistractorViewModel> LinkedDistractors { get; }
+
+    /// <summary>Dropdown source: the scenario's whole distractor catalog.</summary>
+    public ObservableCollection<DistractorViewModel> DistractorCatalog => _editor.Distractors;
+
+    public DistractorViewModel? DistractorToLink { get => _distractorToLink; set => SetField(ref _distractorToLink, value); }
+
+    public void LinkDistractor()
+    {
+        var chosen = _distractorToLink;
+        DistractorToLink = null;
+        if (chosen == null || LinkedDistractors.Contains(chosen)) return;
+
+        LinkedDistractors.Add(chosen);
+        _editor.RefreshDistractorUsage();
+    }
+
+    public void UnlinkDistractor(DistractorViewModel distractor)
+    {
+        if (distractor != null && LinkedDistractors.Remove(distractor)) _editor.RefreshDistractorUsage();
     }
 
     /// <summary>Label shown in the tree.</summary>
@@ -226,13 +286,50 @@ public sealed class TaskViewModel : ViewModelBase
         ppeAdvice = _ppeAdvice,
         omissionAdvice = _omissionAdvice,
         RequiredPpeNames = PpeOptions.Where(p => p.IsSelected).Select(p => p.Name).ToList(),
-        ReportOptions = ReportOptions.Select(o => o.ToDef()).ToList(),
-        Distractors = Distractors.Select(d => d.ToDef()).ToList(),
-        reportPopupTitle = _reportPopupTitle,
-        reportPopupBody = _reportPopupBody,
-        reportConfirmLabel = _reportConfirmLabel,
-        reportCancelLabel = _reportCancelLabel,
+        ReportOptions = _hasReportPopup ? ReportOptionDefs() : new List<ReportOptionDef>(),
+        DistractorIds = LinkedDistractors.Select(d => d.Id?.Trim() ?? string.Empty).ToList(),
+        reportPopupTitle = _hasReportPopup ? _reportPopupTitle : string.Empty,
+        reportPopupBody = _hasReportPopup ? _reportPopupBody : string.Empty,
     };
+
+    /// <summary>Authored ids are kept verbatim; a blank one is derived from the label and made
+    /// unique within the popup, so the author only has to type the button text.</summary>
+    private List<ReportOptionDef> ReportOptionDefs()
+    {
+        var used = new HashSet<string>(
+            ReportOptions.Select(o => o.Id?.Trim() ?? string.Empty).Where(id => id.Length > 0),
+            System.StringComparer.Ordinal);
+
+        var defs = new List<ReportOptionDef>();
+        foreach (var option in ReportOptions)
+        {
+            var id = option.Id?.Trim() ?? string.Empty;
+            if (id.Length == 0)
+            {
+                var stem = Slug(option.Label);
+                if (stem.Length == 0) stem = "opcao";
+                id = stem;
+                for (int n = 2; !used.Add(id); n++) id = $"{stem}_{n}";
+            }
+
+            defs.Add(option.ToDef(id));
+        }
+
+        return defs;
+    }
+
+    private static string Slug(string text)
+    {
+        var sb = new StringBuilder();
+        foreach (var c in (text ?? string.Empty).Normalize(NormalizationForm.FormD))
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(c) == UnicodeCategory.NonSpacingMark) continue;
+            if (char.IsLetterOrDigit(c)) sb.Append(char.ToLowerInvariant(c));
+            else if (sb.Length > 0 && sb[^1] != '_') sb.Append('_');
+        }
+
+        return sb.ToString().Trim('_');
+    }
 
     private static RiskGradeOption GradeFor(IReadOnlyList<RiskGradeOption> options, int grade) =>
         options.FirstOrDefault(o => o.Grade == grade) ?? options[2];

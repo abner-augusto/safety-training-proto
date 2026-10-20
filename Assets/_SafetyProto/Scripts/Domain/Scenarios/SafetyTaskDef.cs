@@ -117,10 +117,25 @@ namespace SafetyProto.Domain.Scenarios
         [JsonProperty("reportOptions")]
         public List<ReportOptionDef> ReportOptions { get; set; } = new();
 
-        /// <summary>Decoy items for an equip task. Empty for every other task; see
-        /// <see cref="ScenarioValidator"/> for the placement and uniqueness rules.</summary>
+        /// <summary>Ids of the scenario-level <see cref="ScenarioDef.Distractors"/> this equip task
+        /// offers as decoys. Empty for every other task; see <see cref="ScenarioValidator"/> for
+        /// the placement and linking rules.</summary>
+        [JsonProperty("distractorIds")]
+        public List<string> DistractorIds { get; set; } = new();
+
+        /// <summary>Decoys declared inline on the task, the format before the scenario-level
+        /// catalog. Read only: <see cref="ScenarioLoader"/> lifts them into the catalog and
+        /// links their ids, so a saved scenario never writes this key again.</summary>
         [JsonProperty("distractors")]
-        public List<DistractorDef> Distractors { get; set; } = new();
+        public List<DistractorDef>? LegacyDistractors { get; set; }
+
+        public bool ShouldSerializeLegacyDistractors() => false;
+
+        /// <summary>The catalog entries <see cref="DistractorIds"/> resolve to, filled by
+        /// <see cref="ScenarioLoader"/>. An id with no catalog entry is skipped here and
+        /// reported by <see cref="ScenarioValidator"/>.</summary>
+        [JsonIgnore]
+        public List<DistractorDef> Distractors { get; } = new();
 
         /// <summary>Report-popup copy, authored alongside <see cref="ReportOptions"/>. Moved
         /// here from the scene's <c>SafetyIssueReporter</c> inspector fields so the scenario

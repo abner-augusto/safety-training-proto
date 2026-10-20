@@ -51,6 +51,20 @@
     <Setter Property="FontSize" Value="15"/>
   </Style>
 
+  <!-- Titles of the cards that split a long editor into sections. -->
+  <Style Selector="TextBlock.section">
+    <Setter Property="Foreground" Value="{DynamicResource SpText}"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="FontSize" Value="13"/>
+  </Style>
+
+  <!-- One-line explanations under a section title or field. -->
+  <Style Selector="TextBlock.hint">
+    <Setter Property="Foreground" Value="{DynamicResource SpTextDim}"/>
+    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="TextWrapping" Value="Wrap"/>
+  </Style>
+
   <!-- ListBoxItem resolves the UWP base brushes rather than per-control keys; those are
        redefined in Tokens.axaml, but the corner radius and rest state are set here. -->
   <Style Selector="ListBoxItem">

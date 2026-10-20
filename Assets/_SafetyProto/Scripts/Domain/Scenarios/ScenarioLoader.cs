@@ -77,6 +77,7 @@ namespace SafetyProto.Domain.Scenarios
             var errors = new List<string>();
 
             scenario.Scoring?.NormalizeLegacyKeys();
+            BindDistractors(scenario);
 
             foreach (var group in scenario.Groups)
             {
@@ -108,6 +109,50 @@ namespace SafetyProto.Domain.Scenarios
             return errors.Count > 0
                 ? ScenarioLoadResult.Fail(errors)
                 : ScenarioLoadResult.Ok(scenario);
+        }
+
+        /// <summary>
+        /// Lifts inline task decoys into the scenario catalog, then resolves every task's
+        /// <see cref="SafetyTaskDef.DistractorIds"/> against it. Lifted entries are appended
+        /// even when their id repeats, so <see cref="ScenarioValidator"/> still sees and reports
+        /// the duplicate instead of the loader silently picking one.
+        /// </summary>
+        private static void BindDistractors(ScenarioDef scenario)
+        {
+            scenario.Distractors ??= new List<DistractorDef>();
+
+            foreach (var group in scenario.Groups)
+            {
+                foreach (var task in group.TaskDefs)
+                {
+                    task.DistractorIds ??= new List<string>();
+                    if (task.LegacyDistractors == null) continue;
+
+                    foreach (var legacy in task.LegacyDistractors)
+                    {
+                        scenario.Distractors.Add(legacy);
+                        var id = legacy.Id?.Trim() ?? string.Empty;
+                        if (id.Length > 0 && !task.DistractorIds.Contains(id)) task.DistractorIds.Add(id);
+                    }
+
+                    task.LegacyDistractors = null;
+                }
+            }
+
+            foreach (var group in scenario.Groups)
+            {
+                foreach (var task in group.TaskDefs)
+                {
+                    task.Distractors.Clear();
+                    foreach (var id in task.DistractorIds)
+                    {
+                        var wanted = id?.Trim() ?? string.Empty;
+                        if (wanted.Length == 0) continue;
+                        var match = scenario.Distractors.Find(d => string.Equals(d.Id?.Trim(), wanted, System.StringComparison.Ordinal));
+                        if (match != null) task.Distractors.Add(match);
+                    }
+                }
+            }
         }
     }
 }

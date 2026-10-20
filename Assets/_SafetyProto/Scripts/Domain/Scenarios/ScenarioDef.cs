@@ -27,6 +27,11 @@ namespace SafetyProto.Domain.Scenarios
         [JsonProperty("finishTips")]
         public List<string> FinishTips { get; set; } = new();
 
+        /// <summary>Catalog of decoy items the scene offers. Each entry is linked to exactly one
+        /// equip task through <see cref="SafetyTaskDef.DistractorIds"/>.</summary>
+        [JsonProperty("distractors")]
+        public List<DistractorDef> Distractors { get; set; } = new();
+
         /// <summary>Optional scripted playthrough; consumed by the CLI harness, ignored by Unity.</summary>
         [JsonProperty("script")]
         public List<ScriptStepDef> Script { get; set; } = new();

@@ -11,6 +11,12 @@
     "A tela fachadeira deve estar sempre íntegra, sem rasgos ou partes soltas.",
     "No canteiro real, diante de qualquer irregularidade: não inicie, comunique e aguarde a correção por pessoa autorizada."
   ],
+  "distractors": [
+    { "id": "flip_flops", "name": "Chinelo", "rejectionAdvice": "O chinelo deixa os pés expostos a perfurações, cortes e queda de objetos. Não é calçado de segurança e não pode ser usado no canteiro (NR-06)." },
+    { "id": "abdominal_belt", "name": "Cinto abdominal", "rejectionAdvice": "O cinto abdominal não retém uma queda: no impacto, a força se concentra na cintura e o corpo pode escapar. Para retenção de queda, a NR-35 exige o cinturão tipo paraquedista (item 35.6.9)." },
+    { "id": "helmet_no_chinstrap", "name": "Capacete sem jugular", "rejectionAdvice": "Este capacete não tem jugular. Em altura, um movimento brusco ou um impacto pode derrubá-lo e deixar a cabeça sem proteção. Para trabalho em altura, use o capacete com jugular (NR-06 e NR-35)." },
+    { "id": "rubber_gloves", "name": "Luva de borracha", "rejectionAdvice": "A luva de borracha protege contra umidade e produtos químicos, mas não contra cortes e esmagamentos no manuseio de peças metálicas. Para montar o andaime, use luvas de raspa de couro (NR-06)." }
+  ],
   "scoring": {
     "levels": {
       "trivial": {
@@ -65,9 +71,7 @@
           "failureAdvice": "A botina de segurança protege contra perfurações e quedas de objetos nos pés. O uso de calçado de proteção em canteiro é obrigatório (NR-06).",
           "ppeAdvice": "",
           "omissionAdvice": "Você não calçou a botina de segurança. Em canteiro, pisos com pregos, entulho e quedas de material tornam o calçado de proteção obrigatório (NR-06).",
-          "distractors": [
-            { "id": "flip_flops", "name": "Chinelo", "rejectionAdvice": "O chinelo deixa os pés expostos a perfurações, cortes e queda de objetos. Não é calçado de segurança e não pode ser usado no canteiro (NR-06)." }
-          ]
+          "distractorIds": ["flip_flops"]
         },
         {
           "id": "inspect_harness",
@@ -102,9 +106,7 @@
           "failureAdvice": "No sistema de retenção de queda, o EPI deve ser o cinturão de segurança tipo paraquedista (NR-35, item 35.6.9). Cintos abdominais não são aceitos para retenção de queda.",
           "ppeAdvice": "",
           "omissionAdvice": "Você não vestiu o cinturão tipo paraquedista. Sem ele não existe sistema de retenção de queda — é o EPI central do trabalho em altura (NR-35, item 35.6.9).",
-          "distractors": [
-            { "id": "abdominal_belt", "name": "Cinto abdominal", "rejectionAdvice": "O cinto abdominal não retém uma queda: no impacto, a força se concentra na cintura e o corpo pode escapar. Para retenção de queda, a NR-35 exige o cinturão tipo paraquedista (item 35.6.9)." }
-          ]
+          "distractorIds": ["abdominal_belt"]
         },
         {
           "id": "equip_helmet",
@@ -122,9 +124,7 @@
           "failureAdvice": "Para trabalho em altura, o capacete deve possuir sistema de fixação (jugular) que impeça sua queda durante a atividade (seleção de EPI — NR-06 e NR-35).",
           "ppeAdvice": "",
           "omissionAdvice": "Você não colocou o capacete com jugular. Para trabalho em altura o capacete deve permanecer preso à cabeça — sem ele, a queda de um objeto pode ser fatal (NR-06 e NR-35).",
-          "distractors": [
-            { "id": "helmet_no_chinstrap", "name": "Capacete sem jugular", "rejectionAdvice": "Este capacete não tem jugular. Em altura, um movimento brusco ou um impacto pode derrubá-lo e deixar a cabeça sem proteção. Para trabalho em altura, use o capacete com jugular (NR-06 e NR-35)." }
-          ]
+          "distractorIds": ["helmet_no_chinstrap"]
         },
         {
           "id": "equip_goggles",
@@ -160,9 +160,7 @@
           "failureAdvice": "Luvas de raspa de couro são obrigatórias para manuseio de estruturas metálicas em altura.",
           "ppeAdvice": "",
           "omissionAdvice": "Você não vestiu as luvas. O manuseio de estruturas metálicas sem proteção expõe as mãos a cortes e esmagamentos (NR-06).",
-          "distractors": [
-            { "id": "rubber_gloves", "name": "Luva de borracha", "rejectionAdvice": "A luva de borracha protege contra umidade e produtos químicos, mas não contra cortes e esmagamentos no manuseio de peças metálicas. Para montar o andaime, use luvas de raspa de couro (NR-06)." }
-          ]
+          "distractorIds": ["rubber_gloves"]
         }
       ],
       "requiredGroups": []

@@ -123,6 +123,92 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual("Expõe os pés.", copy.RejectionAdvice);
         }
 
+        private const string BootsLinkedToCatalog =
+            "{\"distractors\":[{\"id\":\"flip_flops\",\"name\":\"Chinelo\",\"rejectionAdvice\":\"Expõe os pés.\"}]," +
+            "\"groups\":[{\"id\":\"g1\",\"name\":\"g1\",\"tasks\":[" +
+            "{\"id\":\"equip_boots\",\"name\":\"Botina\",\"requiredPPE\":[\"Boots\"],\"distractorIds\":[\"flip_flops\"]}]}]}";
+
+        [Test]
+        public void Catalog_ResolvesLinkedIdsOntoTheTask()
+        {
+            var load = ScenarioLoader.Parse(BootsLinkedToCatalog);
+            Assert.That(load.Success, Is.True, load.ErrorSummary);
+
+            var task = load.Scenario!.Groups[0].TaskDefs[0];
+            Assert.AreSame(load.Scenario.Distractors[0], task.Distractors.Single());
+            Assert.IsNotNull(DistractorResolver.Resolve(load.Scenario.Groups, "flip_flops"));
+            Assert.IsEmpty(Validate(BootsLinkedToCatalog));
+        }
+
+        [Test]
+        public void LegacyInlineDistractors_AreSavedAsCatalogAndLinks()
+        {
+            var load = ScenarioLoader.Parse(BootsWithDistractor);
+            Assert.That(load.Success, Is.True, load.ErrorSummary);
+
+            var json = JsonConvert.SerializeObject(load.Scenario);
+
+            StringAssert.Contains("\"distractorIds\":[\"flip_flops\"]", json);
+            Assert.AreEqual(1, System.Text.RegularExpressions.Regex.Matches(json, "\"rejectionAdvice\"").Count,
+                "The decoy is written once, in the catalog, not again on the task.");
+        }
+
+        [Test]
+        public void Validator_RejectsAnUnlinkedCatalogEntry()
+        {
+            var json =
+                "{\"distractors\":[{\"id\":\"x\",\"name\":\"X\",\"rejectionAdvice\":\"r\"}]," +
+                "\"groups\":[{\"id\":\"g1\",\"name\":\"g1\",\"tasks\":[{\"id\":\"a\",\"name\":\"a\",\"requiredPPE\":[\"Boots\"]}]}]}";
+
+            Assert.That(Validate(json).Any(e => e.Contains("'x'") && e.Contains("nenhuma tarefa")), Is.True);
+        }
+
+        [Test]
+        public void Validator_RejectsAnEntryLinkedByTwoTasks()
+        {
+            var json =
+                "{\"distractors\":[{\"id\":\"x\",\"name\":\"X\",\"rejectionAdvice\":\"r\"}]," +
+                "\"groups\":[{\"id\":\"g1\",\"name\":\"g1\",\"tasks\":[" +
+                "{\"id\":\"a\",\"name\":\"a\",\"requiredPPE\":[\"Boots\"],\"distractorIds\":[\"x\"]}," +
+                "{\"id\":\"b\",\"name\":\"b\",\"requiredPPE\":[\"Harness\"],\"distractorIds\":[\"x\"]}]}]}";
+
+            Assert.That(Validate(json).Any(e => e.Contains("'x'") && e.Contains("mais de uma tarefa")), Is.True);
+        }
+
+        [Test]
+        public void Validator_RejectsALinkToAnUnknownId()
+        {
+            var json =
+                "{\"groups\":[{\"id\":\"g1\",\"name\":\"g1\",\"tasks\":[" +
+                "{\"id\":\"a\",\"name\":\"a\",\"requiredPPE\":[\"Boots\"],\"distractorIds\":[\"ghost\"]}]}]}";
+
+            Assert.That(Validate(json).Any(e => e.Contains("'ghost'") && e.Contains("não está no catálogo")), Is.True);
+        }
+
+        [TestCase(1)]
+        [TestCase(5)]
+        public void Validator_RejectsAReportPopupOutsideTwoToFourAlternatives(int count)
+        {
+            var options = string.Join(",", Enumerable.Range(0, count).Select(i =>
+                $"{{\"id\":\"o{i}\",\"label\":\"O{i}\",\"correct\":{(i == 0 ? "true" : "false")}}}"));
+            var json =
+                "{\"groups\":[{\"id\":\"g1\",\"name\":\"g1\",\"tasks\":[" +
+                $"{{\"id\":\"a\",\"name\":\"a\",\"actionId\":\"flag_safety_net\",\"reportOptions\":[{options}]}}]}}]}}";
+
+            Assert.That(Validate(json).Any(e => e.Contains("de 2 a 4 alternativas")), Is.True);
+        }
+
+        [Test]
+        public void Validator_RejectsAReportAlternativeWithoutText()
+        {
+            var json =
+                "{\"groups\":[{\"id\":\"g1\",\"name\":\"g1\",\"tasks\":[" +
+                "{\"id\":\"a\",\"name\":\"a\",\"actionId\":\"flag_safety_net\",\"reportOptions\":[" +
+                "{\"id\":\"o1\",\"label\":\"Rasgada\",\"correct\":true},{\"id\":\"o2\",\"label\":\" \",\"correct\":false}]}]}]}";
+
+            Assert.That(Validate(json).Any(e => e.Contains("alternativa sem texto")), Is.True);
+        }
+
         [Test]
         public void Validator_AcceptsADistractorOnAnEquipTask()
         {

@@ -25,6 +25,7 @@ public sealed class ScenarioEditorViewModel : ViewModelBase
     private string _name;
     private string _participantId;
     private object? _selectedNode;
+    private DistractorViewModel? _selectedDistractor;
 
     public ScenarioEditorViewModel(ScenarioDef def, CapabilityCatalog? catalog, ActionCatalogDef? actionCatalog = null)
     {
@@ -34,14 +35,77 @@ public sealed class ScenarioEditorViewModel : ViewModelBase
         FinishTips = new ObservableCollection<FinishTipViewModel>(
             (def.FinishTips ?? new List<string>()).Select(tip => new FinishTipViewModel(tip)));
 
+        // Before the groups: each task resolves its distractorIds against this catalog.
+        Distractors = new ObservableCollection<DistractorViewModel>(
+            (def.Distractors ?? new List<DistractorDef>()).Select(d => new DistractorViewModel(d)));
+
         BuildOptions(def, catalog, actionCatalog);
 
         Groups = new ObservableCollection<GroupViewModel>(
             def.Groups.Select(g => new GroupViewModel(g, this)));
+
+        RefreshDistractorUsage();
+        _selectedDistractor = Distractors.FirstOrDefault();
     }
 
     public ObservableCollection<GroupViewModel> Groups { get; }
     public ObservableCollection<FinishTipViewModel> FinishTips { get; }
+
+    /// <summary>The scenario's decoy catalog, edited on its own tab and linked from equip tasks.</summary>
+    public ObservableCollection<DistractorViewModel> Distractors { get; }
+
+    public DistractorViewModel? SelectedDistractor
+    {
+        get => _selectedDistractor;
+        set { if (SetField(ref _selectedDistractor, value)) RefreshDistractorUsage(); }
+    }
+
+    public DistractorViewModel AddDistractor()
+    {
+        var distractor = new DistractorViewModel(string.Empty, string.Empty, string.Empty);
+        Distractors.Add(distractor);
+        SelectedDistractor = distractor;
+        return distractor;
+    }
+
+    /// <summary>Removes the decoy from the catalog and from every task that offered it.</summary>
+    public void RemoveSelectedDistractor()
+    {
+        if (_selectedDistractor is not { } doomed) return;
+
+        foreach (var task in AllTasks()) task.LinkedDistractors.Remove(doomed);
+        Distractors.Remove(doomed);
+        SelectedDistractor = Distractors.FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Resolves a task's distractor id against the catalog. An id with no entry gets a blank
+    /// one registered under it, so a dangling link survives the round trip and shows up on the
+    /// Distratores tab (and in validation) instead of vanishing on save.
+    /// </summary>
+    public DistractorViewModel FindOrRegisterDistractor(string id)
+    {
+        var wanted = id?.Trim() ?? string.Empty;
+        var found = Distractors.FirstOrDefault(d => string.Equals(d.Id?.Trim(), wanted, StringComparison.Ordinal));
+        if (found != null) return found;
+
+        var placeholder = new DistractorViewModel(wanted, string.Empty, string.Empty);
+        Distractors.Add(placeholder);
+        return placeholder;
+    }
+
+    /// <summary>Recomputes each decoy's "used by" caption from the current task links.</summary>
+    public void RefreshDistractorUsage()
+    {
+        var tasks = AllTasks().ToList();
+        foreach (var distractor in Distractors)
+        {
+            var names = tasks.Where(t => t.LinkedDistractors.Contains(distractor)).Select(t => t.TaskName).ToList();
+            distractor.UsedBy = names.Count == 0 ? "nenhuma tarefa" : string.Join(", ", names);
+        }
+    }
+
+    private IEnumerable<TaskViewModel> AllTasks() => Groups.SelectMany(g => g.Tasks);
 
     /// <summary>Action dropdown source: equip-set sentinel + catalog ids ∪ ids already used.</summary>
     public List<string> ActionOptions { get; private set; } = new();
@@ -96,6 +160,8 @@ public sealed class ScenarioEditorViewModel : ViewModelBase
                 SelectedNode = null;
                 break;
         }
+
+        RefreshDistractorUsage();
     }
 
     public ScenarioDef ToDef() => new()
@@ -104,6 +170,7 @@ public sealed class ScenarioEditorViewModel : ViewModelBase
         ParticipantId = _participantId,
         Groups = Groups.Select(g => g.ToDef()).ToList(),
         FinishTips = FinishTips.Select(tip => tip.Text ?? string.Empty).ToList(),
+        Distractors = Distractors.Select(d => d.ToDef()).ToList(),
         Script = _script,
     };
 
