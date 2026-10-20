@@ -74,23 +74,6 @@
           "distractorIds": ["flip_flops"]
         },
         {
-          "id": "inspect_harness",
-          "name": "Inspecionar Cinturão Paraquedista",
-          "taskDescription": "Inspecione o cinturão tipo paraquedista antes de vesti-lo.",
-          "actionId": "inspect_harness",
-          "risk": {
-            "severity": 5,
-            "probability": 4
-          },
-          "requiredPPE": [],
-          "hintText": "Observe as costuras, fivelas e argolas do cinturão antes de usar.",
-          "failureAdvice": "Não use um cinturão com costuras danificadas, cortes ou ferragens deformadas.",
-          "ppeAdvice": "",
-          "omissionAdvice": "Você não inspecionou o cinturão antes de vesti-lo. Um equipamento danificado pode falhar durante uma queda.",
-          "successAdvice": "Antes de vestir, verifique costuras, fivelas e argolas do cinturão. Qualquer desgaste, corte ou deformação exige a retirada de uso do equipamento (NR-35, item 35.6.9).",
-          "successAdviceNarrated": true
-        },
-        {
           "id": "equip_harness",
           "name": "Equipar Cinto Paraquedista",
           "taskDescription": "Selecione o cinto tipo paraquedista e vista corretamente.",
@@ -106,6 +89,8 @@
           "failureAdvice": "No sistema de retenção de queda, o EPI deve ser o cinturão de segurança tipo paraquedista (NR-35, item 35.6.9). Cintos abdominais não são aceitos para retenção de queda.",
           "ppeAdvice": "",
           "omissionAdvice": "Você não vestiu o cinturão tipo paraquedista. Sem ele não existe sistema de retenção de queda — é o EPI central do trabalho em altura (NR-35, item 35.6.9).",
+          "successAdvice": "Antes de vestir, verifique costuras, fivelas e argolas do cinturão. Qualquer desgaste, corte ou deformação exige a retirada de uso do equipamento (NR-35, item 35.6.9).",
+          "successAdviceNarrated": true,
           "distractorIds": ["abdominal_belt"]
         },
         {
@@ -277,7 +262,6 @@
     { "kind": "ppe", "ppeType": "GloveLeft",  "isWearing": true, "delayMs": 200 },
     { "kind": "ppe", "ppeType": "Goggles",    "isWearing": true, "delayMs": 200 },
     { "kind": "ppe", "ppeType": "Helmet",     "isWearing": true, "delayMs": 200 },
-    { "kind": "action", "actionId": "inspect_harness", "delayMs": 200 },
     { "kind": "ppe", "ppeType": "Harness",    "isWearing": true, "delayMs": 200 },
 
     { "kind": "move", "target": "anchor",       "posture": "standing", "delayMs": 200 },

@@ -1076,7 +1076,7 @@ MonoBehaviour:
   readDuration: 4
   narrationVoice: {fileID: 0}
   narrationClips:
-  - taskId: inspect_harness
+  - taskId: equip_harness
     clip: {fileID: 8300000, guid: fcbc436ab06912547a5293d63ea50dce, type: 3}
   - taskId: connect_lanyard
     clip: {fileID: 8300000, guid: 68719ef9797553a4dbe6ac52dbf0f2e6, type: 3}
