@@ -92,7 +92,9 @@ namespace SafetyProto.Runtime.Safety
         private bool _choiceOpen;
 
         private readonly RefusedAttemptTracker _refusalTracker = new RefusedAttemptTracker();
+        private readonly DeferredMisclassification _misclassification = new DeferredMisclassification();
         private System.Action<ActionRefusedEventArgs> _onActionRefused;
+        private System.Action<TaskEventArgs> _onTaskEvent;
 
         private void Awake() => HideButton();
 
@@ -103,7 +105,9 @@ namespace SafetyProto.Runtime.Safety
             if (EventBus.Instance != null)
             {
                 _onActionRefused ??= HandleActionRefused;
+                _onTaskEvent ??= HandleTaskEvent;
                 EventBus.Instance.Subscribe(_onActionRefused);
+                EventBus.Instance.Subscribe(_onTaskEvent);
             }
         }
 
@@ -111,8 +115,11 @@ namespace SafetyProto.Runtime.Safety
         {
             if (_dwellTarget != null) _dwellTarget.Completed -= HandleDwellCompleted;
             if (_reportButton != null) _reportButton.onClick.RemoveListener(Report);
-            if (EventBus.Instance != null && _onActionRefused != null)
-                EventBus.Instance.Unsubscribe(_onActionRefused);
+            if (EventBus.Instance != null)
+            {
+                if (_onActionRefused != null) EventBus.Instance.Unsubscribe(_onActionRefused);
+                if (_onTaskEvent != null) EventBus.Instance.Unsubscribe(_onTaskEvent);
+            }
         }
 
         private void HandleDwellCompleted()
@@ -200,7 +207,13 @@ namespace SafetyProto.Runtime.Safety
                 var runtimeTask = ResolveRuntimeTask();
                 if (runtimeTask != null) runtimeTask.ReportedOptionId = chosenOption.Id;
 
-                if (!chosenOption.Correct) ChargeMisclassification(ResolveTask());
+                if (!chosenOption.Correct && ResolveTask() is { } task)
+                {
+                    // A task finished through another path will not complete again, so nothing
+                    // would ever release a held charge: settle it now.
+                    if (runtimeTask != null && IsFinished(runtimeTask.State)) ChargeMisclassification(task);
+                    else _misclassification.Hold(task);
+                }
             }
 
             HideButton();
@@ -208,6 +221,17 @@ namespace SafetyProto.Runtime.Safety
 
         /// <summary>Delegates to the pure <see cref="HazardClassificationPolicy"/> so the
         /// scoring/violation logic is unit-testable without a MonoBehaviour.</summary>
+        private static bool IsFinished(TaskState state) =>
+            state == TaskState.CompletedSuccess || state == TaskState.CompletedSuccessButUnsafe;
+
+        /// <summary>Charges a held wrong choice once the reported task completes — the report
+        /// was accepted.</summary>
+        private void HandleTaskEvent(TaskEventArgs args)
+        {
+            if (args.Phase != TaskPhase.Completed) return;
+            if (_misclassification.TakeOnCompleted(args.Task) is { } task) ChargeMisclassification(task);
+        }
+
         private void ChargeMisclassification(ISafetyTask task)
         {
             var manager = _taskManager != null ? _taskManager : TaskManager.Instance;
@@ -243,6 +267,9 @@ namespace SafetyProto.Runtime.Safety
             if (!_refusalTracker.TryTakeRevert(Time.time)) return;
 
             HasReported = false;
+            _misclassification.Drop();
+            var runtimeTask = ResolveRuntimeTask();
+            if (runtimeTask != null) runtimeTask.ReportedOptionId = string.Empty;
             ShowButton();
 
             SafetyLog.Info(
@@ -254,6 +281,7 @@ namespace SafetyProto.Runtime.Safety
         {
             HasReported = false;
             _choiceOpen = false;
+            _misclassification.Drop();
             _refusalTracker.Reset();
             if (_dwellTarget != null) _dwellTarget.ResetDwell();
             HideButton();

@@ -141,5 +141,39 @@ namespace SafetyProto.Tests.Editor
                 HazardClassificationPolicy.ChargeMisclassification(_bus, _score, config, task, group, "reporter"));
             Assert.AreEqual(0, _score.CurrentScore);
         }
+
+        [Test]
+        public void DeferredCharge_IsDueOnceWhenTheReportedTaskCompletes()
+        {
+            var task = ReportTask();
+            var deferred = new DeferredMisclassification();
+            deferred.Hold(task);
+
+            Assert.AreSame(task, deferred.TakeOnCompleted(task));
+            Assert.IsNull(deferred.TakeOnCompleted(task), "The charge is settled once.");
+        }
+
+        [Test]
+        public void DeferredCharge_IgnoresOtherTasksCompleting()
+        {
+            var task = ReportTask();
+            var deferred = new DeferredMisclassification();
+            deferred.Hold(task);
+
+            Assert.IsNull(deferred.TakeOnCompleted(_tasks.Task("Outra tarefa", "other_action")));
+            Assert.IsTrue(deferred.IsPending);
+        }
+
+        [Test]
+        public void DeferredCharge_IsForgottenWhenTheReportIsRefused()
+        {
+            var task = ReportTask();
+            var deferred = new DeferredMisclassification();
+            deferred.Hold(task);
+
+            deferred.Drop();
+
+            Assert.IsNull(deferred.TakeOnCompleted(task), "A refused report must cost nothing.");
+        }
     }
 }
