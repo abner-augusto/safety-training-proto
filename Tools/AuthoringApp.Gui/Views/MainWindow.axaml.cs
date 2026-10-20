@@ -52,6 +52,14 @@ public partial class MainWindow : Window
             : "Tema: claro";
     }
 
+    /// <summary>Refreshes the EPIs tab whenever a tab is shown, so PPE ticked on a task since the
+    /// last visit is listed. SelectionChanged bubbles up from every ListBox and ComboBox inside
+    /// the tabs too; only the TabControl's own change counts.</summary>
+    private void OnTabChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (ReferenceEquals(e.Source, sender)) Vm?.RefreshPpeList();
+    }
+
     private void OnNew(object? sender, RoutedEventArgs e) => Vm?.NewScenario();
 
     private async void OnOpenScenario(object? sender, RoutedEventArgs e)

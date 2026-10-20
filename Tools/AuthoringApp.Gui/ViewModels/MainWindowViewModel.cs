@@ -6,8 +6,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using SafetyProto.Core;
 using SafetyProto.Domain.Actions;
 using SafetyProto.Domain.Capabilities;
+using SafetyProto.Domain.Safety;
 using SafetyProto.Domain.Scenarios;
 
 namespace SafetyProto.AuthoringApp.Gui.ViewModels;
@@ -62,9 +64,44 @@ public sealed class MainWindowViewModel : ViewModelBase
         get => _editor;
         private set
         {
-            if (SetField(ref _editor, value)) OnPropertyChanged(nameof(HasScenario));
+            if (!SetField(ref _editor, value)) return;
+            OnPropertyChanged(nameof(HasScenario));
+            RefreshPpeList();
         }
     }
+
+    /// <summary>EPIs tab: the capability catalog's PPE plus any the scenario names that the
+    /// catalog lacks, so a stray name shows up here as unknown instead of being hidden.</summary>
+    public IReadOnlyList<PpeInfoViewModel> PpeList { get; private set; } = Array.Empty<PpeInfoViewModel>();
+
+    /// <summary>Rebuilds <see cref="PpeList"/>. Called when the catalog or the scenario changes
+    /// and whenever the EPIs tab is shown, so task edits made meanwhile are reflected.</summary>
+    public void RefreshPpeList()
+    {
+        var types = new List<string>(_catalog?.PpeTypes ?? new List<string>());
+        var tasks = _editor?.Groups.SelectMany(g => g.Tasks).ToList() ?? new List<TaskViewModel>();
+        foreach (var name in tasks.SelectMany(t => t.PpeOptions.Where(p => p.IsSelected).Select(p => p.Name)))
+        {
+            if (!types.Contains(name, StringComparer.OrdinalIgnoreCase)) types.Add(name);
+        }
+
+        PpeList = types.Select(type =>
+        {
+            var display = Enum.TryParse<PPEType>(type, ignoreCase: true, out var ppe) && ppe != PPEType.None
+                ? PpeLabels.DisplayName(ppe)
+                : "(não existe no build)";
+            var requiredBy = tasks
+                .Where(t => t.PpeOptions.Any(p => p.IsSelected && string.Equals(p.Name, type, StringComparison.OrdinalIgnoreCase)))
+                .Select(t => t.TaskName)
+                .ToList();
+            var usage = _editor == null ? "—" : requiredBy.Count == 0 ? "nenhuma tarefa" : string.Join(", ", requiredBy);
+            return new PpeInfoViewModel(type, display, usage);
+        }).ToList();
+        OnPropertyChanged(nameof(PpeList));
+        OnPropertyChanged(nameof(HasPpeList));
+    }
+
+    public bool HasPpeList => PpeList.Count > 0;
 
     public bool HasScenario => _editor != null;
 
@@ -155,6 +192,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         }
 
         CatalogPath = path;
+        RefreshPpeList();
         Status = $"Catálogo v{_catalog.Version} carregado — {_catalog.ActionIds.Count} ações, " +
                  $"{_catalog.PpeTypes.Count} EPIs, {_catalog.Phases.Count} cenas.";
 

@@ -44,7 +44,7 @@
       </DockPanel>
     </Border>
 
-    <TabControl>
+    <TabControl SelectionChanged="OnTabChanged">
       <TabItem Header="Cenário">
     <Grid ColumnDefinitions="2*,Auto,3*">
 
@@ -365,6 +365,49 @@
             </ContentControl>
           </ScrollViewer>
         </Grid>
+      </TabItem>
+
+      <TabItem Header="EPIs">
+        <DockPanel>
+          <TextBlock DockPanel.Dock="Top" Classes="hint" Margin="0,0,0,8"
+                     Text="EPIs que este build implementa, conforme o catálogo de capacidades, e o nome que o participante vê para cada um. Para exigir um EPI, marque-o na tarefa, na aba Cenário."/>
+
+          <!-- The notice sits at the bottom on purpose: the list is the content, and the
+               notice explains why none of it is editable here. -->
+          <Border DockPanel.Dock="Bottom" Classes="panel" Padding="12" Margin="0,8,0,0">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Alterações só por um desenvolvedor" Classes="section"/>
+              <TextBlock Classes="hint"
+                         Text="Estas informações estão definidas no código do aplicativo e não podem ser alteradas aqui. Mudar o nome de um EPI, ou criar um EPI novo, exige um desenvolvedor: um EPI novo precisa do modelo 3D, do encaixe no corpo do participante e do registro no código e no catálogo de capacidades."/>
+            </StackPanel>
+          </Border>
+
+          <Border Classes="panel" Padding="12">
+            <ScrollViewer>
+              <StackPanel Spacing="6">
+                <Grid ColumnDefinitions="160,220,*">
+                  <TextBlock Grid.Column="0" Text="Tipo (id)" Classes="label"/>
+                  <TextBlock Grid.Column="1" Text="Nome exibido" Classes="label"/>
+                  <TextBlock Grid.Column="2" Text="Exigido pelas tarefas" Classes="label"/>
+                </Grid>
+                <ItemsControl ItemsSource="{Binding PpeList}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="vm:PpeInfoViewModel">
+                      <Grid ColumnDefinitions="160,220,*" Margin="0,4">
+                        <TextBlock Grid.Column="0" Text="{Binding TypeId}" FontFamily="Cascadia Mono, Consolas, monospace"/>
+                        <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontWeight="SemiBold"/>
+                        <TextBlock Grid.Column="2" Text="{Binding RequiredBy}" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource SpTextDim}"/>
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock IsVisible="{Binding !HasPpeList}" Classes="hint"
+                           Text="Nenhum catálogo de capacidades carregado. Use Catálogo… para abrir o capability_catalog.json."/>
+              </StackPanel>
+            </ScrollViewer>
+          </Border>
+        </DockPanel>
       </TabItem>
 
       <TabItem Header="Dicas finais">
