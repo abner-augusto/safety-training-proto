@@ -20,7 +20,8 @@ namespace SafetyProto.UI
         }
 
         [Header("Caption")]
-        // TODO: place below Pontos/Tempo; wire these references and assign clips after recording them.
+        // Keep the caption inside its canvas rect: OVROverlayCanvas renders only that rect, so
+        // anything placed outside it is cut off on the headset.
         [SerializeField] private CanvasGroup captionGroup;
         [SerializeField] private TMP_Text captionText;
         [SerializeField, Min(0f)] private float fadeDuration = 0.25f;
