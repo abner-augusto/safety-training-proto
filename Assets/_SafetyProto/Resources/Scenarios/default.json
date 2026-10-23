@@ -14,7 +14,7 @@
   "distractors": [
     { "id": "flip_flops", "name": "Chinelo", "rejectionAdvice": "O chinelo deixa os pés expostos a perfurações, cortes e queda de objetos. Não é calçado de segurança e não pode ser usado no canteiro (NR-06)." },
     { "id": "abdominal_belt", "name": "Cinto abdominal", "rejectionAdvice": "O cinto abdominal não retém uma queda: no impacto, a força se concentra na cintura e o corpo pode escapar. Para retenção de queda, a NR-35 exige o cinturão tipo paraquedista (item 35.6.9)." },
-    { "id": "helmet_no_chinstrap", "name": "Capacete sem jugular", "rejectionAdvice": "Este capacete não tem jugular. Em altura, um movimento brusco ou um impacto pode derrubá-lo e deixar a cabeça sem proteção. Para trabalho em altura, use o capacete com jugular (NR-06 e NR-35)." },
+    { "id": "helmet_no_chinstrap", "name": "Capacete sem jugular", "rejectionAdvice": "Este capacete não tem jugular. Em altura, um movimento brusco ou um impacto pode derrubá-lo e deixar a cabeça sem proteção. Use o capacete com jugular, como exigem a Análise de Risco (NR-35, item 35.5.5.1) e a seleção de EPI adequado ao risco (NR-06, item 6.5.2)." },
     { "id": "rubber_gloves", "name": "Luva de borracha", "rejectionAdvice": "A luva de borracha protege contra umidade e produtos químicos, mas não contra cortes e esmagamentos no manuseio de peças metálicas. Para montar o andaime, use luvas de raspa de couro (NR-06)." }
   ],
   "scoring": {
@@ -106,9 +106,9 @@
             "Helmet"
           ],
           "hintText": "Escolha o capacete com jugular para mantê-lo preso à cabeça durante o trabalho em altura.",
-          "failureAdvice": "Para trabalho em altura, o capacete deve possuir sistema de fixação (jugular) que impeça sua queda durante a atividade (seleção de EPI — NR-06 e NR-35).",
+          "failureAdvice": "Em altura, use o capacete com a jugular afivelada e ajustada, para que ele não caia durante a atividade. Essa medida decorre da Análise de Risco (NR-35, item 35.5.5.1) e da seleção de EPI adequado ao risco (NR-06, item 6.5.2), conforme o manual do fabricante.",
           "ppeAdvice": "",
-          "omissionAdvice": "Você não colocou o capacete com jugular. Para trabalho em altura o capacete deve permanecer preso à cabeça — sem ele, a queda de um objeto pode ser fatal (NR-06 e NR-35).",
+          "omissionAdvice": "Você não colocou o capacete com jugular. Em altura, o capacete deve permanecer preso à cabeça — sem ele, a queda de um objeto pode ser fatal. A jugular decorre da Análise de Risco (NR-35, item 35.5.5.1) e da seleção de EPI adequado ao risco (NR-06, item 6.5.2).",
           "distractorIds": ["helmet_no_chinstrap"]
         },
         {
