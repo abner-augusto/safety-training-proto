@@ -3,6 +3,8 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Feedback;
+using SafetyProto.Runtime.Feedback;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -24,6 +26,22 @@ namespace SafetyProto.UI
         [Tooltip("Ilustração aplicada a qualquer popup com este título exato, para os avisos " +
                  "abertos por sistemas que não conhecem sprites (EPI incorreto, ordem incorreta…).")]
         [SerializeField] private TitleIllustration[] illustrationsByTitle;
+
+        [Header("Narração")]
+        [Tooltip("Canal de voz compartilhado (o mesmo do onboarding e das DICAs). Vazio = popups sem narração.")]
+        [SerializeField] private NarrationVoice narrationVoice;
+
+        [Tooltip("Locução de cada popup narrado, pela chave que o emissor passa (NarrationKeys): " +
+                 "'fase_concluida', 'inspecao_concluida', 'conecte_se_primeiro', 'distractor:<distractorId>', " +
+                 "'report:<taskId>'. A narração começa quando o popup abre e para quando ele fecha.")]
+        [SerializeField] private NarrationClipTable narrationClips = new();
+
+        [Tooltip("Folga (s) após o fim da locução antes do auto-fechamento de um aviso narrado. " +
+                 "O auto-fechamento nunca corta a locução.")]
+        [SerializeField, Min(0f)] private float narrationCloseTail = 1f;
+
+        /// <summary>Clip narrating the popup on screen; stopped when the popup closes.</summary>
+        private AudioClip _popupClip;
 
         /// <summary>Reason code of the popup currently shown, echoed on close so an emitter
         /// waiting behind a warning can match it back to its own refusal. Empty for a popup
@@ -72,6 +90,7 @@ namespace SafetyProto.UI
 
         private void OnPanelHidden()
         {
+            StopPopupNarration();
             SessionPause.Release(PauseSource.Popup);
 
             PopupEvents.RaisePopupClosed(_currentReasonCode);
@@ -99,7 +118,57 @@ namespace SafetyProto.UI
             if (data.illustrationFrames == null || data.illustrationFrames.Length == 0)
                 data.illustrationFrames = FindIllustration(data.title);
 
+            var clip = ResolveNarration(data.narrationKey);
+            if (clip != null && narrationVoice != null)
+                data.autoCloseSeconds = NarrationTiming.AutoCloseSeconds(
+                    data.autoCloseSeconds, WaitBeforeNarration(), clip.length, narrationCloseTail);
+
             popupPanel.Show(data);
+            StartPopupNarration(clip);
+        }
+
+        private AudioClip ResolveNarration(string narrationKey)
+        {
+            if (string.IsNullOrEmpty(narrationKey)) return null;
+
+            var clip = narrationClips.Find(narrationKey);
+            if (clip == null)
+                SafetyLog.Warning($"[PopupService] Não há narração atribuída ao popup '{narrationKey}'.", this);
+            return clip;
+        }
+
+        /// <summary>Seconds a popup line will wait for the line playing now: a DICA or the onboarding
+        /// is never cut, an info board or the previous popup's line is.</summary>
+        private float WaitBeforeNarration()
+        {
+            if (narrationVoice.CanCutCurrent || narrationVoice.IsPlaying(_popupClip)) return 0f;
+            return narrationVoice.RemainingSeconds;
+        }
+
+        private void StartPopupNarration(AudioClip clip)
+        {
+            if (narrationVoice == null) return;
+
+            // The popup this one replaced takes its line with it; another surface's line is left alone.
+            var previous = _popupClip;
+            _popupClip = clip;
+
+            if (clip == null)
+            {
+                narrationVoice.StopIfCurrent(previous);
+                return;
+            }
+
+            if (narrationVoice.IsPlaying(previous))
+                narrationVoice.Play(clip);
+            else
+                narrationVoice.PlayAfterCurrent(clip);
+        }
+
+        private void StopPopupNarration()
+        {
+            if (narrationVoice != null) narrationVoice.StopIfCurrent(_popupClip);
+            _popupClip = null;
         }
 
         private Sprite[] FindIllustration(string title)
@@ -159,11 +228,14 @@ namespace SafetyProto.UI
         public void ShowWarning(string title, string body)
             => ShowWarning(title, body, 0f);
 
-        public void ShowWarning(string title, string body, float autoCloseSeconds, string reasonCode = "")
-            => Show(new PopupData { type = PopupType.Warning, title = title, body = body, autoCloseSeconds = autoCloseSeconds },
+        public void ShowWarning(string title, string body, float autoCloseSeconds, string reasonCode = "",
+                                string narrationKey = null)
+            => Show(new PopupData { type = PopupType.Warning, title = title, body = body, autoCloseSeconds = autoCloseSeconds,
+                                    narrationKey = narrationKey },
                     reasonCode);
 
-        public void ShowInteractive(string title, string body, string buttonLabel, UnityAction onAction)
+        public void ShowInteractive(string title, string body, string buttonLabel, UnityAction onAction,
+                                    string narrationKey = null)
         {
             var data = new PopupData
             {
@@ -171,7 +243,8 @@ namespace SafetyProto.UI
                 title             = title,
                 body              = body,
                 actionButtonLabel = buttonLabel,
-                onActionPressed   = new UnityEvent()
+                onActionPressed   = new UnityEvent(),
+                narrationKey      = narrationKey
             };
             data.onActionPressed.AddListener(onAction);
             Show(data);
@@ -204,7 +277,7 @@ namespace SafetyProto.UI
         }
 
         public void ShowChoice(string title, string body, IReadOnlyList<IReportOption> options,
-                               UnityAction<IReportOption> onChosen)
+                               UnityAction<IReportOption> onChosen, string narrationKey = null)
         {
             var data = new PopupData
             {
@@ -213,6 +286,7 @@ namespace SafetyProto.UI
                 body = body,
                 choiceOptions = options,
                 onChoiceSelected = onChosen,
+                narrationKey = narrationKey,
             };
             Show(data);
         }

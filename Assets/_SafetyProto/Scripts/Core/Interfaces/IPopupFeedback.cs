@@ -17,8 +17,10 @@ namespace SafetyProto.Core.Interfaces
         bool TryShowIfIdle(string title, string body, float autoCloseSeconds);
 
         /// <summary>Shows a popup with a single action button (e.g. "Continuar") that invokes
-        /// <paramref name="onAction"/> when pressed.</summary>
-        void ShowInteractive(string title, string body, string buttonLabel, UnityAction onAction);
+        /// <paramref name="onAction"/> when pressed. <paramref name="narrationKey"/> names the
+        /// voice-over that narrates the popup while it is open; null keeps it silent.</summary>
+        void ShowInteractive(string title, string body, string buttonLabel, UnityAction onAction,
+                             string narrationKey = null);
 
         /// <summary>Shows a confirmation popup with a confirm and a cancel button. Reusable for any
         /// "are you sure?" flow (quit, reset, discard, …). The popup auto-closes on either choice;
@@ -28,9 +30,10 @@ namespace SafetyProto.Core.Interfaces
 
         /// <summary>Shows a popup offering N labeled choices instead of a binary confirm/cancel
         /// (e.g. classifying a hazard). Auto-closes on any pick; <paramref name="onChosen"/>
-        /// receives the option the participant selected.</summary>
+        /// receives the option the participant selected. <paramref name="narrationKey"/> as in
+        /// <see cref="ShowInteractive"/>.</summary>
         void ShowChoice(string title, string body, IReadOnlyList<IReportOption> options,
-                        UnityAction<IReportOption> onChosen);
+                        UnityAction<IReportOption> onChosen, string narrationKey = null);
 
         void Hide();
 

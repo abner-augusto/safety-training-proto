@@ -279,7 +279,8 @@ namespace SafetyProto.Runtime.Safety
                 Finish();
             else if (_popupFeedback != null)
                 _popupFeedback.ShowInteractive(currentGroup.groupName,
-                    "Inspeção concluída com sucesso!", continueButtonLabel, Finish);
+                    "Inspeção concluída com sucesso!", continueButtonLabel, Finish,
+                    SafetyProto.Domain.Feedback.NarrationKeys.InspectionPassed);
             else
                 Finish();
         }

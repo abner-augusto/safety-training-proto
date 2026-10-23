@@ -38,5 +38,9 @@ namespace SafetyProto.UI
 
         [System.NonSerialized] public IReadOnlyList<IReportOption> choiceOptions;
         public UnityAction<IReportOption> onChoiceSelected;
+
+        /// <summary>Key of the voice-over that narrates this popup (see Domain.Feedback.NarrationKeys),
+        /// resolved by PopupService. Empty keeps the popup silent.</summary>
+        [System.NonSerialized] public string narrationKey;
     }
 }

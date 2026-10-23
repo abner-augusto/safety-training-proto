@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
+using SafetyProto.Core.Logging;
 using SafetyProto.Domain.Safety;
 using SafetyProto.Domain.Scoring;
 using SafetyProto.Domain.Sessions;
+using SafetyProto.Runtime.Feedback;
 using SafetyProto.Runtime.Safety;
 using SafetyProto.Runtime.Task;
 using SafetyProto.Utils;
@@ -80,6 +82,15 @@ namespace SafetyProto.UI
         [SerializeField] private AudioClip completionSound;
         [SerializeField] private AudioClip confettiSound;
 
+        [Header("Narração")]
+        [Tooltip("Canal de voz compartilhado. Vazio = resumo final sem narração.")]
+        [SerializeField] private NarrationVoice narrationVoice;
+        [Tooltip("Locução do resumo final para cada dica de finishTips, na mesma ordem (VO_Resumo_Dica0, 1, …). " +
+                 "Toca a da dica sorteada, depois de uma DICA que ainda esteja tocando.")]
+        [SerializeField] private AudioClip[] finishTipNarrations;
+
+        private AudioClip _reportClip;
+
         private static SessionCompletedEventArgs? _cachedArgs;
 
         /// <summary>True when the last populated report's medal was pulled down from gold by a
@@ -119,6 +130,9 @@ namespace SafetyProto.UI
             _cachedArgs = null;
             if (EventBus.Instance != null)
                 EventBus.Instance.Unsubscribe<SessionCompletedEventArgs>(OnSessionCompleted);
+
+            if (narrationVoice != null) narrationVoice.StopIfCurrent(_reportClip);
+            _reportClip = null;
         }
 
         private void OnSessionCompleted(SessionCompletedEventArgs args)
@@ -157,8 +171,28 @@ namespace SafetyProto.UI
                 return;
             }
 
+            int index = UnityEngine.Random.Range(0, tips.Count);
             finishTipText.gameObject.SetActive(true);
-            finishTipText.text = tips[UnityEngine.Random.Range(0, tips.Count)];
+            finishTipText.text = tips[index];
+            NarrateFinishTip(index);
+        }
+
+        private void NarrateFinishTip(int tipIndex)
+        {
+            if (narrationVoice == null) return;
+
+            var clip = NarrationClipTable.At(finishTipNarrations, tipIndex);
+            if (clip == null)
+            {
+                SafetyLog.Warning($"[SessionReportUI] Não há narração atribuída à dica final {tipIndex}.", this);
+                return;
+            }
+
+            if (narrationVoice.IsPlaying(_reportClip))
+                narrationVoice.Play(clip);
+            else
+                narrationVoice.PlayAfterCurrent(clip);
+            _reportClip = clip;
         }
 
         private void SetupHeader(SessionCompletedEventArgs args, int maxPossibleScore, bool criticalViolation)

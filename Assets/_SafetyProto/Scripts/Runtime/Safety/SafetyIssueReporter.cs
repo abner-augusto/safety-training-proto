@@ -4,6 +4,7 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Feedback;
 using SafetyProto.Domain.Safety;
 using SafetyProto.Domain.Scoring;
 using SafetyProto.Runtime.Actions;
@@ -169,7 +170,7 @@ namespace SafetyProto.Runtime.Safety
             {
                 _choiceOpen = false;
                 PublishReport(option);
-            });
+            }, narrationKey: NarrationKeys.ForHazardReport(task.id));
         }
 
         private ISafetyTask ResolveTask() => ReportTask ?? ResolveRuntimeTask()?.TaskData;

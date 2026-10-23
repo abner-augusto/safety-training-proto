@@ -3,6 +3,7 @@ using NUnit.Framework;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
+using SafetyProto.Domain.Feedback;
 using SafetyProto.Runtime.Safety;
 using SafetyProto.Tests.Editor.Support;
 using UnityEngine;
@@ -39,10 +40,12 @@ namespace SafetyProto.Tests.Editor
             public IReadOnlyList<IReportOption> Options;
             public UnityAction<IReportOption> OnChosen;
             public int ChoiceCount;
+            public string NarrationKey;
 
             public void ShowChoice(string title, string body, IReadOnlyList<IReportOption> options,
-                                   UnityAction<IReportOption> onChosen)
+                                   UnityAction<IReportOption> onChosen, string narrationKey = null)
             {
+                NarrationKey = narrationKey;
                 Title = title;
                 Body = body;
                 Options = options;
@@ -55,7 +58,8 @@ namespace SafetyProto.Tests.Editor
             public void ShowSuccess(string title, string body) { }
             public void ShowWarning(string title, string body) { }
             public bool TryShowIfIdle(string title, string body, float autoCloseSeconds) => true;
-            public void ShowInteractive(string title, string body, string buttonLabel, UnityAction onAction) { }
+            public void ShowInteractive(string title, string body, string buttonLabel, UnityAction onAction,
+                                        string narrationKey = null) { }
             public void Hide() { }
             public bool IsDisplayed => false;
         }
@@ -131,6 +135,20 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual("Comunicar Irregularidade", popup.Title);
             Assert.AreEqual("Como ela deve ser classificada?", popup.Body);
             Assert.AreEqual(3, popup.Options.Count);
+        }
+
+        [Test]
+        public void TheReportPopup_IsNarratedByItsTaskId()
+        {
+            var popup = new HoldingPopup();
+            _reporter.PopupFeedback = popup;
+            var task = MeshTask();
+            _reporter.ReportTask = task;
+
+            _reporter.Report();
+
+            Assert.AreEqual(NarrationKeys.ForHazardReport(task.id), popup.NarrationKey);
+            StringAssert.StartsWith("report:", popup.NarrationKey);
         }
 
         [Test]

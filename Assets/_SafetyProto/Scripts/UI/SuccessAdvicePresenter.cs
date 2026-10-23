@@ -33,6 +33,9 @@ namespace SafetyProto.UI
 
         public event Action<string> AdviceShown;
 
+        /// <summary>True while a caption is on screen or its narration is still playing.</summary>
+        public bool IsShowing => _displayRoutine != null;
+
         private Coroutine _displayRoutine;
 
         private void Awake()

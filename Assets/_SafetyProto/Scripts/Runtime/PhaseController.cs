@@ -4,6 +4,7 @@ using System.Collections;
 using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Feedback;
 using SafetyProto.Domain.Scoring;
 using SafetyProto.Domain.Tasks;
 using SafetyProto.Runtime.Task;
@@ -267,7 +268,7 @@ namespace SafetyProto.Runtime
                     {
                         _popupFeedback.Hide();
                         StartTransition();
-                    });
+                    }, NarrationKeys.PhaseCompleted);
             }
             else
             {
@@ -312,7 +313,7 @@ namespace SafetyProto.Runtime
                         {
                             _popupFeedback.Hide();
                             StartTransition();
-                        });
+                        }, NarrationKeys.PhaseCompleted);
                 }
                 else
                 {

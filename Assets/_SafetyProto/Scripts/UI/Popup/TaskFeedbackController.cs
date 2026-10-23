@@ -1,5 +1,6 @@
 using SafetyProto.Core;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Feedback;
 using SafetyProto.Domain.Safety;
 using SafetyProto.Runtime.PPE;
 using SafetyProto.Runtime.Task;
@@ -85,7 +86,7 @@ namespace SafetyProto.UI
             if (string.IsNullOrWhiteSpace(args.Message)) return;
 
             PopupService.Instance?.ShowWarning(prerequisiteTitle, args.Message, autoCloseSeconds,
-                ViolationCodes.PrerequisitePending);
+                ViolationCodes.PrerequisitePending, NarrationKeys.PrerequisitePending);
         }
 
         private void OnDistractorSnapAttempted(PPEType attempted, string distractorId)
@@ -105,7 +106,9 @@ namespace SafetyProto.UI
                 body = "Este equipamento não é adequado para trabalho em altura.";
             }
 
-            PopupService.Instance?.ShowWarning(ppeTitle, body, autoCloseSeconds);
+            // Narrated per decoy (not per text): only an authored decoy has a voice-over.
+            var narrationKey = match != null ? NarrationKeys.ForDistractor(match.Distractor.Id) : null;
+            PopupService.Instance?.ShowWarning(ppeTitle, body, autoCloseSeconds, narrationKey: narrationKey);
         }
 
         private void OnWrongOrderSnapAttempted(PPEType attempted)
