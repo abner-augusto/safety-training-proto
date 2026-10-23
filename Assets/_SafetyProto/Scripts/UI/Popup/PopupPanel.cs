@@ -26,6 +26,8 @@ namespace SafetyProto.UI
         [SerializeField] private GameObject inputFieldRoot;
         [Tooltip("Root do layout a reconstruir após mudar o conteúdo (geralmente o background ou este próprio RectTransform).")]
         [SerializeField] private RectTransform layoutRoot;
+        [Tooltip("Margem transparente entre o card (Background) e a borda do canvas, em cada lado. O OVROverlayCanvas só desenha o rect do canvas; a margem deixa o botão fechar sobrar além do card sem ser cortado. Deve bater com o recuo do Background no prefab.")]
+        [SerializeField, Min(0f)] private float cardMargin = 40f;
 
         [Header("Teclado numérico")]
         [Tooltip("Tamanho de cada tecla do teclado numérico construído sob o campo de texto.")]
@@ -219,7 +221,8 @@ namespace SafetyProto.UI
         /// The poke and ray surfaces stretch to the canvas rect, but the content size fitter grows
         /// only Background, which is stretched inside that rect with a height offset. Grow or shrink
         /// the canvas by that offset so tall popups (the keypad) stay pokeable and ray-clickable
-        /// all the way to their bottom buttons.
+        /// all the way to their bottom buttons. The canvas keeps <see cref="cardMargin"/> above and
+        /// below the card so the overhanging close button is not clipped by OVROverlayCanvas.
         /// </summary>
         private void FitInteractionAreaToBackground()
         {
@@ -228,7 +231,7 @@ namespace SafetyProto.UI
             if (background.parent is not RectTransform area) return;
             if (background.anchorMin.y != 0f || background.anchorMax.y != 1f) return;
 
-            float overflow = background.sizeDelta.y;
+            float overflow = background.sizeDelta.y + 2f * cardMargin;
             if (Mathf.Abs(overflow) < 0.5f) return;
             area.sizeDelta = new Vector2(area.sizeDelta.x, area.sizeDelta.y + overflow);
         }

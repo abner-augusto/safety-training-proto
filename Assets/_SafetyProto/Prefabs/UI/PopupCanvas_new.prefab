@@ -156,7 +156,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _position: {x: 0, y: 0, z: 0}
-  _size: {x: 600, y: 450, z: 0.01}
+  _size: {x: 680, y: 530, z: 0.01}
 --- !u!114 &4461902704938285132
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -519,6 +519,7 @@ MonoBehaviour:
   skipButtonLabel: {fileID: 3776872144871056127}
   inputFieldRoot: {fileID: 0}
   layoutRoot: {fileID: 2260388966796775858}
+  cardMargin: 40
   keypadCellSize: {x: 132, y: 72}
   keypadSpacing: {x: 12, y: 12}
   keypadBackspaceLabel: Apagar
@@ -2008,7 +2009,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: -80, y: -80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6416690894224492364
 CanvasRenderer:
@@ -2275,7 +2276,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _position: {x: 0, y: 0, z: 0}
-  _size: {x: 600, y: 450, z: 0.01}
+  _size: {x: 680, y: 530, z: 0.01}
 --- !u!114 &355447504817396680
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2330,7 +2331,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 600, y: 450}
+  m_SizeDelta: {x: 680, y: 530}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &6279392800073542707
 Canvas:
