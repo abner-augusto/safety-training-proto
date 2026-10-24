@@ -25,6 +25,7 @@ namespace SafetyProto.Runtime.PPE
             [NonSerialized] internal Vector3[] previous;
             [NonSerialized] internal float[] lengths;
             [NonSerialized] internal Vector3[] surfaceNormals;
+            [NonSerialized] internal Vector3[] stepStart;
         }
 
         [SerializeField] private PPESnapItem snapItem;
@@ -39,6 +40,10 @@ namespace SafetyProto.Runtime.PPE
         [SerializeField, Min(0.1f)] private float teleportDistance = 0.3f;
         [SerializeField] private Vector3 shellCenter = new Vector3(0f, 0.018f, 0f);
         [SerializeField] private Vector3 shellRadii = new Vector3(0.087f, 0.047f, 0.102f);
+        [Tooltip("Strap points slower than this (m/s) count as settled.")]
+        [SerializeField, Min(0f)] private float sleepSpeed = 0.002f;
+        [Tooltip("Settled fixed steps, with the helmet still, before the simulation sleeps.")]
+        [SerializeField, Min(1)] private int sleepSteps = 36;
 
         private ChinstrapCollision _collision;
         private GameObject _probeObject;
@@ -52,6 +57,7 @@ namespace SafetyProto.Runtime.PPE
         private Grabbable _grabbable;
         private bool _wasHeld;
         private float _previousStepDuration;
+        private int _settledSteps;
 
         private bool IsHeld => _grabbable != null && _grabbable.SelectingPointsCount > 0;
 
@@ -76,6 +82,7 @@ namespace SafetyProto.Runtime.PPE
                 strap.previous = new Vector3[count];
                 strap.lengths = new float[count - 1];
                 strap.surfaceNormals = new Vector3[count];
+                strap.stepStart = new Vector3[count];
                 for (int i = 0; i < count - 1; i++)
                     strap.lengths[i] = Vector3.Distance(transform.TransformPoint(strap.fittedPositions[i]),
                         transform.TransformPoint(strap.fittedPositions[i + 1]));
@@ -123,6 +130,7 @@ namespace SafetyProto.Runtime.PPE
             _wasReturning = returnHome != null && returnHome.IsReturning;
             _wasHeld = IsHeld;
             _previousStepDuration = 0f;
+            _settledSteps = 0;
             RememberPose();
             SetVisible(!IsFitted);
             UpdateBones();
@@ -159,9 +167,15 @@ namespace SafetyProto.Runtime.PPE
             bool held = IsHeld;
             bool fitted = IsFitted;
             bool returning = returnHome != null && returnHome.IsReturning;
-            bool jumped = Vector3.Distance(_lastPosition, transform.position) > teleportDistance ||
-                          Quaternion.Angle(_lastRotation, transform.rotation) > 100f;
+            float moved = Vector3.Distance(_lastPosition, transform.position);
+            float turned = Quaternion.Angle(_lastRotation, transform.rotation);
+            bool jumped = moved > teleportDistance || turned > 100f;
             bool reset = fitted != _wasFitted || jumped || returning != _wasReturning;
+            // A loose helmet resting on the shelf would otherwise pay hundreds of contact
+            // queries per step for a strap that no longer moves. The contact is one-way,
+            // so only the helmet itself can disturb a sleeping strap.
+            if (reset || held || returning || held != _wasHeld || moved > 0.0001f || turned > 0.01f)
+                _settledSteps = 0;
             if (reset)
             {
                 SeedPose(fitted);
@@ -178,8 +192,10 @@ namespace SafetyProto.Runtime.PPE
             _wasFitted = fitted;
             _wasReturning = returning;
             RememberPose();
-            if (fitted || duration <= 0f) return;
+            if (fitted || duration <= 0f || _settledSteps >= sleepSteps) return;
 
+            foreach (Strap strap in straps)
+                Array.Copy(strap.positions, strap.stepStart, strap.positions.Length);
             float referenceStep = Time.fixedDeltaTime / substeps;
             duration = Mathf.Min(duration, 0.05f);
             int steps = Mathf.Max(substeps, Mathf.CeilToInt(duration / referenceStep));
@@ -191,6 +207,19 @@ namespace SafetyProto.Runtime.PPE
                 foreach (Strap strap in straps) Simulate(strap, dt, velocityScale * attenuation);
                 _previousStepDuration = dt;
             }
+
+            float settledDistance = sleepSpeed * duration;
+            if (MaxDisplacementSqr() <= settledDistance * settledDistance) _settledSteps++;
+            else _settledSteps = 0;
+        }
+
+        private float MaxDisplacementSqr()
+        {
+            float max = 0f;
+            foreach (Strap strap in straps)
+                for (int i = 0; i < strap.positions.Length; i++)
+                    max = Mathf.Max(max, (strap.positions[i] - strap.stepStart[i]).sqrMagnitude);
+            return max;
         }
 
         private void CarryWithHelmet()
