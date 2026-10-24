@@ -65576,7 +65576,7 @@ Light:
   serializedVersion: 13
   m_Type: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 1.34
+  m_Intensity: 1.139
   m_Range: 12.17
   m_SpotAngle: 105.3
   m_InnerSpotAngle: 21.80208
@@ -66996,21 +66996,21 @@ MonoBehaviour:
   switchedLights:
   - {fileID: 2975354326889926518}
   offLightmapColors:
-  - {fileID: 2800000, guid: cbb295cfee8df6040bceabfe97fe6be0, type: 3}
-  - {fileID: 2800000, guid: 28fd32843b50e6d439a5ba77eb95fb3e, type: 3}
-  - {fileID: 2800000, guid: f6d61da71450e5444988a81ac27c5cc5, type: 3}
-  - {fileID: 2800000, guid: d7df45472670188419bf85bc79381d1e, type: 3}
-  - {fileID: 2800000, guid: 561988a35b1c1774d95f0d857aa9ac60, type: 3}
-  - {fileID: 2800000, guid: da06f62dec7c549438a766c20e1223bb, type: 3}
-  - {fileID: 2800000, guid: f7202a0385e3394428a8732242372685, type: 3}
+  - {fileID: 2800000, guid: e7a82cdc15fdde64d8271be4fc2017f4, type: 3}
+  - {fileID: 2800000, guid: 2750e965366aa1e48b53beb69da5d3a5, type: 3}
+  - {fileID: 2800000, guid: b608db2b178a8c247b1ebafb588359c2, type: 3}
+  - {fileID: 2800000, guid: b25b2e00bf89d40479a2c580222e7fcd, type: 3}
+  - {fileID: 2800000, guid: c091d9803aae00c4e8bf52d14b9ce884, type: 3}
+  - {fileID: 2800000, guid: 82c9e913d6b7c2e4bb0650447d0a5609, type: 3}
+  - {fileID: 2800000, guid: 9660fd257a091fb449cfd95a9aaa7418, type: 3}
   offLightmapDirs:
-  - {fileID: 2800000, guid: ed1622764a6654449823d6ef497e81c4, type: 3}
-  - {fileID: 2800000, guid: ea0c7ac232de161459d60cdc9f753521, type: 3}
-  - {fileID: 2800000, guid: 9ab59270694c4ac4e9d38ac1e0b55f20, type: 3}
-  - {fileID: 2800000, guid: e6bb8fee9a4008e48aaef440d4354fbb, type: 3}
-  - {fileID: 2800000, guid: 9b2ba45797f2d84449f4c95ffdb88b02, type: 3}
-  - {fileID: 2800000, guid: 3c4b7a1fe535fd149835e51ee3e5fbf2, type: 3}
-  - {fileID: 2800000, guid: 639dbe315d121774d84112c631ac19be, type: 3}
+  - {fileID: 2800000, guid: ebdae0d7b77db5942952219f41be651b, type: 3}
+  - {fileID: 2800000, guid: 6362019f9bc9b6c4b94999bf62cdfdea, type: 3}
+  - {fileID: 2800000, guid: b815dcdc57dbe5f4cbd52cf9beb98246, type: 3}
+  - {fileID: 2800000, guid: d4a93cd2f4ef8924e83fb26230f36be5, type: 3}
+  - {fileID: 2800000, guid: 55becff5029bbce44b7d8320af94b54e, type: 3}
+  - {fileID: 2800000, guid: 84f94e76c09df8441ab0080f08e254d6, type: 3}
+  - {fileID: 2800000, guid: 81b9b833f6631ef4ca8d68005340e8f3, type: 3}
   offLightProbes: {fileID: 25800000, guid: 42e35dc3474457649a191942c1cf14f5, type: 2}
   startOff: 1
 --- !u!23 &5391521308821298087
