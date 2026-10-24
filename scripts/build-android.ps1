@@ -5,6 +5,7 @@ param(
     [int]$NewVersionCode,
     [switch]$NoCommit,
     [switch]$Development,
+    [switch]$Lto,
     [int]$PollIntervalSeconds = 15,
     [int]$MaxPollAttempts = 240,
     [switch]$Help
@@ -33,6 +34,9 @@ Options:
                               session simulator) for scripts/quest-sim-run.ps1. It is not copied to
                               the output directory. Builds without -flto=thin (Android build type
                               Development, restored afterwards): the LTO link alone takes ~20 min.
+  -Lto                        With -Development, keep -flto=thin. Slower to build, but its frame rate
+                              matches a release APK: measure performance on this one, never on a
+                              plain -Development APK (~5 fps slower on the CPU).
   -PollIntervalSeconds <int>  Seconds between build status polls (default: 15)
   -MaxPollAttempts <int>      Poll attempts before giving up (default: 240, one hour at
                               the default interval; a release build with LTO takes ~50 min)
@@ -162,7 +166,8 @@ try {
     # switches the Android build type instead of editing the IL2CPP args. The finally block restores
     # the type and the args; androidBuildType is reached by reflection because it is obsolete and
     # eval compiles warnings as errors.
-    if ($Development) {
+    if ($Lto -and -not $Development) { throw "-Lto only applies with -Development; release builds always use LTO." }
+    if ($Development -and -not $Lto) {
         $previousBuildState = Invoke-UnityEval -Code 'var p = typeof(UnityEditor.EditorUserBuildSettings).GetProperty("androidBuildType"); var before = p.GetValue(null).ToString(); p.SetValue(null, System.Enum.Parse(p.PropertyType, "Development")); return before + "|" + UnityEditor.PlayerSettings.GetAdditionalIl2CppArgs();'
         Write-Host "  Android build type Development for this build (was $($previousBuildState.Split('|')[0])), so IL2CPP skips LTO"
     }
