@@ -19,6 +19,10 @@ namespace SafetyProto.Runtime
     ///
     /// Place this on a bootstrap GameObject in the scene. Values are tunable in the Inspector;
     /// re-capture OVR Metrics on hardware after changing them.
+    ///
+    /// The values above are tuned on a Quest 3. A Quest 2 gets its own render scale and foveation
+    /// from the "Quest 2" block: its GPU has roughly half the headroom, and fixed foveation there
+    /// distorts and mirrors the image at the edges of the view while saving no measurable GPU time.
     /// </summary>
     public class XrPerformanceBootstrap : MonoBehaviour
     {
@@ -53,6 +57,21 @@ namespace SafetyProto.Runtime
         [FormerlySerializedAs("dynamicFoveation")]
         [SerializeField] private bool allowGazeFoveation = true;
 
+        [Header("Quest 2")]
+        [Tooltip("Replace the render scale and foveation above with the values below when the app " +
+                 "runs on a Quest 2.")]
+        [SerializeField] private bool applyQuest2Profile = true;
+
+        [Tooltip("eyeTextureResolutionScale on a Quest 2. It is the hard ceiling for OVRManager's dynamic " +
+                 "resolution, which otherwise spends any GPU saving on more pixels instead of frame rate. " +
+                 "At 0.8 the scaffold view measured ~9 ms of app GPU time, inside the 13.9 ms budget.")]
+        [Range(0.5f, 1.5f)]
+        [SerializeField] private float quest2EyeTextureResolutionScale = 0.8f;
+
+        [Tooltip("Fixed foveated rendering on a Quest 2. Off: on-device it produced a mirrored, " +
+                 "blocky periphery, and at the 0.8 render scale it raised app GPU time (12.3 vs 9.2 ms).")]
+        [SerializeField] private bool quest2FoveatedRendering = false;
+
         [Header("Hand debug visuals")]
         [Tooltip("Disable the Meta Interaction SDK HandSphereMap debug spheres (one Standard-shader " +
                  "MeshRenderer per finger joint on both hands, ~144 total). They are pure grab-debug " +
@@ -65,11 +84,92 @@ namespace SafetyProto.Runtime
 
         private void Start()
         {
+            if (applyQuest2Profile && IsQuest2(ReadAndroidBuildDevice(), SystemInfo.deviceModel))
+            {
+                eyeTextureResolutionScale = quest2EyeTextureResolutionScale;
+                enableFoveatedRendering = quest2FoveatedRendering;
+                SafetyLog.Info("[XrPerformanceBootstrap] Quest 2 detectado: aplicando o perfil Quest 2.", this);
+            }
+
+            ApplyLaunchOverrides();
             ApplyRenderScale();
             HideHandDebugSpheres();
             // The XR display subsystem may not be running on the first frame; retry.
             StartCoroutine(ApplyFoveationWhenReady());
         }
+
+        /// <summary>True for a Quest 2, identified by its Android device codename or model name.</summary>
+        public static bool IsQuest2(string androidDevice, string deviceModel)
+        {
+            if (string.Equals(androidDevice, "hollywood", System.StringComparison.OrdinalIgnoreCase))
+                return true;
+            return deviceModel != null &&
+                   deviceModel.IndexOf("Quest 2", System.StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static string ReadAndroidBuildDevice()
+        {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            using var build = new AndroidJavaClass("android.os.Build");
+            return build.GetStatic<string>("DEVICE");
+#else
+            return null;
+#endif
+        }
+
+        /// <summary>
+        /// Development builds read render-scale and foveation overrides from the launch intent, so
+        /// a setting can be compared on the headset without a rebuild:
+        /// <c>am start -n &lt;pkg&gt;/&lt;activity&gt; --es safety_perf_scale 0.9 --es safety_perf_viewport 1
+        /// --es safety_perf_foveation 0.66</c>. A foveation of 0 turns it off; a viewport of 0 or 1
+        /// leaves the runtime's dynamic viewport alone.
+        /// </summary>
+        private void ApplyLaunchOverrides()
+        {
+#if UNITY_ANDROID && DEVELOPMENT_BUILD && !UNITY_EDITOR
+            if (TryReadFloatExtra("safety_perf_scale", out float scale))
+                eyeTextureResolutionScale = scale;
+            if (TryReadFloatExtra("safety_perf_viewport", out float viewport))
+                fixedRenderViewportScale = viewport >= 1f ? 0f : viewport;
+            if (TryReadFloatExtra("safety_perf_foveation", out float foveation))
+            {
+                enableFoveatedRendering = foveation > 0f;
+                foveationLevel = foveation;
+            }
+#endif
+        }
+
+#if UNITY_ANDROID && DEVELOPMENT_BUILD && !UNITY_EDITOR
+        private bool TryReadFloatExtra(string key, out float value)
+        {
+            value = 0f;
+            string raw;
+            try
+            {
+                using var player = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+                using var activity = player.GetStatic<AndroidJavaObject>("currentActivity");
+                using var intent = activity?.Call<AndroidJavaObject>("getIntent");
+                raw = intent?.Call<string>("getStringExtra", key);
+            }
+            catch (System.Exception ex)
+            {
+                SafetyLog.Error($"[XrPerformanceBootstrap] Não foi possível ler o extra '{key}': {ex.Message}", this);
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(raw))
+                return false;
+            if (!float.TryParse(raw, System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out value))
+            {
+                SafetyLog.Warning($"[XrPerformanceBootstrap] Extra '{key}' ignorado: '{raw}' não é um número.", this);
+                return false;
+            }
+
+            SafetyLog.Info($"[XrPerformanceBootstrap] Override de lançamento: {key}={value:0.00}", this);
+            return true;
+        }
+#endif
 
         private void ApplyRenderScale()
         {

@@ -69378,6 +69378,9 @@ MonoBehaviour:
   enableFoveatedRendering: 1
   foveationLevel: 0.66
   allowGazeFoveation: 1
+  applyQuest2Profile: 1
+  quest2EyeTextureResolutionScale: 0.8
+  quest2FoveatedRendering: 0
   hideHandDebugSpheres: 1
 --- !u!114 &7322035375745015846
 MonoBehaviour:
