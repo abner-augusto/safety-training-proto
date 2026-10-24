@@ -6,7 +6,7 @@ param(
     [switch]$NoCommit,
     [switch]$Development,
     [int]$PollIntervalSeconds = 15,
-    [int]$MaxPollAttempts = 80,
+    [int]$MaxPollAttempts = 240,
     [switch]$Help
 )
 
@@ -31,9 +31,11 @@ Options:
                               committed on its own before the build.
   -Development                Build a Development APK (SafetyTraining_dev.apk, debuggable, with the
                               session simulator) for scripts/quest-sim-run.ps1. It is not copied to
-                              the output directory.
+                              the output directory. Builds without -flto=thin (Android build type
+                              Development, restored afterwards): the LTO link alone takes ~20 min.
   -PollIntervalSeconds <int>  Seconds between build status polls (default: 15)
-  -MaxPollAttempts <int>      Poll attempts before giving up (default: 80)
+  -MaxPollAttempts <int>      Poll attempts before giving up (default: 240, one hour at
+                              the default interval; a release build with LTO takes ~50 min)
   -Help, --help               Show this help and exit
 
 Examples:
@@ -55,6 +57,7 @@ if ($Help -or $PSBoundParameters.Values -contains '--help') {
 }
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
+$previousBuildState = $null
 $relativeApkPath = if ($Development) { "Builds/Android/SafetyTraining_dev.apk" } else { "Builds/Android/SafetyTraining.apk" }
 $buildOptionArgs = if ($Development) { @("--options", '["Development","AllowDebugging"]') } else { @() }
 $apkPath = Join-Path $repoRoot $relativeApkPath
@@ -147,11 +150,22 @@ try {
     }
 
     # A dirty scene makes the build open a modal "save scene?" dialog that blocks the editor
-    # until someone clicks it, so the polling below times out. Save first.
-    $saved = Invoke-UnityEval -Code 'var dirty = new System.Collections.Generic.List<string>(); for (int i = 0; i < UnityEditor.SceneManagement.EditorSceneManager.sceneCount; i++) { var s = UnityEditor.SceneManagement.EditorSceneManager.GetSceneAt(i); if (s.isDirty) dirty.Add(s.name); } UnityEditor.SceneManagement.EditorSceneManager.SaveOpenScenes(); UnityEditor.AssetDatabase.SaveAssets(); return string.Join(",", dirty);'
+    # until someone clicks it, so the polling below times out. Save first, and only when dirty:
+    # rewriting the 2 MB scene can exceed eval's 5 s main-thread limit.
+    $saved = Invoke-UnityEval -Code 'var dirty = new System.Collections.Generic.List<string>(); for (int i = 0; i < UnityEditor.SceneManagement.EditorSceneManager.sceneCount; i++) { var s = UnityEditor.SceneManagement.EditorSceneManager.GetSceneAt(i); if (s.isDirty) dirty.Add(s.name); } if (dirty.Count > 0) UnityEditor.SceneManagement.EditorSceneManager.SaveOpenScenes(); UnityEditor.AssetDatabase.SaveAssets(); return string.Join(",", dirty);'
     if ($saved) { Write-Host "  saved dirty scenes: $saved" }
 
     $bundleVersion = Invoke-UnityEval -Code 'return UnityEditor.PlayerSettings.bundleVersion;'
+
+    # Meta's OVRBuildSettingsBuildProcessor re-adds -flto=thin to every Release-type Android build
+    # (OVRProjectConfig.enableIL2CPPLTO) and strips it from any other type, so a Development APK
+    # switches the Android build type instead of editing the IL2CPP args. The finally block restores
+    # the type and the args; androidBuildType is reached by reflection because it is obsolete and
+    # eval compiles warnings as errors.
+    if ($Development) {
+        $previousBuildState = Invoke-UnityEval -Code 'var p = typeof(UnityEditor.EditorUserBuildSettings).GetProperty("androidBuildType"); var before = p.GetValue(null).ToString(); p.SetValue(null, System.Enum.Parse(p.PropertyType, "Development")); return before + "|" + UnityEditor.PlayerSettings.GetAdditionalIl2CppArgs();'
+        Write-Host "  Android build type Development for this build (was $($previousBuildState.Split('|')[0])), so IL2CPP skips LTO"
+    }
     Write-Host "=== Building Android (version $bundleVersion) ===" -ForegroundColor Cyan
 
     $dryRun = Invoke-UnityCommand -Arguments (@(
@@ -221,5 +235,11 @@ try {
     Write-Host "=== Copied to $destPath ===" -ForegroundColor Green
     Get-Item $destPath | Select-Object Name, Length, LastWriteTime
 } finally {
+    if ($previousBuildState) {
+        $buildType, $il2cppArgs = $previousBuildState.Split('|', 2)
+        $restore = 'var p = typeof(UnityEditor.EditorUserBuildSettings).GetProperty("androidBuildType"); p.SetValue(null, System.Enum.Parse(p.PropertyType, "' + $buildType + '")); UnityEditor.PlayerSettings.SetAdditionalIl2CppArgs(@"' + $il2cppArgs.Replace('"', '""') + '"); UnityEditor.AssetDatabase.SaveAssets(); return p.GetValue(null) + " | " + UnityEditor.PlayerSettings.GetAdditionalIl2CppArgs();'
+        $restored = Invoke-UnityEval -Code $restore
+        Write-Host "  restored build type and IL2CPP args: $restored"
+    }
     Pop-Location
 }
