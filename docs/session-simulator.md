@@ -211,6 +211,27 @@ The head pose is wherever the headset rests, so desk runs are comparable with ea
 other but not with a participant's run: a static view renders a different share of
 the scene, and the GPU numbers move with it.
 
+### Performance runs
+
+- **Fix the view with a hold script.** A variant whose last steps repeat `move` to
+  one target with long `delayMs` holds the camera there for minutes. `move` turns
+  the rig to face the target, so turning the headset by hand only changes the view
+  after the move, not before.
+- **`-Extra key=value,...`** adds string intent extras to the launch, for example
+  `XrPerformanceBootstrap`'s Development-only overrides `safety_perf_scale`,
+  `safety_perf_viewport` and `safety_perf_foveation`. Separate pairs with commas
+  inside one argument: `pwsh -File` hands the script a single string.
+- **Measure on an LTO build.** Meta's build processor adds `-flto=thin` to every
+  Release-type Android build, Development or not. `build-android.ps1 -Development`
+  switches the build type to Development to skip it, which is about three times
+  faster but costs about 5 fps of CPU time on a Quest 2. For numbers, build through
+  the Editor with `unity command build --target Android --outputPath
+  Builds/Android/SafetyTraining_dev.apk --options '["Development","AllowDebugging"]'
+  --confirm`.
+- **The simulator never wears PPE.** The helmet stays loose on its shelf and the
+  lanyard is never clipped, so their strap and rope simulations run for the whole
+  run, unlike in a participant's session.
+
 ## Coverage and limitations
 
 Covered: session start, PPE state events, action attempts, real phase and inspection
