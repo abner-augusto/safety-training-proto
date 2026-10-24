@@ -7,6 +7,7 @@ param(
     [switch]$MetricsCsv,
     [int]$TimeoutSeconds = 300,
     [string]$Serial,
+    [string[]]$Extra = @(),
     [switch]$Help
 )
 
@@ -32,6 +33,9 @@ Options:
   -MetricsCsv              Also record an OVR Metrics Tool CSV per run
   -TimeoutSeconds <int>    Give up on a run after this long (default: 300)
   -Serial <serial>         adb device serial when more than one is attached
+  -Extra <key=value,...>   Additional string intent extras for the launch, e.g.
+                           safety_perf_foveation=0.66,safety_perf_viewport=1
+                           (XrPerformanceBootstrap's render overrides)
   -Help, --help            Show this help and exit
 
 Each run folder gets the simulated session log and perf CSV (written under
@@ -122,6 +126,12 @@ try {
 
         $startArgs = @("shell", "am", "start", "-n", $activity, "--es", "safety_sim", $Mode)
         if ($scriptOnDevice) { $startArgs += @("--es", "safety_sim_script", $scriptOnDevice) }
+        # pwsh -File hands a comma list over as one string, so split it here too.
+        foreach ($pair in ($Extra | ForEach-Object { $_ -split ',' } | Where-Object { $_ })) {
+            $key, $value = $pair.Split('=', 2)
+            if (-not $value) { throw "-Extra expects key=value, got '$pair'" }
+            $startArgs += @("--es", $key, $value)
+        }
         $started = (Invoke-Adb @startArgs) -join "`n"
         if ($started -match "Error") { throw "Launch failed: $started" }
         Write-Host "[run $run] launched at $(Invoke-Adb shell date '+%H:%M:%S')"
