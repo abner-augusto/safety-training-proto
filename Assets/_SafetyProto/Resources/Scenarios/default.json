@@ -258,11 +258,11 @@
   ],
   "script": [
     { "kind": "ppe", "ppeType": "Boots",      "isWearing": true, "delayMs": 200 },
+    { "kind": "ppe", "ppeType": "Harness",    "isWearing": true, "delayMs": 200 },
+    { "kind": "ppe", "ppeType": "Helmet",     "isWearing": true, "delayMs": 200 },
+    { "kind": "ppe", "ppeType": "Goggles",    "isWearing": true, "delayMs": 200 },
     { "kind": "ppe", "ppeType": "GloveRight", "isWearing": true, "delayMs": 200 },
     { "kind": "ppe", "ppeType": "GloveLeft",  "isWearing": true, "delayMs": 200 },
-    { "kind": "ppe", "ppeType": "Goggles",    "isWearing": true, "delayMs": 200 },
-    { "kind": "ppe", "ppeType": "Helmet",     "isWearing": true, "delayMs": 200 },
-    { "kind": "ppe", "ppeType": "Harness",    "isWearing": true, "delayMs": 200 },
 
     { "kind": "move", "target": "anchor",       "posture": "standing", "delayMs": 200 },
     { "kind": "action", "actionId": "connect_harness",   "delayMs": 200 },
