@@ -85,15 +85,25 @@ LTO development build, render scale 0.8, foveation off, simulator holds:
 
 Run folders: `dist/quest-sim/q2-c5-loosehide`, `q2-c5-guardrail`, `q2-c5-andaime` (git-ignored).
 
+## Stage 3: GPU headroom
+
+Every panel prefab set `OVROverlayCanvas.superSample` on top of dynamic resolution, which already
+renders each canvas at twice the eye-buffer density, so canvas textures ran at four times it. The
+Quest 2 profile now turns super-sampling off (`0abcc8d`); the text looks almost the same on the
+headset. Andaime view, two alternating rounds each, with the simulator wearing the PPE:
+
+| Canvas super-sampling | fps | App GPU | GPU util |
+|---|---|---|---|
+| On | 70.1 | 11.64 ms | 92% |
+| Off | 70.5 | 9.84 ms | 88% |
+
+The frame rate barely moves because the main thread still sets it; the saving is headroom for
+heavier views.
+
 ## Open candidates
 
 Ranked by expected gain. None of them is measured yet.
 
-- **Overlay canvas super-sampling (GPU).** All seven panel prefabs set `superSample` on top of
-  dynamic resolution, which already renders each canvas at twice the eye-buffer density, so the
-  canvas textures run at 4× density per axis (capped by `maxTextureSize`). Turning it off on a
-  Quest 2 would save GPU time and bandwidth, not main-thread time, and text sharpness has to be
-  checked on the headset before it ships.
 - **Static canvases redraw every other frame (CPU).** Info boards and the inspection buttons use
   `renderInterval` 2. Content that never changes could use `manualRedraw` and redraw on change.
 - **PopupCamera (CPU and GPU).** A second depth-clearing camera renders the cursors every frame.
