@@ -63560,7 +63560,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9120159384485408234, guid: dcdf7e4d797ea214bb21923e92937d12, type: 3}
       propertyPath: m_Name
-      value: Distractor_RubberGlove_Left
+      value: Distractor_RubberGlove_Right
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -63865,7 +63865,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2620520957659290863, guid: 9c6dd181e495b9549a5384f74057850d, type: 3}
       propertyPath: m_Name
-      value: Distractor_RubberGlove_Right
+      value: Distractor_RubberGlove_Left
       objectReference: {fileID: 0}
     - target: {fileID: 3233705284028316491, guid: 9c6dd181e495b9549a5384f74057850d, type: 3}
       propertyPath: m_LocalPosition.x
