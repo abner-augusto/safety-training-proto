@@ -114,12 +114,35 @@ them on a Development build). Andaime view, three alternating rounds each:
 About 0.5 ms of GPU; the fps gap comes mostly from one round's dip. Identical runs differ by up
 to ~3.5 ms of app GPU here, so judge a change by alternating rounds, never by a single run.
 
+The PPE materials then went back to the Standard shader: they are held a few centimetres from
+the eyes, and SimpleLit flattened their metallic, gloss and normal maps. Canteiro view (PPE and
+distractors on the bench), three alternating rounds each, `safety_perf_ppe_pbr` toggling the 16
+materials:
+
+| PPE shader | fps | App GPU | GPU util |
+|---|---|---|---|
+| Standard | 68.8 | 9.57 ms | 81% |
+| SimpleLit | 69.3 | 10.33 ms | 84% |
+
+No measurable cost (one SimpleLit round spiked to 11.9 ms), so the Quest 2 keeps Standard too.
+
+## Stage 4: static overlay canvases
+
+The three info boards and the inspection, phase-advance and report button canvases re-rendered
+every other frame while in view. `OverlayCanvasRedrawOnChange` puts them on `manualRedraw` and
+redraws only when a graphic changes (text, layout, activation, a button's tint fade). Andaime
+view, three alternating rounds each, `safety_perf_canvas_redraw` toggling it:
+
+| Canvas redraw | fps | App GPU | GPU util | Stale frames |
+|---|---|---|---|---|
+| Every 2nd frame | 68.6 | 11.48 ms | 91% | 2592 |
+| On change | 70.1 | 10.72 ms | 89% | 1711 |
+
+It won every round. The checklist keeps its render interval: its active row pulses every frame.
+
 ## Open candidates
 
 Ranked by expected gain. None of them is measured yet.
-
-- **Static canvases redraw every other frame (CPU).** Info boards and the inspection buttons use
-  `renderInterval` 2. Content that never changes could use `manualRedraw` and redraw on change.
 - **PopupCamera (CPU and GPU).** A second depth-clearing camera renders the cursors every frame.
   Its mid-pass clear also keeps hardware early-Z (LRZ) off for the eye pass.
 - **CPU level.** VrApi already reports CPU level 4 / GPU level 5, so `suggestedCpuPerfLevel` is
