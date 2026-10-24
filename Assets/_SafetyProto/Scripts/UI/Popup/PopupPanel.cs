@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using TMPro;
@@ -10,6 +11,12 @@ namespace SafetyProto.UI
 {
     public class PopupPanel : MonoBehaviour
     {
+        // TMP breaks lines after a hyphen, which split "NR-06" and "mantê-lo" across lines.
+        private static readonly Regex HyphenatedWord = new(@"[\w.(]+(?:-[\w.)]+)+", RegexOptions.Compiled);
+
+        private static string KeepHyphenatedWordsTogether(string text) =>
+            string.IsNullOrEmpty(text) ? text : HyphenatedWord.Replace(text, "<nobr>$0</nobr>");
+
         [Header("Referências UI")]
         [SerializeField] private TextMeshProUGUI titleText;
         [SerializeField] private TextMeshProUGUI bodyText;
@@ -113,7 +120,7 @@ namespace SafetyProto.UI
             _currentData = data;
 
             if (titleText != null) titleText.text = data.title;
-            if (bodyText != null) bodyText.text = data.body;
+            if (bodyText != null) bodyText.text = KeepHyphenatedWordsTogether(data.body);
 
             if (backgroundImage != null)
             {

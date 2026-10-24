@@ -71593,6 +71593,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 1917115605258271978, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 800
+      objectReference: {fileID: 0}
     - target: {fileID: 1933596170070335624, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
       propertyPath: m_Layer
       value: 3
@@ -71636,6 +71640,10 @@ PrefabInstance:
     - target: {fileID: 3471765697244431596, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
       propertyPath: m_Layer
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3832133888644160195, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
+      propertyPath: m_PreferredWidth
+      value: 620
       objectReference: {fileID: 0}
     - target: {fileID: 3992221505758115048, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
       propertyPath: _overlayEnabled
