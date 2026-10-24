@@ -3090,6 +3090,25 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 171066195}
   m_Mesh: {fileID: 2273937050938995751, guid: 9b1545b790c85354a9b6449bb3dee586, type: 3}
+--- !u!1 &171569560 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7427183092401785367, guid: f0b1686d38f26734aad688ad4432b2f2, type: 3}
+  m_PrefabInstance: {fileID: 6142811650165555934}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &171569565
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 171569560}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ContentSizeFitter
+  m_HorizontalFit: 0
+  m_VerticalFit: 2
 --- !u!1 &172091594
 GameObject:
   m_ObjectHideFlags: 0
@@ -68351,10 +68370,29 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7427183092401785368, guid: f0b1686d38f26734aad688ad4432b2f2, type: 3}
+      propertyPath: m_Pivot.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7427183092401785370, guid: f0b1686d38f26734aad688ad4432b2f2, type: 3}
+      propertyPath: m_fontSize
+      value: 44
+      objectReference: {fileID: 0}
+    - target: {fileID: 7427183092401785370, guid: f0b1686d38f26734aad688ad4432b2f2, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 44
+      objectReference: {fileID: 0}
+    - target: {fileID: 7427183092401785371, guid: f0b1686d38f26734aad688ad4432b2f2, type: 3}
+      propertyPath: m_PreferredHeight
+      value: -1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7427183092401785367, guid: f0b1686d38f26734aad688ad4432b2f2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 171569565}
   m_SourcePrefab: {fileID: 100100000, guid: f0b1686d38f26734aad688ad4432b2f2, type: 3}
 --- !u!224 &6142811650165555935 stripped
 RectTransform:
