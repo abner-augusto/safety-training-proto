@@ -100,6 +100,20 @@ headset. Andaime view, two alternating rounds each, with the simulator wearing t
 The frame rate barely moves because the main thread still sets it; the saving is headroom for
 heavier views.
 
+Part of that headroom then went back into the picture. The PPE room's spotlight is now baked,
+with a lightmap swap that keeps its lights-on moment, and light probe grids cover the room and
+the scaffold platform. None of that costs anything per frame. The scaffold metals regained
+reflection-probe reflections in `SafetyProto/SimpleLit` (`safety_perf_metal_reflections` toggles
+them on a Development build). Andaime view, three alternating rounds each:
+
+| Metal reflections | fps | App GPU | GPU util |
+|---|---|---|---|
+| Off | 70.8 | 9.66 ms | 84% |
+| On | 69.1 | 10.16 ms | 85% |
+
+About 0.5 ms of GPU; the fps gap comes mostly from one round's dip. Identical runs differ by up
+to ~3.5 ms of app GPU here, so judge a change by alternating rounds, never by a single run.
+
 ## Open candidates
 
 Ranked by expected gain. None of them is measured yet.
