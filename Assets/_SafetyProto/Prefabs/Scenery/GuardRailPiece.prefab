@@ -175,9 +175,9 @@ MonoBehaviour:
   targetSocketB: {fileID: 0}
   allowAnySlotDirection: 1
   allow180Rotation: 1
-  positionTolerance: 0.15
-  yawTolerance: 35
-  tiltTolerance: 45
+  positionTolerance: 0.1725
+  yawTolerance: 40.25
+  tiltTolerance: 51.75
   snapOnRelease: 1
   lockAfterInstalled: 1
   disableGrabAfterInstalled: 1
@@ -356,6 +356,7 @@ MonoBehaviour:
   - {fileID: 5313489545297829222}
   viewOrigin: {fileID: 0}
   phaseController: {fileID: 0}
+  requireAndaimePhase: 1
   viewHalfAngle: 35
   maxViewDistance: 5
   fadeDuration: 0.25
