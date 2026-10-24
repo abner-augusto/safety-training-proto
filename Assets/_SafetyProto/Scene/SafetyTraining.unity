@@ -4766,6 +4766,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 9072373272357213150, guid: f7da5913b2c00f045a3051c007e13e8f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 233012393}
+    - targetCorrespondingSourceObject: {fileID: 2830847439900390111, guid: f7da5913b2c00f045a3051c007e13e8f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 404973707}
   m_SourcePrefab: {fileID: 100100000, guid: f7da5913b2c00f045a3051c007e13e8f, type: 3}
 --- !u!4 &233012391 stripped
 Transform:
@@ -9537,6 +9540,23 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 400665576}
   m_Mesh: {fileID: 4639845854051334900, guid: 9b1545b790c85354a9b6449bb3dee586, type: 3}
+--- !u!1 &404973703 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2830847439900390111, guid: f7da5913b2c00f045a3051c007e13e8f, type: 3}
+  m_PrefabInstance: {fileID: 233012390}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &404973707
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 404973703}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40724ff776b95494c84643eed862ba81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.OverlayCanvasRedrawOnChange
 --- !u!114 &409973192 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2978571458893240915, guid: 0a7d2469f24041c4284c66706f84c45e, type: 3}
@@ -23664,6 +23684,23 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 956055370}
   m_Mesh: {fileID: 134395379165635378, guid: 9b1545b790c85354a9b6449bb3dee586, type: 3}
+--- !u!1 &957076929 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2830847439900390111, guid: f7da5913b2c00f045a3051c007e13e8f, type: 3}
+  m_PrefabInstance: {fileID: 1562590036}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &957076933
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957076929}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40724ff776b95494c84643eed862ba81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.OverlayCanvasRedrawOnChange
 --- !u!1 &962034034
 GameObject:
   m_ObjectHideFlags: 0
@@ -24935,7 +24972,10 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7225912760332395731, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1115883728}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8774602304170262593, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 997715747}
   m_SourcePrefab: {fileID: 100100000, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
 --- !u!1 &997715740 stripped
 GameObject:
@@ -24952,6 +24992,18 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 6308249081878237579, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
   m_PrefabInstance: {fileID: 997715739}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &997715747
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 997715740}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40724ff776b95494c84643eed862ba81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.OverlayCanvasRedrawOnChange
 --- !u!1 &999508339
 GameObject:
   m_ObjectHideFlags: 0
@@ -42142,6 +42194,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1515773941}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 180}
+--- !u!1 &1443044178 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2830847439900390111, guid: f7da5913b2c00f045a3051c007e13e8f, type: 3}
+  m_PrefabInstance: {fileID: 1899365299}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1443044182
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1443044178}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40724ff776b95494c84643eed862ba81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.OverlayCanvasRedrawOnChange
 --- !u!1 &1447331323
 GameObject:
   m_ObjectHideFlags: 0
@@ -44470,7 +44539,10 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7225912760332395731, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
       insertIndex: -1
       addedObject: {fileID: 745442016}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8774602304170262593, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1997287292}
   m_SourcePrefab: {fileID: 100100000, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
 --- !u!224 &1524687498 stripped
 RectTransform:
@@ -45536,6 +45608,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 9072373272357213150, guid: f7da5913b2c00f045a3051c007e13e8f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1562590039}
+    - targetCorrespondingSourceObject: {fileID: 2830847439900390111, guid: f7da5913b2c00f045a3051c007e13e8f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 957076933}
   m_SourcePrefab: {fileID: 100100000, guid: f7da5913b2c00f045a3051c007e13e8f, type: 3}
 --- !u!4 &1562590037 stripped
 Transform:
@@ -50722,7 +50797,10 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7225912760332395731, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1916120411}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8774602304170262593, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1719324710}
   m_SourcePrefab: {fileID: 100100000, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
 --- !u!224 &1719324703 stripped
 RectTransform:
@@ -50739,6 +50817,18 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 8774602304170262593, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
   m_PrefabInstance: {fileID: 1719324702}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1719324710
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1719324705}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40724ff776b95494c84643eed862ba81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.OverlayCanvasRedrawOnChange
 --- !u!1 &1722772040
 GameObject:
   m_ObjectHideFlags: 0
@@ -55905,6 +55995,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 9072373272357213150, guid: f7da5913b2c00f045a3051c007e13e8f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1899365302}
+    - targetCorrespondingSourceObject: {fileID: 2830847439900390111, guid: f7da5913b2c00f045a3051c007e13e8f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1443044182}
   m_SourcePrefab: {fileID: 100100000, guid: f7da5913b2c00f045a3051c007e13e8f, type: 3}
 --- !u!4 &1899365300 stripped
 Transform:
@@ -58944,6 +59037,23 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 9b1545b790c85354a9b6449bb3dee586, type: 3}
   m_PrefabInstance: {fileID: 7032256312750891949}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1997287287 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8774602304170262593, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
+  m_PrefabInstance: {fileID: 1524687497}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1997287292
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1997287287}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40724ff776b95494c84643eed862ba81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.OverlayCanvasRedrawOnChange
 --- !u!1 &1998176470
 GameObject:
   m_ObjectHideFlags: 0

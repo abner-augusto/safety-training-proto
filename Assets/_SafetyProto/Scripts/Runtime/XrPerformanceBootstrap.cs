@@ -88,8 +88,9 @@ namespace SafetyProto.Runtime
         private bool? _canvasSuperSample;
         private bool? _ppePbr;
 
-        // Launch override only: there is no device profile for it.
+        // Launch overrides only: there is no device profile for them.
         private bool? _metalReflections;
+        private bool? _canvasRedrawOnChange;
 
         [Header("Hand debug visuals")]
         [Tooltip("Disable the Meta Interaction SDK HandSphereMap debug spheres (one Standard-shader " +
@@ -117,6 +118,7 @@ namespace SafetyProto.Runtime
             ApplyCanvasSuperSample();
             ApplyMetalReflections();
             ApplyPpePbr();
+            ApplyCanvasRedrawOnChange();
             HideHandDebugSpheres();
             // The XR display subsystem may not be running on the first frame; retry.
             StartCoroutine(ApplyFoveationWhenReady());
@@ -146,11 +148,12 @@ namespace SafetyProto.Runtime
         /// a setting can be compared on the headset without a rebuild:
         /// <c>am start -n &lt;pkg&gt;/&lt;activity&gt; --es safety_perf_scale 0.9 --es safety_perf_viewport 1
         /// --es safety_perf_foveation 0.66 --es safety_perf_canvas_ss 0 --es safety_perf_metal_reflections 0
-        /// --es safety_perf_ppe_pbr 0</c>.
+        /// --es safety_perf_ppe_pbr 0 --es safety_perf_canvas_redraw 0</c>.
         /// A foveation of 0 turns it off; a viewport of 0 or 1 leaves the runtime's dynamic viewport
         /// alone; canvas_ss 0 or 1 sets OVROverlayCanvas super-sampling on every canvas;
         /// metal_reflections 0 turns off SimpleLit's reflection-probe path on the materials using it;
-        /// ppe_pbr 0 shades the PPE with SimpleLit instead of Standard.
+        /// ppe_pbr 0 shades the PPE with SimpleLit instead of Standard; canvas_redraw 0 puts the
+        /// change-driven canvases back on their render interval.
         /// </summary>
         private void ApplyLaunchOverrides()
         {
@@ -170,6 +173,8 @@ namespace SafetyProto.Runtime
                 _metalReflections = metalReflections > 0f;
             if (TryReadFloatExtra("safety_perf_ppe_pbr", out float ppePbr))
                 _ppePbr = ppePbr > 0f;
+            if (TryReadFloatExtra("safety_perf_canvas_redraw", out float canvasRedraw))
+                _canvasRedrawOnChange = canvasRedraw > 0f;
 #endif
         }
 
@@ -237,6 +242,15 @@ namespace SafetyProto.Runtime
             }
 
             SafetyLog.Info($"[XrPerformanceBootstrap] EPIs com SimpleLit em vez de Standard ({swapped} materiais).", this);
+        }
+
+        private void ApplyCanvasRedrawOnChange()
+        {
+            if (_canvasRedrawOnChange is not bool on)
+                return;
+
+            OverlayCanvasRedrawOnChange.SetEnabledForAll(on);
+            SafetyLog.Info($"[XrPerformanceBootstrap] Redesenho dos canvases só quando mudam: {on}.", this);
         }
 
 #if UNITY_ANDROID && DEVELOPMENT_BUILD && !UNITY_EDITOR
