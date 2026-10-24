@@ -79,6 +79,9 @@ namespace SafetyProto.Runtime
 
         private bool? _canvasSuperSample;
 
+        // Launch override only: there is no device profile for it.
+        private bool? _metalReflections;
+
         [Header("Hand debug visuals")]
         [Tooltip("Disable the Meta Interaction SDK HandSphereMap debug spheres (one Standard-shader " +
                  "MeshRenderer per finger joint on both hands, ~144 total). They are pure grab-debug " +
@@ -102,6 +105,7 @@ namespace SafetyProto.Runtime
             ApplyLaunchOverrides();
             ApplyRenderScale();
             ApplyCanvasSuperSample();
+            ApplyMetalReflections();
             HideHandDebugSpheres();
             // The XR display subsystem may not be running on the first frame; retry.
             StartCoroutine(ApplyFoveationWhenReady());
@@ -130,9 +134,10 @@ namespace SafetyProto.Runtime
         /// Development builds read render-scale and foveation overrides from the launch intent, so
         /// a setting can be compared on the headset without a rebuild:
         /// <c>am start -n &lt;pkg&gt;/&lt;activity&gt; --es safety_perf_scale 0.9 --es safety_perf_viewport 1
-        /// --es safety_perf_foveation 0.66 --es safety_perf_canvas_ss 0</c>. A foveation of 0 turns it
-        /// off; a viewport of 0 or 1 leaves the runtime's dynamic viewport alone; canvas_ss 0 or 1
-        /// sets OVROverlayCanvas super-sampling on every canvas.
+        /// --es safety_perf_foveation 0.66 --es safety_perf_canvas_ss 0 --es safety_perf_metal_reflections 0</c>.
+        /// A foveation of 0 turns it off; a viewport of 0 or 1 leaves the runtime's dynamic viewport
+        /// alone; canvas_ss 0 or 1 sets OVROverlayCanvas super-sampling on every canvas;
+        /// metal_reflections 0 turns off SimpleLit's reflection-probe path on the materials using it.
         /// </summary>
         private void ApplyLaunchOverrides()
         {
@@ -148,6 +153,8 @@ namespace SafetyProto.Runtime
             }
             if (TryReadFloatExtra("safety_perf_canvas_ss", out float canvasSuperSample))
                 _canvasSuperSample = canvasSuperSample > 0f;
+            if (TryReadFloatExtra("safety_perf_metal_reflections", out float metalReflections))
+                _metalReflections = metalReflections > 0f;
 #endif
         }
 
@@ -165,6 +172,30 @@ namespace SafetyProto.Runtime
 
             SafetyLog.Info(
                 $"[XrPerformanceBootstrap] Super-sampling dos canvases de overlay: {superSample} ({canvases.Length} canvases).",
+                this);
+        }
+
+        private void ApplyMetalReflections()
+        {
+            if (_metalReflections is not bool on)
+                return;
+
+            const string keyword = "_SIMPLELIT_REFLECTIONS";
+            var materials = new HashSet<Material>();
+            foreach (var renderer in Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include))
+            foreach (var material in renderer.sharedMaterials)
+            {
+                bool usesReflections = material != null && material.HasProperty("_Reflections") &&
+                                       material.GetFloat("_Reflections") > 0f;
+                if (usesReflections && materials.Add(material))
+                {
+                    if (on) material.EnableKeyword(keyword);
+                    else material.DisableKeyword(keyword);
+                }
+            }
+
+            SafetyLog.Info(
+                $"[XrPerformanceBootstrap] Reflexos metálicos do SimpleLit: {on} ({materials.Count} materiais).",
                 this);
         }
 
