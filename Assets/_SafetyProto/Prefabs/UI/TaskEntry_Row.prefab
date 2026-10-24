@@ -377,7 +377,6 @@ GameObject:
   - component: {fileID: 7770824023248157160}
   - component: {fileID: 8517205991818731630}
   - component: {fileID: 3071958594645012742}
-  - component: {fileID: 8591548334140408488}
   m_Layer: 4
   m_Name: Background
   m_TagString: Untagged
@@ -455,7 +454,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: 2c59325cff8447d47899d7e518a87833, type: 2}
+  m_Material: {fileID: 0}
   m_Color: {r: 0.27, g: 0.31, b: 0.37, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
@@ -463,8 +462,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 0
+  m_Sprite: {fileID: 21300000, guid: dcdc43f7a0ad67b4ab3e3db38233dfae, type: 3}
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -472,20 +471,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!114 &8591548334140408488
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2763618357253410997}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 56549cdaaf4d81e4387b02698fd3daa0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  borderRadius: {x: 12, y: 12, z: 12, w: 12}
+  m_PixelsPerUnitMultiplier: 5
 --- !u!1 &3949114980085604816
 GameObject:
   m_ObjectHideFlags: 0
@@ -562,6 +548,7 @@ MonoBehaviour:
   highlightColor: {r: 1, g: 0.69615364, b: 0.19999999, a: 0.69803923}
   pillColor: {r: 0.27, g: 0.31, b: 0.37, a: 1}
   pillPulseColor: {r: 0.78, g: 0.5, b: 0.12, a: 1}
+  pillSoftPulseColor: {r: 0.4, g: 0.37, b: 0.32, a: 1}
   pulsePeriod: 1.6
 --- !u!114 &3678498020123121180
 MonoBehaviour:
