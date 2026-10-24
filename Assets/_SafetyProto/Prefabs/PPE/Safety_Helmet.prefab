@@ -285,7 +285,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.Gameplay.Interactables.ReturnObjectHome
   homeOverride: {fileID: 0}
   maxHomeDistance: 0.3
-  returnDelay: 3
+  returnDelay: 2
   returnDuration: 0.4
   returnCurve:
     serializedVersion: 2
@@ -405,6 +405,7 @@ MonoBehaviour:
   ppeType: 1
   hideWhenEquipped: 0
   isDistractor: 0
+  distractorId: 
 --- !u!114 &2639094376097806207
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -541,6 +542,8 @@ MonoBehaviour:
   teleportDistance: 0.3
   shellCenter: {x: 0, y: 0.018, z: 0}
   shellRadii: {x: 0.087, y: 0.047, z: 0.102}
+  sleepSpeed: 0.002
+  sleepSteps: 36
 --- !u!1 &1457021240700685440
 GameObject:
   m_ObjectHideFlags: 0
