@@ -72,6 +72,13 @@ namespace SafetyProto.Runtime
                  "blocky periphery, and at the 0.8 render scale it raised app GPU time (12.3 vs 9.2 ms).")]
         [SerializeField] private bool quest2FoveatedRendering = false;
 
+        [Tooltip("OVROverlayCanvas.superSample on a Quest 2. Dynamic resolution already renders each " +
+                 "canvas at twice the eye-buffer density, so super-sampling on top quadruples it; off, " +
+                 "the canvas textures hold a quarter of the pixels.")]
+        [SerializeField] private bool quest2CanvasSuperSample = false;
+
+        private bool? _canvasSuperSample;
+
         [Header("Hand debug visuals")]
         [Tooltip("Disable the Meta Interaction SDK HandSphereMap debug spheres (one Standard-shader " +
                  "MeshRenderer per finger joint on both hands, ~144 total). They are pure grab-debug " +
@@ -88,11 +95,13 @@ namespace SafetyProto.Runtime
             {
                 eyeTextureResolutionScale = quest2EyeTextureResolutionScale;
                 enableFoveatedRendering = quest2FoveatedRendering;
+                _canvasSuperSample = quest2CanvasSuperSample;
                 SafetyLog.Info("[XrPerformanceBootstrap] Quest 2 detectado: aplicando o perfil Quest 2.", this);
             }
 
             ApplyLaunchOverrides();
             ApplyRenderScale();
+            ApplyCanvasSuperSample();
             HideHandDebugSpheres();
             // The XR display subsystem may not be running on the first frame; retry.
             StartCoroutine(ApplyFoveationWhenReady());
@@ -121,8 +130,9 @@ namespace SafetyProto.Runtime
         /// Development builds read render-scale and foveation overrides from the launch intent, so
         /// a setting can be compared on the headset without a rebuild:
         /// <c>am start -n &lt;pkg&gt;/&lt;activity&gt; --es safety_perf_scale 0.9 --es safety_perf_viewport 1
-        /// --es safety_perf_foveation 0.66</c>. A foveation of 0 turns it off; a viewport of 0 or 1
-        /// leaves the runtime's dynamic viewport alone.
+        /// --es safety_perf_foveation 0.66 --es safety_perf_canvas_ss 0</c>. A foveation of 0 turns it
+        /// off; a viewport of 0 or 1 leaves the runtime's dynamic viewport alone; canvas_ss 0 or 1
+        /// sets OVROverlayCanvas super-sampling on every canvas.
         /// </summary>
         private void ApplyLaunchOverrides()
         {
@@ -136,7 +146,26 @@ namespace SafetyProto.Runtime
                 enableFoveatedRendering = foveation > 0f;
                 foveationLevel = foveation;
             }
+            if (TryReadFloatExtra("safety_perf_canvas_ss", out float canvasSuperSample))
+                _canvasSuperSample = canvasSuperSample > 0f;
 #endif
+        }
+
+        /// <summary>Overrides super-sampling on every overlay canvas, inactive ones included, when a
+        /// device profile or launch override asks for it. OVROverlayCanvas reads the flag each time
+        /// it sizes its texture, so setting it after the canvas started still takes effect.</summary>
+        private void ApplyCanvasSuperSample()
+        {
+            if (_canvasSuperSample is not bool superSample)
+                return;
+
+            var canvases = Object.FindObjectsByType<OVROverlayCanvas>(FindObjectsInactive.Include);
+            foreach (var canvas in canvases)
+                canvas.superSample = superSample;
+
+            SafetyLog.Info(
+                $"[XrPerformanceBootstrap] Super-sampling dos canvases de overlay: {superSample} ({canvases.Length} canvases).",
+                this);
         }
 
 #if UNITY_ANDROID && DEVELOPMENT_BUILD && !UNITY_EDITOR
