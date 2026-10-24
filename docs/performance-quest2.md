@@ -11,7 +11,7 @@ what is still open.
   (`unity command build ... --options '["Development","AllowDebugging"]'`). `build-android.ps1
   -Development` skips LTO and runs ~5 fps slower on the CPU, so its numbers are not comparable.
 - **Runs.** `scripts/quest-sim-run.ps1 -Mode avaliacao -MetricsCsv` with a hold script that
-  drives the session to a view and stays there, nobody wearing the headset. Launch extras set
+  drives the session to a view and stays there (now `-Hold <waypoint>`), nobody wearing the headset. Launch extras set
   the render settings without a rebuild:
   `-Extra safety_perf_scale=0.8,safety_perf_foveation=0`. See
   [session-simulator.md](session-simulator.md#performance-runs).
@@ -69,8 +69,9 @@ This is not specific to the simulator: it happens whenever a participant leaves 
 evaluation mode. Unworn, unheld PPE is now deactivated at the blackout, and a session reset
 reloads the scene.
 
-The session simulator never wears PPE, so the chinstrap stays loose for the whole run and these
-views overstate its cost. In real play the strap stops simulating once the helmet is worn.
+The session simulator did not wear PPE at the time, so the chinstrap stayed loose for the whole
+run and these views overstate its cost. In real play the strap stops simulating once the helmet is
+worn; the simulator now snaps the PPE onto its slots, so later runs show that state.
 
 ## Result
 

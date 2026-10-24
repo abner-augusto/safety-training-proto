@@ -61,7 +61,7 @@ step has a `kind` and a `delayMs` (clamped to 0–30 s) applied before it runs.
 
 | `kind`   | Fields | Effect |
 |----------|--------|--------|
-| `ppe`    | `ppeType`, `isWearing` | Raises `PPEStateChanged` for that PPE. `ppeType` matches the `PPEType` enum (`Boots`, `GloveLeft`, `GloveRight`, `Goggles`, `Helmet`, `Harness`, `Vest`). |
+| `ppe`    | `ppeType`, `isWearing` | Snaps the scene's real item onto a free body slot that accepts it (or takes it off), through the same order, distractor and capacity checks as a hand; `PPEManager` then raises `PPEStateChanged`. A refused snap fails the run. A scene without the item or a slot only raises the event, as does the whole step with `equipPpePhysically` off. `ppeType` matches the `PPEType` enum (`Boots`, `GloveLeft`, `GloveRight`, `Goggles`, `Helmet`, `Harness`, `Vest`). |
 | `action` | `actionId` | Publishes an action attempt (e.g. `install_guardrail`). Must be a real action id from the scenario. |
 | `gate`   | `gateTarget` (optional) | Presses a real gate. `phase1` advances past the PPE-selection group; `inspection` runs the scaffold inspection gate. |
 | `move`   | `target`, `posture` (optional) | Parks the player rig at a waypoint with its eyes 1.65 m (`standing`, default) or 1.05 m (`crouched`) above the floor. See [Moving the player](#moving-the-player). The CLI harness ignores it. |
@@ -213,24 +213,31 @@ the scene, and the GPU numbers move with it.
 
 ### Performance runs
 
-- **Fix the view with a hold script.** A variant whose last steps repeat `move` to
-  one target with long `delayMs` holds the camera there for minutes. `move` turns
-  the rig to face the target, so turning the headset by hand only changes the view
-  after the move, not before.
+- **Hold a view with `-Hold <waypoint>`.** `quest-sim-run.ps1 -Hold irregularity
+  -HoldSeconds 120` builds a script from the canonical scenario's PPE steps, moves
+  to the waypoint and stays there; the run's missing terminal snapshot is its normal
+  end. `move` turns the rig to face the target, so turning the headset by hand only
+  changes the view after the move, not before.
 - **`-Extra key=value,...`** adds string intent extras to the launch, for example
   `XrPerformanceBootstrap`'s Development-only overrides `safety_perf_scale`,
   `safety_perf_viewport` and `safety_perf_foveation`. Separate pairs with commas
   inside one argument: `pwsh -File` hands the script a single string.
+- **Read the summary.** Each run prints and saves (`vrapi_summary.json`) the mean and
+  minimum fps, app GPU time, GPU and CPU utilisation and stale frames, from the
+  VrApi lines after the first 10 s.
 - **Measure on an LTO build.** Meta's build processor adds `-flto=thin` to every
   Release-type Android build, Development or not. `build-android.ps1 -Development`
   switches the build type to Development to skip it, which is about three times
-  faster but costs about 5 fps of CPU time on a Quest 2. For numbers, build through
-  the Editor with `unity command build --target Android --outputPath
-  Builds/Android/SafetyTraining_dev.apk --options '["Development","AllowDebugging"]'
-  --confirm`.
-- **The simulator never wears PPE.** The helmet stays loose on its shelf and the
-  lanyard is never clipped, so their strap and rope simulations run for the whole
-  run, unlike in a participant's session.
+  faster but costs about 5 fps of CPU time on a Quest 2. For numbers, build with
+  `build-android.ps1 -Development -Lto`.
+- **Rank CPU costs with `quest-profile.ps1`.** It runs a hold, records the Unity
+  Profiler from the connected Editor and writes `breakdown.txt` (ms per frame by
+  marker). `-Marker <name>` adds that marker's time per frame, which tells a steady
+  cost from a periodic one. The profiler costs a few fps, so take fps from
+  `quest-sim-run.ps1` alone.
+- **The lanyard is never clipped.** `connect_harness` is an action event, so the
+  lanyard rope keeps simulating as if loose. The PPE itself is worn: the helmet
+  strap stops once the helmet is on, as in a participant's session.
 
 ## Coverage and limitations
 
