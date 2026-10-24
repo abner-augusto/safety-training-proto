@@ -247,6 +247,23 @@ namespace SafetyProto.Runtime.PPE
                 SetPhysicsEnabled(true);
         }
 
+        /// <summary>Snaps this item into <paramref name="slot"/> through the same checks as a hand
+        /// letting go of it there (order, distractor and capacity rules). Used by the session
+        /// simulator, which has no hands. Returns false when the slot refuses the item.</summary>
+        public bool TryEquip(PPESnapSlot slot)
+        {
+            if (slot == null || _isSnapped || _grabDisabled) return false;
+            if (!slot.TryAcceptSnap(this)) return false;
+            SnapTo(slot);
+            return true;
+        }
+
+        /// <summary>Takes this item off its slot as if a hand pulled it away; it then returns home.</summary>
+        public void Unequip()
+        {
+            if (_isSnapped) Unsnap();
+        }
+
         private PPESnapSlot FindSlotToSnap()
         {
             if (_hoveringSlot != null && !_hoveringSlot.IsOccupied && _hoveringSlot.Accepts(_ppeItem.ppeType))

@@ -9,6 +9,7 @@ using SafetyProto.Core.Logging;
 using SafetyProto.Domain.Scenarios;
 using SafetyProto.Domain.Scoring;
 using SafetyProto.Runtime;
+using SafetyProto.Runtime.PPE;
 using SafetyProto.Runtime.Safety;
 using SafetyProto.Runtime.Session;
 using SafetyProto.Runtime.Task;
@@ -75,6 +76,10 @@ namespace SafetyProto.Runtime.Simulation
 
         [Tooltip("Show the session report when the simulated run completes, including runs that never reach the inspection gate.")]
         [SerializeField] private bool showSessionReportOnCompletion = true;
+
+        [Tooltip("Snap the scene's real PPE item onto a body slot for a ppe step, as a hand would. " +
+                 "Off, the step only raises the PPE event and the item stays where it lies.")]
+        [SerializeField] private bool equipPpePhysically = true;
 
         private TrainingSessionManager? _sessionManager;
         private TaskManager? _taskManager;
@@ -396,7 +401,18 @@ namespace SafetyProto.Runtime.Simulation
                     }
                     string ppeTaskId = _taskManager?.CurrentRuntimeTask?.id ?? string.Empty;
                     _inputObserved = false;
-                    PPEEvents.RaisePpeStateChanged(new PPEStateChangedEventArgs(ppe, step.IsWearing));
+                    var outcome = ApplyPpeStep(ppe, step.IsWearing);
+                    if (outcome == PpeStepOutcome.Refused)
+                    {
+                        Fail($"Etapa {index + 1}: o slot recusou {ppe} (ordem, distrator ou capacidade).");
+                        yield break;
+                    }
+                    // PPEManager raises nothing for a state that does not change, so there is no input to wait for.
+                    if (outcome == PpeStepOutcome.AlreadyInState)
+                    {
+                        AddTranscript($"EPI {ppe} já estava {(step.IsWearing ? "equipado" : "fora do corpo")}; etapa sem efeito.");
+                        break;
+                    }
                     yield return WaitForInputSettlement(ppeTaskId);
                     if (!IsRunning) yield break;
                     break;
@@ -506,6 +522,69 @@ namespace SafetyProto.Runtime.Simulation
                 Fail($"Alvo de gate desconhecido '{step.GateTarget}'. Use phase1 ou inspection.");
                 yield break;
             }
+        }
+
+        private enum PpeStepOutcome { Applied, AlreadyInState, Refused }
+
+        /// <summary>Puts the scene's real PPE item on (or takes it off) a body slot, so the snapped
+        /// item, its slot rules and everything that reacts to a worn item behave as in play: the
+        /// helmet strap stops simulating, a hidden glove stays hidden. A scene without that item or
+        /// a free slot for it falls back to raising the PPE event alone.</summary>
+        private PpeStepOutcome ApplyPpeStep(PPEType ppe, bool wearing)
+        {
+            if (equipPpePhysically)
+            {
+                var ppeManager = FindAnyObjectByType<PPEManager>();
+                if (ppeManager != null && ppeManager.IsWearing(ppe) == wearing)
+                    return PpeStepOutcome.AlreadyInState;
+
+                if (wearing && FindLooseItem(ppe) is PPESnapItem item && FindFreeSlot(ppe) is PPESnapSlot slot)
+                {
+                    if (!item.TryEquip(slot)) return PpeStepOutcome.Refused;
+                    AddTranscript($"EPI {ppe}: {item.name} encaixado em {slot.name}.");
+                    return PpeStepOutcome.Applied;
+                }
+
+                if (!wearing && FindWornItem(ppe) is PPESnapItem worn)
+                {
+                    worn.Unequip();
+                    AddTranscript($"EPI {ppe}: {worn.name} retirado.");
+                    return PpeStepOutcome.Applied;
+                }
+
+                AddTranscript($"EPI {ppe}: nenhum item ou slot na cena; só o evento foi publicado.");
+            }
+
+            PPEEvents.RaisePpeStateChanged(new PPEStateChangedEventArgs(ppe, wearing));
+            return PpeStepOutcome.Applied;
+        }
+
+        private static PPESnapItem? FindLooseItem(PPEType ppe)
+        {
+            foreach (var item in FindObjectsByType<PPESnapItem>(FindObjectsSortMode.None))
+            {
+                var ppeItem = item.GetComponent<PPEItem>();
+                if (item.PpeType == ppe && !item.IsSnapped && (ppeItem == null || !ppeItem.isDistractor))
+                    return item;
+            }
+            return null;
+        }
+
+        private static PPESnapItem? FindWornItem(PPEType ppe)
+        {
+            // An item with hideWhenEquipped is inactive while worn.
+            foreach (var item in FindObjectsByType<PPESnapItem>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                if (item.PpeType == ppe && item.IsSnapped)
+                    return item;
+            return null;
+        }
+
+        private static PPESnapSlot? FindFreeSlot(PPEType ppe)
+        {
+            foreach (var slot in FindObjectsByType<PPESnapSlot>(FindObjectsSortMode.None))
+                if (slot.isActiveAndEnabled && slot.Accepts(ppe) && slot.HasAvailableSpace)
+                    return slot;
+            return null;
         }
 
         private IEnumerator WaitForInputSettlement(string taskId)
