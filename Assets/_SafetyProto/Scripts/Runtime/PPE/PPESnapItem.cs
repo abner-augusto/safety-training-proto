@@ -69,6 +69,9 @@ namespace SafetyProto.Runtime.PPE
         /// <summary>Whether this item is currently attached to a body slot.</summary>
         public bool IsSnapped => _isSnapped && _currentSlot != null;
 
+        /// <summary>Whether a hand is holding this item.</summary>
+        public bool IsGrabbed => _isGrabbed;
+
 #if UNITY_EDITOR
         public Transform SnapPoseOverride => snapPoseOverride;
 #endif

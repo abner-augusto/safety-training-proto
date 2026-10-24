@@ -7,6 +7,7 @@ using SafetyProto.Core.Logging;
 using SafetyProto.Domain.Feedback;
 using SafetyProto.Domain.Scoring;
 using SafetyProto.Domain.Tasks;
+using SafetyProto.Runtime.PPE;
 using SafetyProto.Runtime.Task;
 using UnityEngine;
 using UnityEngine.Events;
@@ -43,6 +44,10 @@ namespace SafetyProto.Runtime
         [SerializeField] private GameObject[] objectsToHide;
         [Tooltip("GameObjects a ativar ao entrar no Andaime. Deixe vazio se não usar.")]
         [SerializeField] private GameObject[] objectsToShow;
+        [Tooltip("Deactivate every PPE item still loose (neither worn nor held) when the canteiro " +
+                 "hides. Its shelves hide with the zone, so a loose item would fall, be returned " +
+                 "home in mid-air and fall again for the rest of the session, out of reach.")]
+        [SerializeField] private bool hideLoosePPE = true;
         [Tooltip("Objetos movidos para outra pose durante o blackout, para que uma única " +
                  "instância atenda as duas fases. A pose original volta a cada nova sessão.")]
         [SerializeField] private PhaseRelocation[] objectsToRelocate;
@@ -363,6 +368,7 @@ namespace SafetyProto.Runtime
                         if (obj != null) obj.SetActive(false);
                     foreach (var obj in objectsToShow)
                         if (obj != null) obj.SetActive(true);
+                    if (hideLoosePPE) HideLoosePPE();
                     ApplyRelocations();
                     if (transitionPanel != null)
                         transitionPanel.SetActive(true);
@@ -378,6 +384,13 @@ namespace SafetyProto.Runtime
 
             SafetyLog.Info("[PhaseController] Transição concluída. ZonaAndaime ativa.", this);
             _simulationTransitionCompleted = true;
+        }
+
+        private static void HideLoosePPE()
+        {
+            foreach (var item in FindObjectsByType<PPESnapItem>(FindObjectsSortMode.None))
+                if (!item.IsSnapped && !item.IsGrabbed)
+                    item.gameObject.SetActive(false);
         }
 
         private bool IsGroundReadyAtSpawn()
