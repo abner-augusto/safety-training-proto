@@ -77,7 +77,16 @@ namespace SafetyProto.Runtime
                  "the canvas textures hold a quarter of the pixels.")]
         [SerializeField] private bool quest2CanvasSuperSample = false;
 
+        [Tooltip("Keep the Standard (PBR) shader on the PPE materials below on a Quest 2. Off, they " +
+                 "fall back to SafetyProto/SimpleLit there; other headsets always keep Standard.")]
+        [SerializeField] private bool quest2PpePbr = true;
+
+        [Tooltip("PPE materials authored with the Standard shader. Held close to the eyes, they are the " +
+                 "scene's hero assets.")]
+        [SerializeField] private Material[] ppePbrMaterials = System.Array.Empty<Material>();
+
         private bool? _canvasSuperSample;
+        private bool? _ppePbr;
 
         // Launch override only: there is no device profile for it.
         private bool? _metalReflections;
@@ -99,6 +108,7 @@ namespace SafetyProto.Runtime
                 eyeTextureResolutionScale = quest2EyeTextureResolutionScale;
                 enableFoveatedRendering = quest2FoveatedRendering;
                 _canvasSuperSample = quest2CanvasSuperSample;
+                _ppePbr = quest2PpePbr;
                 SafetyLog.Info("[XrPerformanceBootstrap] Quest 2 detectado: aplicando o perfil Quest 2.", this);
             }
 
@@ -106,6 +116,7 @@ namespace SafetyProto.Runtime
             ApplyRenderScale();
             ApplyCanvasSuperSample();
             ApplyMetalReflections();
+            ApplyPpePbr();
             HideHandDebugSpheres();
             // The XR display subsystem may not be running on the first frame; retry.
             StartCoroutine(ApplyFoveationWhenReady());
@@ -134,10 +145,12 @@ namespace SafetyProto.Runtime
         /// Development builds read render-scale and foveation overrides from the launch intent, so
         /// a setting can be compared on the headset without a rebuild:
         /// <c>am start -n &lt;pkg&gt;/&lt;activity&gt; --es safety_perf_scale 0.9 --es safety_perf_viewport 1
-        /// --es safety_perf_foveation 0.66 --es safety_perf_canvas_ss 0 --es safety_perf_metal_reflections 0</c>.
+        /// --es safety_perf_foveation 0.66 --es safety_perf_canvas_ss 0 --es safety_perf_metal_reflections 0
+        /// --es safety_perf_ppe_pbr 0</c>.
         /// A foveation of 0 turns it off; a viewport of 0 or 1 leaves the runtime's dynamic viewport
         /// alone; canvas_ss 0 or 1 sets OVROverlayCanvas super-sampling on every canvas;
-        /// metal_reflections 0 turns off SimpleLit's reflection-probe path on the materials using it.
+        /// metal_reflections 0 turns off SimpleLit's reflection-probe path on the materials using it;
+        /// ppe_pbr 0 shades the PPE with SimpleLit instead of Standard.
         /// </summary>
         private void ApplyLaunchOverrides()
         {
@@ -155,6 +168,8 @@ namespace SafetyProto.Runtime
                 _canvasSuperSample = canvasSuperSample > 0f;
             if (TryReadFloatExtra("safety_perf_metal_reflections", out float metalReflections))
                 _metalReflections = metalReflections > 0f;
+            if (TryReadFloatExtra("safety_perf_ppe_pbr", out float ppePbr))
+                _ppePbr = ppePbr > 0f;
 #endif
         }
 
@@ -197,6 +212,31 @@ namespace SafetyProto.Runtime
             SafetyLog.Info(
                 $"[XrPerformanceBootstrap] Reflexos metálicos do SimpleLit: {on} ({materials.Count} materiais).",
                 this);
+        }
+
+        private void ApplyPpePbr()
+        {
+            if (_ppePbr is not false)
+                return;
+
+            // Changes the shared material, so every PPE instance follows. Not reachable in the
+            // Editor, where it would rewrite the material asset.
+            var simpleLit = Shader.Find("SafetyProto/SimpleLit");
+            if (simpleLit == null)
+            {
+                SafetyLog.Error("[XrPerformanceBootstrap] Shader SafetyProto/SimpleLit não encontrado; EPIs mantêm o Standard.", this);
+                return;
+            }
+
+            int swapped = 0;
+            foreach (var material in ppePbrMaterials)
+            {
+                if (material == null) continue;
+                material.shader = simpleLit;
+                swapped++;
+            }
+
+            SafetyLog.Info($"[XrPerformanceBootstrap] EPIs com SimpleLit em vez de Standard ({swapped} materiais).", this);
         }
 
 #if UNITY_ANDROID && DEVELOPMENT_BUILD && !UNITY_EDITOR

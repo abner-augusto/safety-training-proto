@@ -69867,6 +69867,24 @@ MonoBehaviour:
   quest2EyeTextureResolutionScale: 0.8
   quest2FoveatedRendering: 0
   quest2CanvasSuperSample: 0
+  quest2PpePbr: 1
+  ppePbrMaterials:
+  - {fileID: 2100000, guid: f3cacf991cbe53a488b026abc8192601, type: 2}
+  - {fileID: 2100000, guid: c5ff2fa341b2e3348a928f0c78f2bf0b, type: 2}
+  - {fileID: 2100000, guid: 947fcc6a89c79eb46b0e3df5eb07df8c, type: 2}
+  - {fileID: 2100000, guid: e456d1a060e880d408f8a6ce0b114157, type: 2}
+  - {fileID: 2100000, guid: bc17974b7d66d2a4db8921824133cda8, type: 2}
+  - {fileID: 2100000, guid: 5723020eaff90234a9c413ed6fec9a22, type: 2}
+  - {fileID: 2100000, guid: 28aec1cb030075341ac0345dad532d82, type: 2}
+  - {fileID: 2100000, guid: b204302a85f8c344e8f5f3c7b41afc36, type: 2}
+  - {fileID: 2100000, guid: c7b674201a8639a4aa1ef153d8b46113, type: 2}
+  - {fileID: 2100000, guid: 3e2b3e6b29d3ef5459e3327912ef553d, type: 2}
+  - {fileID: 2100000, guid: 96d43aadea30ec54681279e281bd1640, type: 2}
+  - {fileID: 2100000, guid: f273a38fd9a894a448afb8759250dcc0, type: 2}
+  - {fileID: 2100000, guid: 73e46c3dc38ce2b478de983c5721c34c, type: 2}
+  - {fileID: 2100000, guid: a92efa490bf4abc4bb1f3b9d70f9bf2b, type: 2}
+  - {fileID: 2100000, guid: 804253da903af3a4caec95ed5734027f, type: 2}
+  - {fileID: 2100000, guid: 44726f735cb61ca489502734beefb5c2, type: 2}
   hideHandDebugSpheres: 1
 --- !u!114 &7322035375745015846
 MonoBehaviour:
