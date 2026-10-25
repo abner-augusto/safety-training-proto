@@ -708,7 +708,7 @@ MonoBehaviour:
   manualRedraw: 0
   renderInterval: 2
   renderIntervalFrameOffset: 0
-  superSample: 0
+  superSample: 1
   layer: 5
   opacity: 2
   shape: 0
