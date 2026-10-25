@@ -234,7 +234,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Oculus.VR::OVROverlayCanvas
   _mipmapMode: 0
   _dynamicResolution: 1
-  _redrawResolutionThreshold: 32
+  _redrawResolutionThreshold: 2147483647
   rectTransform: {fileID: 6951596445574509049}
   maxTextureSize: 2048
   manualRedraw: 0

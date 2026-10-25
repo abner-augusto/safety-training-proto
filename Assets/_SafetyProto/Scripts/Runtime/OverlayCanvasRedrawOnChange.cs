@@ -14,9 +14,10 @@ namespace SafetyProto.Runtime
     /// rebuilds (text, sprite, layout, material), turns on or off, or changes its tint (a Button's
     /// hover and press fades).
     ///
-    /// The OVROverlayCanvas must have Dynamic Resolution Redraw on. Without it a manual-redraw
-    /// canvas keeps the resolution it first rendered at, so one drawn from across the room stays
-    /// blurry after the player teleports up to it.
+    /// It also redraws when the canvas grows on screen, so one first drawn from across the room
+    /// sharpens after the player teleports up to it. Leave the OVROverlayCanvas's own Dynamic
+    /// Resolution Redraw off: that path resizes the layer's source rect and then skips the render,
+    /// which shrinks the old image inside the panel.
     ///
     /// Not for canvases that animate every frame (the checklist's pulsing row): they would redraw
     /// every frame and cost more than their render interval.
@@ -29,7 +30,13 @@ namespace SafetyProto.Runtime
         private const int RedrawFramesAfterEnable = 3;
         private const float SettleRedrawSeconds = 0.5f;
 
+        // Growth in on-screen size since the last render that is worth a sharper texture.
+        // OVROverlayCanvas sizes the texture from the canvas's projected size at render time.
+        private const float RedrawScreenGrowth = 1.1f;
+
         private static readonly List<OverlayCanvasRedrawOnChange> s_Active = new();
+        private static readonly Vector3[] s_Corners = new Vector3[4];
+        private static readonly Plane[] s_FrustumPlanes = new Plane[6];
         private static bool s_Enabled = true;
 
         private OVROverlayCanvas _canvas;
@@ -39,6 +46,8 @@ namespace SafetyProto.Runtime
         private int _redrawFramesLeft;
         private float _settleRedrawAt;
         private bool _dirty;
+        private RectTransform _rect;
+        private float _renderedScreenSize;
 
         /// <summary>
         /// Turns change-driven redraw on or off for every canvas carrying this component, so a
@@ -54,7 +63,11 @@ namespace SafetyProto.Runtime
         /// <summary>Re-renders the canvas next frame.</summary>
         public void Redraw() => _dirty = true;
 
-        private void Awake() => _canvas = GetComponent<OVROverlayCanvas>();
+        private void Awake()
+        {
+            _canvas = GetComponent<OVROverlayCanvas>();
+            _rect = GetComponent<RectTransform>();
+        }
 
         private void OnEnable()
         {
@@ -123,11 +136,42 @@ namespace SafetyProto.Runtime
                 _dirty = true;
             }
 
-            if (_dirty)
+            var eye = OVRManager.FindMainCamera();
+            if (eye == null) return;
+
+            float screenSize = ScreenSize(eye);
+            if (screenSize > _renderedScreenSize * RedrawScreenGrowth)
+                _dirty = true;
+
+            // OVROverlayCanvas renders a dirty frame only once the canvas is in view, and sizes the
+            // texture from where the player is then. Hold the request until then, or the size
+            // recorded here would describe a render that happens later from somewhere else.
+            if (_dirty && IsInView(eye))
             {
                 _dirty = false;
+                _renderedScreenSize = screenSize;
                 _canvas.SetFrameDirty();
             }
+        }
+
+        // The canvas's world diagonal over its distance from the eye: proportional to its size on
+        // screen, ignoring the viewing angle.
+        private float ScreenSize(Camera eye)
+        {
+            var size = Vector2.Scale(_rect.rect.size, _rect.lossyScale);
+            float distance = Vector3.Distance(eye.transform.position, _rect.position);
+            return size.magnitude / Mathf.Max(distance, 0.01f);
+        }
+
+        private bool IsInView(Camera eye)
+        {
+            _rect.GetWorldCorners(s_Corners);
+            var bounds = new Bounds(s_Corners[0], Vector3.zero);
+            for (int i = 1; i < s_Corners.Length; i++)
+                bounds.Encapsulate(s_Corners[i]);
+
+            GeometryUtility.CalculateFrustumPlanes(eye, s_FrustumPlanes);
+            return GeometryUtility.TestPlanesAABB(s_FrustumPlanes, bounds);
         }
     }
 }
