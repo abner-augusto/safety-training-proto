@@ -43,11 +43,11 @@ namespace SafetyProto.Runtime
                  "Big win for fill-rate-bound scenes.")]
         [SerializeField] private bool enableFoveatedRendering = true;
 
-        [Tooltip("Foveation strength, 0 = off .. 1 = highest. ~0.66 (High) is a good default. " +
-                 "On-device this maps to the OVR Metrics integer levels; 0.66 reported as level 3 " +
-                 "in every plan 036 run.")]
+        [Tooltip("Foveation strength, 0 = off .. 1 = highest. On a Quest 3 0.33 reports as VrApi " +
+                 "Fov=2 and 0.66 as Fov=3. Level 3 left the periphery visibly blocky on the scaffold " +
+                 "mesh; level 2 is near-imperceptible and still holds 72 fps in the scaffold view.")]
         [Range(0f, 1f)]
-        [SerializeField] private float foveationLevel = 0.66f;
+        [SerializeField] private float foveationLevel = 0.33f;
 
         [Tooltip("Permits eye-tracked (gaze-contingent) foveated rendering on devices that support " +
                  "it, by setting XRDisplaySubsystem.FoveatedRenderingFlags.GazeAllowed. This is not " +
@@ -147,7 +147,7 @@ namespace SafetyProto.Runtime
         /// Development builds read render-scale and foveation overrides from the launch intent, so
         /// a setting can be compared on the headset without a rebuild:
         /// <c>am start -n &lt;pkg&gt;/&lt;activity&gt; --es safety_perf_scale 0.9 --es safety_perf_viewport 1
-        /// --es safety_perf_foveation 0.66 --es safety_perf_canvas_ss 0 --es safety_perf_metal_reflections 0
+        /// --es safety_perf_foveation 0.33 --es safety_perf_canvas_ss 0 --es safety_perf_metal_reflections 0
         /// --es safety_perf_ppe_pbr 0 --es safety_perf_canvas_redraw 0</c>.
         /// A foveation of 0 turns it off; a viewport of 0 or 1 leaves the runtime's dynamic viewport
         /// alone; canvas_ss 0 or 1 sets OVROverlayCanvas super-sampling on every canvas;
