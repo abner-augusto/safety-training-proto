@@ -2070,6 +2070,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8774602304170262593, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
       insertIndex: -1
       addedObject: {fileID: 487160352336974134}
+    - targetCorrespondingSourceObject: {fileID: 8774602304170262593, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1752974757455900775}
   m_SourcePrefab: {fileID: 100100000, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
 --- !u!1 &1317361045211216094 stripped
 GameObject:
@@ -2088,6 +2091,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40724ff776b95494c84643eed862ba81, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.OverlayCanvasRedrawOnChange
+--- !u!114 &1752974757455900775
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1317361045211216094}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b5302f6c29fd844fa2396365e0cf5e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.OverlayCanvasAboveFade
+  fadeLayer: 16
 --- !u!224 &4325414646882085140 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 6308249081878237579, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
