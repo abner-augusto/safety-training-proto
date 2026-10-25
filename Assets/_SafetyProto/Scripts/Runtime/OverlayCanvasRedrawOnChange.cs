@@ -12,8 +12,11 @@ namespace SafetyProto.Runtime
     ///
     /// The canvas switches to <c>manualRedraw</c> and is marked dirty when any of its graphics
     /// rebuilds (text, sprite, layout, material), turns on or off, or changes its tint (a Button's
-    /// hover and press fades). OVROverlayCanvas still redraws on its own when the player walks
-    /// close enough for dynamic resolution to want a sharper texture.
+    /// hover and press fades).
+    ///
+    /// The OVROverlayCanvas must have Dynamic Resolution Redraw on. Without it a manual-redraw
+    /// canvas keeps the resolution it first rendered at, so one drawn from across the room stays
+    /// blurry after the player teleports up to it.
     ///
     /// Not for canvases that animate every frame (the checklist's pulsing row): they would redraw
     /// every frame and cost more than their render interval.
