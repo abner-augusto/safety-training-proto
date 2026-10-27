@@ -197,6 +197,7 @@ and `Core/Events/`:
 | `SafetyViolationEventArgs`      | `SafetyRuleEngineCore`, `HazardClassificationPolicy`, `InspectionGateValidator` | `SafetyAnalyzer`, logger, dashboard relay |
 | `CriticalSafetyFailureEventArgs`| `SafetyAnalyzer`, `InspectionGateValidator` | UI, logger, dashboard relay |
 | `SafetyErrorEventArgs`          | `EventBus` itself (queue overflow, listener threw), `TimerSystem` | `LogHUD`, logger, dashboard relay |
+| `PlayspaceNoticeEventArgs`      | `WalkableZoneGuard`, `RecenterService` | logger, dashboard relay (never scored) |
 | `ActionRefusedEventArgs`        | `SafetyRuleEngineCore`          | the emitter of the refused attempt (`ScaffoldPieceInstaller`, `SafetyIssueReporter`) |
 | `PopupClosedEventArgs`          | `PopupService`                  | gameplay objects waiting on a warning |
 | `PopupShownEventArgs`           | `PopupService`                  | popup camera (`FadeHandOverlay`)      |
@@ -562,7 +563,34 @@ where to:
   Evaluation advance button and the Guided group-completion popup.
 - `RecenterCommandHandler` serves the dashboard's `recenter_player` command
   (§17) and refuses while busy or without an anchor.
+  `CalibrateRoomCenterCommandHandler` serves `calibrate_room_center`: the same
+  recenter, preceded by an operator room-center capture.
 - `PlayerSpawnCenter` recenters once, without a fade, on `SessionStarted`.
+
+Every placement goes through `RecenterService.PlaceOn`, which puts the
+calibrated physical room center (`RoomCenterCalibration`: the floor mark under
+the participant's neck plus the room's forward, stored in tracking space) over
+the anchor. The participant's position at the moment of a phase transition
+therefore does not shift the play area. `PlayerSpawnCenter` captures that
+center at every session start unless the evaluator calibrated one through the
+dashboard; a system recenter (Meta button) discards it, and with no
+calibration the live head lands on the anchor as before. A participant who is
+away from the center keeps that offset on arrival, clamped by the anchor's
+`RecenterAnchorArea` landing ranges (the scaffold plank is 0.9 m deep, so
+there the depth offset is almost entirely dropped); the clamped amount shifts
+the room for that teleport only. `RecenterAnchorArea` also draws the physical
+area, arm reach and landing zone in the Scene view.
+
+The physical room is still deeper than the plank, so `WalkableZoneGuard` watches
+the participant's body during the scaffold phase. After 0.3 s off the plank it
+dims the view through `OVRScreenFade` (an explicit level, so the teleport and
+fall fades still win), shows a short popup and places a glowing column
+(`PlayspaceBeacon`, on the PopupUI layer so the popup camera draws it after the
+fade) on the nearest point of the plank's center line; all of it clears 15 cm
+back inside. It publishes
+`PlayspaceNoticeEventArgs`, which the session log and the dashboard record and
+nothing scores: the cause is the room and guardian drift, not a scenario
+decision.
 
 While a recenter is in flight the service sets `DashboardGate.PoseBroadcastSuspended`
 so the pose stream cannot hitch the frame mid-teleport.
