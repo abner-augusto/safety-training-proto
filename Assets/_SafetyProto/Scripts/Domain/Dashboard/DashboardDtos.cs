@@ -128,6 +128,17 @@ namespace SafetyProto.Domain.Dashboard
     }
 
     [Serializable]
+    public struct PlayspaceNoticeDto
+    {
+        public string sessionId;
+        /// <summary>PlayspaceNoticeKind name: LeftWalkableArea, ReturnedToWalkableArea, RoomCenterDiscarded.</summary>
+        public string kind;
+        public string area;
+        public float durationSeconds;
+        public long timestampMs;
+    }
+
+    [Serializable]
     public struct SessionLogFileDto
     {
         public string sessionId;

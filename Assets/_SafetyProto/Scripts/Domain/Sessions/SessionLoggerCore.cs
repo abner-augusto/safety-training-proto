@@ -69,6 +69,9 @@ namespace SafetyProto.Domain.Sessions
             public float totalElapsedTime;
             public int tasksCompleted;
             public int totalTasks;
+            public string noticeKind;
+            public string area;
+            public float durationSeconds;
         }
 
         [Serializable]
@@ -190,6 +193,7 @@ namespace SafetyProto.Domain.Sessions
         private readonly Action<SafetyViolationEventArgs>         _onSafetyViolation;
         private readonly Action<SafetyErrorEventArgs>             _onSafetyError;
         private readonly Action<CriticalSafetyFailureEventArgs>   _onCriticalSafetyFailure;
+        private readonly Action<PlayspaceNoticeEventArgs>         _onPlayspaceNotice;
 
         private bool _subscribed;
         private bool _disposed;
@@ -290,7 +294,18 @@ namespace SafetyProto.Domain.Sessions
                 new LogData { source = args.Source, message = args.Message, errorDetails = args.Details });
             _onCriticalSafetyFailure = args => LogEvent("CriticalSafetyFailure", $"{args.Reason} [{args.ViolationCount} em {args.WindowSeconds}s]", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                 new LogData { reason = args.Reason, violationCount = args.ViolationCount, windowSeconds = args.WindowSeconds });
+            _onPlayspaceNotice       = args => LogEvent("PlayspaceNotice", DescribePlayspaceNotice(args), args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                new LogData { noticeKind = args.Kind.ToString(), area = args.Area, durationSeconds = args.DurationSeconds });
         }
+
+        private static string DescribePlayspaceNotice(PlayspaceNoticeEventArgs args) => args.Kind switch
+        {
+            PlayspaceNoticeKind.LeftWalkableArea => $"Saiu da área caminhável ({args.Area})",
+            PlayspaceNoticeKind.ReturnedToWalkableArea =>
+                $"Voltou à área caminhável ({args.Area}) após {args.DurationSeconds.ToString("0.0", CultureInfo.InvariantCulture)} s",
+            PlayspaceNoticeKind.RoomCenterDiscarded => "Calibração do centro da sala descartada (recentralização do sistema)",
+            _ => args.Kind.ToString()
+        };
 
         public void Subscribe()
         {
@@ -307,6 +322,7 @@ namespace SafetyProto.Domain.Sessions
             _eventBus.Subscribe(_onSafetyViolation);
             _eventBus.Subscribe(_onSafetyError);
             _eventBus.Subscribe(_onCriticalSafetyFailure);
+            _eventBus.Subscribe(_onPlayspaceNotice);
             _subscribed = true;
         }
 
@@ -325,6 +341,7 @@ namespace SafetyProto.Domain.Sessions
             _eventBus.Unsubscribe(_onSafetyViolation);
             _eventBus.Unsubscribe(_onSafetyError);
             _eventBus.Unsubscribe(_onCriticalSafetyFailure);
+            _eventBus.Unsubscribe(_onPlayspaceNotice);
             _subscribed = false;
         }
 

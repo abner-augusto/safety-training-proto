@@ -281,6 +281,50 @@ namespace SafetyProto.Core
         public string Details;
     }
 
+    /// <summary>What happened between the physical room and the virtual floor.</summary>
+    public enum PlayspaceNoticeKind
+    {
+        /// <summary>The participant's body left the walkable floor (e.g. past the scaffold plank).</summary>
+        LeftWalkableArea,
+        /// <summary>The participant came back; <see cref="PlayspaceNoticeEventArgs.DurationSeconds"/> says after how long.</summary>
+        ReturnedToWalkableArea,
+        /// <summary>A system recenter (Meta button) discarded the room-center calibration.</summary>
+        RoomCenterDiscarded,
+    }
+
+    /// <summary>
+    /// XR ergonomics notice: the physical play area and the virtual floor disagree. Logged and
+    /// shown to the evaluator, never scored — it reflects the room and tracking drift, not a
+    /// decision the participant made in the scenario.
+    /// </summary>
+    [System.Serializable]
+    public struct PlayspaceNoticeEventArgs : IEventPayload
+    {
+        public string SessionId;
+        public string PlayerId;
+        public string ScenarioId;
+        public long TimestampMs;
+
+        string IEventPayload.SessionId => SessionId;
+        string IEventPayload.PlayerId => PlayerId;
+        string IEventPayload.ScenarioId => ScenarioId;
+        long IEventPayload.TimestampMs => TimestampMs;
+
+        void IEventPayload.SetMetadata(string sessionId, string playerId, string scenarioId, long timestampMs)
+        {
+            SessionId = sessionId;
+            PlayerId = playerId;
+            ScenarioId = scenarioId;
+            TimestampMs = timestampMs;
+        }
+
+        public PlayspaceNoticeKind Kind;
+        /// <summary>Walkable area concerned, e.g. "andaime"; empty for <see cref="PlayspaceNoticeKind.RoomCenterDiscarded"/>.</summary>
+        public string Area;
+        /// <summary>Seconds spent outside; set on <see cref="PlayspaceNoticeKind.ReturnedToWalkableArea"/> only.</summary>
+        public float DurationSeconds;
+    }
+
     [System.Serializable]
     public struct SessionCompletedEventArgs : IEventPayload
     {

@@ -43,6 +43,7 @@ namespace SafetyProto.Domain.Dashboard
             _bus.Subscribe<SafetyViolationEventArgs>(OnSafetyViolation);
             _bus.Subscribe<CriticalSafetyFailureEventArgs>(OnCriticalSafetyFailure);
             _bus.Subscribe<SafetyErrorEventArgs>(OnSafetyError);
+            _bus.Subscribe<PlayspaceNoticeEventArgs>(OnPlayspaceNotice);
         }
 
         public void Unsubscribe()
@@ -60,6 +61,7 @@ namespace SafetyProto.Domain.Dashboard
             _bus.Unsubscribe<SafetyViolationEventArgs>(OnSafetyViolation);
             _bus.Unsubscribe<CriticalSafetyFailureEventArgs>(OnCriticalSafetyFailure);
             _bus.Unsubscribe<SafetyErrorEventArgs>(OnSafetyError);
+            _bus.Unsubscribe<PlayspaceNoticeEventArgs>(OnPlayspaceNotice);
         }
 
         private void OnSessionStarted(SessionStartedEventArgs args)
@@ -194,6 +196,16 @@ namespace SafetyProto.Domain.Dashboard
                 reason = args.Reason,
                 violationCount = args.ViolationCount,
                 windowSeconds = args.WindowSeconds,
+                timestampMs = _host.ResolveTimestamp(args.TimestampMs)
+            });
+
+        private void OnPlayspaceNotice(PlayspaceNoticeEventArgs args) =>
+            _host.Broadcast("PlayspaceNotice", new PlayspaceNoticeDto
+            {
+                sessionId = args.SessionId,
+                kind = args.Kind.ToString(),
+                area = args.Area,
+                durationSeconds = args.DurationSeconds,
                 timestampMs = _host.ResolveTimestamp(args.TimestampMs)
             });
 
