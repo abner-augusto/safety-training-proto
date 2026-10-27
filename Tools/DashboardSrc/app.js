@@ -129,12 +129,18 @@
       keys: { ...commandStatusKeys, button: 'recenterButton', confirm: 'commandConfirmButton',
               success: 'recenterSuccess', failed: 'recenterFailed' },
     });
+    const calibrateCenterControl = createCommandControl({
+      btnId: 'btn-calibrate-center', statusId: 'calibrate-center-status', command: 'calibrate_room_center',
+      keys: { ...commandStatusKeys, button: 'calibrateCenterButton', confirm: 'commandConfirmButton',
+              success: 'calibrateCenterSuccess', failed: 'calibrateCenterFailed' },
+    });
     const resetControl = createCommandControl({
       btnId: 'btn-reset-session', statusId: 'reset-session-status', command: 'reset_session',
       keys: { ...commandStatusKeys, button: 'resetSessionButton', confirm: 'resetSessionConfirmButton',
               success: 'resetSessionSuccess', failed: 'resetSessionFailed' },
     });
     document.getElementById('btn-recenter').onclick = () => recenterControl.click(ws);
+    document.getElementById('btn-calibrate-center').onclick = () => calibrateCenterControl.click(ws);
     document.getElementById('btn-reset-session').onclick = () => resetControl.click(ws);
 
     /* Gancho de teste: permite injetar eventos/poses pelo console do

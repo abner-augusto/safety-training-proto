@@ -390,6 +390,7 @@
     .log-item.success .g { color: var(--green); }
     .log-item.violation  { background: color-mix(in srgb, var(--red) 7%, transparent); }
     .log-item.violation .g { color: var(--red); }
+    .log-item.caution .g { color: var(--orange); }
 
     .log-time {
       font-family: var(--mono);

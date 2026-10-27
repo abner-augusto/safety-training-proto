@@ -186,6 +186,14 @@
     on('CriticalSafetyFailure',p => { state.violationCount++; renderCluster(); addLog(`${t('logCritical')}: ${p.violationCount} ${t('violations').toLowerCase()} ${t('detailIn')} ${p.windowSeconds}s`, 'violation'); });
     on('SafetyError',          p => addLog(`${t('logSafetyError')}: ${t('internalError')}${p.source ? ` · ${t('origin')}: ${p.source}` : ''}`, 'violation'));
 
+    /* XR ergonomics, never scored: the room and the virtual floor disagree. */
+    on('PlayspaceNotice', p => {
+      const area = p.area ? ` (${p.area})` : '';
+      if (p.kind === 'LeftWalkableArea') addLog(`${t('logLeftWalkable')}${area}`, 'caution');
+      else if (p.kind === 'ReturnedToWalkableArea') addLog(`${t('logReturnedWalkable')}${area} · ${Number(p.durationSeconds ?? 0).toFixed(1)} s`, 'caution');
+      else if (p.kind === 'RoomCenterDiscarded') addLog(t('logRoomCenterDiscarded'), 'caution');
+    });
+
     /* ── Evaluator commands ── */
     on('CommandAck', resolveCommandAck);
 

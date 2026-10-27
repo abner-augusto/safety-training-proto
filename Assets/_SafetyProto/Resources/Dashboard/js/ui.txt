@@ -260,7 +260,7 @@
     }
 
     /* ── Log: hora · glifo tipado · mensagem ── */
-    const LOG_GLYPH = { success: '✔', violation: '▲', info: '●' };
+    const LOG_GLYPH = { success: '✔', violation: '▲', caution: '◆', info: '●' };
 
     export function addLog(message, type = 'info') {
       const container = document.getElementById('log-container');

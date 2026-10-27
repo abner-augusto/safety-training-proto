@@ -74,6 +74,8 @@
         logSessionEnded: 'Session ended',
         logPpeEquipped: 'PPE Equipped', logPpeRemoved: 'PPE Removed',
         logActionAttempt: 'Action', logSafetyError: 'Safety Error', at: 'at',
+        logLeftWalkable: 'Left the walkable area', logReturnedWalkable: 'Back in the walkable area',
+        logRoomCenterDiscarded: 'Room-center calibration discarded (system recenter) — calibrate again with the participant on the X',
         // report detail line (scaffolding labels)
         detailPpe: 'PPE', detailWorn: 'worn', detailRemoved: 'removed',
         detailDelta: 'Delta', detailTotal: 'Total', detailIn: 'in',
@@ -85,6 +87,8 @@
         controlsTitle: 'Evaluator controls', commandConfirmButton: 'Confirm?',
         commandPending: 'Sending…', commandNoConnection: 'No connection to the app.', commandNoResponse: 'No response from the app.',
         recenterButton: 'Recenter player', recenterSuccess: 'Player recentered.', recenterFailed: 'Recenter refused.',
+        calibrateCenterButton: 'Calibrate room center (participant on the X)',
+        calibrateCenterSuccess: 'Room center calibrated.', calibrateCenterFailed: 'Calibration refused.',
         resetSessionButton: 'Restart session', resetSessionConfirmButton: 'Confirm? Progress will be lost',
         resetSessionSuccess: 'Session restarted.', resetSessionFailed: 'Restart refused.',
       },
@@ -160,6 +164,8 @@
         logSessionEnded: 'Sessão encerrada',
         logPpeEquipped: 'EPI Equipado', logPpeRemoved: 'EPI Removido',
         logActionAttempt: 'Ação', logSafetyError: 'Erro de Segurança', at: 'em',
+        logLeftWalkable: 'Saiu da área caminhável', logReturnedWalkable: 'Voltou à área caminhável',
+        logRoomCenterDiscarded: 'Calibração do centro da sala descartada (recentralização do sistema) — calibre de novo com o participante no X',
         // report detail line (scaffolding labels)
         detailPpe: 'EPI', detailWorn: 'equipado', detailRemoved: 'removido',
         detailDelta: 'Variação', detailTotal: 'Total', detailIn: 'em',
@@ -169,6 +175,8 @@
         controlsTitle: 'Controles do avaliador', commandConfirmButton: 'Confirmar?',
         commandPending: 'Enviando…', commandNoConnection: 'Sem conexão com o aplicativo.', commandNoResponse: 'Sem resposta do aplicativo.',
         recenterButton: 'Recentralizar jogador', recenterSuccess: 'Jogador recentralizado.', recenterFailed: 'Recentralização recusada.',
+        calibrateCenterButton: 'Calibrar centro da sala (participante no X)',
+        calibrateCenterSuccess: 'Centro da sala calibrado.', calibrateCenterFailed: 'Calibração recusada.',
         resetSessionButton: 'Reiniciar sessão', resetSessionConfirmButton: 'Confirmar? O progresso será perdido',
         resetSessionSuccess: 'Sessão reiniciada.', resetSessionFailed: 'Reinício recusado.',
       }
