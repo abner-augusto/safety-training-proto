@@ -6,9 +6,10 @@ using UnityEngine;
 namespace SafetyProto.Runtime
 {
     /// <summary>
-    /// Centers the player on a chosen start point when the session starts, cancelling the
-    /// room-scale offset via <see cref="PlayerRecenter"/> so the head (not the rig origin) lands
-    /// over <see cref="startPoint"/>.
+    /// Centers the player on a chosen start point when the session starts. With a
+    /// <see cref="recenterService"/> it first records the participant's position as the room
+    /// center (unless the evaluator already calibrated one), then places that center over
+    /// <see cref="startPoint"/>; without one the head lands there via <see cref="PlayerRecenter"/>.
     ///
     /// Wire in the Inspector: <see cref="playerRig"/> (OVRCameraRig root), optional
     /// <see cref="playerHead"/> (auto-resolves CenterEyeAnchor if empty), and <see cref="startPoint"/>.
@@ -24,6 +25,9 @@ namespace SafetyProto.Runtime
         [Header("Spawn")]
         [Tooltip("Where the player's head should end up at session start.")]
         [SerializeField] private Transform startPoint;
+
+        [Tooltip("Owns the room-center calibration. When empty, the live head is centered instead.")]
+        [SerializeField] private RecenterService recenterService;
 
         [Tooltip("Recenter again every time the session restarts (SessionStarted re-fires).")]
         [SerializeField] private bool recenterOnEverySessionStart = true;
@@ -55,10 +59,17 @@ namespace SafetyProto.Runtime
             if (_done && !recenterOnEverySessionStart) return;
             if (playerRig == null || startPoint == null) return;
 
-            if (playerHead == null)
-                playerHead = PlayerRecenter.ResolveHead(playerRig);
-
-            PlayerRecenter.Recenter(playerRig, playerHead, startPoint);
+            if (recenterService != null)
+            {
+                recenterService.CaptureRoomCenter(RoomCenterSource.SessionStart);
+                recenterService.PlaceOn(startPoint);
+            }
+            else
+            {
+                if (playerHead == null)
+                    playerHead = PlayerRecenter.ResolveHead(playerRig);
+                PlayerRecenter.Recenter(playerRig, playerHead, startPoint);
+            }
             _done = true;
 
             SafetyLog.Info("[PlayerSpawnCenter] Jogador centralizado no ponto de partida.", this);

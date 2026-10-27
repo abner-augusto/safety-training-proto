@@ -99,6 +99,127 @@ namespace SafetyProto.Tests.Editor
             }
         }
 
+        [TestCase(0f, 0f)]
+        [TestCase(40f, 0f)]
+        [TestCase(89.5f, 0f)]
+        [TestCase(-89.5f, 0f)]
+        [TestCase(80f, 135f)]
+        public void HeadingYaw_IgnoresPitch_EvenLookingStraightDown(float pitch, float yaw)
+        {
+            float heading = PlayerRecenter.HeadingYaw(Quaternion.Euler(pitch, yaw, 0f));
+
+            Assert.AreEqual(0f, Mathf.DeltaAngle(yaw, heading), 0.01f);
+        }
+
+        [Test]
+        public void RoomCenter_SurvivesRigMoves_AndLandsOnAnchorWhereverTheHeadIs()
+        {
+            var rig = new GameObject("Rig").transform;
+            var head = new GameObject("CenterEyeAnchor").transform;
+            head.SetParent(rig);
+            var anchor = new GameObject("Anchor").transform;
+
+            try
+            {
+                // Participant on the floor mark, facing the room's front, looking down at the mark.
+                rig.SetPositionAndRotation(new Vector3(2f, 0f, 1f), Quaternion.Euler(0f, 30f, 0f));
+                head.localPosition = new Vector3(0.4f, 1.7f, -0.2f);
+                head.localRotation = Quaternion.Euler(60f, 15f, 0f);
+
+                var calibration = new RoomCenterCalibration();
+                calibration.Capture(rig, head.position, head.rotation, RoomCenterSource.Operator);
+                Assert.IsTrue(calibration.TryGetWorld(rig, out var markBefore, out var frontBefore));
+                Vector3 markInRoom = rig.InverseTransformPoint(markBefore);
+
+                // Artificial locomotion moves the rig; the participant walks 1.2 m away and turns.
+                rig.SetPositionAndRotation(new Vector3(-7f, 3f, 4f), Quaternion.Euler(0f, -100f, 0f));
+                head.localPosition = new Vector3(-0.8f, 1.7f, 0.9f);
+                head.localRotation = Quaternion.Euler(0f, 170f, 0f);
+
+                anchor.SetPositionAndRotation(new Vector3(-1f, 21.7f, 12.5f), Quaternion.Euler(0f, 180f, 0f));
+                Assert.IsTrue(calibration.TryGetWorld(rig, out var mark, out var front));
+                PlayerRecenter.Recenter(rig, mark, front, anchor.position, anchor.eulerAngles.y);
+
+                Assert.IsTrue(calibration.TryGetWorld(rig, out var markAfter, out var frontAfter));
+                Assert.AreEqual(anchor.position.x, markAfter.x, 0.001f, "mark x");
+                Assert.AreEqual(anchor.position.z, markAfter.z, 0.001f, "mark z");
+                Assert.AreEqual(anchor.position.y, rig.position.y, Epsilon, "rig floor y");
+                Assert.AreEqual(0f, Mathf.DeltaAngle(180f, frontAfter), 0.01f, "room front");
+                AssertApprox(markInRoom, rig.InverseTransformPoint(markAfter), 0.001f);
+                Assert.AreEqual(0f, Mathf.DeltaAngle(frontBefore - 30f, frontAfter - rig.eulerAngles.y), 0.01f, "front in room");
+            }
+            finally
+            {
+                Object.DestroyImmediate(rig.gameObject);
+                Object.DestroyImmediate(anchor.gameObject);
+            }
+        }
+
+        [Test]
+        public void LandingReference_KeepsAllowedOffset_ClampsTheRest()
+        {
+            var center = new Vector3(1f, 0f, 2f);
+            const float roomYaw = 90f; // room forward = world +X, room right = world -Z
+            // Body 1.2 m right and 0.9 m forward of the center.
+            var body = center + new Vector3(0.9f, 1.4f, -1.2f);
+
+            Vector3 reference = RoomCenterCalibration.LandingReference(center, roomYaw, body,
+                offset => new Vector2(Mathf.Clamp(offset.x, -1f, 0.8f), Mathf.Clamp(offset.y, -0.25f, 0.25f)));
+
+            // Placing the reference on the anchor puts the body at (body - reference) from it.
+            Vector3 landed = Quaternion.Euler(0f, -roomYaw, 0f) * (body - reference);
+            Assert.AreEqual(0.8f, landed.x, 0.001f, "lateral clamped to 0.8 m right");
+            Assert.AreEqual(0.25f, landed.z, 0.001f, "depth clamped to 0.25 m forward");
+            Assert.AreEqual(center.y, reference.y, Epsilon, "reference stays on the center's height");
+
+            Vector3 unclamped = RoomCenterCalibration.LandingReference(center, roomYaw, body, offset => offset);
+            AssertApprox(center, unclamped);
+        }
+
+        [Test]
+        public void RoomCenter_IsUnderTheNeck_NotTheEyes()
+        {
+            var rig = new GameObject("Rig").transform;
+            try
+            {
+                var calibration = new RoomCenterCalibration();
+                calibration.Capture(rig, new Vector3(0f, 1.7f, 0f), Quaternion.identity, RoomCenterSource.Operator);
+                Assert.IsTrue(calibration.TryGetWorld(rig, out var upright, out _));
+
+                calibration.Capture(rig, new Vector3(0f, 1.6f, 0.1f), Quaternion.Euler(70f, 0f, 0f), RoomCenterSource.Operator);
+                Assert.IsTrue(calibration.TryGetWorld(rig, out var lookingDown, out _));
+
+                Assert.Less(upright.z, -0.07f, "neck sits behind the eyes");
+                Assert.AreEqual(upright.x, lookingDown.x, 0.001f);
+            }
+            finally
+            {
+                Object.DestroyImmediate(rig.gameObject);
+            }
+        }
+
+        [Test]
+        public void RoomCenter_ClearedOrNeverCaptured_ReportsNoValue()
+        {
+            var rig = new GameObject("Rig").transform;
+            try
+            {
+                var calibration = new RoomCenterCalibration();
+                Assert.IsFalse(calibration.TryGetWorld(rig, out _, out _));
+
+                calibration.Capture(rig, Vector3.up, Quaternion.identity, RoomCenterSource.SessionStart);
+                Assert.AreEqual(RoomCenterSource.SessionStart, calibration.Source);
+
+                calibration.Clear();
+                Assert.IsFalse(calibration.HasValue);
+                Assert.IsFalse(calibration.TryGetWorld(rig, out _, out _));
+            }
+            finally
+            {
+                Object.DestroyImmediate(rig.gameObject);
+            }
+        }
+
         private static Vector3 RotateAround(Vector3 point, Vector3 pivot, float yawDelta)
         {
             Vector3 relative = point - pivot;

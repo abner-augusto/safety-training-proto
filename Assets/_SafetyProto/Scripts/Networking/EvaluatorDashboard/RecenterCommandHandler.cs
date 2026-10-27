@@ -45,7 +45,7 @@ namespace SafetyProto.Runtime
         private IRecenterAnchorProvider _anchorProvider;
         private SafetyProto.Core.Interfaces.IPopupFeedback _popupFeedback;
 
-        public string Command => CommandName;
+        public virtual string Command => CommandName;
 
         private void Awake()
         {
@@ -81,6 +81,8 @@ namespace SafetyProto.Runtime
                 return false;
             }
 
+            BeforeRecenter(recenterService);
+
             var options = new RecenterOptions
             {
                 FadeOutDuration = fadeOutDuration,
@@ -96,6 +98,9 @@ namespace SafetyProto.Runtime
             reason = string.Empty;
             return true;
         }
+
+        /// <summary>Runs once the command is accepted, before the fade starts.</summary>
+        protected virtual void BeforeRecenter(RecenterService service) { }
 
         private void ShowSelfClosingBlackoutMessage()
         {

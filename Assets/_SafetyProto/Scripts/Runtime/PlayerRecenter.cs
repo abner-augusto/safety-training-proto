@@ -74,12 +74,43 @@ namespace SafetyProto.Runtime
         {
             if (rig == null || head == null) return;
 
-            var solution = Solve(rig.position, head.position, head.eulerAngles.y, targetPos, targetYaw);
+            Recenter(rig, head.position, head.eulerAngles.y, targetPos, targetYaw);
+        }
 
-            rig.RotateAround(head.position, Vector3.up, solution.RigYawDelta);
+        /// <summary>
+        /// Recenter <paramref name="rig"/> so an arbitrary world-space reference (e.g. the
+        /// calibrated physical room center) lands over <paramref name="targetPos"/> (XZ) with
+        /// <paramref name="referenceYaw"/> turned to <paramref name="targetYaw"/>. The rig floor
+        /// goes to <paramref name="targetPos"/>.y.
+        /// </summary>
+        public static void Recenter(
+            Transform rig, Vector3 referencePos, float referenceYaw, Vector3 targetPos, float targetYaw)
+        {
+            if (rig == null) return;
+
+            var solution = Solve(rig.position, referencePos, referenceYaw, targetPos, targetYaw);
+
+            rig.RotateAround(referencePos, Vector3.up, solution.RigYawDelta);
             rig.position = solution.RigPosition;
 
             Physics.SyncTransforms();
+        }
+
+        /// <summary>
+        /// Horizontal heading of a head rotation, in degrees about world up. Reads the forward
+        /// vector, and the head's up vector when looking nearly straight down or up — someone
+        /// looking at a floor mark still faces where the top of their head points.
+        /// </summary>
+        public static float HeadingYaw(Quaternion headRotation)
+        {
+            Vector3 forward = headRotation * Vector3.forward;
+            Vector3 flat = new Vector3(forward.x, 0f, forward.z);
+            if (flat.sqrMagnitude < 0.04f)
+            {
+                Vector3 up = headRotation * Vector3.up;
+                flat = new Vector3(up.x, 0f, up.z) * Mathf.Sign(-forward.y);
+            }
+            return Mathf.Atan2(flat.x, flat.z) * Mathf.Rad2Deg;
         }
 
         /// <summary>

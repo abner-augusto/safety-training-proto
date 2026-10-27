@@ -90,16 +90,50 @@ namespace SafetyProto.Tests.Editor
             }
         }
 
-        private static void SetPrivateField(object target, string fieldName, object value)
+        [Test]
+        public void CalibrateRoomCenter_RecordsOperatorCenter_ThatSessionStartCannotReplace()
         {
-            var field = target.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+            var rig = new GameObject("Rig").transform;
+            var head = new GameObject("CenterEyeAnchor").transform;
+            head.SetParent(rig);
+            var anchorGo = new GameObject("Anchor");
+            try
+            {
+                SetPrivateField(_service, "playerRig", rig);
+                _anchorProvider.Anchor = anchorGo.transform;
+
+                var calibrate = _root.AddComponent<CalibrateRoomCenterCommandHandler>();
+                SetPrivateField(calibrate, "recenterService", _service, typeof(RecenterCommandHandler));
+                SetPrivateField(calibrate, "anchorProviderBehaviour", _anchorProvider, typeof(RecenterCommandHandler));
+                InvokePrivate(calibrate, "Awake", typeof(RecenterCommandHandler));
+
+                Assert.AreEqual("calibrate_room_center", calibrate.Command);
+                Assert.AreEqual("recenter_player", _handler.Command);
+
+                bool accepted = calibrate.TryExecute(out var reason);
+
+                Assert.IsTrue(accepted, reason);
+                Assert.AreEqual(RoomCenterSource.Operator, _service.RoomCenterSource);
+                Assert.IsFalse(_service.CaptureRoomCenter(RoomCenterSource.SessionStart));
+                Assert.AreEqual(RoomCenterSource.Operator, _service.RoomCenterSource);
+            }
+            finally
+            {
+                Object.DestroyImmediate(rig.gameObject);
+                Object.DestroyImmediate(anchorGo);
+            }
+        }
+
+        private static void SetPrivateField(object target, string fieldName, object value, System.Type declaringType = null)
+        {
+            var field = (declaringType ?? target.GetType()).GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.NotNull(field, $"Expected private field '{fieldName}' on {target.GetType().Name}");
             field.SetValue(target, value);
         }
 
-        private static void InvokePrivate(object target, string methodName)
+        private static void InvokePrivate(object target, string methodName, System.Type declaringType = null)
         {
-            var method = target.GetType().GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
+            var method = (declaringType ?? target.GetType()).GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.NotNull(method, $"Expected private method '{methodName}' on {target.GetType().Name}");
             method.Invoke(target, null);
         }

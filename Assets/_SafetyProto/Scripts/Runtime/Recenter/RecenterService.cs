@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using Oculus.Interaction.Locomotion;
+using SafetyProto.Core;
 using SafetyProto.Core.Logging;
 using SafetyProto.Runtime.Analytics;
 using UnityEngine;
@@ -64,6 +65,8 @@ namespace SafetyProto.Runtime
     /// See plans/026-evaluator-recenter-playspace.md for the extraction rationale — the two
     /// original call sites diverge deliberately (ground probe, DashboardGate suspension,
     /// locomotor handling, fade-time restore); RecenterOptions is how each keeps its own shape.
+    /// Also owns the <see cref="RoomCenterCalibration"/> every placement uses, so the physical
+    /// room center, not wherever the participant stands, maps onto each phase's anchor.
     /// </summary>
     public class RecenterService : MonoBehaviour
     {
@@ -78,10 +81,15 @@ namespace SafetyProto.Runtime
         private Behaviour _activeLocomotor;
         private bool _activeLocomotorWasEnabled;
         private bool _activeSuspendedPoseBroadcast;
+        private readonly RoomCenterCalibration _roomCenter = new RoomCenterCalibration();
+        private OVRDisplay _subscribedDisplay;
 
         /// <summary>True for the whole sequence, including both fades — an overlapping request
         /// during fade-in is still refused.</summary>
         public bool IsBusy => _isBusy;
+
+        /// <summary>Who recorded the room center that recenters currently use, if anyone.</summary>
+        public RoomCenterSource RoomCenterSource => _roomCenter.Source;
 
         private void Awake()
         {
@@ -90,6 +98,83 @@ namespace SafetyProto.Runtime
 
             if (playerHead == null && playerRig != null)
                 playerHead = PlayerRecenter.ResolveHead(playerRig);
+        }
+
+        private void Start()
+        {
+            // OVRManager creates its display in its own Awake, so look it up only after every Awake.
+            _subscribedDisplay = OVRManager.display;
+            if (_subscribedDisplay != null)
+                _subscribedDisplay.RecenteredPose += OnSystemRecentered;
+        }
+
+        private void OnDestroy()
+        {
+            if (_subscribedDisplay != null)
+                _subscribedDisplay.RecenteredPose -= OnSystemRecentered;
+        }
+
+        private void OnSystemRecentered()
+        {
+            if (!_roomCenter.HasValue) return;
+            _roomCenter.Clear();
+            SafetyLog.Warning("[RecenterService] Recentralização do sistema (botão Meta) — calibração do centro da sala descartada. Calibre novamente com o participante no X.", this);
+            EventBus.Instance?.Publish(new PlayspaceNoticeEventArgs { Kind = PlayspaceNoticeKind.RoomCenterDiscarded });
+        }
+
+        /// <summary>
+        /// Records where the participant's head stands now as the physical room center and the
+        /// way they face as the room's forward. An automatic session-start capture never
+        /// replaces an operator calibration.
+        /// </summary>
+        public bool CaptureRoomCenter(RoomCenterSource source)
+        {
+            if (source == RoomCenterSource.SessionStart && _roomCenter.Source == RoomCenterSource.Operator)
+                return false;
+
+            if (playerHead == null && playerRig != null)
+                playerHead = PlayerRecenter.ResolveHead(playerRig);
+            if (playerRig == null || playerHead == null)
+            {
+                SafetyLog.Warning("[RecenterService] Calibração do centro da sala ignorada — rig ou cabeça não atribuídos.", this);
+                return false;
+            }
+
+            _roomCenter.Capture(playerRig, playerHead.position, playerHead.rotation, source);
+            return true;
+        }
+
+        /// <summary>
+        /// Moves the rig at once so the calibrated room center lands on <paramref name="anchor"/>
+        /// facing its yaw; without a calibration, the live head lands there instead. A
+        /// <see cref="RecenterAnchorArea"/> on the anchor clamps where the body may arrive.
+        /// </summary>
+        public void PlaceOn(Transform anchor)
+        {
+            if (playerRig == null || anchor == null) return;
+
+            if (playerHead == null)
+                playerHead = PlayerRecenter.ResolveHead(playerRig);
+
+            if (_roomCenter.TryGetWorld(playerRig, out var center, out var centerYaw))
+            {
+                var area = anchor.GetComponent<RecenterAnchorArea>();
+                Vector3 reference = area != null && playerHead != null
+                    ? RoomCenterCalibration.LandingReference(center, centerYaw,
+                        RoomCenterCalibration.BodyAxis(playerHead.position, playerHead.rotation), area.ClampLanding)
+                    : center;
+                PlayerRecenter.Recenter(playerRig, reference, centerYaw, anchor.position, anchor.eulerAngles.y);
+            }
+            else if (playerHead != null)
+            {
+                PlayerRecenter.Recenter(playerRig, playerHead, anchor);
+            }
+            else
+            {
+                playerRig.position = anchor.position;
+                playerRig.rotation = Quaternion.Euler(0f, anchor.rotation.eulerAngles.y, 0f);
+                Physics.SyncTransforms();
+            }
         }
 
         private static Behaviour ResolveLocomotor(Transform root)
@@ -143,19 +228,7 @@ namespace SafetyProto.Runtime
             if (_activeSuspendedPoseBroadcast)
                 DashboardGate.PoseBroadcastSuspended = true;
 
-            if (playerRig != null)
-            {
-                if (playerHead != null)
-                {
-                    PlayerRecenter.Recenter(playerRig, playerHead, anchor);
-                }
-                else
-                {
-                    playerRig.position = anchor.position;
-                    playerRig.rotation = Quaternion.Euler(0f, anchor.rotation.eulerAngles.y, 0f);
-                    Physics.SyncTransforms();
-                }
-            }
+            PlaceOn(anchor);
 
             options.OnBlackout?.Invoke();
 
