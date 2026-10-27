@@ -46,6 +46,11 @@ namespace SafetyProto.Runtime.Interaction
         /// orbits the user in yaw; head pitch and vertical bob never move it.</summary>
         public bool YawOnly;
 
+        /// <summary><see cref="YawOnly"/> only: metres the head may rise or sink from the pinned
+        /// height before the menu re-pins to the new head height. Catches a menu shown before the
+        /// headset was put on, or a sit/stand change. 0 = the height never moves.</summary>
+        public float HeightDeadzone;
+
         /// <summary>Clamp values that would otherwise misbehave (negative times, cone &gt; 90 deg).</summary>
         public MenuFollowConfig Sanitized()
         {
@@ -58,6 +63,7 @@ namespace SafetyProto.Runtime.Interaction
             c.PositionSmoothTime = Mathf.Max(0.01f, c.PositionSmoothTime);
             c.RotationSmoothTime = Mathf.Max(0.01f, c.RotationSmoothTime);
             c.ReengageFraction = Mathf.Clamp01(c.ReengageFraction);
+            c.HeightDeadzone = Mathf.Max(0f, c.HeightDeadzone);
             return c;
         }
     }
@@ -167,6 +173,8 @@ namespace SafetyProto.Runtime.Interaction
                     {
                         _following = true;
                         _positionVelocity = Vector3.zero;
+                        if (HeightDrifted(headPosition))
+                            SnapHeight(headPosition.y);
                     }
                 }
                 else
@@ -284,6 +292,7 @@ namespace SafetyProto.Runtime.Interaction
             HeadLocalAngles(menuPosition, headPosition, headRotation, out float yaw, out float pitch);
             if (Mathf.Abs(yaw) > _config.YawDeadzoneDegrees) return true;
             if (!_config.YawOnly && Mathf.Abs(pitch) > _config.PitchDeadzoneDegrees) return true;
+            if (HeightDrifted(headPosition)) return true;
             return DistanceError(menuPosition, headPosition) > _config.PositionDeadzone;
         }
 
@@ -293,10 +302,17 @@ namespace SafetyProto.Runtime.Interaction
             if (Mathf.Abs(yaw) > YawSettleAngle() + AngleSettleEpsilonDegrees) return false;
             if (!_config.YawOnly && Mathf.Abs(pitch) > PitchSettleAngle() + AngleSettleEpsilonDegrees)
                 return false;
+            if (_config.YawOnly && Mathf.Abs(menuPosition.y - (_lockedHeight + _config.MenuOffset.y))
+                > DistanceSettleEpsilonMetres)
+                return false;
             float distanceThreshold = Mathf.Max(
                 _config.PositionDeadzone * _config.ReengageFraction, DistanceSettleEpsilonMetres);
             return DistanceError(menuPosition, headPosition) <= distanceThreshold;
         }
+
+        private bool HeightDrifted(Vector3 headPosition) =>
+            _config.YawOnly && _config.HeightDeadzone > 0f
+            && Mathf.Abs(headPosition.y - _lockedHeight) > _config.HeightDeadzone;
 
         private float YawSettleAngle() => _config.YawDeadzoneDegrees * _config.ReengageFraction;
         private float PitchSettleAngle() => _config.PitchDeadzoneDegrees * _config.ReengageFraction;

@@ -47,6 +47,9 @@ namespace SafetyProto.UI
         [Header("Behaviour")]
         [Tooltip("Ride a horizontal ring at a fixed world height and only orbit the user in yaw. Head pitch and vertical bob never move the menu.")]
         public bool yawOnlyFollow = false;
+        [Tooltip("Yaw-only mode: metres the head may rise or sink from the pinned height before the menu re-pins to it (e.g. menu shown before the headset was put on). 0 = height never moves.")]
+        [Min(0f)]
+        public float heightDeadzone = 0.3f;
         [Tooltip("Snap straight to the ideal pose when this component is enabled, instead of easing in from wherever it was.")]
         public bool snapOnEnable = true;
         [Tooltip("Once engaged, the follow disengages when the head returns within this fraction of the comfort cone. Hysteresis against boundary chatter.")]
@@ -67,6 +70,7 @@ namespace SafetyProto.UI
             RotationSmoothTime = rotationSmoothTime,
             ReengageFraction = reengageFraction,
             YawOnly = yawOnlyFollow,
+            HeightDeadzone = heightDeadzone,
         };
 
         /// <summary>True while the menu is actively catching up to the head.</summary>

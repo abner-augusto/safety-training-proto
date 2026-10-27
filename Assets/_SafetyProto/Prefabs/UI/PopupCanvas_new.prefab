@@ -519,14 +519,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.UI.MenuFollowHmd
   hmdTransform: {fileID: 0}
   followDistance: 0.5
-  menuOffset: {x: 0, y: 0, z: 0}
-  positionDeadzone: 0.05
-  yawDeadzoneDegrees: 12
+  menuOffset: {x: 0, y: -0.15, z: 0}
+  positionDeadzone: 0.2
+  yawDeadzoneDegrees: 40
   pitchDeadzoneDegrees: 18
-  dwellBeforeFollow: 0.35
-  positionSmoothTime: 0.25
-  rotationSmoothTime: 0.15
-  yawOnlyFollow: 0
+  dwellBeforeFollow: 1
+  positionSmoothTime: 0.5
+  rotationSmoothTime: 0.4
+  yawOnlyFollow: 1
+  heightDeadzone: 0.3
   snapOnEnable: 1
   reengageFraction: 0.25
 --- !u!225 &5140503507838935300

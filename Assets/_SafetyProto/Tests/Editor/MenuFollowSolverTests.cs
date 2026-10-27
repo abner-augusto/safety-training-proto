@@ -129,6 +129,45 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
+        public void YawOnly_SmallHeadDip_KeepsHeight()
+        {
+            var cfg = DefaultConfig();
+            cfg.YawOnly = true;
+            cfg.HeightDeadzone = 0.3f;
+            cfg.MenuOffset = new Vector3(0f, -0.15f, 0f);
+            var solver = new MenuFollowSolver();
+            solver.SnapHeight(1.6f);
+            var start = MenuFollowSolver.ComputeIdealPose(
+                new Vector3(0f, 1.6f, 0f), Quaternion.identity, cfg, 1.6f);
+
+            var end = Run(solver, start, cfg, new Vector3(0f, 1.45f, 0f), Quaternion.Euler(30f, 0f, 0f), 3f);
+
+            Assert.That(end.Position.y, Is.EqualTo(1.45f).Within(1e-3f));
+            Assert.IsFalse(solver.IsFollowing);
+        }
+
+        [Test]
+        public void YawOnly_HeightJumpBeyondDeadzone_RepinsAfterDwell_AndSettles()
+        {
+            var cfg = DefaultConfig();
+            cfg.YawOnly = true;
+            cfg.HeightDeadzone = 0.3f;
+            cfg.MenuOffset = new Vector3(0f, -0.15f, 0f);
+            var solver = new MenuFollowSolver();
+            solver.SnapHeight(0.8f);
+            var start = MenuFollowSolver.ComputeIdealPose(
+                new Vector3(0f, 0.8f, 0f), Quaternion.identity, cfg, 0.8f);
+
+            var head = new Vector3(0f, 1.6f, 0f);
+            var beforeDwell = Run(solver, start, cfg, head, Quaternion.identity, 0.2f);
+            Assert.That(beforeDwell.Position.y, Is.EqualTo(start.Position.y).Within(1e-4f));
+
+            var end = Run(solver, beforeDwell, cfg, head, Quaternion.identity, 4f);
+            Assert.That(end.Position.y, Is.EqualTo(1.45f).Within(0.011f));
+            Assert.IsFalse(solver.IsFollowing);
+        }
+
+        [Test]
         public void TurnAwayThenBack_MenuReturnsTowardGaze_AndRelaxes()
         {
             var cfg = DefaultConfig();

@@ -71860,7 +71860,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6494895806796852190, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
       propertyPath: positionDeadzone
-      value: 0.1
+      value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 6494895806796852190, guid: 89a9ed933151a6e47a5041c5b9c1b673, type: 3}
       propertyPath: rotationLerpSpeed
