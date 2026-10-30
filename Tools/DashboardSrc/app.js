@@ -1,9 +1,10 @@
     import { WS_PORT, WS_PATH, CAST_URL } from './js/constants.js';
-    import { applyTranslations, toggleLang } from './js/i18n.js';
-    import { applyTheme, toggleTheme } from './js/theme.js';
+    import { applyTranslations, toggleLang, setLang } from './js/i18n.js';
+    import { applyTheme, toggleTheme, setTheme } from './js/theme.js';
     import { state } from './js/state.js';
     import { renderTasks, closeReportModal } from './js/ui.js';
     import { initStationControls, renderStation } from './js/station.js';
+    import { initEmbed } from './js/embed.js';
     import { loadHistory, renderHistory, clearHistory, exportAllHistory } from './js/history.js';
     import { route } from './js/router.js';
     import { WsManager } from './js/ws.js';
@@ -128,6 +129,12 @@
     /* ── Evaluator command controls: session form, restart, playspace, objects ── */
     initStationControls(ws, {
       pending: 'commandPending', noConnection: 'commandNoConnection', noResponse: 'commandNoResponse',
+    });
+
+    /* Inside the multi-headset shell, theme and language follow the shell. */
+    initEmbed({
+      onTheme: next => setTheme(next),
+      onLang: next => { setLang(next); refreshLanguage(); },
     });
 
     /* Gancho de teste: permite injetar eventos/poses pelo console do

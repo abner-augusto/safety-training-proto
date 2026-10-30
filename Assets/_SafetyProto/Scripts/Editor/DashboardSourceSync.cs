@@ -26,6 +26,7 @@ namespace SafetyProto.Editor
             ("index.html", "index.txt", "<!-- GENERATED FILE — DO NOT EDIT. Source: Tools/DashboardSrc/index.html (menu: SafetyProto → Sync Dashboard Source) -->"),
             ("style.css",  "style.txt", "/* GENERATED FILE — DO NOT EDIT. Source: Tools/DashboardSrc/style.css (menu: SafetyProto → Sync Dashboard Source) */"),
             ("app.js",     "app.txt",   "// GENERATED FILE — DO NOT EDIT. Source: Tools/DashboardSrc/app.js (menu: SafetyProto → Sync Dashboard Source)"),
+            ("multi.html", "multi.txt", "<!-- GENERATED FILE — DO NOT EDIT. Source: Tools/DashboardSrc/multi.html (menu: SafetyProto → Sync Dashboard Source) -->"),
         };
 
         [InitializeOnLoadMethod]

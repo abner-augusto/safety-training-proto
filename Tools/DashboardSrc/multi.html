@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafetyProto — Vários óculos</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body class="mx">
+
+  <!-- One full station dashboard per headset, side by side. Each iframe loads
+       http://<headset>:8080/?embed=1, so it talks to its own headset. -->
+  <header class="mx-bar">
+    <h1>
+      <svg class="wordmark-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5l-8-3Z"/><path d="m9 12 2 2 4-4"/>
+      </svg>
+      SafetyProto · <span data-i18n="multiTitle">Vários óculos</span>
+    </h1>
+    <form class="mx-add" id="mx-add" autocomplete="off">
+      <input id="mx-host" placeholder="IP do óculos (ex.: 192.168.0.12)" data-i18n-placeholder="multiAddPlaceholder" aria-label="IP do óculos">
+      <button class="report-btn primary" type="submit" data-i18n="multiAdd">Adicionar</button>
+    </form>
+    <button class="report-btn secondary" id="btn-lang" type="button" aria-label="Idioma"><span id="lang-flag">PT</span></button>
+    <button class="report-btn secondary" id="btn-theme" type="button" aria-label="Alternar tema claro/escuro" aria-pressed="false">
+      <svg id="theme-icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/>
+      </svg>
+      <svg id="theme-icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none">
+        <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.9 4.9 1.4 1.4"/><path d="m17.7 17.7 1.4 1.4"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.3 17.7-1.4 1.4"/><path d="m19.1 4.9-1.4 1.4"/>
+      </svg>
+    </button>
+  </header>
+
+  <main class="mx-grid" id="mx-grid" aria-live="polite"></main>
+
+  <script type="module" src="/js/multi.js"></script>
+</body>
+</html>

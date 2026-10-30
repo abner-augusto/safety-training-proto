@@ -207,6 +207,15 @@ namespace SafetyProto.Networking.Dashboard
             var orbitAsset = Resources.Load<TextAsset>("Dashboard/vendor/OrbitControls");
 
             var extraRoutes = new Dictionary<string, (byte[] body, string contentType)>();
+
+            // Several headsets in one tab: the shell iframes each headset's own dashboard.
+            var multiAsset = Resources.Load<TextAsset>("Dashboard/multi");
+            if (multiAsset != null)
+            {
+                var multiBytes = Encoding.UTF8.GetBytes(multiAsset.text);
+                extraRoutes["/multi"] = (multiBytes, "text/html; charset=utf-8");
+                extraRoutes["/multi.html"] = (multiBytes, "text/html; charset=utf-8");
+            }
             if (threeAsset != null)
                 extraRoutes["/vendor/three.module.js"] = (Encoding.UTF8.GetBytes(threeAsset.text), "application/javascript");
             if (orbitAsset != null)

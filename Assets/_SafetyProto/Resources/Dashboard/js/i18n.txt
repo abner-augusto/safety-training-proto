@@ -114,6 +114,11 @@
         pauseSrcPopup: 'popup', pauseSrcPauseMenu: 'pause menu', pauseSrcXrSessionUnfocused: 'system menu / headset off',
         pauseSrcApplicationPause: 'headset asleep', pauseSrcApplicationFocus: 'focus lost', pauseSrcUnspecified: 'unknown source',
         detailHeld: 'held', detailReleased: 'released', detailRestartOf: 'restart of',
+        multiTitle: 'Several headsets', multiAddPlaceholder: 'Headset IP (e.g. 192.168.0.12)', multiAdd: 'Add',
+        multiRemove: 'Remove', multiExpand: 'Expand', multiCollapse: 'Show all', multiOpen: 'Open in a new tab',
+        multiEmpty: 'Add the IP of each headset (shown on the in-VR menu).', multiDisconnected: 'disconnected',
+        multiBatteryLow: 'low battery', multiCritical: 'critical failure', multiWaiting: 'waiting to start',
+        multiKeypad: 'participant keypad open',
       },
       pt: {
         currentScore: 'Pontuação',
@@ -223,6 +228,11 @@
         pauseSrcPopup: 'popup', pauseSrcPauseMenu: 'menu de pausa', pauseSrcXrSessionUnfocused: 'menu do sistema / óculos retirado',
         pauseSrcApplicationPause: 'óculos em repouso', pauseSrcApplicationFocus: 'foco perdido', pauseSrcUnspecified: 'origem desconhecida',
         detailHeld: 'retida', detailReleased: 'liberada', detailRestartOf: 'reinício de',
+        multiTitle: 'Vários óculos', multiAddPlaceholder: 'IP do óculos (ex.: 192.168.0.12)', multiAdd: 'Adicionar',
+        multiRemove: 'Remover', multiExpand: 'Ampliar', multiCollapse: 'Mostrar todos', multiOpen: 'Abrir em nova aba',
+        multiEmpty: 'Adicione o IP de cada óculos (aparece no menu dentro da RV).', multiDisconnected: 'desconectado',
+        multiBatteryLow: 'bateria baixa', multiCritical: 'falha crítica', multiWaiting: 'aguardando início',
+        multiKeypad: 'teclado liberado ao participante',
       }
     };
 

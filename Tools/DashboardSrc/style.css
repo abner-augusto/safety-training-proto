@@ -770,6 +770,8 @@
     .fab-lang  { top: 18px; right: 18px; }
     /* Optional "watch player cast" FAB, sits left of the language toggle */
     .fab-cast  { top: 18px; right: 78px; }
+    .fab-multi { top: 18px; right: 198px; text-decoration: none; }
+    .fab-multi svg { width: 21px; height: 21px; }
     .fab-cast svg { width: 22px; height: 22px; }
     /* Theme toggle (dark live mode ↔ light figure mode) */
     .fab-theme { top: 18px; right: 138px; }
@@ -788,8 +790,77 @@
       .fab-lang  { top: 80px; }
       .fab-cast  { top: 142px; right: 18px; }
       .fab-theme { top: 204px; right: 18px; }
+      .fab-multi { top: 266px; right: 18px; }
     }
 
+    /* ── Embedded in the multi-headset shell (?embed=1) ───────────
+         The shell owns theme, language and casting, so the FABs go.
+         Narrow frames stack the sidebar over a short viewport instead
+         of hiding it in a drawer: the controls matter most there. ── */
+    html.embed .fab { display: none; }
+    @media (max-width: 768px) {
+      html.embed .app { flex-direction: column; }
+      /* !important: SidebarResizeManager sets an inline width for the side-by-side layout. */
+      html.embed .sidebar {
+        position: static; transform: none; box-shadow: none;
+        width: 100% !important; max-width: none; min-width: 0; flex: 1 1 auto; min-height: 0;
+        border-right: none; border-bottom: 1px solid var(--border);
+      }
+      html.embed .resize-handle { display: none; }
+      html.embed .viewport { flex: 0 0 32vh; min-height: 180px; }
+    }
+
+    /* ── Multi-headset shell (multi.html) ─────────────────────────── */
+    body.mx { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    .mx-bar {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      padding: 10px 16px; background: var(--bg-rail); border-bottom: 1px solid var(--border);
+    }
+    .mx-bar h1 { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-right: auto; }
+    .mx-add { display: flex; gap: 6px; }
+    .mx-add input {
+      width: 230px; padding: 7px 10px; border-radius: var(--radius);
+      border: 1px solid var(--border-strong); background: var(--bg-elev); color: var(--text);
+      font-family: var(--mono); font-size: 12px;
+    }
+    .mx-add .report-btn, .mx-bar .report-btn { flex: none; padding: 8px 12px; }
+    .mx-grid {
+      flex: 1; min-height: 0; display: grid; gap: 1px; background: var(--border);
+      grid-template-columns: repeat(var(--mx-cols, 2), minmax(0, 1fr));
+      grid-auto-rows: minmax(0, 1fr);
+    }
+    /* One station expanded: the others shrink to their status bar but keep their iframe (and
+       its WebSocket) alive, so their alerts still reach the bar. */
+    .mx-grid.focused { display: flex; flex-direction: column; }
+    .mx-tile { display: flex; flex-direction: column; min-height: 0; background: var(--bg); }
+    .mx-grid.focused .mx-tile { flex: none; }
+    .mx-grid.focused .mx-tile.max { flex: 1 1 auto; order: 1; }
+    .mx-grid.focused .mx-tile:not(.max) iframe { flex: 0 0 0; height: 0; visibility: hidden; }
+    .mx-tile-bar {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      padding: 6px 10px; background: var(--bg-sidebar); border-bottom: 1px solid var(--border);
+      font-size: 12px; border-top: 3px solid transparent;
+    }
+    .mx-tile.alert .mx-tile-bar { border-top-color: var(--red); }
+    .mx-tile.caution .mx-tile-bar { border-top-color: var(--orange); }
+    .mx-tile.ok .mx-tile-bar { border-top-color: var(--green); }
+    .mx-tile-title { font-weight: 600; }
+    .mx-tile-host { font-family: var(--mono); color: var(--text-dim); font-size: 11px; }
+    .mx-tile-sub { font-family: var(--mono); color: var(--text-muted); font-size: 11px; }
+    .mx-badges { display: flex; gap: 4px; flex-wrap: wrap; margin-right: auto; }
+    .mx-badge {
+      font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+      padding: 2px 6px; border-radius: 4px; border: 1px solid currentColor;
+    }
+    .mx-badge.red { color: var(--red); } .mx-badge.orange { color: var(--orange); } .mx-badge.blue { color: var(--accent); }
+    .mx-tile-actions { display: flex; gap: 4px; }
+    .mx-tile-actions button, .mx-tile-actions a {
+      border: 1px solid var(--border-strong); background: transparent; color: var(--text-muted);
+      border-radius: 4px; padding: 3px 8px; font: inherit; font-size: 11px; cursor: pointer; text-decoration: none;
+    }
+    .mx-tile-actions button:hover, .mx-tile-actions a:hover { color: var(--text); background: var(--bg-hover); }
+    .mx-tile iframe { flex: 1; min-height: 0; width: 100%; border: 0; background: var(--bg); }
+    .mx-empty { display: grid; place-items: center; color: var(--text-dim); font-size: 13px; padding: 40px; text-align: center; }
     /* ── Inline SVG icons (replace emoji chrome) ──────────────── */
     .s-icon { width: 14px; height: 14px; flex-shrink: 0; color: var(--accent); opacity: 0.9; vertical-align: -2px; margin-right: 7px; }
     .wordmark-icon { width: 20px; height: 20px; color: var(--accent); flex-shrink: 0; }

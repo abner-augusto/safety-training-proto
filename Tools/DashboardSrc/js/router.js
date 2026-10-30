@@ -3,6 +3,7 @@
     import { addLog, setScoreUI, renderCluster, renderTasks, resetTaskUI, emptyState, renderReportSection, resolveCommandAck } from './ui.js';
     import { saveSessionToHistory } from './history.js';
     import { setStationStatus, setPauseSources, renderStation, clearStartCode } from './station.js';
+    import { notifyShell } from './embed.js';
 
     /* ================================================================
      * EVENT ROUTER — declarative handler map
@@ -17,6 +18,7 @@
       const fn = handlers[eventType];
       if (fn) { try { fn(payload); } catch (e) { console.error(`[handler:${eventType}]`, e); } }
       // PoseFrame handled inline (high frequency — skip addLog)
+      notifyShell();
     }
 
     on('StationStatus', setStationStatus);

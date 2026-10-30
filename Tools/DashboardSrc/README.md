@@ -21,6 +21,8 @@ concern lives in its own ES module under `js/`, one file per concern:
 | `js/ws.js` | `WsManager` (reconnect/backoff WebSocket client) |
 | `js/history.js` | session history persisted in localStorage |
 | `js/station.js` | headset state (`StationStatus`), session start form, restart and in-session command buttons, pause and battery chips |
+| `js/embed.js` | `?embed=1` mode inside the multi-headset shell: theme/language from the shell, status up to it |
+| `js/multi.js` | the multi-headset shell itself (entry point of `multi.html`, not of `app.js`) |
 | `js/router.js` | event router: handler map + `route` |
 | `js/viewport.js` | `EvaluatorViewport` (Three.js instrument scene) |
 | `js/scene-layout.js` | `SceneLayoutView`: walkable floors + task-spot markers (Three.js) |
@@ -32,6 +34,12 @@ resolution magic): `app.js` imports from `./js/state.js`; modules inside `js/`
 import each other with `./state.js`. The import graph is acyclic —
 `history.js` is imported only by `router.js` and `station.js`.
 
+`multi.html` is a second page: one iframe per headset
+(`http://<headset>:8080/?embed=1`), side by side, so one evaluator can watch
+and drive two headsets from one tab. Each iframe is a complete station page
+talking to its own headset; the shell only lays them out, forwards theme and
+language, and shows each station's status in its tile bar.
+
 Adding a module: create `js/<name>.js`, import it where needed. The sync
 mirrors it to `Resources/Dashboard/js/<name>.txt` and
 `EvaluatorDashboardBootstrap` auto-routes everything in
@@ -39,7 +47,7 @@ mirrors it to `Resources/Dashboard/js/<name>.txt` and
 
 ## Generated copies
 
-`Assets/_SafetyProto/Resources/Dashboard/{index,style,app}.txt` are
+`Assets/_SafetyProto/Resources/Dashboard/{index,style,app,multi}.txt` are
 **generated copies** of the files here. They exist only because Unity imports
 `.txt` (not `.js`/`.css`) as a `TextAsset`, which is how the on-device HTTP
 server (`MiniHttpServer`) gets its bytes. Each generated `.txt` file carries a

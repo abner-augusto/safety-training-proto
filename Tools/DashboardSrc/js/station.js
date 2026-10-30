@@ -2,6 +2,7 @@
     import { state } from './state.js';
     import { createCommandControl, refreshCommandControls } from './ui.js';
     import { findCompletedSession } from './history.js';
+    import { notifyShell } from './embed.js';
 
     /* ================================================================
      * STATION — what the headset is doing (StationStatus), and the
@@ -48,6 +49,7 @@
     export function setPauseSources(list) {
       state.pauseSources = Array.isArray(list) ? list.filter(Boolean) : [];
       renderPauseChip();
+      notifyShell();
     }
 
     function renderPauseChip() {
@@ -103,6 +105,7 @@
       renderDeviceChips();
       renderPauseChip();
       refreshCommandControls();
+      notifyShell();
     }
 
     function setSeg(groupId, attr, value) {
