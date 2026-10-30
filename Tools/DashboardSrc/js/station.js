@@ -1,0 +1,212 @@
+    import { t, tf, locale, pauseSourceLabel } from './i18n.js';
+    import { state } from './state.js';
+    import { createCommandControl, refreshCommandControls } from './ui.js';
+    import { findCompletedSession } from './history.js';
+
+    /* ================================================================
+     * STATION — what the headset is doing (StationStatus), and the
+     * session form: the evaluator, not the participant, sets the
+     * participant code and the mode. Codes mirror the app's
+     * ParticipantCode: P-07 for a participant, DEMO-03 for a demo.
+     * ============================================================== */
+    const STUDY_MAX_PARTICIPANT = 100;
+    const MAX_DIGITS = 3;
+    let codeKind = 'participant';
+    let selectedMode = 'guiado';
+
+    /** Normalized id from the form, or an i18n error. */
+    export function normalizeCode(kind, raw) {
+      const digits = String(raw ?? '').replace(/\D/g, '').replace(/^0+/, '');
+      if (String(raw ?? '').trim() === '') return { error: t('codeMissing') };
+      if (digits === '') return { error: t('codeZero') };
+      if (digits.length > MAX_DIGITS) return { error: t('codeTooLong') };
+      const prefix = kind === 'demo' ? 'DEMO' : 'P';
+      return { id: `${prefix}-${digits.padStart(2, '0')}`, number: Number(digits) };
+    }
+
+    /** Where the headset is in the session lifecycle. 'unknown' = an app that predates StationStatus. */
+    export function stationPhase() {
+      if (!state.connected) return 'offline';
+      const s = state.station;
+      if (!s) return state.currentSessionId ? 'active' : 'unknown';
+      if (s.sessionActive) return 'active';
+      if (s.sessionCompleted) return 'completed';
+      if (s.participantKeypadOpen) return 'keypad';
+      if (s.awaitingStart) return 'awaiting';
+      return 'loading';
+    }
+
+    const modeName = mode => t(mode === 'avaliacao' ? 'modeEvaluation' : 'modeGuided');
+
+    export function setStationStatus(payload) {
+      state.station = payload ?? null;
+      // A page that connected mid-pause never saw the hold events; the status carries them.
+      if (Array.isArray(payload?.pauseSources)) state.pauseSources = payload.pauseSources.filter(Boolean);
+      renderStation();
+    }
+
+    export function setPauseSources(list) {
+      state.pauseSources = Array.isArray(list) ? list.filter(Boolean) : [];
+      renderPauseChip();
+    }
+
+    function renderPauseChip() {
+      const chip = document.getElementById('pause-chip');
+      if (!chip) return;
+      const paused = state.pauseSources.length > 0;
+      chip.hidden = !paused;
+      if (paused) chip.textContent = `${t('paused')} · ${state.pauseSources.map(pauseSourceLabel).join(' + ')}`;
+    }
+
+    function renderDeviceChips() {
+      const s = state.station;
+      const device = document.getElementById('device-label');
+      const battery = document.getElementById('battery-label');
+      if (device) {
+        device.hidden = !s || !(s.deviceModel || s.appVersion);
+        if (s) device.textContent = [s.deviceModel, s.appVersion ? `v${s.appVersion}` : ''].filter(Boolean).join(' · ');
+      }
+      if (battery) {
+        const level = s ? Number(s.batteryLevel) : -1;
+        battery.hidden = !(level >= 0);
+        if (level >= 0) {
+          const charging = s.batteryStatus === 'Charging' || s.batteryStatus === 'Full';
+          battery.textContent = `${t('battery')} ${Math.round(level * 100)}%${charging ? ` · ${t('charging')}` : ''}`;
+          battery.classList.toggle('low', level < 0.2 && !charging);
+          battery.classList.toggle('warn', level >= 0.2 && level < 0.35 && !charging);
+        }
+      }
+    }
+
+    export function renderStation() {
+      const phase = stationPhase();
+      const el = document.getElementById('station-state');
+      if (el) {
+        el.dataset.state = phase;
+        const s = state.station;
+        const pid = (s && s.participantId) || state.currentParticipantId;
+        const attempt = (s && s.attempt) || state.currentAttempt;
+        let text = '';
+        if (phase === 'offline') text = t('stationOffline');
+        else if (phase === 'loading') text = t('stationLoading');
+        else if (phase === 'awaiting') text = t('stationAwaiting');
+        else if (phase === 'keypad') text = t('stationKeypad');
+        else if (phase === 'active')
+          text = `${t('stationActive')}: ${pid} · ${modeName((s && s.mode) || state.currentMode)}${attempt > 1 ? ` · ${t('attempt')} ${attempt}` : ''}`;
+        else if (phase === 'completed') text = `${t('stationCompleted')}: ${pid}`;
+        el.textContent = text;
+        el.hidden = text === '';
+        el.removeAttribute('data-i18n');
+      }
+      const form = document.getElementById('start-form');
+      if (form) form.classList.toggle('disabled', phase === 'offline');
+      renderDeviceChips();
+      renderPauseChip();
+      refreshCommandControls();
+    }
+
+    function setSeg(groupId, attr, value) {
+      document.querySelectorAll(`#${groupId} [data-${attr}]`).forEach(btn =>
+        btn.setAttribute('aria-checked', String(btn.dataset[attr] === value)));
+    }
+
+    function renderStartWarning() {
+      const el = document.getElementById('start-warning');
+      const input = document.getElementById('code-number');
+      if (!el || !input) return;
+      const code = normalizeCode(codeKind, input.value);
+      const warnings = [];
+      if (code.id && codeKind === 'participant' && code.number > STUDY_MAX_PARTICIPANT) warnings.push(t('warnOutOfRange'));
+      const previous = code.id ? findCompletedSession(code.id) : null;
+      if (previous) {
+        const when = new Date(previous.savedAt).toLocaleString(locale(),
+          { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+        warnings.push(tf('warnAlreadyUsed', { code: code.id, when }));
+      }
+      el.textContent = warnings.join(' ');
+      el.hidden = warnings.length === 0;
+    }
+
+    /** Wires the session form, the restart button and the in-session commands. */
+    export function initStationControls(ws, commandStatusKeys) {
+      const input = document.getElementById('code-number');
+      const prefix = document.getElementById('code-prefix');
+
+      document.querySelectorAll('#code-kind [data-kind]').forEach(btn => btn.onclick = () => {
+        codeKind = btn.dataset.kind;
+        setSeg('code-kind', 'kind', codeKind);
+        if (prefix) prefix.textContent = codeKind === 'demo' ? 'DEMO-' : 'P-';
+        startControl.disarm();
+        renderStartWarning();
+      });
+      document.querySelectorAll('#mode-select [data-mode]').forEach(btn => btn.onclick = () => {
+        selectedMode = btn.dataset.mode;
+        setSeg('mode-select', 'mode', selectedMode);
+        startControl.disarm();
+      });
+      if (input) input.oninput = () => {
+        input.value = input.value.replace(/\D/g, '').slice(0, MAX_DIGITS);
+        startControl.disarm();
+        renderStartWarning();
+      };
+
+      const offline = () => stationPhase() === 'offline';
+      const startControl = createCommandControl({
+        btnId: 'btn-start-session', statusId: 'start-session-status', command: 'start_session',
+        keys: { ...commandStatusKeys, button: 'startSessionButton', confirm: 'startConfirm',
+                success: 'startSuccess', failed: 'startFailed' },
+        args: () => {
+          const code = normalizeCode(codeKind, input ? input.value : '');
+          return code.error ? { error: code.error } : { args: { participantCode: code.id, mode: selectedMode } };
+        },
+        buttonLabel: () => {
+          const phase = stationPhase();
+          if (phase === 'active') return t('startReplaceButton');
+          if (phase === 'completed') return t('startNextButton');
+          return t('startSessionButton');
+        },
+        confirmLabel: () => {
+          const code = normalizeCode(codeKind, input ? input.value : '');
+          const vars = { code: code.id, mode: modeName(selectedMode) };
+          return stationPhase() === 'active' ? tf('startReplaceConfirm', vars) : tf('startConfirm', vars);
+        },
+        isBlocked: offline,
+      });
+      document.getElementById('start-form').onsubmit = e => {
+        e.preventDefault();
+        startControl.click(ws);
+      };
+
+      const resetControl = createCommandControl({
+        btnId: 'btn-reset-session', statusId: 'reset-session-status', command: 'reset_session',
+        keys: { ...commandStatusKeys, button: 'resetSessionButton', confirm: 'resetSessionConfirmButton',
+                success: 'resetSessionSuccess', failed: 'resetSessionFailed' },
+        buttonLabel: () => t(stationPhase() === 'completed' ? 'resetToWaitingButton' : 'resetSessionButton'),
+        isBlocked: () => !['active', 'completed', 'unknown'].includes(stationPhase()),
+      });
+      document.getElementById('btn-reset-session').onclick = () => resetControl.click(ws);
+
+      const inSession = [
+        ['btn-recenter', 'recenter-status', 'recenter_player', 'recenterButton', 'commandConfirmButton', 'recenterSuccess', 'recenterFailed'],
+        ['btn-calibrate-center', 'calibrate-center-status', 'calibrate_room_center', 'calibrateCenterButton', 'commandConfirmButton', 'calibrateCenterSuccess', 'calibrateCenterFailed'],
+        ['btn-return-objects', 'return-objects-status', 'return_all_ppe', 'returnObjectsButton', 'commandConfirmButton', 'returnObjectsSuccess', 'returnObjectsFailed'],
+      ];
+      for (const [btnId, statusId, command, button, confirm, success, failed] of inSession) {
+        const control = createCommandControl({
+          btnId, statusId, command,
+          keys: { ...commandStatusKeys, button, confirm, success, failed },
+          isBlocked: offline,
+        });
+        document.getElementById(btnId).onclick = () => control.click(ws);
+      }
+
+      window.addEventListener('sp-connection', renderStation);
+      renderStation();
+    }
+
+    /** Clears the code after a start so the next participant cannot inherit it by accident. */
+    export function clearStartCode() {
+      const input = document.getElementById('code-number');
+      if (input) input.value = '';
+      renderStartWarning();
+    }

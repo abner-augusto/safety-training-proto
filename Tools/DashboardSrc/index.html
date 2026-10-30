@@ -77,6 +77,11 @@
           <span id="participant-label">—</span>
           <span id="session-id-label">—</span>
           <span id="conn-status-label">Desconectado</span>
+          <span id="pause-chip" class="pause-chip" hidden>—</span>
+        </div>
+        <div class="s-header-meta station-meta">
+          <span id="device-label" hidden>—</span>
+          <span id="battery-label" class="battery-chip" hidden>—</span>
         </div>
       </div>
 
@@ -102,23 +107,57 @@
           </div>
         </div>
 
-        <!-- Evaluator commands (recenter playspace, reset session) -->
+        <!-- Session: who trains, in which mode; restart -->
+        <div class="section" id="session-section">
+          <div class="section-title" style="display:flex; align-items:center;">
+            <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            <span data-i18n="sessionControlsTitle">Sessão</span>
+          </div>
+          <div class="station-state" id="station-state" aria-live="polite" data-state="offline" data-i18n="stationOffline">Sem conexão com o óculos</div>
+          <form class="start-form" id="start-form" autocomplete="off" novalidate>
+            <div class="seg" role="radiogroup" aria-label="Tipo de código" id="code-kind">
+              <button type="button" role="radio" aria-checked="true" data-kind="participant" data-i18n="codeKindParticipant">Participante</button>
+              <button type="button" role="radio" aria-checked="false" data-kind="demo" data-i18n="codeKindDemo">Demonstração</button>
+            </div>
+            <label class="code-field">
+              <span class="code-prefix" id="code-prefix">P-</span>
+              <input id="code-number" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="07" aria-label="Número do participante">
+            </label>
+            <div class="seg" role="radiogroup" aria-label="Modo" id="mode-select">
+              <button type="button" role="radio" aria-checked="true" data-mode="guiado" data-i18n="modeGuided">Guiado</button>
+              <button type="button" role="radio" aria-checked="false" data-mode="avaliacao" data-i18n="modeEvaluation">Avaliação</button>
+            </div>
+            <div class="start-warning" id="start-warning" aria-live="polite"></div>
+            <button type="submit" class="report-btn primary command-btn" id="btn-start-session" data-i18n="startSessionButton">Iniciar sessão</button>
+            <div class="command-status" id="start-session-status" aria-live="polite"></div>
+          </form>
+          <div class="command-control">
+            <button class="report-btn secondary command-btn danger" id="btn-reset-session" data-i18n="resetSessionButton">Reiniciar sessão (mesmo participante)</button>
+            <div class="command-status" id="reset-session-status" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <!-- Playspace and objects: fixes during the session -->
         <div class="section">
           <div class="section-title" style="display:flex; align-items:center;">
             <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-            <span data-i18n="controlsTitle">Controles do avaliador</span>
+            <span data-i18n="controlsTitle">Ajustes durante a sessão</span>
           </div>
-          <div class="command-control">
-            <button class="report-btn primary command-btn" id="btn-recenter" data-i18n="recenterButton">Recentralizar jogador</button>
-            <div class="command-status" id="recenter-status" aria-live="polite"></div>
+          <div class="command-group-label" data-i18n="spaceGroup">Espaço</div>
+          <div class="command-row">
+            <div class="command-control">
+              <button class="report-btn secondary command-btn" id="btn-recenter" data-i18n="recenterButton">Recentralizar jogador</button>
+              <div class="command-status" id="recenter-status" aria-live="polite"></div>
+            </div>
+            <div class="command-control">
+              <button class="report-btn secondary command-btn" id="btn-calibrate-center" data-i18n="calibrateCenterButton">Calibrar centro (participante no X)</button>
+              <div class="command-status" id="calibrate-center-status" aria-live="polite"></div>
+            </div>
           </div>
+          <div class="command-group-label" data-i18n="objectsGroup">Objetos</div>
           <div class="command-control">
-            <button class="report-btn secondary command-btn" id="btn-calibrate-center" data-i18n="calibrateCenterButton">Calibrar centro da sala (participante no X)</button>
-            <div class="command-status" id="calibrate-center-status" aria-live="polite"></div>
-          </div>
-          <div class="command-control">
-            <button class="report-btn secondary command-btn danger" id="btn-reset-session" data-i18n="resetSessionButton">Reiniciar sessão</button>
-            <div class="command-status" id="reset-session-status" aria-live="polite"></div>
+            <button class="report-btn secondary command-btn" id="btn-return-objects" data-i18n="returnObjectsButton">Recolher objetos soltos</button>
+            <div class="command-status" id="return-objects-status" aria-live="polite"></div>
           </div>
         </div>
 

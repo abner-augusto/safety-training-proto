@@ -229,6 +229,11 @@
       color: var(--orange);
       border-color: var(--orange);
     }
+    .s-header-meta.station-meta { margin-top: 8px; }
+    .s-header-meta span[hidden] { display: none; }
+    .s-header-meta .pause-chip { color: var(--orange); border-color: var(--orange); font-weight: 600; }
+    .s-header-meta .battery-chip.warn { color: var(--orange); border-color: var(--orange); }
+    .s-header-meta .battery-chip.low  { color: var(--red); border-color: var(--red); font-weight: 600; }
 
     /* ── Instrument cluster: 4 células em 2×2 (pontuação, tempo,
          violações, EPI) — rótulos nunca cortam. ─────────────────── */
@@ -491,6 +496,62 @@
     /* ── Evaluator command controls ──────────────────────────────── */
     .command-control { display: flex; flex-direction: column; gap: 8px; }
     .command-control + .command-control { margin-top: 10px; }
+    .command-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .command-row .command-control + .command-control { margin-top: 0; }
+    .command-group-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--text-dim); margin: 12px 0 6px;
+    }
+    .command-group-label:first-of-type { margin-top: 0; }
+
+    /* ── Session: station state + start form ─────────────────────── */
+    .station-state {
+      font-size: 12px; line-height: 1.4;
+      padding: 8px 10px; margin-bottom: 10px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg-surface);
+      color: var(--text-muted);
+    }
+    .station-state[hidden] { display: none; }
+    .station-state[data-state="awaiting"] { border-color: var(--accent); color: var(--text); background: var(--accent-weak); }
+    .station-state[data-state="active"]   { border-color: var(--green); color: var(--text); }
+    .station-state[data-state="keypad"]   { border-color: var(--orange); color: var(--orange); }
+    .station-state[data-state="offline"]  { border-color: var(--red); color: var(--red); }
+
+    .start-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .start-form.disabled { opacity: 0.55; pointer-events: none; }
+    .seg {
+      display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+      border: 1px solid var(--border-strong); border-radius: var(--radius); overflow: hidden;
+    }
+    .seg button {
+      border: none; background: transparent; color: var(--text-muted);
+      padding: 7px 6px; font: inherit; font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
+    }
+    .seg button + button { border-left: 1px solid var(--border-strong); }
+    .seg button[aria-checked="true"] { background: var(--accent-weak); color: var(--accent); }
+    #mode-select button[data-mode="avaliacao"][aria-checked="true"] { background: color-mix(in srgb, var(--orange) 16%, transparent); color: var(--orange); }
+    .code-field {
+      display: flex; align-items: stretch;
+      border: 1px solid var(--border-strong); border-radius: var(--radius);
+      background: var(--bg-elev); overflow: hidden;
+    }
+    .code-field:focus-within { outline: 2px solid var(--accent); outline-offset: -1px; }
+    .code-prefix {
+      display: flex; align-items: center; padding: 0 10px;
+      font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--text-dim);
+      background: var(--bg-surface); border-right: 1px solid var(--border);
+    }
+    .code-field input {
+      flex: 1; min-width: 0; border: none; outline: none; background: transparent;
+      color: var(--text); font-family: var(--mono); font-size: 22px; font-weight: 600;
+      padding: 8px 10px; font-variant-numeric: tabular-nums; letter-spacing: 2px;
+    }
+    .start-warning { font-size: 11px; color: var(--orange); line-height: 1.4; }
+    .start-warning[hidden] { display: none; }
+    #btn-start-session.confirm { text-transform: none; letter-spacing: 0; font-size: 12px; }
     .command-btn { width: 100%; }
     .command-btn.danger { color: var(--red); }
     .command-btn.confirm {
@@ -729,6 +790,7 @@
       .fab-cast  { top: 142px; right: 18px; }
       .fab-theme { top: 204px; right: 18px; }
     }
+
     /* ── Inline SVG icons (replace emoji chrome) ──────────────── */
     .s-icon { width: 14px; height: 14px; flex-shrink: 0; color: var(--accent); opacity: 0.9; vertical-align: -2px; margin-right: 7px; }
     .wordmark-icon { width: 20px; height: 20px; color: var(--accent); flex-shrink: 0; }

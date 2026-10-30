@@ -2,7 +2,8 @@
     import { applyTranslations, toggleLang } from './js/i18n.js';
     import { applyTheme, toggleTheme } from './js/theme.js';
     import { state } from './js/state.js';
-    import { renderTasks, closeReportModal, createCommandControl } from './js/ui.js';
+    import { renderTasks, closeReportModal } from './js/ui.js';
+    import { initStationControls, renderStation } from './js/station.js';
     import { loadHistory, renderHistory, clearHistory, exportAllHistory } from './js/history.js';
     import { route } from './js/router.js';
     import { WsManager } from './js/ws.js';
@@ -52,13 +53,17 @@
     };
 
     /* ── Language toggle ── */
-    document.getElementById('btn-lang').onclick = () => {
-      toggleLang();
+    function refreshLanguage() {
       applyTranslations();
       // Re-render dynamic UI in new language
       renderTasks();
       renderHistory();
+      renderStation();
       window.__spViewport?.invalidate();   /* floor dimension labels are formatted per language at render */
+    }
+    document.getElementById('btn-lang').onclick = () => {
+      toggleLang();
+      refreshLanguage();
     };
 
     /* ── Theme toggle: escuro (uso vivo) ↔ claro (modo figura) ── */
@@ -120,28 +125,10 @@
     loadHistory();
     renderHistory();
 
-    /* ── Evaluator command controls ── */
-    const commandStatusKeys = {
+    /* ── Evaluator command controls: session form, restart, playspace, objects ── */
+    initStationControls(ws, {
       pending: 'commandPending', noConnection: 'commandNoConnection', noResponse: 'commandNoResponse',
-    };
-    const recenterControl = createCommandControl({
-      btnId: 'btn-recenter', statusId: 'recenter-status', command: 'recenter_player',
-      keys: { ...commandStatusKeys, button: 'recenterButton', confirm: 'commandConfirmButton',
-              success: 'recenterSuccess', failed: 'recenterFailed' },
     });
-    const calibrateCenterControl = createCommandControl({
-      btnId: 'btn-calibrate-center', statusId: 'calibrate-center-status', command: 'calibrate_room_center',
-      keys: { ...commandStatusKeys, button: 'calibrateCenterButton', confirm: 'commandConfirmButton',
-              success: 'calibrateCenterSuccess', failed: 'calibrateCenterFailed' },
-    });
-    const resetControl = createCommandControl({
-      btnId: 'btn-reset-session', statusId: 'reset-session-status', command: 'reset_session',
-      keys: { ...commandStatusKeys, button: 'resetSessionButton', confirm: 'resetSessionConfirmButton',
-              success: 'resetSessionSuccess', failed: 'resetSessionFailed' },
-    });
-    document.getElementById('btn-recenter').onclick = () => recenterControl.click(ws);
-    document.getElementById('btn-calibrate-center').onclick = () => calibrateCenterControl.click(ws);
-    document.getElementById('btn-reset-session').onclick = () => resetControl.click(ws);
 
     /* Gancho de teste: permite injetar eventos/poses pelo console do
        navegador quando não há headset (ex.: __spRoute({eventType, payload})). */

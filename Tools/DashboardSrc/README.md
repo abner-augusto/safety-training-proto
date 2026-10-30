@@ -20,6 +20,7 @@ concern lives in its own ES module under `js/`, one file per concern:
 | `js/ui.js` | DOM rendering: cluster, tasks, log, report section + modal |
 | `js/ws.js` | `WsManager` (reconnect/backoff WebSocket client) |
 | `js/history.js` | session history persisted in localStorage |
+| `js/station.js` | headset state (`StationStatus`), session start form, restart and in-session command buttons, pause and battery chips |
 | `js/router.js` | event router: handler map + `route` |
 | `js/viewport.js` | `EvaluatorViewport` (Three.js instrument scene) |
 | `js/scene-layout.js` | `SceneLayoutView`: walkable floors + task-spot markers (Three.js) |
@@ -29,7 +30,7 @@ concern lives in its own ES module under `js/`, one file per concern:
 Import specifiers are explicit with the `.js` extension (native ESM has no
 resolution magic): `app.js` imports from `./js/state.js`; modules inside `js/`
 import each other with `./state.js`. The import graph is acyclic —
-`router.js` is the only module that imports `history.js`.
+`history.js` is imported only by `router.js` and `station.js`.
 
 Adding a module: create `js/<name>.js`, import it where needed. The sync
 mirrors it to `Resources/Dashboard/js/<name>.txt` and

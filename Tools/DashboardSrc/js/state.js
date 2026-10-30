@@ -20,6 +20,11 @@
       currentParticipantId: '—',
       currentSessionId: null,
       currentMode: null,
+      currentAttempt: 0,
+      connected: false,
+      station: null,          // last StationStatus from the headset (null on apps that predate it)
+      pauseSources: [],       // PauseSource tokens holding the session right now
+      lastCriticalAt: 0,      // Date.now() of the last CriticalSafetyFailure
     };
 
     /* ── Live session timer (driven by session lifecycle events) ── */

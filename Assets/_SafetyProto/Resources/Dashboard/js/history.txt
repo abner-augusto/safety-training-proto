@@ -38,7 +38,8 @@
     export function saveSessionToHistory(report, sessionId, participantId) {
       if (!report) return;
       const reportParticipantId = participantId ?? state.currentParticipantId;
-      if ((reportParticipantId ?? '').toUpperCase().startsWith('SIM-')) return;
+      // Simulator runs and demonstrations are never study data.
+      if (/^(SIM|DEMO)-/i.test(reportParticipantId ?? '')) return;
       sessionHistory.unshift({
         sessionId:     sessionId ?? state.currentSessionId,
         participantId: reportParticipantId,
@@ -48,6 +49,12 @@
       if (sessionHistory.length > MAX_HISTORY) sessionHistory.length = MAX_HISTORY;
       persistHistory();
       renderHistory();
+    }
+
+    /** Newest saved completed session of a participant, or null. */
+    export function findCompletedSession(participantId) {
+      if (!participantId) return null;
+      return sessionHistory.find(h => h.participantId === participantId && h.report?.summary?.completed) ?? null;
     }
 
     export function renderHistory() {

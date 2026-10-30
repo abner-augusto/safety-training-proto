@@ -84,13 +84,35 @@
         internalError: 'Internal system error', manualReset: 'The session was restarted manually.', origin: 'Source',
         // evaluator command controls (two-stage confirm; reject reasons come from the app
         // itself in Portuguese — operator-facing SafetyLog text is not translated here)
-        controlsTitle: 'Evaluator controls', commandConfirmButton: 'Confirm?',
+        controlsTitle: 'In-session adjustments', commandConfirmButton: 'Confirm?',
         commandPending: 'Sending…', commandNoConnection: 'No connection to the app.', commandNoResponse: 'No response from the app.',
         recenterButton: 'Recenter player', recenterSuccess: 'Player recentered.', recenterFailed: 'Recenter refused.',
-        calibrateCenterButton: 'Calibrate room center (participant on the X)',
+        calibrateCenterButton: 'Calibrate center (participant on the X)',
         calibrateCenterSuccess: 'Room center calibrated.', calibrateCenterFailed: 'Calibration refused.',
-        resetSessionButton: 'Restart session', resetSessionConfirmButton: 'Confirm? Progress will be lost',
+        resetSessionButton: 'Restart session (same participant)', resetSessionConfirmButton: 'Confirm? Progress will be lost',
         resetSessionSuccess: 'Session restarted.', resetSessionFailed: 'Restart refused.',
+        // session start (the evaluator, not the participant, sets code and mode)
+        sessionControlsTitle: 'Session', spaceGroup: 'Playspace', objectsGroup: 'Objects',
+        stationOffline: 'No connection to the headset', stationLoading: 'Headset loading…',
+        stationAwaiting: 'Headset on the waiting screen — ready to start',
+        stationKeypad: 'No panel in time: the headset let the participant type the code. You can still start from here.',
+        stationActive: 'In progress', stationCompleted: 'Completed', attempt: 'attempt',
+        codeKindParticipant: 'Participant', codeKindDemo: 'Demo',
+        startSessionButton: 'Start session', startNextButton: 'Start next participant',
+        startReplaceButton: 'Switch participant or mode',
+        startConfirm: 'Start {code} · {mode}?', startReplaceConfirm: 'End the current session and start {code} · {mode}?',
+        startSuccess: 'Session started.', startFailed: 'Start refused.',
+        codeMissing: 'Type the participant number.', codeZero: 'The number must be greater than zero.',
+        codeTooLong: 'Use at most 3 digits.',
+        warnOutOfRange: 'Outside the study range (P-01 to P-100).',
+        warnAlreadyUsed: '{code} already has a completed session in this panel ({when}).',
+        resetToWaitingButton: 'Back to the waiting screen',
+        returnObjectsButton: 'Return loose objects', returnObjectsSuccess: 'Objects returned.', returnObjectsFailed: 'Return refused.',
+        logEvaluatorCommand: 'Evaluator command',
+        paused: 'Paused', battery: 'Battery', charging: 'charging',
+        pauseSrcPopup: 'popup', pauseSrcPauseMenu: 'pause menu', pauseSrcXrSessionUnfocused: 'system menu / headset off',
+        pauseSrcApplicationPause: 'headset asleep', pauseSrcApplicationFocus: 'focus lost', pauseSrcUnspecified: 'unknown source',
+        detailHeld: 'held', detailReleased: 'released', detailRestartOf: 'restart of',
       },
       pt: {
         currentScore: 'Pontuação',
@@ -172,13 +194,34 @@
         detailTime: 'Tempo', detailScore: 'Pontuação', detailCompleted: 'Concluídas',
         unknownAction: 'Ação não catalogada', unknownEvent: 'Evento não reconhecido',
         internalError: 'Erro interno do sistema', manualReset: 'A sessão foi reiniciada manualmente.', origin: 'Origem',
-        controlsTitle: 'Controles do avaliador', commandConfirmButton: 'Confirmar?',
+        controlsTitle: 'Ajustes durante a sessão', commandConfirmButton: 'Confirmar?',
         commandPending: 'Enviando…', commandNoConnection: 'Sem conexão com o aplicativo.', commandNoResponse: 'Sem resposta do aplicativo.',
         recenterButton: 'Recentralizar jogador', recenterSuccess: 'Jogador recentralizado.', recenterFailed: 'Recentralização recusada.',
-        calibrateCenterButton: 'Calibrar centro da sala (participante no X)',
+        calibrateCenterButton: 'Calibrar centro (participante no X)',
         calibrateCenterSuccess: 'Centro da sala calibrado.', calibrateCenterFailed: 'Calibração recusada.',
-        resetSessionButton: 'Reiniciar sessão', resetSessionConfirmButton: 'Confirmar? O progresso será perdido',
+        resetSessionButton: 'Reiniciar sessão (mesmo participante)', resetSessionConfirmButton: 'Confirmar? O progresso será perdido',
         resetSessionSuccess: 'Sessão reiniciada.', resetSessionFailed: 'Reinício recusado.',
+        sessionControlsTitle: 'Sessão', spaceGroup: 'Espaço', objectsGroup: 'Objetos',
+        stationOffline: 'Sem conexão com o óculos', stationLoading: 'Óculos carregando…',
+        stationAwaiting: 'Óculos na tela de espera — pronto para iniciar',
+        stationKeypad: 'Sem painel a tempo: o óculos liberou o teclado ao participante. Você ainda pode iniciar daqui.',
+        stationActive: 'Em andamento', stationCompleted: 'Concluída', attempt: 'tentativa',
+        codeKindParticipant: 'Participante', codeKindDemo: 'Demonstração',
+        startSessionButton: 'Iniciar sessão', startNextButton: 'Iniciar próximo participante',
+        startReplaceButton: 'Trocar participante ou modo',
+        startConfirm: 'Iniciar {code} · {mode}?', startReplaceConfirm: 'Encerrar a sessão atual e iniciar {code} · {mode}?',
+        startSuccess: 'Sessão iniciada.', startFailed: 'Início recusado.',
+        codeMissing: 'Digite o número do participante.', codeZero: 'O número precisa ser maior que zero.',
+        codeTooLong: 'Use no máximo 3 dígitos.',
+        warnOutOfRange: 'Fora da faixa do estudo (P-01 a P-100).',
+        warnAlreadyUsed: '{code} já tem sessão concluída neste painel ({when}).',
+        resetToWaitingButton: 'Voltar à tela de espera',
+        returnObjectsButton: 'Recolher objetos soltos', returnObjectsSuccess: 'Objetos recolhidos.', returnObjectsFailed: 'Recolhimento recusado.',
+        logEvaluatorCommand: 'Comando do avaliador',
+        paused: 'Pausada', battery: 'Bateria', charging: 'carregando',
+        pauseSrcPopup: 'popup', pauseSrcPauseMenu: 'menu de pausa', pauseSrcXrSessionUnfocused: 'menu do sistema / óculos retirado',
+        pauseSrcApplicationPause: 'óculos em repouso', pauseSrcApplicationFocus: 'foco perdido', pauseSrcUnspecified: 'origem desconhecida',
+        detailHeld: 'retida', detailReleased: 'liberada', detailRestartOf: 'reinício de',
       }
     };
 
@@ -231,6 +274,15 @@
 
     let lang = localStorage.getItem('sp_lang') === 'en' ? 'en' : 'pt';
     export const t = k => (i18n[lang][k] ?? i18n.pt[k] ?? k);
+    /** t() with {name} placeholders filled from vars. */
+    export const tf = (k, vars) => t(k).replace(/\{(\w+)\}/g, (m, name) => (vars && name in vars ? String(vars[name]) : m));
+    /** Short label for a PauseSource token. */
+    export const pauseSourceLabel = token => t(`pauseSrc${token || 'Unspecified'}`);
+    export function setLang(next) {
+      if (next !== 'pt' && next !== 'en') return;
+      lang = next;
+      localStorage.setItem('sp_lang', lang);
+    }
     export function getLang() { return lang; }
     export function locale() { return lang === 'pt' ? 'pt-BR' : 'en-US'; }
     export function ppeLabel(value) { return labels.ppe[lang][value] ?? labels.ppe.pt[value] ?? t('ppeShort'); }

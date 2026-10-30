@@ -13,7 +13,12 @@
     }
 
     export function toggleTheme() {
-      theme = theme === 'dark' ? 'light' : 'dark';
+      setTheme(theme === 'dark' ? 'light' : 'dark');
+    }
+
+    export function setTheme(next) {
+      if (next !== 'dark' && next !== 'light') return;
+      theme = next;
       localStorage.setItem('sp_theme', theme);
       applyTheme();
     }

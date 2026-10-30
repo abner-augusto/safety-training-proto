@@ -1,7 +1,8 @@
-    import { t, actionLabel, ppeLabel, violationLabel, violationMessage, applyTranslations } from './i18n.js';
+    import { t, actionLabel, ppeLabel, violationLabel, violationMessage, applyTranslations, pauseSourceLabel } from './i18n.js';
     import { tasks, wornPpe, state, sessionTimer } from './state.js';
     import { addLog, setScoreUI, renderCluster, renderTasks, resetTaskUI, emptyState, renderReportSection, resolveCommandAck } from './ui.js';
     import { saveSessionToHistory } from './history.js';
+    import { setStationStatus, setPauseSources, renderStation, clearStartCode } from './station.js';
 
     /* ================================================================
      * EVENT ROUTER — declarative handler map
@@ -18,6 +19,8 @@
       // PoseFrame handled inline (high frequency — skip addLog)
     }
 
+    on('StationStatus', setStationStatus);
+
     on('SceneLayout', p => {
       window.__spViewport?.setLayout(p);
       applyTranslations();   /* marker labels take their text from data-i18n */
@@ -26,9 +29,11 @@
 
     /* ── Session lifecycle ── */
     on('SessionStarted', p => {
+      const sameSession = state.currentSessionId === (p.sessionId ?? null);
       state.currentSessionId = p.sessionId ?? null;
       state.currentParticipantId = p.participantId ?? '—';
       state.currentMode = p.mode ?? null;
+      state.currentAttempt = p.attempt ?? 0;
       document.getElementById('session-id-label').textContent =
         `${t('session')}: ${p.sessionId?.substring(0, 8) ?? '?'}`;
       document.getElementById('participant-label').textContent =
@@ -47,11 +52,17 @@
           badge.classList.remove('mode-avaliacao');
         }
       }
-      sessionTimer.start();
-      state.violationCount = 0;
-      wornPpe.clear();
+      // RequestSync replays SessionStarted after a reconnect; keep the clock and tallies then.
+      if (!sameSession) {
+        sessionTimer.start();
+        state.violationCount = 0;
+        wornPpe.clear();
+        clearStartCode();
+        const attempt = state.currentAttempt > 1 ? ` · ${t('attempt')} ${state.currentAttempt}` : '';
+        addLog(`${t('logSessionStarted')} · ${state.currentParticipantId}${attempt}`, 'success');
+      }
       renderCluster();
-      addLog(t('logSessionStarted'), 'success');
+      renderStation();
     });
 
     on('SessionManifest', p => {
@@ -87,8 +98,20 @@
       refreshMarkers();
     });
 
-    on('SessionPaused',   () => { sessionTimer.pause();  addLog(t('logSessionPaused')); });
-    on('SessionResumed',  () => { sessionTimer.resume(); addLog(t('logSessionResumed'), 'success'); });
+    const pauseLabels = list => (list ?? []).map(pauseSourceLabel).join(' + ');
+    on('SessionPaused', p => {
+      const sources = p?.pauseSources?.length ? p.pauseSources : (p?.pauseSource ? [p.pauseSource] : []);
+      setPauseSources(sources);
+      sessionTimer.pause();
+      addLog(`${t('logSessionPaused')}${sources.length ? ` · ${pauseLabels(sources)}` : ''}`, 'caution');
+    });
+    on('SessionResumed', p => {
+      setPauseSources([]);
+      sessionTimer.resume();
+      addLog(`${t('logSessionResumed')}${p?.pauseSource ? ` · ${pauseLabels([p.pauseSource])}` : ''}`, 'success');
+    });
+    /* Overlapping holds change the chip without a new pause/resume pair. */
+    on('PauseHoldChanged', p => setPauseSources(p?.pauseSources ?? []));
     on('SessionEnded',    () => { sessionTimer.stop();   addLog(t('logSessionEnded')); });
 
     on('SessionCompleted', p => {
@@ -102,6 +125,8 @@
       state.sessionReport = null;
       state.currentScore  = 0;
       state.currentMode = null;
+      state.currentAttempt = 0;
+      setPauseSources([]);
       sessionTimer.reset();
       setScoreUI(0);
       resetTaskUI();
@@ -120,6 +145,7 @@
         badge.classList.remove('mode-avaliacao');
       }
       addLog(t('logSessionReset'));
+      renderStation();
     });
 
     /* ── Task events ── */
@@ -183,7 +209,7 @@
       const detail = violationMessage(p.violationCode, p.message);
       addLog(`${t('logViolation')}: ${violationLabel(p.violationCode)}${detail ? ` · ${detail}` : ''}`, 'violation');
     });
-    on('CriticalSafetyFailure',p => { state.violationCount++; renderCluster(); addLog(`${t('logCritical')}: ${p.violationCount} ${t('violations').toLowerCase()} ${t('detailIn')} ${p.windowSeconds}s`, 'violation'); });
+    on('CriticalSafetyFailure',p => { state.violationCount++; state.lastCriticalAt = Date.now(); renderCluster(); addLog(`${t('logCritical')}: ${p.violationCount} ${t('violations').toLowerCase()} ${t('detailIn')} ${p.windowSeconds}s`, 'violation'); });
     on('SafetyError',          p => addLog(`${t('logSafetyError')}: ${t('internalError')}${p.source ? ` · ${t('origin')}: ${p.source}` : ''}`, 'violation'));
 
     /* XR ergonomics, never scored: the room and the virtual floor disagree. */

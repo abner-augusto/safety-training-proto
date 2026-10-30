@@ -1,5 +1,5 @@
 // GENERATED FILE — DO NOT EDIT. Source: Tools/DashboardSrc/js/ui.js (menu: SafetyProto → Sync Dashboard Source)
-    import { t, getLang, locale, ppeLabel, violationLabel, violationMessage } from './i18n.js';
+    import { t, getLang, locale, ppeLabel, violationLabel, violationMessage, pauseSourceLabel } from './i18n.js';
     import { MAX_LOG_ITEMS } from './constants.js';
     import { tasks, wornPpe, state } from './state.js';
 
@@ -12,11 +12,17 @@
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     }
 
-    export function setStatusUI(state) {
+    export function setStatusUI(status) {
       const dot   = document.getElementById('status-dot');
       const label = document.getElementById('conn-status-label');
-      dot.className = 'status-dot' + (state === 'connected' ? ' connected' : state === 'connecting' ? ' connecting' : '');
-      label.textContent = t(state === 'connected' ? 'connected' : state === 'connecting' ? 'connecting' : 'disconnected');
+      dot.className = 'status-dot' + (status === 'connected' ? ' connected' : status === 'connecting' ? ' connecting' : '');
+      label.textContent = t(status === 'connected' ? 'connected' : status === 'connecting' ? 'connecting' : 'disconnected');
+      const connected = status === 'connected';
+      if (state.connected !== connected) {
+        state.connected = connected;
+        if (!connected) state.station = null;   // a reconnect resyncs it
+        window.dispatchEvent(new CustomEvent('sp-connection', { detail: { connected } }));
+      }
     }
 
     export function setScoreUI(score) {
@@ -81,6 +87,9 @@
           SessionEnded: 'Sessão encerrada',
           SessionCompleted: 'Sessão concluída',
           SessionReset: 'Sessão reiniciada',
+          PauseHoldChanged: 'Origem de pausa',
+          EvaluatorCommand: 'Comando do avaliador',
+          PlayspaceNotice: 'Aviso de espaço físico',
           ActionAttempt: 'Tentativa de ação',
           PpeStateChanged: 'EPI alterado',
           TaskStarted: 'Tarefa iniciada',
@@ -99,6 +108,9 @@
           SessionEnded: 'Session ended',
           SessionCompleted: 'Session completed',
           SessionReset: 'Session reset',
+          PauseHoldChanged: 'Pause source',
+          EvaluatorCommand: 'Evaluator command',
+          PlayspaceNotice: 'Playspace notice',
           ActionAttempt: 'Action attempt',
           PpeStateChanged: 'PPE changed',
           TaskStarted: 'Task started',
@@ -169,6 +181,21 @@
           return `${d.violationCount ?? 0} ${t('violations').toLowerCase()} ${t('detailIn')} ${d.windowSeconds ?? 0}s`;
         case 'SessionReset':
           return t('manualReset');
+        case 'SessionStarted': {
+          const who = entry.playerId || '';
+          const restart = d.previousSessionId ? ` · ${t('attempt')} ${d.attempt ?? '?'} · ${t('detailRestartOf')} ${String(d.previousSessionId).substring(0, 8)}` : '';
+          return `${who}${restart}`;
+        }
+        case 'SessionPaused':
+          return (d.pauseSources ?? (d.pauseSource ? [d.pauseSource] : [])).map(pauseSourceLabel).join(' + ');
+        case 'SessionResumed':
+          return `${pauseSourceLabel(d.pauseSource)}${d.durationSeconds ? ` · ${Number(d.durationSeconds).toFixed(1)} s` : ''}`;
+        case 'PauseHoldChanged':
+          return `${pauseSourceLabel(d.pauseSource)} · ${d.held ? t('detailHeld') : t('detailReleased')}`;
+        case 'EvaluatorCommand':
+          return entry.details || d.command || '';
+        case 'PlayspaceNotice':
+          return entry.details || '';
         case 'SessionCompleted': {
           const m = Math.floor((d.totalElapsedTime ?? 0) / 60);
           const s = Math.floor((d.totalElapsedTime ?? 0) % 60);
@@ -395,13 +422,18 @@
     const _commandControls = [];
 
     /** Wires one evaluator command button. `keys` names the i18n strings for the button label,
-        its armed label, and the pending/success/failed/noConnection/noResponse status lines. */
-    export function createCommandControl({ btnId, statusId, command, keys }) {
+        its armed label, and the pending/success/failed/noConnection/noResponse status lines.
+        Optional hooks: `args()` returns `{ args }` or `{ error }` (validated before arming),
+        `buttonLabel()` / `confirmLabel()` override the static labels, `isBlocked()` disables the
+        button for the station's state. An accepted ack shows the app's own summary when it sends one. */
+    export function createCommandControl({ btnId, statusId, command, keys, args, buttonLabel, confirmLabel, isBlocked }) {
       let armed = false;
       let confirmTimer = null;
       let ackTimer = null;
       let pendingRequestId = null;
+      let pendingArgs = null;
       const btn = () => document.getElementById(btnId);
+      const label = () => (buttonLabel ? buttonLabel() : t(keys.button));
 
       function setStatus(text, kind) {
         const status = document.getElementById(statusId);
@@ -410,22 +442,33 @@
         status.className = 'command-status' + (kind ? ` ${kind}` : '');
       }
 
+      function refresh() {
+        const b = btn();
+        if (!b) return;
+        b.disabled = pendingRequestId !== null || (isBlocked ? isBlocked() : false);
+        if (!armed) b.textContent = label();
+      }
+
       function disarm() {
         armed = false;
+        pendingArgs = null;
         clearTimeout(confirmTimer);
         const b = btn();
         if (!b) return;
         b.classList.remove('confirm');
-        b.textContent = t(keys.button);
+        b.textContent = label();
       }
 
       function click(ws) {
         const b = btn();
-        if (!b) return;
+        if (!b || b.disabled) return;
 
         if (!armed) {
+          const checked = args ? args() : null;
+          if (checked && checked.error) { setStatus(checked.error, 'error'); return; }
+          pendingArgs = checked ? checked.args : null;
           armed = true;
-          b.textContent = t(keys.confirm);
+          b.textContent = confirmLabel ? confirmLabel() : t(keys.confirm);
           b.classList.add('confirm');
           setStatus('');
           clearTimeout(confirmTimer);
@@ -433,12 +476,15 @@
           return;
         }
 
+        const sentArgs = pendingArgs;
         disarm();
         const requestId = `${command}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         b.disabled = true;
         setStatus(t(keys.pending), 'pending');
 
-        if (!ws.send({ eventType: 'Command', command, requestId })) {
+        const envelope = { eventType: 'Command', command, requestId };
+        if (sentArgs) envelope.args = sentArgs;
+        if (!ws.send(envelope)) {
           b.disabled = false;
           setStatus(t(keys.noConnection), 'error');
           return;
@@ -449,7 +495,7 @@
         ackTimer = setTimeout(() => {
           if (pendingRequestId !== requestId) return; // superseded by a newer ack
           pendingRequestId = null;
-          b.disabled = false;
+          refresh();
           setStatus(t(keys.noResponse), 'error');
         }, COMMAND_ACK_TIMEOUT_MS);
       }
@@ -459,15 +505,15 @@
         if (!payload || payload.requestId == null || payload.requestId !== pendingRequestId) return;
         clearTimeout(ackTimer);
         pendingRequestId = null;
-        const b = btn();
-        if (b) b.disabled = false;
+        refresh();
         setStatus(
-          payload.accepted ? t(keys.success) : (payload.reason || t(keys.failed)),
+          payload.accepted ? (payload.reason || t(keys.success)) : (payload.reason || t(keys.failed)),
           payload.accepted ? 'success' : 'error'
         );
+        if (payload.accepted && payload.reason) addLog(`${t(keys.button)} · ${payload.reason}`, 'info');
       }
 
-      const control = { click, resolveAck };
+      const control = { click, resolveAck, refresh, disarm };
       _commandControls.push(control);
       return control;
     }
@@ -475,6 +521,11 @@
     /** Routed from the CommandAck event. */
     export function resolveCommandAck(payload) {
       for (const control of _commandControls) control.resolveAck(payload);
+    }
+
+    /** Re-evaluates every command button against the station's state. */
+    export function refreshCommandControls() {
+      for (const control of _commandControls) control.refresh();
     }
 
     export function downloadReport() {
