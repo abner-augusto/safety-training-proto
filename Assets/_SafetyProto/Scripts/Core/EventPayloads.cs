@@ -325,6 +325,39 @@ namespace SafetyProto.Core
         public float DurationSeconds;
     }
 
+    /// <summary>
+    /// The evaluator acted on the session from the dashboard (recenter, recall loose objects).
+    /// Logged so the analysis can tell an evaluator intervention from what the participant did;
+    /// never scored. Commands that reload the scene are recorded by SessionReset and the next
+    /// SessionStarted instead, because an event queued here would land after the log is flushed.
+    /// </summary>
+    [System.Serializable]
+    public struct EvaluatorCommandEventArgs : IEventPayload
+    {
+        public string SessionId;
+        public string PlayerId;
+        public string ScenarioId;
+        public long TimestampMs;
+
+        string IEventPayload.SessionId => SessionId;
+        string IEventPayload.PlayerId => PlayerId;
+        string IEventPayload.ScenarioId => ScenarioId;
+        long IEventPayload.TimestampMs => TimestampMs;
+
+        void IEventPayload.SetMetadata(string sessionId, string playerId, string scenarioId, long timestampMs)
+        {
+            SessionId = sessionId;
+            PlayerId = playerId;
+            ScenarioId = scenarioId;
+            TimestampMs = timestampMs;
+        }
+
+        /// <summary>Dashboard command string, e.g. "return_all_ppe".</summary>
+        public string Command;
+        /// <summary>Portuguese result summary from the handler; empty when it gave none.</summary>
+        public string Summary;
+    }
+
     [System.Serializable]
     public struct SessionCompletedEventArgs : IEventPayload
     {

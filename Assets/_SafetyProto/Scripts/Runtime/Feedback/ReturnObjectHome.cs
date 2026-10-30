@@ -36,6 +36,9 @@ namespace SafetyProto.Runtime.Feedback
         /// <summary>Whether the object is currently following its animated return path.</summary>
         public bool IsReturning => _returning;
 
+        /// <summary>Where the object returns to.</summary>
+        public Pose HomePose => new Pose(_homePosition, _homeRotation);
+
         private void Awake()
         {
             _grabbable = GetComponent<Grabbable>();

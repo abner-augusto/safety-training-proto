@@ -50,6 +50,13 @@ namespace SafetyProto.Networking.Dashboard
         private readonly Queue<Action> _mainThreadQueue = new Queue<Action>();
         private readonly Dictionary<string, IDashboardCommandHandler> _commandHandlers = new Dictionary<string, IDashboardCommandHandler>();
 
+        // These reload the scene: an EvaluatorCommand queued for them would reach the logger after
+        // it flushed the session, so SessionReset and the next SessionStarted record them instead.
+        private static readonly HashSet<string> CommandsLoggedBySessionLifecycle = new HashSet<string>
+        {
+            "reset_session"
+        };
+
         private void Awake()
         {
             if (_instance != null && _instance != this)
@@ -267,6 +274,16 @@ namespace SafetyProto.Networking.Dashboard
             }
 
             bool accepted = handler.TryExecute(out var reason);
+
+            if (accepted && !CommandsLoggedBySessionLifecycle.Contains(command.command) && EventBus.Instance != null)
+            {
+                EventBus.Instance.Publish(new EvaluatorCommandEventArgs
+                {
+                    Command = command.command,
+                    Summary = reason ?? string.Empty
+                });
+            }
+
             var ack = new CommandAckDto
             {
                 requestId = command.requestId,

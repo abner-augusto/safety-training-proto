@@ -25,6 +25,7 @@ to keep it small, and fields the event does not use are omitted from the JSON.
 | `SessionCompleted` | `totalScore`, `totalElapsedTime`, `tasksCompleted`, `totalTasks` |
 | `SessionPaused` | `pauseSource` (the hold that started the pause), `pauseSources` (every hold active then), `context = pre_session` when the hold began before `SessionStarted` |
 | `SessionResumed` | `pauseSource` (the release that ended the pause), `durationSeconds` |
+| `EvaluatorCommand` | `command` (`recenter_player`, `calibrate_room_center`, `return_all_ppe`), `message` (the handler's result summary) |
 | `PauseHoldChanged` | `pauseSource`, `held` (omitted when false), `pauseSources` (active after the change; omitted when none) |
 
 Notes for analysis:

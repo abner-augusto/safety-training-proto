@@ -75,6 +75,7 @@ namespace SafetyProto.Domain.Sessions
             public string pauseSource;
             public string[]? pauseSources;
             public bool held;
+            public string command;
         }
 
         [Serializable]
@@ -198,6 +199,7 @@ namespace SafetyProto.Domain.Sessions
         private readonly Action<CriticalSafetyFailureEventArgs>   _onCriticalSafetyFailure;
         private readonly Action<PlayspaceNoticeEventArgs>         _onPlayspaceNotice;
         private readonly Action<PauseHoldChangedEventArgs>        _onPauseHoldChanged;
+        private readonly Action<EvaluatorCommandEventArgs>        _onEvaluatorCommand;
 
         private bool _subscribed;
         private bool _disposed;
@@ -268,6 +270,9 @@ namespace SafetyProto.Domain.Sessions
                     args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                     new LogData { pauseSource = args.Source.ToString(), durationSeconds = seconds });
             };
+            _onEvaluatorCommand = args => LogEvent("EvaluatorCommand", DescribeEvaluatorCommand(args),
+                args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                new LogData { command = args.Command ?? string.Empty, message = args.Summary ?? string.Empty });
             _onPauseHoldChanged = args =>
             {
                 _activeHolds = args.ActiveSources ?? Array.Empty<PauseSource>();
@@ -337,6 +342,20 @@ namespace SafetyProto.Domain.Sessions
                 new LogData { noticeKind = args.Kind.ToString(), area = args.Area, durationSeconds = args.DurationSeconds });
         }
 
+        private static string DescribeEvaluatorCommand(EvaluatorCommandEventArgs args)
+        {
+            string label = args.Command switch
+            {
+                "recenter_player" => "recentralizar jogador",
+                "calibrate_room_center" => "calibrar centro da sala",
+                "return_all_ppe" => "recolher objetos soltos",
+                _ => args.Command ?? string.Empty
+            };
+            return string.IsNullOrWhiteSpace(args.Summary)
+                ? $"Comando do avaliador: {label}"
+                : $"Comando do avaliador: {label} ({args.Summary})";
+        }
+
         private static string DescribePlayspaceNotice(PlayspaceNoticeEventArgs args) => args.Kind switch
         {
             PlayspaceNoticeKind.LeftWalkableArea => $"Saiu da área caminhável ({args.Area})",
@@ -363,6 +382,7 @@ namespace SafetyProto.Domain.Sessions
             _eventBus.Subscribe(_onCriticalSafetyFailure);
             _eventBus.Subscribe(_onPlayspaceNotice);
             _eventBus.Subscribe(_onPauseHoldChanged);
+            _eventBus.Subscribe(_onEvaluatorCommand);
             _subscribed = true;
         }
 
@@ -383,6 +403,7 @@ namespace SafetyProto.Domain.Sessions
             _eventBus.Unsubscribe(_onCriticalSafetyFailure);
             _eventBus.Unsubscribe(_onPlayspaceNotice);
             _eventBus.Unsubscribe(_onPauseHoldChanged);
+            _eventBus.Unsubscribe(_onEvaluatorCommand);
             _subscribed = false;
         }
 

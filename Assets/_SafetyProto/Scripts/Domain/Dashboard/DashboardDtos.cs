@@ -194,7 +194,8 @@ namespace SafetyProto.Domain.Dashboard
         public string requestId;
         public string command;
         public bool accepted;
-        /// <summary>Portuguese, operator-facing. Empty when accepted.</summary>
+        /// <summary>Portuguese, operator-facing: why the command was refused, or an optional result
+        /// summary when it was accepted ("3 EPIs devolvidos à mesa").</summary>
         public string reason;
     }
 

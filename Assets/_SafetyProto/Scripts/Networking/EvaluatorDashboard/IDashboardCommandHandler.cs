@@ -11,7 +11,8 @@ namespace SafetyProto.Networking.Dashboard
 
         /// <summary>
         /// Attempts to execute the command now. Returns false plus a Portuguese operator-facing
-        /// reason when the command cannot run in the current state.
+        /// reason when the command cannot run in the current state. On success the same string
+        /// may carry a short Portuguese result summary, shown to the evaluator and logged.
         /// </summary>
         bool TryExecute(out string reason);
     }
