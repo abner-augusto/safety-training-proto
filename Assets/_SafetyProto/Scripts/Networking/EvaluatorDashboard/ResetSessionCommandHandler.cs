@@ -9,7 +9,9 @@ namespace SafetyProto.Networking.Dashboard
     /// menu's restart button uses (<see cref="SceneLoader.ResetSession"/>): every
     /// ISessionResettable flushes its state — the session logger writes the partial log tagged
     /// "SessionReset" — and the scene reloads, which returns the participant to the spawn point
-    /// with all PPE unequipped and every interactive object back in its authored state.
+    /// with all PPE unequipped and every interactive object back in its authored state. An
+    /// interrupted session restarts straight away with the same participant code and mode; a
+    /// completed one returns to the waiting screen (see SessionHandoff).
     /// </summary>
     public class ResetSessionCommandHandler : MonoBehaviour, IDashboardCommandHandler
     {

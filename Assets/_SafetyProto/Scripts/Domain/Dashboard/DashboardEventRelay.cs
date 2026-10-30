@@ -71,7 +71,10 @@ namespace SafetyProto.Domain.Dashboard
             var dto = new SessionDto(args.SessionId, _host.ResolveTimestamp(args.TimestampMs))
             {
                 participantId = string.IsNullOrEmpty(args.PlayerId) ? "—" : args.PlayerId,
-                mode = SessionModeState.NameOf(_modeSource())
+                mode = SessionModeState.NameOf(_modeSource()),
+                participantSource = args.ParticipantSource ?? string.Empty,
+                previousSessionId = args.PreviousSessionId ?? string.Empty,
+                attempt = args.Attempt
             };
             _host.Broadcast("SessionStarted", dto);
             _host.Broadcast("SessionManifest", _host.BuildSessionManifest(args.SessionId));

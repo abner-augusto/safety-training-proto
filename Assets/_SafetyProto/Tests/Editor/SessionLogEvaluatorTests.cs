@@ -11,8 +11,9 @@ using SafetyProto.Tests.Editor.Support;
 namespace SafetyProto.Tests.Editor
 {
     /// <summary>
-    /// Every in-session dashboard intervention reaches the session log, so the analysis can
-    /// separate evaluator help from what the participant did.
+    /// What the evaluator did reaches the session log: who set the participant code, which
+    /// interrupted session a restart replaces, and every in-session dashboard intervention.
+    /// The analysis counts attempts and separates evaluator help from participant actions.
     /// </summary>
     public class SessionLogEvaluatorTests
     {
@@ -38,9 +39,31 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
+        public void RestartedSession_RecordsSourcePreviousSessionAndAttempt()
+        {
+            _bus.Publish(new SessionStartedEventArgs
+            {
+                SessionId = "S2", PlayerId = "P-07", TotalTasks = 9, TimestampMs = 1000L,
+                ParticipantSource = ParticipantSources.Dashboard, PreviousSessionId = "S1", Attempt = 2
+            });
+
+            var log = WriteLog();
+            var started = ((JArray)log["entries"]!)[0];
+            Assert.AreEqual("dashboard", (string?)started["data"]!["source"]);
+            Assert.AreEqual("S1", (string?)started["data"]!["previousSessionId"]);
+            Assert.AreEqual(2, (int?)started["data"]!["attempt"]);
+
+            var summary = log["summary"]!;
+            Assert.AreEqual("P-07", (string?)summary["participantId"]);
+            Assert.AreEqual("dashboard", (string?)summary["participantSource"]);
+            Assert.AreEqual("S1", (string?)summary["previousSessionId"]);
+            Assert.AreEqual(2, (int?)summary["attempt"]);
+        }
+
+        [Test]
         public void EvaluatorCommand_IsLoggedWithItsSummary()
         {
-            _bus.Publish(new SessionStartedEventArgs { SessionId = "S1", TotalTasks = 9, TimestampMs = 1000L });
+            _bus.Publish(new SessionStartedEventArgs { SessionId = "S1", TotalTasks = 9, TimestampMs = 1000L, Attempt = 1 });
             _bus.Publish(new EvaluatorCommandEventArgs
             {
                 SessionId = "S1", Command = "return_all_ppe", Summary = "2 EPIs devolvidos à posição inicial.", TimestampMs = 5000L

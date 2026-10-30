@@ -970,6 +970,50 @@ MonoBehaviour:
   popupTitle: "Aten\xE7\xE3o: fora do andaime"
   popupBody: "Voc\xEA saiu da \xE1rea do andaime. Caminhe at\xE9 a coluna de luz."
   popupSeconds: 5
+--- !u!1 &54888881
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 54888882}
+  - component: {fileID: 54888883}
+  m_Layer: 0
+  m_Name: ReturnLooseObjectsCommandHandler
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &54888882
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 54888881}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7322035375745015844}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &54888883
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 54888881}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4132c07da74329840a5e8ff4b21d595b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Networking.Unity::SafetyProto.Runtime.ReturnLooseObjectsCommandHandler
 --- !u!1 &55622361
 GameObject:
   m_ObjectHideFlags: 0
@@ -41691,6 +41735,52 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1413728732}
   m_Mesh: {fileID: -7717180329171634314, guid: 9b1545b790c85354a9b6449bb3dee586, type: 3}
+--- !u!1 &1420690868
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1420690869}
+  - component: {fileID: 1420690870}
+  m_Layer: 0
+  m_Name: StartSessionCommandHandler
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1420690869
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1420690868}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7322035375745015844}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1420690870
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1420690868}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7e2b4741f8757c45b876437cb8d66df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Networking.Unity::SafetyProto.Networking.Dashboard.StartSessionCommandHandler
+  sceneLoader: {fileID: 0}
+  sessionManager: {fileID: 0}
 --- !u!43 &1424424662
 Mesh:
   m_ObjectHideFlags: 0
@@ -48022,6 +48112,11 @@ MonoBehaviour:
   popupService: {fileID: 5455797637335201551}
   nameField: {fileID: 1157075124}
   confirmLabel: Confirmar
+  waitForEvaluator: 1
+  waitingTitle: Aguardando o pesquisador
+  waitingBody: "O pesquisador vai iniciar o treinamento em instantes. Aguarde nesta
+    posi\xE7\xE3o."
+  keypadFallbackSeconds: 90
   inputMode: 0
   codeTitle: "C\xF3digo do participante"
   codeBody: "Digite o n\xFAmero de participante informado pelo pesquisador."
@@ -70341,6 +70436,8 @@ Transform:
   - {fileID: 1733408819}
   - {fileID: 454836258}
   - {fileID: 1554790567}
+  - {fileID: 1420690869}
+  - {fileID: 54888882}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7322035375745015845

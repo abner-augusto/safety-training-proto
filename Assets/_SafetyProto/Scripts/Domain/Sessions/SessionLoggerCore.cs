@@ -76,6 +76,8 @@ namespace SafetyProto.Domain.Sessions
             public string[]? pauseSources;
             public bool held;
             public string command;
+            public string previousSessionId;
+            public int attempt;
         }
 
         [Serializable]
@@ -116,6 +118,14 @@ namespace SafetyProto.Domain.Sessions
             /// <summary>"guiado" | "avaliacao" — captured at SessionStarted so collected
             /// data can be split by mode. Empty on logs written before this field existed.</summary>
             public string mode = string.Empty;
+            /// <summary>Who set <see cref="participantId"/>: "dashboard" (the evaluator), "keypad",
+            /// "system_keyboard", "skipped" (random id) or "simulator". Empty on older logs.</summary>
+            public string participantSource = string.Empty;
+            /// <summary>The interrupted session this one restarted, when it is a restart.</summary>
+            public string previousSessionId = string.Empty;
+            /// <summary>1 for a first attempt, +1 per interrupted session restarted for the same person.
+            /// 0 on logs written before this field existed.</summary>
+            public int attempt;
             public float totalElapsedTime;
             public int totalScore;
             public int tasksCompleted;
@@ -213,6 +223,9 @@ namespace SafetyProto.Domain.Sessions
         private string _playerId = string.Empty;
         private string _scenarioId = string.Empty;
         private string _mode = string.Empty;
+        private string _participantSource = string.Empty;
+        private string _previousSessionId = string.Empty;
+        private int _attempt;
         private bool _completionWriteStarted;
 
         // Pause sources are tracked across sessions: a hold taken before SessionStarted (the
@@ -243,8 +256,13 @@ namespace SafetyProto.Domain.Sessions
                 _playerId = args.PlayerId ?? string.Empty;
                 _scenarioId = args.ScenarioId ?? string.Empty;
                 _mode = SessionModeState.NameOf(_modeSource());
+                _participantSource = args.ParticipantSource ?? string.Empty;
+                _previousSessionId = args.PreviousSessionId ?? string.Empty;
+                _attempt = args.Attempt;
                 _completionWriteStarted = false;
-                LogEvent("SessionStarted", string.Empty, _sessionId, _playerId, _scenarioId, args.TimestampMs);
+                LogEvent("SessionStarted", DescribeSessionStart(),
+                    _sessionId, _playerId, _scenarioId, args.TimestampMs,
+                    new LogData { source = _participantSource, previousSessionId = _previousSessionId, attempt = _attempt });
                 if (_activeHolds.Length > 0)
                 {
                     _pauseStartMs = ResolveTimestamp(args.TimestampMs);
@@ -342,6 +360,16 @@ namespace SafetyProto.Domain.Sessions
                 new LogData { noticeKind = args.Kind.ToString(), area = args.Area, durationSeconds = args.DurationSeconds });
         }
 
+        private string DescribeSessionStart()
+        {
+            string who = _participantSource == ParticipantSources.Dashboard
+                ? $"{_playerId}, código definido pelo avaliador"
+                : _playerId;
+            return string.IsNullOrEmpty(_previousSessionId)
+                ? $"Participante {who}"
+                : $"Participante {who}; tentativa {_attempt}, reinício da sessão {_previousSessionId}";
+        }
+
         private static string DescribeEvaluatorCommand(EvaluatorCommandEventArgs args)
         {
             string label = args.Command switch
@@ -431,6 +459,9 @@ namespace SafetyProto.Domain.Sessions
                 appVersion = _appVersion,
                 commit = _commit,
                 mode = _mode,
+                participantSource = _participantSource,
+                previousSessionId = _previousSessionId,
+                attempt = _attempt,
                 totalElapsedTime = args.totalElapsedTime,
                 totalScore = args.totalScore,
                 tasksCompleted = args.tasksCompleted,
@@ -510,6 +541,9 @@ namespace SafetyProto.Domain.Sessions
             _playerId = string.Empty;
             _scenarioId = string.Empty;
             _mode = string.Empty;
+            _participantSource = string.Empty;
+            _previousSessionId = string.Empty;
+            _attempt = 0;
             _pauseStartMs = 0;
         }
 
@@ -520,6 +554,9 @@ namespace SafetyProto.Domain.Sessions
             appVersion = _appVersion,
             commit = _commit,
             mode = _mode,
+            participantSource = _participantSource,
+            previousSessionId = _previousSessionId,
+            attempt = _attempt,
             totalScore = _lastTotalScore,
             tasksCompleted = _tasksCompletedCount,
             totalTasks = _totalTasks,

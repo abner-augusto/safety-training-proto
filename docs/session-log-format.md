@@ -7,6 +7,29 @@ of `entries` plus a `summary`.
 If a session ends without `SessionCompleted` (reset or abandoned), the summary
 is synthesized from the events logged so far and has `completed: false`.
 
+## Participant and restarts
+
+`summary.participantId` is the code the session ran under. From the build after
+1.2.14 the evaluator sets it on the dashboard; `summary.participantSource` says
+who did:
+
+| Token | Meaning |
+| --- | --- |
+| `dashboard` | the evaluator, through `start_session` |
+| `keypad` | typed in VR — the fallback when no dashboard connected, or the development popup |
+| `system_keyboard` | a first name typed in VR (development popup); the id is random |
+| `skipped` | "Pular" in the development popup; the id is random |
+| `simulator` | the session simulator (`SIM-` ids) |
+
+`DEMO-NN` ids are demonstrations, never study data. A reset of an interrupted
+session restarts it with the same code and mode: the new log has
+`previousSessionId` = the interrupted session and `attempt` = its attempt + 1.
+When the evaluator starts another code over an interrupted session (a mistyped
+code corrected, or a different participant), `previousSessionId` still links
+the replaced session but `attempt` starts at 1, since attempts count the tries
+under one code. A session started after a completed one has `attempt` 1 and no
+`previousSessionId`. Older logs have neither field (`attempt` 0).
+
 ## `LogEntry.data` fields
 
 Each entry carries a `data` object (`LogData`). Fields are reused across events
@@ -25,6 +48,7 @@ to keep it small, and fields the event does not use are omitted from the JSON.
 | `SessionCompleted` | `totalScore`, `totalElapsedTime`, `tasksCompleted`, `totalTasks` |
 | `SessionPaused` | `pauseSource` (the hold that started the pause), `pauseSources` (every hold active then), `context = pre_session` when the hold began before `SessionStarted` |
 | `SessionResumed` | `pauseSource` (the release that ended the pause), `durationSeconds` |
+| `SessionStarted` | `source` (who set the participant id), `previousSessionId` (the interrupted session this one restarts), `attempt` |
 | `EvaluatorCommand` | `command` (`recenter_player`, `calibrate_room_center`, `return_all_ppe`), `message` (the handler's result summary) |
 | `PauseHoldChanged` | `pauseSource`, `held` (omitted when false), `pauseSources` (active after the change; omitted when none) |
 

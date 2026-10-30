@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Sessions;
 using UnityEngine;
 
 namespace SafetyProto.Runtime.Session
@@ -22,6 +23,9 @@ namespace SafetyProto.Runtime.Session
 
         /// <summary>The participant's first name (empty if skipped). Kept in memory + private file only.</summary>
         public static string CurrentName { get; private set; } = string.Empty;
+
+        /// <summary>Who set <see cref="CurrentId"/> (a <see cref="ParticipantSources"/> token).</summary>
+        public static string CurrentSource { get; private set; } = string.Empty;
 
         [Serializable]
         private class Entry
@@ -51,6 +55,7 @@ namespace SafetyProto.Runtime.Session
 
             CurrentId = id;
             CurrentName = name;
+            CurrentSource = name.Length == 0 ? ParticipantSources.Skipped : ParticipantSources.SystemKeyboard;
 
             map.entries.Add(new Entry { id = id, name = name, utc = DateTime.UtcNow.ToString("o") });
             Save(map);
@@ -64,12 +69,21 @@ namespace SafetyProto.Runtime.Session
         /// pseudonymous — the key spreadsheet that resolves it lives with the researcher — so
         /// nothing is written to the private name map.
         /// </summary>
-        public static string SetParticipantCode(string code)
+        public static string SetParticipantCode(string code, string source = ParticipantSources.Keypad)
         {
             CurrentId = (code ?? string.Empty).Trim();
             CurrentName = string.Empty;
-            SafetyLog.Info($"[ParticipantIdentity] Participante registrado como {CurrentId}.");
+            CurrentSource = source ?? string.Empty;
+            SafetyLog.Info($"[ParticipantIdentity] Participante registrado como {CurrentId} ({CurrentSource}).");
             return CurrentId;
+        }
+
+        /// <summary>Forgets the participant, so the next session cannot inherit a finished one's id.</summary>
+        public static void Clear()
+        {
+            CurrentId = null;
+            CurrentName = string.Empty;
+            CurrentSource = string.Empty;
         }
 
         /// <summary>
@@ -81,6 +95,7 @@ namespace SafetyProto.Runtime.Session
             string id = "SIM-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpperInvariant();
             CurrentId = id;
             CurrentName = "SIMULADOR";
+            CurrentSource = ParticipantSources.Simulator;
             SafetyLog.Info($"[ParticipantIdentity] Sessão simulada identificada como {id} (sem mapa privado).");
             return id;
         }

@@ -463,14 +463,31 @@ whether they are watching a lesson or an assessment.
 ## 10. Participant identity and anonymization
 
 The product is used for human-subject sessions, so participant identity is
-handled with care. A pre-session popup captures the participant's name; the
-system then derives an anonymized `P-XXXX` identifier and uses *that* everywhere
+handled with care. In the study configuration the evaluator assigns it: the
+headset shows a waiting screen and the dashboard's `start_session` command sets
+the participant code (`P-07`, or `DEMO-03` for a demonstration) and the mode, so
+the participant never types a code or picks a mode. That id is used everywhere
 downstream — in the session log, on the in-headset menu, and on the evaluator
-dashboard. The name-to-id map is kept private in
-`persistentDataPath/participants_private.json`, separate from the session
-artifacts, so a log or a dashboard screenshot never carries a real name.
-Simulated sessions (§15) use a `SIM-` id and write their artifacts under a
-separate `simulations/` directory so they can never be mistaken for human data.
+dashboard — and the log records who set it (`participantSource`). When no
+dashboard connects within a configurable time (90 s by default), the headset
+lets the participant type the code on an in-VR keypad, without the skip button,
+so a collection cannot stall on the network.
+
+A reset never loses the identity. `TrainingSessionManager` is an
+`ISessionResettable`: before the reload it hands the session to
+`SessionHandoff`, and `SessionLineage` decides what the reloaded scene starts
+with — an interrupted session restarts with the same code and mode (or the
+identity the evaluator just set), linked through `previousSessionId`, with
+`attempt` counting the tries under one code; a completed one goes back to the
+waiting screen for the next participant.
+
+Outside the study (`waitForEvaluator` off) the older popup remains: a keypad
+code, or a first name from which an anonymized `P-XXXX` id is derived, with the
+name-to-id map kept private in `persistentDataPath/participants_private.json`,
+separate from the session artifacts, so a log or a dashboard screenshot never
+carries a real name. Simulated sessions (§15) use a `SIM-` id and write their
+artifacts under a separate `simulations/` directory so they can never be
+mistaken for human data.
 
 ---
 
@@ -526,8 +543,9 @@ hand-played scenario yield logs in the same format.
 The file is `session_log_<stem>.json`, where `SessionFileStem` combines the UTC
 start time with the first eight characters of the session id; the perf CSV
 (§16) uses the same stem, so a session's artifacts sort together. The summary
-block carries `completed`, the participant id, the mode, the app version and
-build commit, score totals, the per-task outcome list, and — when a perf source
+block carries `completed`, the participant id and who set it, the mode, the
+restart lineage (`previousSessionId`, `attempt`), the app version and build
+commit, score totals, the per-task outcome list, and — when a perf source
 is injected — a `perf` summary of frame and flush timings. The log is written on
 `SessionCompleted`; a reset or abandoned session leaves a fallback summary with
 `completed=false`, and because the file name is keyed on session start,
@@ -674,8 +692,14 @@ domain:
 - Telemetry is one-way. Two inbound envelopes exist: `RequestSync`, answered
   with the scene layout, session, manifest, and score for that client only, and
   `Command`, routed to scene components that implement
-  `IDashboardCommandHandler` (today `recenter_player` and `reset_session`) and
-  acknowledged with `CommandAckDto`. Handlers are discovered by type when the
+  `IDashboardCommandHandler` (`recenter_player`, `calibrate_room_center`,
+  `return_all_ppe`, `reset_session`, and `start_session`, whose
+  `IDashboardCommandWithArgs` handler reads the envelope's `args`) and
+  acknowledged with `CommandAckDto`; an accepted ack may carry a result summary.
+  Accepted in-session commands are published as `EvaluatorCommandEventArgs` for
+  the session log. The bootstrap also pushes `StationStatus` (waiting for a
+  start, session state, battery, device) on sync, after commands, on session
+  start and completion, and every 5 s. Handlers are discovered by type when the
   scene loads; no command reaches the domain, and the event protocol stays
   publish-only. The channel carries no authentication yet; that is deferred on
   purpose until the QA phase.
@@ -760,7 +784,8 @@ Restart buttons and to the dashboard's `reset_session` command — scans scene
 `MonoBehaviour`s for `ISessionResettable`, calls `ResetSession()` on each, then
 reloads the scene. Non-`MonoBehaviour` state is reset through the
 `TrainingSessionManager` lifecycle instead: `BeginSession()` resets
-`ScoreService` and restamps `EventContext`; teardown raises an aborted
+`ScoreService` and restamps `EventContext`; its `ResetSession()` hands the
+participant over to the next scene (§10); teardown raises an aborted
 `SessionEnded`, clears both, and drops every pause hold. New stateful systems
 must opt into this contract rather than relying on Unity's domain reload.
 

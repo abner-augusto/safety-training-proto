@@ -172,7 +172,7 @@ namespace SafetyProto.UI
                 actionButtonLabel.text = data.actionButtonLabel;
 
             if (closeButtonRoot != null)
-                closeButtonRoot.SetActive(!isInteractive);
+                closeButtonRoot.SetActive(!isInteractive && !data.hideCloseButton);
 
             if (skipButtonRoot != null)
                 skipButtonRoot.SetActive(data.showSkipButton && !isChoice);

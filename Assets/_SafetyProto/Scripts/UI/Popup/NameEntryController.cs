@@ -1,6 +1,7 @@
 using System.Collections;
 using SafetyProto.Core;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Sessions;
 using SafetyProto.Runtime.Session;
 using TMPro;
 using UnityEngine;
@@ -18,19 +19,35 @@ namespace SafetyProto.UI
     }
 
     /// <summary>
-    /// Pre-session flow: shows an identification popup before onboarding — a numeric keypad for
-    /// the study's participant code by default, or the Horizon OS system keyboard for a first
-    /// name. A typed participant code becomes the participant id itself (7 → P-07); a first name
-    /// or a skip gets a random anonymized id, with the name kept in the private on-device map.
-    /// Then it starts the training session and kicks off onboarding.
+    /// Pre-session flow. In the study configuration (<c>waitForEvaluator</c>) the headset shows
+    /// a "waiting for the researcher" screen and the evaluator starts the session from the
+    /// dashboard with the participant code and mode, so the participant never types a code or
+    /// picks a mode. A restart after an interrupted session skips the screen and starts again
+    /// with the same code and mode (<see cref="SessionHandoff"/>).
+    ///
+    /// With <c>waitForEvaluator</c> off — development outside the study — it shows the old
+    /// identification popup: a numeric keypad for the participant code (7 → P-07), or the
+    /// Horizon OS system keyboard for a first name, where a name or a skip gets a random
+    /// anonymized id; then the mode picker. Either way it then starts the session and onboarding.
     /// </summary>
-    public class NameEntryController : MonoBehaviour
+    public class NameEntryController : MonoBehaviour, IEvaluatorSessionStarter
     {
         [Header("UI")]
         [SerializeField] private PopupService popupService;
         [Tooltip("Display field for the typed value. Mirrored from the system keyboard on device, or filled by the keypad.")]
         [SerializeField] private TMP_InputField nameField;
         [SerializeField] private string confirmLabel = "Confirmar";
+
+        [Header("Início pelo avaliador")]
+        [Tooltip("Coleta: o avaliador define código e modo pelo painel, e o participante só vê a tela de espera. " +
+                 "Desmarque para usar o teclado e o seletor de modo em RV (desenvolvimento).")]
+        [SerializeField] private bool waitForEvaluator = true;
+        [SerializeField] private string waitingTitle = "Aguardando o pesquisador";
+        [SerializeField, TextArea(2, 4)]
+        private string waitingBody = "O pesquisador vai iniciar o treinamento em instantes. Aguarde nesta posição.";
+        [Tooltip("Sem painel conectado por este tempo na tela de espera, o óculos abre o teclado para o participante " +
+                 "digitar o código (sem o botão Pular). O painel ainda pode iniciar a sessão depois. 0 = nunca.")]
+        [SerializeField, Min(0f)] private float keypadFallbackSeconds = 90f;
 
         [Header("Modo de entrada")]
         [Tooltip("NumericKeypad: teclado numérico no painel para o código do participante (coleta do mestrado). " +
@@ -76,6 +93,14 @@ namespace SafetyProto.UI
         private string _namePlaceholder;
         private bool _resolved;
         private bool _active;
+        private bool _awaitingEvaluator;
+        private bool _sessionStarting;
+        private bool _keypadFallbackOpen;
+
+        public bool IsAwaitingEvaluator => _awaitingEvaluator && !_sessionStarting;
+
+        /// <summary>No dashboard showed up in time, so the participant may type the code.</summary>
+        public bool IsParticipantKeypadOpen => _keypadFallbackOpen && !_sessionStarting;
 
         private void Awake()
         {
@@ -96,8 +121,31 @@ namespace SafetyProto.UI
             Begin();
         }
 
-        /// <summary>Show the name-entry popup and focus the editable name field.</summary>
+        /// <summary>Starts the pre-session flow: a pending restart, the waiting screen, or the
+        /// identification popup.</summary>
         public void Begin()
+        {
+            if (_sessionStarting) return;
+
+            if (SessionHandoff.TryConsume(out var restart))
+            {
+                SafetyLog.Info($"[NameEntryController] Reinício: {restart.ParticipantId}, tentativa {restart.Attempt}.", this);
+                StartSession(restart.ParticipantId, restart.Source, restart.Mode, restart.PreviousSessionId, restart.Attempt);
+                return;
+            }
+
+            if (waitForEvaluator)
+            {
+                ShowWaitingScreen();
+                return;
+            }
+
+            ShowIdentificationPopup(allowSkip: true);
+        }
+
+        /// <summary>The participant identifies themself: keypad code or system-keyboard name.
+        /// Without the skip button, only a typed code can start the session.</summary>
+        private void ShowIdentificationPopup(bool allowSkip)
         {
             _resolved = false;
             _active = true;
@@ -135,7 +183,7 @@ namespace SafetyProto.UI
                 showNumericKeypad = useKeypad,
                 hideIcon = useKeypad,
                 keypadMaxDigits = codeMaxDigits,
-                showSkipButton = true,
+                showSkipButton = allowSkip,
                 skipButtonLabel = "Pular",
                 onSkipPressed = new UnityEvent()
             };
@@ -153,6 +201,78 @@ namespace SafetyProto.UI
             }
             else
                 SafetyLog.Warning("[NameEntryController] popupService não atribuído no Inspector.", this);
+        }
+
+        private void ShowWaitingScreen()
+        {
+            _awaitingEvaluator = true;
+            if (popupService == null)
+            {
+                SafetyLog.Warning("[NameEntryController] popupService não atribuído no Inspector.", this);
+                return;
+            }
+            popupService.Show(new PopupData
+            {
+                type = PopupType.Normal,
+                title = waitingTitle,
+                body = waitingBody,
+                hideIcon = true,
+                hideCloseButton = true
+            });
+            SafetyLog.Info("[NameEntryController] Aguardando o avaliador iniciar a sessão pelo painel.", this);
+            if (keypadFallbackSeconds > 0f)
+                StartCoroutine(OpenKeypadWithoutEvaluator());
+        }
+
+        /// <summary>
+        /// A collection must not stall when the dashboard cannot connect (laptop off the network,
+        /// Wi-Fi down): after <see cref="keypadFallbackSeconds"/> with no dashboard connected the
+        /// participant gets the code keypad. Any connection restarts the wait.
+        /// </summary>
+        private IEnumerator OpenKeypadWithoutEvaluator()
+        {
+            float unconnected = 0f;
+            while (unconnected < keypadFallbackSeconds)
+            {
+                yield return null;
+                if (_sessionStarting) yield break;
+                unconnected = EvaluatorLink.IsConnected ? 0f : unconnected + Time.unscaledDeltaTime;
+            }
+
+            SafetyLog.Info($"[NameEntryController] Nenhum painel conectado há {keypadFallbackSeconds:0} s; teclado liberado para o participante.", this);
+            _keypadFallbackOpen = true;
+            ShowIdentificationPopup(allowSkip: false);
+        }
+
+        public bool TryStartFromEvaluator(string participantId, SessionMode mode, out string reason)
+        {
+            if (_sessionStarting)
+            {
+                reason = "A sessão já foi iniciada.";
+                return false;
+            }
+            StartSession(participantId, ParticipantSources.Dashboard, mode, string.Empty, 1);
+            reason = string.Empty;
+            return true;
+        }
+
+        /// <summary>Starts with an identity decided outside the popup (evaluator or restart),
+        /// in the same order as <see cref="Finish"/>; closes whatever popup is open.</summary>
+        private void StartSession(string participantId, string source, SessionMode mode, string previousSessionId, int attempt)
+        {
+            _resolved = true;
+            _active = false;
+            _awaitingEvaluator = false;
+            _keypadFallbackOpen = false;
+            StopAllCoroutines();
+            _keyboardOpenCoroutine = null;
+
+            ParticipantIdentity.SetParticipantCode(participantId, source);
+            SessionModeState.Current = mode;
+            if (narrationVoice != null) narrationVoice.Stop();
+            popupService?.Hide();
+
+            StartSessionAndOnboarding(previousSessionId, attempt);
         }
 
         private IEnumerator OpenKeyboardAfterPopup()
@@ -204,18 +324,22 @@ namespace SafetyProto.UI
 
             if (modeSelection != null)
             {
-                modeSelection.Begin(StartSessionAndOnboarding);
+                modeSelection.Begin(() => StartSessionAndOnboarding(string.Empty, 1));
             }
             else
             {
                 SessionModeState.Current = SessionMode.Guided;
-                StartSessionAndOnboarding();
+                StartSessionAndOnboarding(string.Empty, 1);
             }
         }
 
-        private void StartSessionAndOnboarding()
+        private void StartSessionAndOnboarding(string previousSessionId, int attempt)
         {
-            if (sessionManager != null) sessionManager.BeginSession();
+            // The evaluator can start the session while the mode picker is still open.
+            if (_sessionStarting) return;
+            _sessionStarting = true;
+
+            if (sessionManager != null) sessionManager.BeginSession(previousSessionId, attempt);
             else SafetyLog.Warning("[NameEntryController] sessionManager não atribuído — sessão não iniciada.", this);
 
             if (onboarding != null) onboarding.StartSequence();

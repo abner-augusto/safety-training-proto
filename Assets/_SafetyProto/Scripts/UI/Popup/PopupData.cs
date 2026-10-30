@@ -17,6 +17,9 @@ namespace SafetyProto.UI
 
         public bool hideIcon;
 
+        /// <summary>Hides the close button of a non-interactive popup, for a screen only the app may dismiss.</summary>
+        public bool hideCloseButton;
+
         public Sprite[] illustrationFrames;
 
         public string actionButtonLabel;

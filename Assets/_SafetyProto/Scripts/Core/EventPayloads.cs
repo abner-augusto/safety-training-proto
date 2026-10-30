@@ -468,6 +468,14 @@ namespace SafetyProto.Core
         /// <summary>Total number of tasks in the loaded scenario. Lets the session logger report an
         /// accurate denominator even when the session is abandoned before SessionCompleted fires.</summary>
         public int TotalTasks;
+
+        /// <summary>Who set the participant id ("dashboard", "keypad", "skipped", "simulator", ...).</summary>
+        public string ParticipantSource;
+        /// <summary>The interrupted session this one restarts; empty for a first attempt.</summary>
+        public string PreviousSessionId;
+        /// <summary>1 for a first attempt, +1 for every interrupted session of the same code it
+        /// restarts. 0 when the producer predates the field.</summary>
+        public int Attempt;
     }
     [System.Serializable]
     public struct SessionPausedEventArgs : IEventPayload

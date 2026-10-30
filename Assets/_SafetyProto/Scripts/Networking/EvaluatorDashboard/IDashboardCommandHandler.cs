@@ -1,3 +1,5 @@
+using System;
+
 namespace SafetyProto.Networking.Dashboard
 {
     /// <summary>
@@ -15,5 +17,24 @@ namespace SafetyProto.Networking.Dashboard
         /// may carry a short Portuguese result summary, shown to the evaluator and logged.
         /// </summary>
         bool TryExecute(out string reason);
+    }
+
+    /// <summary>A command that reads arguments from the envelope's <c>args</c> object.</summary>
+    public interface IDashboardCommandWithArgs : IDashboardCommandHandler
+    {
+        bool TryExecute(DashboardCommandArgs args, out string reason);
+    }
+
+    /// <summary>
+    /// The optional <c>args</c> object of a "Command" envelope. One flat type for every command,
+    /// because JsonUtility needs the shape up front; fields a command does not use stay empty.
+    /// </summary>
+    [Serializable]
+    public class DashboardCommandArgs
+    {
+        /// <summary>Normalized participant id ("P-07", "DEMO-01") for start_session.</summary>
+        public string participantCode = string.Empty;
+        /// <summary>Session mode token, "guiado" or "avaliacao", for start_session.</summary>
+        public string mode = string.Empty;
     }
 }

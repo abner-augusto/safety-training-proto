@@ -35,6 +35,17 @@ namespace SafetyProto.Core
         public static string NameOf(SessionMode mode) =>
             mode == SessionMode.Evaluation ? "avaliacao" : "guiado";
 
+        /// <summary>Reads a mode token ("guiado" / "avaliacao"); false for anything else.</summary>
+        public static bool TryParse(string token, out SessionMode mode)
+        {
+            switch ((token ?? string.Empty).Trim().ToLowerInvariant())
+            {
+                case "guiado": mode = SessionMode.Guided; return true;
+                case "avaliacao": mode = SessionMode.Evaluation; return true;
+                default: mode = SessionMode.Guided; return false;
+            }
+        }
+
         public static void Reset() => Current = SessionMode.Guided;
     }
 }

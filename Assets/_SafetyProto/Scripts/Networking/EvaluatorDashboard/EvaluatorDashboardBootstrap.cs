@@ -12,6 +12,7 @@ using SafetyProto.Core.Logging;
 using SafetyProto.Domain.Dashboard;
 using SafetyProto.Domain.Scoring;
 using SafetyProto.Runtime.Analytics;
+using SafetyProto.Runtime.Session;
 using SafetyProto.Utils;
 using UnityEngine;
 using System.IO;
@@ -50,11 +51,18 @@ namespace SafetyProto.Networking.Dashboard
         private readonly Queue<Action> _mainThreadQueue = new Queue<Action>();
         private readonly Dictionary<string, IDashboardCommandHandler> _commandHandlers = new Dictionary<string, IDashboardCommandHandler>();
 
+        // Often enough that the start form unlocks soon after a reload and a falling battery is
+        // seen; each frame is a few hundred bytes, next to the 10 Hz pose stream.
+        private const float StationStatusIntervalSeconds = 5f;
+        private float _nextStationStatusAt;
+        private TrainingSessionManager _sessionManager;
+        private IEvaluatorSessionStarter _sessionStarter;
+
         // These reload the scene: an EvaluatorCommand queued for them would reach the logger after
         // it flushed the session, so SessionReset and the next SessionStarted record them instead.
         private static readonly HashSet<string> CommandsLoggedBySessionLifecycle = new HashSet<string>
         {
-            "reset_session"
+            "reset_session", "start_session"
         };
 
         private void Awake()
@@ -73,6 +81,10 @@ namespace SafetyProto.Networking.Dashboard
         {
             RegisterCommandHandlers();
             AttachSessionLogger();
+            _sessionManager = null;
+            _sessionStarter = null;
+            // The waiting screen opens a few frames after load; report it soon after.
+            _nextStationStatusAt = Time.unscaledTime + 1f;
         }
 
         private void AttachSessionLogger()
@@ -103,9 +115,14 @@ namespace SafetyProto.Networking.Dashboard
             {
                 _relay = new DashboardEventRelay(eventBus, this, () => SessionModeState.Current);
                 _relay.Subscribe();
+                eventBus.Subscribe<SessionStartedEventArgs>(OnSessionLifecycleForStatus);
+                eventBus.Subscribe<SessionCompletedEventArgs>(OnSessionLifecycleForStatus);
             }
             RegisterCommandHandlers();
         }
+
+        private void OnSessionLifecycleForStatus(SessionStartedEventArgs _) => BroadcastStationStatus();
+        private void OnSessionLifecycleForStatus(SessionCompletedEventArgs _) => BroadcastStationStatus();
 
         private void RegisterCommandHandlers()
         {
@@ -138,6 +155,10 @@ namespace SafetyProto.Networking.Dashboard
                     }
                 }
             }
+
+            EvaluatorLink.SetConnected(_wsServer != null && _wsServer.HasConnections);
+            if (Time.unscaledTime >= _nextStationStatusAt)
+                BroadcastStationStatus();
         }
 
         private void OnDisable() { }
@@ -148,6 +169,11 @@ namespace SafetyProto.Networking.Dashboard
             if (_sessionLogger != null)
                 _sessionLogger.CompletedLogWritten -= OnCompletedLogWritten;
             _relay?.Unsubscribe();
+            if (EventBus.Instance != null)
+            {
+                EventBus.Instance.Unsubscribe<SessionStartedEventArgs>(OnSessionLifecycleForStatus);
+                EventBus.Instance.Unsubscribe<SessionCompletedEventArgs>(OnSessionLifecycleForStatus);
+            }
             if (_poseSendCoroutine != null)
             {
                 StopCoroutine(_poseSendCoroutine);
@@ -155,7 +181,11 @@ namespace SafetyProto.Networking.Dashboard
             }
             _httpServer?.Stop();
             _wsServer?.StopServer();
-            if (_instance == this) _instance = null;
+            if (_instance == this)
+            {
+                _instance = null;
+                EvaluatorLink.SetConnected(false);
+            }
         }
 
         private void StartServers()
@@ -273,7 +303,10 @@ namespace SafetyProto.Networking.Dashboard
                 return;
             }
 
-            bool accepted = handler.TryExecute(out var reason);
+            string reason;
+            bool accepted = handler is IDashboardCommandWithArgs withArgs
+                ? withArgs.TryExecute(command.args ?? new DashboardCommandArgs(), out reason)
+                : handler.TryExecute(out reason);
 
             if (accepted && !CommandsLoggedBySessionLifecycle.Contains(command.command) && EventBus.Instance != null)
             {
@@ -292,10 +325,54 @@ namespace SafetyProto.Networking.Dashboard
                 reason = reason ?? string.Empty,
             };
             _wsServer.SendToClient(client, "CommandAck", ack);
+            BroadcastStationStatus();
+        }
+
+        private void BroadcastStationStatus()
+        {
+            _nextStationStatusAt = Time.unscaledTime + StationStatusIntervalSeconds;
+            Broadcast("StationStatus", BuildStationStatus());
+        }
+
+        private StationStatusDto BuildStationStatus()
+        {
+            if (_sessionManager == null)
+                _sessionManager = FindAnyObjectByType<TrainingSessionManager>();
+            if (_sessionStarter is UnityEngine.Object starterObject && starterObject == null)
+                _sessionStarter = null;
+            if (_sessionStarter == null)
+            {
+                foreach (var behaviour in FindObjectsByType<MonoBehaviour>())
+                {
+                    if (behaviour is IEvaluatorSessionStarter starter) { _sessionStarter = starter; break; }
+                }
+            }
+
+            bool started = _sessionManager != null && _sessionManager.IsSessionStarted;
+            bool completed = _sessionManager != null && _sessionManager.IsSessionCompleted;
+            bool starterEnabled = _sessionStarter is Behaviour b && b.isActiveAndEnabled;
+            return new StationStatusDto
+            {
+                awaitingStart = !started && starterEnabled && _sessionStarter.IsAwaitingEvaluator,
+                participantKeypadOpen = !started && starterEnabled && _sessionStarter.IsParticipantKeypadOpen,
+                sessionActive = started && !completed,
+                sessionCompleted = completed,
+                pauseSources = Array.ConvertAll(SessionPause.ActiveSources(), s => s.ToString()),
+                participantId = started ? EventContext.CurrentPlayerId ?? string.Empty : string.Empty,
+                mode = started ? SessionModeState.CurrentName : string.Empty,
+                attempt = _sessionManager != null ? _sessionManager.Attempt : 0,
+                deviceModel = SystemInfo.deviceModel,
+                appVersion = Application.version,
+                batteryLevel = SystemInfo.batteryLevel,
+                batteryStatus = SystemInfo.batteryStatus.ToString(),
+                timestampMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+            };
         }
 
         private void HandleRequestSync(EvaluatorWebSocketServer.ClientConnection client)
         {
+            _wsServer.SendToClient(client, "StationStatus", BuildStationStatus());
+
             var sceneLayout = FindAnyObjectByType<DashboardSceneLayout>();
             if (sceneLayout != null)
                 _wsServer.SendToClient(client, "SceneLayout", sceneLayout.Build());
@@ -308,6 +385,9 @@ namespace SafetyProto.Networking.Dashboard
                 sessionId = sessionId,
                 participantId = string.IsNullOrEmpty(EventContext.CurrentPlayerId) ? "—" : EventContext.CurrentPlayerId,
                 mode = SessionModeState.CurrentName,
+                participantSource = ParticipantIdentity.CurrentSource,
+                previousSessionId = _sessionManager != null ? _sessionManager.PreviousSessionId : string.Empty,
+                attempt = _sessionManager != null ? _sessionManager.Attempt : 0,
                 timestampMs = ResolveTimestamp(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
             };
             _wsServer.SendToClient(client, "SessionStarted", sessionDto);
@@ -340,6 +420,7 @@ namespace SafetyProto.Networking.Dashboard
             public string eventType;
             public string command;
             public string requestId;   // echoed back in CommandAck
+            public DashboardCommandArgs args;
         }
 
         bool IDashboardHost.VerboseEvents => verboseEvents;

@@ -11,6 +11,11 @@ namespace SafetyProto.Domain.Dashboard
         public string sessionId;
         public string? participantId;
         public string? mode;
+        /// <summary>Who set the participant id: "dashboard", "keypad", "skipped", "simulator".</summary>
+        public string? participantSource;
+        /// <summary>The interrupted session this one restarts; empty for a first attempt.</summary>
+        public string? previousSessionId;
+        public int attempt;
         public long timestampMs;
 
         public SessionDto(string sessionId, long timestamp)
@@ -18,8 +23,40 @@ namespace SafetyProto.Domain.Dashboard
             this.sessionId = sessionId;
             participantId = null;
             mode = null;
+            participantSource = null;
+            previousSessionId = null;
+            attempt = 0;
             timestampMs = timestamp;
         }
+    }
+
+    /// <summary>
+    /// What the headset is doing and how it is holding up, so the evaluator knows when it is
+    /// ready for a start command and sees the battery before it dies mid-session. Sent on
+    /// RequestSync, after every command, on session start/completion and periodically.
+    /// </summary>
+    [Serializable]
+    public struct StationStatusDto
+    {
+        /// <summary>The headset shows the "waiting for the researcher" screen.</summary>
+        public bool awaitingStart;
+        /// <summary>No dashboard connected in time, so the headset let the participant type the code.</summary>
+        public bool participantKeypadOpen;
+        public bool sessionActive;
+        public bool sessionCompleted;
+        /// <summary>PauseSource names holding the session right now; empty while it runs.</summary>
+        public string[] pauseSources;
+        public string participantId;
+        /// <summary>"guiado" | "avaliacao"; empty before the first session.</summary>
+        public string mode;
+        public int attempt;
+        public string deviceModel;
+        public string appVersion;
+        /// <summary>0..1, or -1 when the platform does not report it.</summary>
+        public float batteryLevel;
+        /// <summary>UnityEngine.BatteryStatus name: Charging, Discharging, NotCharging, Full, Unknown.</summary>
+        public string batteryStatus;
+        public long timestampMs;
     }
 
     [Serializable]
