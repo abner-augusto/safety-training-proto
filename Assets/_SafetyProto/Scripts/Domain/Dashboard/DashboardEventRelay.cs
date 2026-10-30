@@ -44,6 +44,7 @@ namespace SafetyProto.Domain.Dashboard
             _bus.Subscribe<CriticalSafetyFailureEventArgs>(OnCriticalSafetyFailure);
             _bus.Subscribe<SafetyErrorEventArgs>(OnSafetyError);
             _bus.Subscribe<PlayspaceNoticeEventArgs>(OnPlayspaceNotice);
+            _bus.Subscribe<PauseHoldChangedEventArgs>(OnPauseHoldChanged);
         }
 
         public void Unsubscribe()
@@ -62,6 +63,7 @@ namespace SafetyProto.Domain.Dashboard
             _bus.Unsubscribe<CriticalSafetyFailureEventArgs>(OnCriticalSafetyFailure);
             _bus.Unsubscribe<SafetyErrorEventArgs>(OnSafetyError);
             _bus.Unsubscribe<PlayspaceNoticeEventArgs>(OnPlayspaceNotice);
+            _bus.Unsubscribe<PauseHoldChangedEventArgs>(OnPauseHoldChanged);
         }
 
         private void OnSessionStarted(SessionStartedEventArgs args)
@@ -76,10 +78,37 @@ namespace SafetyProto.Domain.Dashboard
         }
 
         private void OnSessionPaused(SessionPausedEventArgs args) =>
-            _host.Broadcast("SessionPaused", new SessionDto(args.SessionId, _host.ResolveTimestamp(args.TimestampMs)));
+            _host.Broadcast("SessionPaused", new PauseDto
+            {
+                sessionId = args.SessionId,
+                pauseSource = args.Source.ToString(),
+                pauseSources = PauseTokens(args.ActiveSources),
+                held = true,
+                timestampMs = _host.ResolveTimestamp(args.TimestampMs)
+            });
 
         private void OnSessionResumed(SessionResumedEventArgs args) =>
-            _host.Broadcast("SessionResumed", new SessionDto(args.SessionId, _host.ResolveTimestamp(args.TimestampMs)));
+            _host.Broadcast("SessionResumed", new PauseDto
+            {
+                sessionId = args.SessionId,
+                pauseSource = args.Source.ToString(),
+                pauseSources = Array.Empty<string>(),
+                held = false,
+                timestampMs = _host.ResolveTimestamp(args.TimestampMs)
+            });
+
+        private void OnPauseHoldChanged(PauseHoldChangedEventArgs args) =>
+            _host.Broadcast("PauseHoldChanged", new PauseDto
+            {
+                sessionId = args.SessionId,
+                pauseSource = args.Source.ToString(),
+                pauseSources = PauseTokens(args.ActiveSources),
+                held = args.Held,
+                timestampMs = _host.ResolveTimestamp(args.TimestampMs)
+            });
+
+        private static string[] PauseTokens(PauseSource[]? sources) =>
+            sources == null ? Array.Empty<string>() : Array.ConvertAll(sources, s => s.ToString());
 
         private void OnSessionEnded(SessionEndedEventArgs args) =>
             _host.Broadcast("SessionEnded", new SessionDto(args.SessionId, _host.ResolveTimestamp(args.TimestampMs)));

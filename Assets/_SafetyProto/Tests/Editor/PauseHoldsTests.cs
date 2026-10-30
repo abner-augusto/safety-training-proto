@@ -72,6 +72,21 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
+        public void ActiveSourcesListsHoldersInDeclarationOrder()
+        {
+            var holds = new PauseHolds();
+            holds.Acquire(PauseSource.PauseMenu);
+            holds.Acquire(PauseSource.ApplicationPause);
+            holds.Acquire(PauseSource.Popup);
+            holds.Release(PauseSource.Popup);
+
+            CollectionAssert.AreEqual(
+                new[] { PauseSource.ApplicationPause, PauseSource.PauseMenu }, holds.ActiveSources());
+            Assert.IsTrue(holds.IsHeldBy(PauseSource.PauseMenu));
+            Assert.IsFalse(holds.IsHeldBy(PauseSource.Popup));
+        }
+
+        [Test]
         public void ClearDropsEveryHold()
         {
             var holds = new PauseHolds();

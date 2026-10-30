@@ -138,6 +138,19 @@ namespace SafetyProto.Domain.Dashboard
         public long timestampMs;
     }
 
+    /// <summary>SessionPaused, SessionResumed and PauseHoldChanged. Tokens are PauseSource names.</summary>
+    [Serializable]
+    public struct PauseDto
+    {
+        public string sessionId;
+        /// <summary>The hold that started (SessionPaused), ended (SessionResumed) or changed (PauseHoldChanged).</summary>
+        public string pauseSource;
+        /// <summary>Sources still holding the pause after the event; empty once the session runs.</summary>
+        public string[] pauseSources;
+        public bool held;
+        public long timestampMs;
+    }
+
     [Serializable]
     public struct SessionLogFileDto
     {

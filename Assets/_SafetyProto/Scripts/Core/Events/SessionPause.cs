@@ -1,40 +1,13 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace SafetyProto.Core.Events
 {
-    /// <summary>Something that can hold the session paused.</summary>
-    public enum PauseSource
-    {
-        ApplicationFocus,
-        Popup,
-        PauseMenu
-    }
-
-    /// <summary>
-    /// Tracks which sources currently hold the session paused. The session is paused while any
-    /// source holds it; <see cref="Acquire"/> and <see cref="Release"/> report only the
-    /// transitions, so one source resuming never cancels a pause another source still needs.
-    /// </summary>
-    public sealed class PauseHolds
-    {
-        private readonly HashSet<PauseSource> _sources = new HashSet<PauseSource>();
-
-        public bool IsPaused => _sources.Count > 0;
-
-        /// <summary>Returns true when this hold moved the session from running to paused.</summary>
-        public bool Acquire(PauseSource source) => _sources.Add(source) && _sources.Count == 1;
-
-        /// <summary>Returns true when this release moved the session from paused to running.</summary>
-        public bool Release(PauseSource source) => _sources.Remove(source) && _sources.Count == 0;
-
-        public void Clear() => _sources.Clear();
-    }
-
     /// <summary>
     /// The single entry point for pausing the session. Pause sources call <see cref="Hold"/> and
     /// <see cref="Release"/> instead of raising SessionPaused/SessionResumed themselves, so
     /// every listener sees one balanced pair per pause no matter how many sources overlap.
+    /// Each change of the hold set is also published as <see cref="PauseHoldChangedEventArgs"/>,
+    /// ahead of the transition event it causes, so overlapping pauses can be reconstructed.
     /// </summary>
     public static class SessionPause
     {
@@ -44,16 +17,27 @@ namespace SafetyProto.Core.Events
         /// EventBus pump, this reflects a hold immediately.</summary>
         public static bool IsPaused => Holds.IsPaused;
 
+        /// <summary>The sources holding the pause right now, for a late observer (a dashboard
+        /// that connects mid-pause) that missed the hold events.</summary>
+        public static PauseSource[] ActiveSources() => Holds.ActiveSources();
+
         public static void Hold(PauseSource source)
         {
-            if (Holds.Acquire(source))
-                SessionEvents.RaiseSessionPaused();
+            if (Holds.IsHeldBy(source)) return;
+            bool paused = Holds.Acquire(source);
+            var active = Holds.ActiveSources();
+            SessionEvents.RaisePauseHoldChanged(new PauseHoldChangedEventArgs { Source = source, Held = true, ActiveSources = active });
+            if (paused)
+                SessionEvents.RaiseSessionPaused(new SessionPausedEventArgs { Source = source, ActiveSources = active });
         }
 
         public static void Release(PauseSource source)
         {
-            if (Holds.Release(source))
-                SessionEvents.RaiseSessionResumed();
+            if (!Holds.IsHeldBy(source)) return;
+            bool resumed = Holds.Release(source);
+            SessionEvents.RaisePauseHoldChanged(new PauseHoldChangedEventArgs { Source = source, Held = false, ActiveSources = Holds.ActiveSources() });
+            if (resumed)
+                SessionEvents.RaiseSessionResumed(new SessionResumedEventArgs { Source = source });
         }
 
         /// <summary>Drops every hold without raising SessionResumed. For session teardown, where

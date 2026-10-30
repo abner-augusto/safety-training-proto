@@ -456,6 +456,11 @@ namespace SafetyProto.Core
             ScenarioId = scenarioId;
             TimestampMs = timestampMs;
         }
+
+        /// <summary>The hold that moved the session from running to paused.</summary>
+        public PauseSource Source;
+        /// <summary>Every source holding the pause when it began.</summary>
+        public PauseSource[]? ActiveSources;
     }
     [System.Serializable]
     public struct SessionResumedEventArgs : IEventPayload
@@ -477,6 +482,42 @@ namespace SafetyProto.Core
             ScenarioId = scenarioId;
             TimestampMs = timestampMs;
         }
+
+        /// <summary>The release that moved the session from paused to running.</summary>
+        public PauseSource Source;
+    }
+
+    /// <summary>
+    /// One pause source took or dropped its hold. Published for every change of the hold set,
+    /// ahead of the SessionPaused/SessionResumed transition it may cause, so a log can rebuild
+    /// overlapping pauses (popup open while the headset is off) that the transition pair merges.
+    /// </summary>
+    [System.Serializable]
+    public struct PauseHoldChangedEventArgs : IEventPayload
+    {
+        public string SessionId;
+        public string PlayerId;
+        public string ScenarioId;
+        public long TimestampMs;
+
+        string IEventPayload.SessionId => SessionId;
+        string IEventPayload.PlayerId => PlayerId;
+        string IEventPayload.ScenarioId => ScenarioId;
+        long IEventPayload.TimestampMs => TimestampMs;
+
+        void IEventPayload.SetMetadata(string sessionId, string playerId, string scenarioId, long timestampMs)
+        {
+            SessionId = sessionId;
+            PlayerId = playerId;
+            ScenarioId = scenarioId;
+            TimestampMs = timestampMs;
+        }
+
+        public PauseSource Source;
+        /// <summary>True when the source took its hold, false when it released it.</summary>
+        public bool Held;
+        /// <summary>Sources holding the pause after this change; empty when the session runs.</summary>
+        public PauseSource[]? ActiveSources;
     }
     [System.Serializable]
     public struct SessionEndedEventArgs : IEventPayload

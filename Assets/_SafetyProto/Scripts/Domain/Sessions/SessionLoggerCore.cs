@@ -72,6 +72,9 @@ namespace SafetyProto.Domain.Sessions
             public string noticeKind;
             public string area;
             public float durationSeconds;
+            public string pauseSource;
+            public string[]? pauseSources;
+            public bool held;
         }
 
         [Serializable]
@@ -194,6 +197,7 @@ namespace SafetyProto.Domain.Sessions
         private readonly Action<SafetyErrorEventArgs>             _onSafetyError;
         private readonly Action<CriticalSafetyFailureEventArgs>   _onCriticalSafetyFailure;
         private readonly Action<PlayspaceNoticeEventArgs>         _onPlayspaceNotice;
+        private readonly Action<PauseHoldChangedEventArgs>        _onPauseHoldChanged;
 
         private bool _subscribed;
         private bool _disposed;
@@ -208,6 +212,11 @@ namespace SafetyProto.Domain.Sessions
         private string _scenarioId = string.Empty;
         private string _mode = string.Empty;
         private bool _completionWriteStarted;
+
+        // Pause sources are tracked across sessions: a hold taken before SessionStarted (the
+        // pre-session popup still fading out) is still active when the session begins.
+        private PauseSource[] _activeHolds = Array.Empty<PauseSource>();
+        private long _pauseStartMs;
 
         public SessionLoggerCore(IEventBus eventBus, string outputDirectory, Func<SessionLog, string> serialize, Func<SessionMode> modeSource, IHarnessLogger? logger = null, Func<string, string>? actionNameResolver = null, Func<string>? outputDirectoryResolver = null, string? appVersion = null, string? commit = null, Func<string, PerfSummary?>? perfSource = null)
         {
@@ -234,9 +243,39 @@ namespace SafetyProto.Domain.Sessions
                 _mode = SessionModeState.NameOf(_modeSource());
                 _completionWriteStarted = false;
                 LogEvent("SessionStarted", string.Empty, _sessionId, _playerId, _scenarioId, args.TimestampMs);
+                if (_activeHolds.Length > 0)
+                {
+                    _pauseStartMs = ResolveTimestamp(args.TimestampMs);
+                    LogEvent("SessionPaused", $"Sessão iniciada em pausa: {PauseSourceLabels.Describe(_activeHolds)}",
+                        _sessionId, _playerId, _scenarioId, args.TimestampMs,
+                        new LogData { pauseSource = _activeHolds[0].ToString(), pauseSources = PauseSourceLabels.Tokens(_activeHolds), context = "pre_session" });
+                }
             };
-            _onSessionPaused         = args => LogEvent("SessionPaused",     string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
-            _onSessionResumed        = args => LogEvent("SessionResumed",    string.Empty, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs);
+            _onSessionPaused = args =>
+            {
+                _pauseStartMs = ResolveTimestamp(args.TimestampMs);
+                LogEvent("SessionPaused", $"Pausa iniciada: {PauseSourceLabels.Describe(args.Source)}",
+                    args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                    new LogData { pauseSource = args.Source.ToString(), pauseSources = PauseSourceLabels.Tokens(args.ActiveSources) });
+            };
+            _onSessionResumed = args =>
+            {
+                long resumedMs = ResolveTimestamp(args.TimestampMs);
+                float seconds = _pauseStartMs > 0 ? Math.Max(0L, resumedMs - _pauseStartMs) / 1000f : 0f;
+                _pauseStartMs = 0;
+                LogEvent("SessionResumed",
+                    $"Pausa encerrada: {PauseSourceLabels.Describe(args.Source)}, após {seconds.ToString("0.0", CultureInfo.InvariantCulture)} s",
+                    args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                    new LogData { pauseSource = args.Source.ToString(), durationSeconds = seconds });
+            };
+            _onPauseHoldChanged = args =>
+            {
+                _activeHolds = args.ActiveSources ?? Array.Empty<PauseSource>();
+                LogEvent("PauseHoldChanged",
+                    $"{(args.Held ? "Pausa retida" : "Pausa liberada")}: {PauseSourceLabels.Describe(args.Source)}",
+                    args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                    new LogData { pauseSource = args.Source.ToString(), held = args.Held, pauseSources = PauseSourceLabels.Tokens(args.ActiveSources) });
+            };
             _onSessionCompleted      = OnSessionCompleted;
             _onActionAttempt         = args =>
             {
@@ -323,6 +362,7 @@ namespace SafetyProto.Domain.Sessions
             _eventBus.Subscribe(_onSafetyError);
             _eventBus.Subscribe(_onCriticalSafetyFailure);
             _eventBus.Subscribe(_onPlayspaceNotice);
+            _eventBus.Subscribe(_onPauseHoldChanged);
             _subscribed = true;
         }
 
@@ -342,6 +382,7 @@ namespace SafetyProto.Domain.Sessions
             _eventBus.Unsubscribe(_onSafetyError);
             _eventBus.Unsubscribe(_onCriticalSafetyFailure);
             _eventBus.Unsubscribe(_onPlayspaceNotice);
+            _eventBus.Unsubscribe(_onPauseHoldChanged);
             _subscribed = false;
         }
 
@@ -415,9 +456,12 @@ namespace SafetyProto.Domain.Sessions
             _ => "pending"
         };
 
+        private static long ResolveTimestamp(long timestampMs) =>
+            timestampMs == 0 ? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() : timestampMs;
+
         private void LogEvent(string eventName, string details, string sessionId, string playerId, string scenarioId, long timestampMs, LogData data = default)
         {
-            long actualTimestamp = timestampMs == 0 ? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() : timestampMs;
+            long actualTimestamp = ResolveTimestamp(timestampMs);
             var timestampIso = DateTimeOffset.FromUnixTimeMilliseconds(actualTimestamp).ToString("o");
             _lastEventMs = actualTimestamp;
 
@@ -445,6 +489,7 @@ namespace SafetyProto.Domain.Sessions
             _playerId = string.Empty;
             _scenarioId = string.Empty;
             _mode = string.Empty;
+            _pauseStartMs = 0;
         }
 
         private SessionSummary BuildFallbackSummary() => new SessionSummary

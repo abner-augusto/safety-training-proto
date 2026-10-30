@@ -23,6 +23,9 @@ to keep it small, and fields the event does not use are omitted from the JSON.
 | `SafetyError` | `source`, `errorDetails`, `message` |
 | `CriticalSafetyFailure` | `reason`, `violationCount`, `windowSeconds` |
 | `SessionCompleted` | `totalScore`, `totalElapsedTime`, `tasksCompleted`, `totalTasks` |
+| `SessionPaused` | `pauseSource` (the hold that started the pause), `pauseSources` (every hold active then), `context = pre_session` when the hold began before `SessionStarted` |
+| `SessionResumed` | `pauseSource` (the release that ended the pause), `durationSeconds` |
+| `PauseHoldChanged` | `pauseSource`, `held` (omitted when false), `pauseSources` (active after the change; omitted when none) |
 
 Notes for analysis:
 
@@ -35,3 +38,25 @@ Notes for analysis:
   declared a level directly.
 - `message` is shared by `SafetyViolation` and `SafetyError`; `totalScore` is
   shared by `ScoreChanged` and `SessionCompleted`.
+
+## Pauses
+
+The session is paused while any source holds it, and one `SessionPaused` /
+`SessionResumed` pair brackets each pause however many sources overlap.
+`PauseHoldChanged` records every individual hold and release, so the overlap
+can be rebuilt. `pauseSource` tokens:
+
+| Token | Meaning |
+| --- | --- |
+| `Popup` | a popup was open |
+| `PauseMenu` | the in-VR pause menu was open |
+| `XrSessionUnfocused` | the OpenXR session lost focus while frames kept running: Meta system menu, guardian, or the headset taken off and not yet asleep |
+| `ApplicationPause` | the Android activity paused: the headset went to sleep (usually taken off for some seconds) |
+| `ApplicationFocus` | the Android window lost focus |
+| `Unspecified` | not produced by the app; only an event built by hand |
+
+Reading them: `XrSessionUnfocused` alone, for a few seconds, is most likely the
+system menu; `XrSessionUnfocused` followed by `ApplicationPause` is a headset
+taken off long enough to sleep. The app cannot tell a short removal from the
+menu (proximity sensing is not used). Logs up to 1.2.14 (the 26–28/10
+collection) carry no pause data at all.

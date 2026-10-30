@@ -21,7 +21,9 @@ namespace SafetyProto.Runtime.Session
         private bool _appPaused;
         private bool _appFocused = true;
         private bool _xrSessionWasFocused;
-        private bool _focusLost;
+        private bool _holdingAppPause;
+        private bool _holdingAppFocus;
+        private bool _holdingXrFocus;
         private bool _sessionStarted;
         private bool _sessionEnded;
 
@@ -90,24 +92,35 @@ namespace SafetyProto.Runtime.Session
             RefreshFocusHold();
         }
 
+        /// <summary>
+        /// Each focus signal holds the pause as its own source, so the log can tell a system
+        /// menu (XR session unfocused only) from a headset that went to sleep (activity paused).
+        /// The session is paused exactly when any of the three is lost, as with a single hold.
+        /// </summary>
         private void RefreshFocusHold()
         {
-            bool lost = !HasFocus();
-            if (lost == _focusLost)
+            SetFocusHold(PauseSource.ApplicationPause, _appPaused, ref _holdingAppPause);
+            SetFocusHold(PauseSource.ApplicationFocus, !_appFocused, ref _holdingAppFocus);
+            SetFocusHold(PauseSource.XrSessionUnfocused, IsXrSessionUnfocused(), ref _holdingXrFocus);
+        }
+
+        private void SetFocusHold(PauseSource source, bool lost, ref bool holding)
+        {
+            if (lost == holding)
             {
                 return;
             }
-            _focusLost = lost;
+            holding = lost;
 
             if (lost)
             {
-                SessionPause.Hold(PauseSource.ApplicationFocus);
-                SafetyLog.Info("TrainingSessionManager: focus lost, session pause held.", this);
+                SessionPause.Hold(source);
+                SafetyLog.Info($"TrainingSessionManager: focus lost ({source}), session pause held.", this);
             }
             else
             {
-                SessionPause.Release(PauseSource.ApplicationFocus);
-                SafetyLog.Info("TrainingSessionManager: focus regained, session pause released.", this);
+                SessionPause.Release(source);
+                SafetyLog.Info($"TrainingSessionManager: focus regained ({source}), session pause released.", this);
             }
         }
 
@@ -117,22 +130,17 @@ namespace SafetyProto.Runtime.Session
         /// while the app keeps running frames, and the Activity only pauses once the headset
         /// sleeps. So the XR session state has to be polled alongside the app callbacks.
         /// </summary>
-        private bool HasFocus()
+        private bool IsXrSessionUnfocused()
         {
-            if (_appPaused || !_appFocused)
-            {
-                return false;
-            }
-
             if (!XRSettings.isDeviceActive)
             {
-                return true;
+                return false;
             }
 
             // OpenXR reaches FOCUSED only some frames after startup.
             bool xrFocused = OpenXRUtility.IsSessionFocused;
             _xrSessionWasFocused |= xrFocused;
-            return xrFocused || !_xrSessionWasFocused;
+            return !xrFocused && _xrSessionWasFocused;
         }
 
         private void RaiseAbortedSessionEnd()

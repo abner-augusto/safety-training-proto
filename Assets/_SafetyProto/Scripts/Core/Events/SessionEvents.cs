@@ -19,6 +19,11 @@ namespace SafetyProto.Core.Events
             EventBus.Instance.Publish(args);
         }
 
+        public static void RaisePauseHoldChanged(PauseHoldChangedEventArgs args)
+        {
+            EventBus.Instance.Publish(args);
+        }
+
         public static void RaiseSessionEnded(SessionEndedEventArgs args = new SessionEndedEventArgs())
         {
             EventBus.Instance.Publish(args);

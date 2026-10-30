@@ -187,6 +187,7 @@ and `Core/Events/`:
 |---------------------------------|---------------------------------|---------------------------------------|
 | `SessionStartedEventArgs`       | `TrainingSessionManager`, harness | `SessionLoggerCore`, dashboard relay, UI, `PlayerSpawnCenter` |
 | `SessionPausedEventArgs` / `SessionResumedEventArgs` | `SessionPause.Hold/Release` only | `SessionLoggerCore`, dashboard relay, `TimerUI`, `LogHUD`, `AmbienceAudioController` |
+| `PauseHoldChangedEventArgs`     | `SessionPause.Hold/Release` only | `SessionLoggerCore`, dashboard relay |
 | `SessionCompletedEventArgs`     | `TaskManagerCore`               | `SessionLoggerCore`, dashboard relay, UI |
 | `SessionEndedEventArgs`         | `TaskManagerCore` (after the summary), `TrainingSessionManager` (abort) | `TrainingSessionManager`, dashboard relay, `EventBusPerfRecorder`, `LogHUD`, `EventGameObjectListener` |
 | `ActionAttemptedEvent`          | Unity interactors, `SafetyIssueReporter`, `ScriptedActor`, `SessionSimulator` | `SafetyRuleEngineCore`, logger, dashboard relay |
@@ -214,11 +215,15 @@ The design points worth stating here are these:
   which marks its pending tasks `NotPerformed` — there is no timeout phase on the
   event.
 - **Pause is a hold count, not a flag.** `SessionPause` is the single entry
-  point for pausing. Holders — application focus, an open popup, the pause menu
-  — are keyed by `PauseSource`, and `SessionPaused` / `SessionResumed` are
+  point for pausing. Holders — the three focus signals (Android window focus,
+  activity pause, OpenXR session focus), an open popup, the pause menu — are
+  keyed by `PauseSource`, and `SessionPaused` / `SessionResumed` are
   published only on the 0→1 and 1→0 transitions of the hold set. A popup
   opening over an already-paused session therefore produces no second event,
   and the countdown timer freezes for exactly as long as any hold exists.
+  Every change of the hold set is also published as `PauseHoldChanged`, ahead
+  of the transition, and the transition events name the source that caused
+  them, so the session log can attribute and rebuild overlapping pauses.
   `IsPaused` reflects the holds immediately; the events arrive on the next pump
   (see [ADR 0004](docs/adr/0004-session-pause-hold-count.md)).
 - **The bus reports its own faults through the protocol.** `SafetyError` is how

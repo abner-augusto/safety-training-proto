@@ -35,7 +35,7 @@ namespace SafetyProto.Tests.Editor
                 new PPEStateChangedEventArgs(PPEType.Helmet, true),
                 new TaskEventArgs(null!), new TaskGroupEventArgs(null), new ScoreChangedEventArgs(1, 1),
                 new SafetyViolationEventArgs(), new CriticalSafetyFailureEventArgs(), new SafetyErrorEventArgs(),
-                new PlayspaceNoticeEventArgs()
+                new PlayspaceNoticeEventArgs(), new PauseHoldChangedEventArgs()
             };
 
             foreach (var payload in payloads)
