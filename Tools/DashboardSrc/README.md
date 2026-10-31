@@ -48,7 +48,8 @@ Stuck alert: the router folds every event into `state.progress`
 (`stuck-math.js`), the embed snapshot carries it to the shell, and the shell
 re-evaluates every tile once a second, because a participant who stops moving
 sends no event. A tile is stuck after N seconds without progress (a task
-started or completed, or an action attempt the rule engine did not refuse; N
+started or completed, a PPE item put on, or an action attempt the rule engine
+did not refuse; N
 defaults to 60 and is kept in `localStorage` as `sp_stuck_seconds`), at once when
 the session is paused by a focus token (`ApplicationFocus`, `ApplicationPause`,
 `XrSessionUnfocused`; `Popup` and `PauseMenu` are not stuck), and at once on a

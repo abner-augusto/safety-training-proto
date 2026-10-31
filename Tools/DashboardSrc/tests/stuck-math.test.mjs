@@ -40,6 +40,13 @@ test('TaskStarted, TaskCompleted and an accepted action restart the idle clock',
   }
 });
 
+test('putting a PPE item on restarts the idle clock; taking one off does not', () => {
+  const donned = replay([started, ['PpeChanged', { ppeType: 'GloveLeft', isWearing: true }, 50]]);
+  assert.equal(check(donned, 109).stuck, false);
+  const removed = replay([started, ['PpeChanged', { ppeType: 'GloveLeft', isWearing: false }, 50]]);
+  assert.equal(check(removed, 60).stuck, true);
+});
+
 test('events that are not progress leave the idle clock alone', () => {
   const p = replay([started, ['ScoreChanged', { delta: 5 }, 30], ['SafetyViolation', { violationCode: 'PPE_MISSING' }, 40],
     ['SceneLayout', {}, 45], ['GroupStarted', { groupName: 'g' }, 50]]);

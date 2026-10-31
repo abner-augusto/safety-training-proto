@@ -102,8 +102,9 @@ function hintFrom(payload, now) {
   };
 }
 
-/* Folds one routed event into the progress. Progress is a task started or completed, or an action
-   attempt the rule engine did not refuse; every other event leaves the object untouched. */
+/* Folds one routed event into the progress. Progress is a task started or completed, a PPE item put
+   on, or an action attempt the rule engine did not refuse; every other event leaves the object
+   untouched. */
 export function trackProgress(progress, eventType, payload, now) {
   const p = payload ?? {};
   switch (eventType) {
@@ -114,6 +115,7 @@ export function trackProgress(progress, eventType, payload, now) {
     case 'TaskStarted':
     case 'TaskCompleted': return advance(progress, now);
     case 'ActionAttempt': return acceptAttempt(progress, now);
+    case 'PpeChanged': return p.isWearing === true ? advance(progress, now) : progress;
     case 'SafetyViolation': return refuse(progress, p.violationCode, now);
     case 'HintShown': return { ...progress, hint: hintFrom(p, now) };
     case 'SessionPaused': return withPauseSources(progress, p.pauseSources?.length ? p.pauseSources : (p.pauseSource ? [p.pauseSource] : []), now);
