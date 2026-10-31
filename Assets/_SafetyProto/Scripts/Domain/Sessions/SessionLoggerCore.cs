@@ -79,6 +79,7 @@ namespace SafetyProto.Domain.Sessions
             public string target;
             public bool secured;
             public int level;
+            public string handCollision;
             public string previousSessionId;
             public int attempt;
         }
@@ -268,7 +269,8 @@ namespace SafetyProto.Domain.Sessions
                 _completionWriteStarted = false;
                 LogEvent("SessionStarted", DescribeSessionStart(),
                     _sessionId, _playerId, _scenarioId, args.TimestampMs,
-                    new LogData { source = _participantSource, previousSessionId = _previousSessionId, attempt = _attempt });
+                    new LogData { source = _participantSource, previousSessionId = _previousSessionId, attempt = _attempt,
+                                  handCollision = args.HandCollision ?? string.Empty });
                 if (_activeHolds.Length > 0)
                 {
                     _pauseStartMs = ResolveTimestamp(args.TimestampMs);

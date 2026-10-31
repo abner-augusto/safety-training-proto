@@ -323,7 +323,7 @@ namespace SafetyProto.Networking.Dashboard
                 {
                     Command = command.command,
                     Summary = reason ?? string.Empty,
-                    Target = command.args?.targetId ?? string.Empty
+                    Target = CommandTarget(command)
                 });
             }
 
@@ -336,6 +336,16 @@ namespace SafetyProto.Networking.Dashboard
             };
             _wsServer.SendToClient(client, "CommandAck", ack);
             BroadcastStationStatus();
+        }
+
+        /// <summary>What the command acted on, as a stable token for the log: the attention target
+        /// of highlight_target, the hand mode of set_hand_collision.</summary>
+        private static string CommandTarget(DashboardCommandEnvelope command)
+        {
+            var args = command.args;
+            if (args == null) return string.Empty;
+            if (!string.IsNullOrEmpty(args.targetId)) return args.targetId;
+            return command.command == "set_hand_collision" ? args.mode ?? string.Empty : string.Empty;
         }
 
         private void BroadcastStationStatus()

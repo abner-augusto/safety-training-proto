@@ -86,6 +86,7 @@
 
     export function renderStation() {
       fillHighlightPicker(document.getElementById('highlight-target'), state.highlightTargets);
+      syncHandPicker();
       const phase = stationPhase();
       const el = document.getElementById('station-state');
       if (el) {
@@ -201,6 +202,15 @@
       select.value = String(DEFAULT_HIGHLIGHT_SECONDS);
     }
 
+    /* Shows the headset's actual hand mode, which survives a restart, unless the evaluator is
+       choosing another one right now. */
+    function syncHandPicker() {
+      const select = document.getElementById('hand-collision-mode');
+      const actual = state.station && state.station.handCollision;
+      if (!select || !actual || document.activeElement === select || select.dataset.dirty === '1') return;
+      select.value = actual;
+    }
+
     /** Routed from the HighlightTargets message, sent on every sync. */
     export function setHighlightTargets(targets) {
       state.highlightTargets = Array.isArray(targets) ? targets : [];
@@ -306,11 +316,15 @@
         btnId: 'btn-hand-collision', statusId: 'hand-collision-status', command: 'set_hand_collision',
         keys: { ...commandStatusKeys, button: 'handApply', confirm: 'commandConfirmButton',
                 success: 'handSuccess', failed: 'handFailed' },
-        args: () => ({ args: { mode: handSelect ? handSelect.value : 'push' } }),
+        args: () => {
+          window.dispatchEvent(new Event('sp-hand-mode-sent'));
+          return { args: { mode: handSelect ? handSelect.value : 'push' } };
+        },
         isBlocked: () => offline() || !(state.station && state.station.handCollision),
       });
       document.getElementById('btn-hand-collision').onclick = () => handControl.click(ws);
-      if (handSelect) handSelect.onchange = () => handControl.disarm();
+      if (handSelect) handSelect.onchange = () => { handSelect.dataset.dirty = '1'; handControl.disarm(); };
+      window.addEventListener('sp-hand-mode-sent', () => { if (handSelect) handSelect.dataset.dirty = ''; });
 
       window.addEventListener('sp-connection', renderStation);
       renderStation();

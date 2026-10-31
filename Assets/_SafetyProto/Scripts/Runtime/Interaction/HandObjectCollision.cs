@@ -18,6 +18,13 @@ namespace SafetyProto.Runtime.Interaction
 
         [SerializeField] private Mode startMode = Mode.Push;
 
+        // A restart reloads the scene; the evaluator's choice must survive it, or the next session
+        // silently runs the other mode.
+        private static Mode? _chosen;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ForgetChoice() => _chosen = null;
+
         private int _handLayer = -1;
         private int[] _interactive;
         private bool[] _ignoredAtStart;
@@ -52,7 +59,7 @@ namespace SafetyProto.Runtime.Interaction
             }
             if (_handLayer < 0)
                 SafetyLog.Warning("[HandObjectCollision] Layer HandPhysics ausente; a colisão das mãos não pode ser alternada.", this);
-            Apply(startMode);
+            Apply(_chosen ?? startMode);
         }
 
         // The layer matrix is global and outlives the scene (and Play Mode in the Editor), so put
@@ -65,7 +72,14 @@ namespace SafetyProto.Runtime.Interaction
                 if (_interactive[i] >= 0) Physics.IgnoreLayerCollision(_handLayer, _interactive[i], _ignoredAtStart[i]);
         }
 
-        public void Apply(Mode mode)
+        /// <summary>The evaluator's choice: applied now and kept across scene reloads.</summary>
+        public void Choose(Mode mode)
+        {
+            _chosen = mode;
+            Apply(mode);
+        }
+
+        private void Apply(Mode mode)
         {
             Current = mode;
             if (_handLayer < 0) return;

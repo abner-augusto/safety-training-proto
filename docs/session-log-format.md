@@ -48,8 +48,8 @@ to keep it small, and fields the event does not use are omitted from the JSON.
 | `SessionCompleted` | `totalScore`, `totalElapsedTime`, `tasksCompleted`, `totalTasks` |
 | `SessionPaused` | `pauseSource` (the hold that started the pause), `pauseSources` (every hold active then), `context = pre_session` when the hold began before `SessionStarted` |
 | `SessionResumed` | `pauseSource` (the release that ended the pause), `durationSeconds` |
-| `SessionStarted` | `source` (who set the participant id), `previousSessionId` (the interrupted session this one restarts), `attempt` |
-| `EvaluatorCommand` | `command` (`recenter_player`, `calibrate_room_center`, `return_all_ppe`, `highlight_target`, `set_hand_collision`), `message` (the handler's result summary), `target` (`highlight_target` only: the target id, e.g. `ppe:Safety_Helmet`, `socket:GuardRailPiece`) |
+| `SessionStarted` | `source` (who set the participant id), `previousSessionId` (the interrupted session this one restarts), `attempt`, `handCollision` (`push` or `pass_through`: whether the hands pushed interactive objects in this session) |
+| `EvaluatorCommand` | `command` (`recenter_player`, `calibrate_room_center`, `return_all_ppe`, `highlight_target`, `set_hand_collision`), `message` (the handler's result summary), `target` (`highlight_target`: the target id, e.g. `ppe:Safety_Helmet`, `socket:GuardRailPiece`; `set_hand_collision`: the mode chosen, `push` or `pass_through`) |
 | `PauseHoldChanged` | `pauseSource`, `held` (omitted when false), `pauseSources` (active after the change; omitted when none) |
 | `ObjectGrabbed` | `target` (scene name of the object a hand took hold of) |
 | `HintShown` | `level` (1 = the next object pulses, 2 = the step is said aloud, 3 = the evaluator is alerted), `taskId`, `durationSeconds` (seconds without progress when it fired). Guided mode only |

@@ -478,6 +478,9 @@ namespace SafetyProto.Core
         /// <summary>1 for a first attempt, +1 for every interrupted session of the same code it
         /// restarts. 0 when the producer predates the field.</summary>
         public int Attempt;
+        /// <summary>"push" | "pass_through": whether the hands push interactive objects in this
+        /// session; empty when the scene cannot switch it.</summary>
+        public string HandCollision;
     }
     [System.Serializable]
     public struct SessionPausedEventArgs : IEventPayload

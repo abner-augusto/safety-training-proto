@@ -33,7 +33,7 @@ namespace SafetyProto.Runtime
                 return false;
             }
 
-            collision.Apply(mode);
+            collision.Choose(mode);
             reason = mode == HandObjectCollision.Mode.PassThrough
                 ? "Mãos atravessam os objetos."
                 : "Mãos empurram os objetos.";
