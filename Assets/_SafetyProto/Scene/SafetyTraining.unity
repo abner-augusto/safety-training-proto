@@ -50690,7 +50690,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: SafetyProto.UI.Unity::SafetyProto.UI.GuidedHintCoach
   narrationVoice: {fileID: 1602798036}
   hintClips:
-    entries: []
+    entries:
+    - key: hint:equip_boots
+      clip: {fileID: 8300000, guid: 701dc87317f7a7345bc9ec8e2a560acb, type: 3}
+    - key: hint:equip_harness
+      clip: {fileID: 8300000, guid: a1c2d816003a8db4980cf3526aab6c7b, type: 3}
+    - key: hint:equip_helmet
+      clip: {fileID: 8300000, guid: 864b7ff3f68e78141adcae7b048cd762, type: 3}
+    - key: hint:equip_goggles
+      clip: {fileID: 8300000, guid: 271fd14da28d2ac4f974452d762c66cd, type: 3}
+    - key: hint:equip_gloves
+      clip: {fileID: 8300000, guid: a9cb89a68b09b2c47b64ab716c641a7a, type: 3}
+    - key: hint:connect_lanyard
+      clip: {fileID: 8300000, guid: 4ebf5c4febad0a44eb5971d3411b4484, type: 3}
+    - key: hint:install_guardrail
+      clip: {fileID: 8300000, guid: 23760d8fda9850e42860f640af887903, type: 3}
+    - key: hint:install_toeboard
+      clip: {fileID: 8300000, guid: 9d47286b73a58e94da46164a33c31394, type: 3}
+    - key: hint:report_damaged_safety_mesh
+      clip: {fileID: 8300000, guid: 08d813898d8f6ca4784be1e411ab9894, type: 3}
   pulseAfterSeconds: 15
   narrateAfterSeconds: 30
   alertAfterSeconds: 60
@@ -54487,7 +54505,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SafetyProto.UI.Unity::SafetyProto.UI.TwoHandGripCoach
   narrationVoice: {fileID: 1602798036}
-  firstTimeNarration: {fileID: 0}
+  firstTimeNarration: {fileID: 8300000, guid: 6ceae297a699b5147a3312c7d3cb861f, type: 3}
   cueClip: {fileID: 8300000, guid: 35219044b859c854db170f30da70d5f7, type: 3}
   cueVolume: 0.8
   delaySeconds: 0.8
@@ -67925,6 +67943,16 @@ MonoBehaviour:
       clip: {fileID: 8300000, guid: 4705ecf218e37834e9faa64450091298, type: 3}
     - key: report:report_damaged_safety_mesh
       clip: {fileID: 8300000, guid: 99aae3b02266f8f4d8dac901b95a995e, type: 3}
+    - key: ordem_incorreta
+      clip: {fileID: 8300000, guid: 745ab1eb20f370f47ab41e73209289a8, type: 3}
+    - key: ppe_advice:connect_lanyard
+      clip: {fileID: 8300000, guid: 41cb174c41bb4244bb4641d0ad7af320, type: 3}
+    - key: ppe_advice:install_guardrail
+      clip: {fileID: 8300000, guid: c1b5c0e9c3bd93f48998458d947b4655, type: 3}
+    - key: ppe_advice:install_toeboard
+      clip: {fileID: 8300000, guid: 4c07cc4863ec5404da28df2bdc05786a, type: 3}
+    - key: ppe_advice:report_damaged_safety_mesh
+      clip: {fileID: 8300000, guid: 829448bddee495948a506dfc98142510, type: 3}
   narrationCloseTail: 1
   feedbackMaxSeconds: 30
 --- !u!33 &5493516858789556511
