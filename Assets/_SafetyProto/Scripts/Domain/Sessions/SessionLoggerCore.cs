@@ -327,8 +327,9 @@ namespace SafetyProto.Domain.Sessions
                 LogEvent("ActionAttempt", details, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                     new LogData { actionId = actionId, context = args.Context ?? string.Empty });
             };
+            // A null context stays out of the entry, so an ordinary equip logs as it always did.
             _onPpeStateChanged       = args => LogEvent("PpeStateChanged",   $"EPI={PpeLabels.DisplayName(args.PpeType)}, Equipado={(args.IsWearing ? "Sim" : "Não")}", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
-                new LogData { ppeType = args.PpeType.ToString(), wearing = args.IsWearing });
+                new LogData { ppeType = args.PpeType.ToString(), wearing = args.IsWearing, context = args.Context! });
             _onTaskLifecycle = args =>
             {
                 string eventName = args.Phase switch

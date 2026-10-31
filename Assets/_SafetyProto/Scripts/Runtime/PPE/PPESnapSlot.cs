@@ -193,7 +193,12 @@ namespace SafetyProto.Runtime.PPE
             return false;
         }
 
-        public bool TryAcceptSnap(PPESnapItem item)
+        /// <summary>The action context of an item a hand let go of at the slot.</summary>
+        public const string HandReleaseContext = "ppe_snap";
+
+        /// <param name="context">Recorded on the action attempt, so the log tells a hand letting go
+        /// from a grip the headset lost at the slot.</param>
+        public bool TryAcceptSnap(PPESnapItem item, string context = HandReleaseContext)
         {
             if (item == null) return false;
 
@@ -221,7 +226,8 @@ namespace SafetyProto.Runtime.PPE
                 item.gameObject.SetActive(false);
 
             // SetActive(false) fires OnDisable, which unregisters the item; mark worn only after hiding.
-            _ppeManager?.ReportPPEStateChange(item.PpeType, true, item.gameObject);
+            _ppeManager?.ReportPPEStateChange(item.PpeType, true, item.gameObject,
+                context == HandReleaseContext ? null : context);
 
             SafetyLog.Info($"PPESnapSlot [{name}]: accepted {item.PpeType} ({_snappedItems.Count}/{_slotCapacity})", this);
 
@@ -236,7 +242,7 @@ namespace SafetyProto.Runtime.PPE
                         ActionEvents.PublishActionAttempt(
                             actionId,
                             sourceId: name,
-                            context: "ppe_snap",
+                            context: context,
                             position: transform.position);
                         SafetyLog.Info($"PPESnapSlot [{name}]: emitted ActionAttempt '{actionId}' for {item.PpeType}", this);
                         break;

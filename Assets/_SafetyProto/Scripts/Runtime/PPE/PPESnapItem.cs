@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using Oculus.Interaction;
 using Oculus.Interaction.HandGrab;
+using Oculus.Interaction.Input;
 using SafetyProto.Core;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Feedback;
 using SafetyProto.Runtime.Analytics;
 using SafetyProto.Runtime.Feedback;
 using SafetyProto.Runtime.Interaction;
@@ -31,6 +33,16 @@ namespace SafetyProto.Runtime.PPE
 
         [Tooltip("When snapped, re-samples the snapPoseOverride pose every frame (useful for tuning the anchor in Play Mode).")]
         [SerializeField] private bool trackSnapPoseOverrideEveryFrame = false;
+
+        [Header("Lost Grip")]
+        [Tooltip("Counts a grab that ends abnormally at a slot (hand untracked, or a tracking jump) as letting go there.")]
+        [SerializeField] private bool snapOnLostGrip = true;
+        [Tooltip("How long after leaving the slot a lost grip still counts, in seconds.")]
+        [SerializeField, Range(0f, 1f)] private float lostGripGraceSeconds = 0.4f;
+        [Tooltip("How long the holding hand must stay untracked before it counts, in seconds.")]
+        [SerializeField, Range(0f, 0.5f)] private float lostGripConfirmSeconds = 0.1f;
+        [Tooltip("Item speed (m/s) leaving the slot above which the move is a tracking jump, not the hand.")]
+        [SerializeField, Range(2f, 20f)] private float lostGripJumpSpeed = 5f;
 
         [Header("Unsnap")]
         [Tooltip("How far the hand must pull from the slot before unsnapping.")]
@@ -96,11 +108,25 @@ namespace SafetyProto.Runtime.PPE
         private Vector3 _snapOverrideLocalPos;
         private Quaternion _snapOverrideLocalRot;
 
+        private LostGripSnapPolicy _lostGrip;
+        private HandGrabInteractable[] _handGrabs = System.Array.Empty<HandGrabInteractable>();
+        private readonly List<IHand> _holdingHands = new List<IHand>();
+        private PPESnapSlot _recentSlot;
+        private LostGripCause _forcedRelease;
+        private float _forcedReleaseUntil;
+        private Vector3 _lastHeldPosition;
+        private bool _hasLastHeldPosition;
+
+        private const float ForcedReleaseWindowSeconds = 0.5f;
+
         private void Awake()
         {
             _ppeItem = GetComponent<PPEItem>();
             _rigidbody = GetComponent<Rigidbody>();
             _grabbable = GetComponent<Grabbable>();
+            _lostGrip = new LostGripSnapPolicy(lostGripGraceSeconds, lostGripConfirmSeconds, lostGripJumpSpeed);
+            _handGrabs = System.Array.FindAll(GetComponentsInChildren<HandGrabInteractable>(true),
+                grab => grab.GetComponentInParent<Rigidbody>(true) == _rigidbody);
 
             if (returnObjectHome == null)
                 returnObjectHome = GetComponent<ReturnObjectHome>();
@@ -222,6 +248,8 @@ namespace SafetyProto.Runtime.PPE
                 return;
             }
 
+            ForgetLostGrip();
+
             if (_isSnapped)
                 SafetyLog.Info($"PPESnapItem [{name}]: grabbed while snapped, monitoring pull distance.", this);
         }
@@ -232,10 +260,90 @@ namespace SafetyProto.Runtime.PPE
             if (_isSnapped) return;
 
             PPESnapSlot slot = FindSlotToSnap();
-            if (slot != null && slot.TryAcceptSnap(this))
+            LostGripCause lostGrip = TakeLostGrip(slot != null);
+            if (slot == null && lostGrip != LostGripCause.None)
+                slot = UsableRecentSlot();
+            ForgetLostGrip();
+
+            string context = lostGrip == LostGripCause.None ? PPESnapSlot.HandReleaseContext : LostGripContext(lostGrip);
+            if (slot != null && slot.TryAcceptSnap(this, context))
                 SnapTo(slot);
             else if (returnObjectHome == null)
                 SetPhysicsEnabled(true);
+        }
+
+        private LostGripCause TakeLostGrip(bool atSlot)
+        {
+            if (_forcedRelease != LostGripCause.None && Time.time <= _forcedReleaseUntil)
+                return _forcedRelease;
+            if (!snapOnLostGrip || atSlot) return LostGripCause.None;
+            return _lostGrip.CountsAtSlotOnRelease(Time.time, HoldingHandsTracked())
+                ? LostGripCause.TrackingLost
+                : LostGripCause.None;
+        }
+
+        private PPESnapSlot UsableRecentSlot() =>
+            _recentSlot != null && !_recentSlot.IsOccupied && _recentSlot.Accepts(_ppeItem.ppeType) ? _recentSlot : null;
+
+        private static string LostGripContext(LostGripCause cause) =>
+            cause == LostGripCause.Jump ? "ppe_snap:grip_lost=jump" : "ppe_snap:grip_lost=tracking";
+
+        private void ForgetLostGrip()
+        {
+            _lostGrip.Reset();
+            _recentSlot = null;
+            _forcedRelease = LostGripCause.None;
+            _hasLastHeldPosition = false;
+        }
+
+        private void WatchHeldGrip()
+        {
+            if (!snapOnLostGrip || !_isGrabbed || _grabDisabled || _forcedRelease != LostGripCause.None)
+            {
+                _hasLastHeldPosition = false;
+                return;
+            }
+
+            Vector3 position = transform.position;
+            float dt = Time.deltaTime;
+            float speed = _hasLastHeldPosition && dt > 0f ? Vector3.Distance(position, _lastHeldPosition) / dt : 0f;
+            _lastHeldPosition = position;
+            _hasLastHeldPosition = true;
+
+            CollectHoldingHands();
+            PPESnapSlot near = FindSlotToSnap();
+            if (near != null) _recentSlot = near;
+
+            LostGripCause cause = _lostGrip.Observe(Time.time, near != null, HoldingHandsTracked(), speed);
+            if (cause == LostGripCause.None || UsableRecentSlot() == null) return;
+
+            // The SDK still holds the item; release it through the interactors so the ordinary
+            // release path runs (kinematic restore, pointer events) and snaps it to the recent slot.
+            _forcedRelease = cause;
+            _forcedReleaseUntil = Time.time + ForcedReleaseWindowSeconds;
+            foreach (var grab in _handGrabs)
+                foreach (var interactor in grab.SelectingInteractors)
+                    interactor.ForceRelease();
+            SafetyLog.Info($"PPESnapItem [{name}]: grip lost at {_recentSlot.name} ({cause}), releasing it there.", this);
+        }
+
+        private void CollectHoldingHands()
+        {
+            _holdingHands.Clear();
+            foreach (var grab in _handGrabs)
+                foreach (var interactor in grab.SelectingInteractors)
+                    if (interactor.Hand != null && !_holdingHands.Contains(interactor.Hand))
+                        _holdingHands.Add(interactor.Hand);
+        }
+
+        // Low confidence counts as lost: it is what the headset reports while a hand presses an
+        // item to the face or chest, before it drops the hand entirely.
+        private bool HoldingHandsTracked()
+        {
+            foreach (var hand in _holdingHands)
+                if (hand == null || !hand.IsConnected || !hand.IsTrackedDataValid || !hand.IsHighConfidence)
+                    return false;
+            return true;
         }
 
         /// <summary>Snaps this item into <paramref name="slot"/> through the same checks as a hand
@@ -315,7 +423,11 @@ namespace SafetyProto.Runtime.PPE
 
         private void LateUpdate()
         {
-            if (!_isSnapped || _currentSlot == null) return;
+            if (!_isSnapped || _currentSlot == null)
+            {
+                WatchHeldGrip();
+                return;
+            }
 
             if (_isGrabbed && !_currentSlot.IsLocked)
             {

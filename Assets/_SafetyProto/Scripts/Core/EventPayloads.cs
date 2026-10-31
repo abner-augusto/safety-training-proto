@@ -40,7 +40,11 @@ namespace SafetyProto.Core
         public PPEType PpeType;
         public bool IsWearing;
 
-        public PPEStateChangedEventArgs(PPEType ppeType, bool isWearing)
+        /// <summary>How the item went on when it was not a hand letting go at the slot, e.g.
+        /// <c>ppe_snap:grip_lost=tracking</c>; null otherwise.</summary>
+        public string? Context;
+
+        public PPEStateChangedEventArgs(PPEType ppeType, bool isWearing, string? context = null)
         {
             SessionId = string.Empty;
             PlayerId = string.Empty;
@@ -48,6 +52,7 @@ namespace SafetyProto.Core
             TimestampMs = 0L;
             PpeType = ppeType;
             IsWearing = isWearing;
+            Context = context;
         }
     }
 

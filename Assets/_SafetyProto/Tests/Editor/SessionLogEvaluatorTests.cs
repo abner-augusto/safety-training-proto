@@ -112,6 +112,18 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
+        public void InferredEquip_CarriesItsContext_AnOrdinaryOneDoesNot()
+        {
+            _bus.Publish(new SessionStartedEventArgs { SessionId = "S1", TotalTasks = 9, TimestampMs = 1000L, Attempt = 1 });
+            _bus.Publish(new PPEStateChangedEventArgs(PPEType.Boots, true) { SessionId = "S1", TimestampMs = 2000L });
+            _bus.Publish(new PPEStateChangedEventArgs(PPEType.Helmet, true, "ppe_snap:grip_lost=tracking") { SessionId = "S1", TimestampMs = 3000L });
+
+            var equips = ((JArray)WriteLog()["entries"]!).Where(e => (string?)e["eventName"] == "PpeStateChanged").ToList();
+            Assert.IsNull(equips[0]["data"]!["context"]);
+            Assert.AreEqual("ppe_snap:grip_lost=tracking", (string?)equips[1]["data"]!["context"]);
+        }
+
+        [Test]
         public void HintShown_IsLoggedWithLevelTaskAndWaitingTime()
         {
             _bus.Publish(new SessionStartedEventArgs { SessionId = "S1", TotalTasks = 9, TimestampMs = 1000L, Attempt = 1 });

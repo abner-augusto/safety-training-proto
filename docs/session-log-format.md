@@ -39,7 +39,7 @@ to keep it small, and fields the event does not use are omitted from the JSON.
 | Event | Fields filled |
 | --- | --- |
 | `ActionAttempt` | `actionId` (stable id; the friendly name is in `details`), `context` |
-| `PpeStateChanged` | `ppeType`, `wearing` |
+| `PpeStateChanged` | `ppeType`, `wearing`, `context` (only on an inferred equip, see below) |
 | `ScoreChanged` | `delta`, `totalScore` |
 | `Task*` events | `riskLevel`, `riskSeverity`, `riskProbability` |
 | `SafetyViolation` | `violationCode`, `message`, `taskId`, `groupId` |
@@ -65,6 +65,12 @@ Notes for analysis:
 
 - `context` is free-form: `gaze_dwell`, or `gaze_dwell:option=loose_fixing` for
   a hazard-classification report.
+- A `PpeStateChanged` entry with `wearing` true carries `context` only when the
+  equip was inferred: `ppe_snap:grip_lost=tracking` when the headset lost the
+  holding hand while the item was at the slot, `ppe_snap:grip_lost=jump` when
+  the item leapt out of the slot faster than a hand moves. Both count as
+  letting go at the slot. A slot that emits an `ActionAttempt` records the same
+  value as its `context` (otherwise `ppe_snap`).
 - `Task*` entries embed the risk the task carried, so a log can be analysed on
   its own without joining it back to the scenario document. `riskLevel` is the
   NR-01 class token (for example `substantial`). `riskSeverity` and
