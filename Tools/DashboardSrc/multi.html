@@ -21,6 +21,13 @@
       <input id="mx-host" placeholder="IP do óculos (ex.: 192.168.0.12)" data-i18n-placeholder="multiAddPlaceholder" aria-label="IP do óculos">
       <button class="report-btn primary" type="submit" data-i18n="multiAdd">Adicionar</button>
     </form>
+    <!-- Seconds without progress before a tile raises the stuck alert (kept in this browser) -->
+    <label class="mx-limit">
+      <span data-i18n="stuckLimitLabel">Travado após</span>
+      <input type="number" id="mx-stuck-seconds" step="5" inputmode="numeric">
+      <span data-i18n="stuckLimitUnit">s</span>
+    </label>
+    <button class="report-btn secondary" id="btn-sound" type="button" aria-pressed="true"></button>
     <button class="report-btn secondary" id="btn-lang" type="button" aria-label="Idioma"><span id="lang-flag">PT</span></button>
     <button class="report-btn secondary" id="btn-theme" type="button" aria-label="Alternar tema claro/escuro" aria-pressed="false">
       <svg id="theme-icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

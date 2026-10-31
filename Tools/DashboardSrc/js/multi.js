@@ -1,22 +1,45 @@
-    import { t, toggleLang, getLang, applyTranslations, pauseSourceLabel } from './i18n.js';
+    import { t, tf, toggleLang, getLang, applyTranslations, pauseSourceLabel } from './i18n.js';
     import { applyTheme, toggleTheme } from './theme.js';
+    import { createCommandControl, refreshCommandControls, resolveCommandAck } from './ui.js';
+    import { MIN_STUCK_SECONDS, MAX_STUCK_SECONDS, parseThresholdSeconds, evaluateStuck, alertChange } from './stuck-math.js';
+    import { TILE_ACTIONS, isActionBlocked } from './tile-actions.js';
 
     /* ================================================================
      * MULTI-HEADSET SHELL (multi.html) — one station page per headset in
      * an iframe, side by side. Each station page keeps its own WebSocket
-     * and controls; this shell only lays them out, forwards theme and
+     * and controls; this shell lays them out, forwards theme and
      * language, and turns each station's status message into a tile bar
      * an evaluator running two headsets alone can read at a glance.
+     * It also raises the stuck alert per tile and relays the tile's quick
+     * actions to the station page behind it.
      * ============================================================== */
     const STORAGE_KEY = 'sp_stations';
+    const STUCK_SECONDS_KEY = 'sp_stuck_seconds';
+    const SOUND_KEY = 'sp_stuck_sound';
     const DEFAULT_HTTP_PORT = 8080;
     const CRITICAL_RECENT_MS = 120_000;
     const SILENT_AFTER_MS = 12_000;
+    /* The alert must show within ~2 s of the threshold; a participant who stops moving sends no
+       event, so the tiles are re-evaluated on a timer. */
+    const TICK_MS = 1000;
+    const BEEP_COOLDOWN_MS = 400;
+    const NOT_STUCK = { stuck: false, reason: null, secondsWithoutProgress: 0 };
 
     const grid = document.getElementById('mx-grid');
-    const tiles = new Map();   // host -> { el, iframe, status, lastStatusAt }
+    const tiles = new Map();   // host -> { id, el, iframe, status, lastStatusAt, alertReason }
     let stations = [];
     let focusedHost = null;
+    let nextTileId = 1;
+
+    function readStored(key) {
+      try { return localStorage.getItem(key); } catch { return null; }
+    }
+
+    function writeStored(key, value) {
+      try { localStorage.setItem(key, value); } catch { /* private mode */ }
+    }
+
+    let stuckSeconds = parseThresholdSeconds(readStored(STUCK_SECONDS_KEY));
 
     function normalizeHost(raw) {
       let host = String(raw ?? '').trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
@@ -39,7 +62,7 @@
     }
 
     function saveStations() {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(stations)); } catch { /* private mode */ }
+      writeStored(STORAGE_KEY, JSON.stringify(stations));
     }
 
     function stationUrl(host, embed) {
@@ -59,6 +82,110 @@
       postTo(iframe, { type: 'sp-lang', lang: getLang() });
     }
 
+    /* The last report of a tile's station page, or null once it went quiet (headset off, app closed). */
+    function liveStatus(tile) {
+      return tile.status && Date.now() - tile.lastStatusAt <= SILENT_AFTER_MS ? tile.status : null;
+    }
+
+    /* ── Alert sound: synthesized, so no audio asset has to ship with the dashboard ── */
+    let audioCtx = null;
+    let soundOn = readStored(SOUND_KEY) !== 'off';
+    let lastBeepAt = 0;
+
+    function audioContext() {
+      if (!audioCtx) {
+        const Context = window.AudioContext || window.webkitAudioContext;
+        if (Context) {
+          audioCtx = new Context();
+          audioCtx.onstatechange = renderSoundButton;
+        }
+      }
+      return audioCtx;
+    }
+
+    function beep(ctx) {
+      const start = ctx.currentTime;
+      [[880, 0], [1175, 0.18]].forEach(([frequency, offset]) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = frequency;
+        gain.gain.setValueAtTime(0.0001, start + offset);
+        gain.gain.exponentialRampToValueAtTime(0.25, start + offset + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + offset + 0.16);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(start + offset);
+        osc.stop(start + offset + 0.18);
+      });
+    }
+
+    /* A browser starts audio only after a user gesture; until then the alert stays visual and the
+       sound button says so. */
+    function playAlertSound() {
+      const now = Date.now();
+      if (!soundOn || now - lastBeepAt < BEEP_COOLDOWN_MS) return;
+      const ctx = audioContext();
+      if (!ctx) return;
+      lastBeepAt = now;
+      if (ctx.state === 'running') { beep(ctx); return; }
+      // A late resume would sound an alert that is no longer news.
+      ctx.resume().then(() => { if (Date.now() - now < 1500) beep(ctx); }).catch(() => { /* still locked */ });
+    }
+
+    function renderSoundButton() {
+      const button = document.getElementById('btn-sound');
+      const locked = soundOn && !!audioCtx && audioCtx.state !== 'running';
+      button.textContent = `${t('soundLabel')}: ${!soundOn ? t('soundOff') : locked ? t('soundBlocked') : t('soundOn')}`;
+      button.setAttribute('aria-pressed', String(soundOn));
+      button.classList.toggle('blocked', locked);
+    }
+
+    document.getElementById('btn-sound').onclick = () => {
+      const ctx = audioContext();
+      const locked = soundOn && !!ctx && ctx.state !== 'running';
+      if (!locked) {
+        soundOn = !soundOn;
+        writeStored(SOUND_KEY, soundOn ? 'on' : 'off');
+      }
+      // The click is the gesture that lets the browser start audio; the beep shows the evaluator what to expect.
+      if (soundOn && ctx) ctx.resume().then(() => beep(ctx)).catch(() => { /* still locked */ });
+      renderSoundButton();
+    };
+
+    /* ── Tiles ── */
+    function sendToStation(iframe, envelope) {
+      if (!iframe.contentWindow) return false;
+      postTo(iframe, { type: 'sp-command', envelope });
+      return true;
+    }
+
+    /* One confirm-then-send button per TILE_ACTIONS entry. The station page behind the tile sends
+       the command over its own WebSocket, so it reaches this headset and no other; its ack comes
+       back as a message and settles the button. */
+    function buildActions(tile) {
+      const buttons = tile.el.querySelector('.mx-quick-buttons');
+      const statusId = `mx-${tile.id}-status`;
+      tile.el.querySelector('.mx-quick > .command-status').id = statusId;
+      const sender = { send: envelope => sendToStation(tile.iframe, envelope) };
+      for (const action of TILE_ACTIONS) {
+        const btnId = `mx-${tile.id}-${action.command}`;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.id = btnId;
+        button.className = `report-btn secondary command-btn${action.danger ? ' danger' : ''}`;
+        buttons.appendChild(button);
+        const control = createCommandControl({
+          btnId, statusId, command: action.command,
+          keys: {
+            pending: 'commandPending', noConnection: 'commandNoConnection', noResponse: 'commandNoResponse',
+            button: action.labelKey, confirm: action.confirmKey, success: action.successKey, failed: action.failedKey,
+          },
+          isBlocked: () => isActionBlocked(action, liveStatus(tile)),
+        });
+        button.onclick = () => control.click(sender);
+      }
+    }
+
     function buildTile(host) {
       const el = document.createElement('section');
       el.className = 'mx-tile';
@@ -74,6 +201,12 @@
             <a target="_blank" rel="noopener" data-act="open"></a>
             <button type="button" data-act="remove"></button>
           </span>
+        </div>
+        <div class="mx-alert" hidden></div>
+        <div class="mx-quick">
+          <span class="mx-quick-buttons"></span>
+          <span class="command-status" aria-live="polite"></span>
+          <span class="mx-quick-count"></span>
         </div>
         <iframe loading="eager"></iframe>`;
       el.querySelector('.mx-tile-host').textContent = host;
@@ -92,7 +225,9 @@
         saveStations();
         render();
       };
-      return { el, iframe, status: null, lastStatusAt: 0 };
+      const tile = { id: nextTileId++, el, iframe, status: null, lastStatusAt: 0, alertReason: null };
+      buildActions(tile);
+      return tile;
     }
 
     function render() {
@@ -126,6 +261,7 @@
         tile.el.querySelector('[data-act="remove"]').textContent = t('multiRemove');
         renderTileStatus(tile);
       }
+      refreshCommandControls();
     }
 
     function badge(text, color) {
@@ -135,19 +271,38 @@
       return b;
     }
 
-    function renderTileStatus(tile) {
-      const s = tile.status;
-      const silent = !s || Date.now() - tile.lastStatusAt > SILENT_AFTER_MS;
-      const connected = !silent && s.connected;
-      const dot = tile.el.querySelector('.status-dot');
-      dot.className = 'status-dot' + (connected ? ' connected' : silent ? '' : ' connecting');
-      tile.el.querySelector('.mx-tile-title').textContent = (s && s.deviceModel) || '—';
+    function alertText(verdict) {
+      const detail = verdict.reason === 'idle' ? tf('stuckIdle', { seconds: verdict.secondsWithoutProgress })
+        : verdict.reason === 'focus' ? `${t('stuckFocus')} · ${verdict.pauseSources.map(pauseSourceLabel).join(' + ')}`
+        : `${tf('stuckHint', { level: verdict.hint.level })}${verdict.hint.taskName ? ` · ${verdict.hint.taskName}` : ''}`;
+      return `${t('stuckBadge')} · ${detail}`;
+    }
 
-      const modeName = s && s.mode ? t(s.mode === 'avaliacao' ? 'modeEvaluation' : 'modeGuided') : '';
-      const pid = s && s.participantId && s.participantId !== '—' ? s.participantId : '';
+    /* Shows or clears the tile's stuck alert; the sound plays once when an alert starts. */
+    function renderStuckAlert(tile, verdict) {
+      const change = alertChange(tile.alertReason, verdict.reason);
+      tile.alertReason = verdict.reason;
+      const banner = tile.el.querySelector('.mx-alert');
+      banner.hidden = !verdict.stuck;
+      banner.textContent = verdict.stuck ? alertText(verdict) : '';
+      tile.el.classList.toggle('stuck', verdict.stuck);
+      if (change === 'raised') playAlertSound();
+    }
+
+    function renderTileStatus(tile) {
+      const s = liveStatus(tile);
+      const connected = !!s && s.connected;
+      const dot = tile.el.querySelector('.status-dot');
+      dot.className = 'status-dot' + (connected ? ' connected' : !s ? '' : ' connecting');
+
+      // A silent station keeps showing who it was, next to the red "disconnected" badge.
+      const last = tile.status;
+      tile.el.querySelector('.mx-tile-title').textContent = (last && last.deviceModel) || '—';
+      const modeName = last && last.mode ? t(last.mode === 'avaliacao' ? 'modeEvaluation' : 'modeGuided') : '';
+      const pid = last && last.participantId && last.participantId !== '—' ? last.participantId : '';
       tile.el.querySelector('.mx-tile-sub').textContent =
-        s && s.sessionActive ? [pid, modeName].filter(Boolean).join(' · ')
-        : s && s.sessionCompleted ? `${pid} · ${t('stationCompleted')}`
+        last && last.sessionActive ? [pid, modeName].filter(Boolean).join(' · ')
+        : last && last.sessionCompleted ? `${pid} · ${t('stationCompleted')}`
         : '';
 
       const badges = tile.el.querySelector('.mx-badges');
@@ -170,8 +325,18 @@
           else badges.append(badge(pct, 'blue'));
         }
       }
+
+      const verdict = connected && s.progress
+        ? evaluateStuck(s.progress, { connected, now: Date.now(), thresholdSeconds: stuckSeconds })
+        : NOT_STUCK;
+      renderStuckAlert(tile, verdict);
+      if (verdict.stuck) level = 'alert';
+
       tile.el.classList.remove('ok', 'caution', 'alert');
       if (level) tile.el.classList.add(level);
+
+      const count = s ? s.interventionCount : 0;
+      tile.el.querySelector('.mx-quick-count').textContent = count > 0 ? `${t('interventionsShort')}: ${count}` : '';
     }
 
     window.addEventListener('message', e => {
@@ -183,13 +348,17 @@
           tile.status = m.status;
           tile.lastStatusAt = Date.now();
           renderTileStatus(tile);
+          refreshCommandControls();
         }
+        else if (m?.type === 'sp-command-ack') resolveCommandAck(m.ack);
         return;
       }
     });
 
-    /* A station page that stops reporting (headset off, app closed) turns red. */
-    setInterval(() => { for (const tile of tiles.values()) renderTileStatus(tile); }, 3000);
+    setInterval(() => {
+      for (const tile of tiles.values()) renderTileStatus(tile);
+      refreshCommandControls();
+    }, TICK_MS);
 
     document.getElementById('mx-add').onsubmit = e => {
       e.preventDefault();
@@ -202,10 +371,30 @@
       render();
     };
 
+    const stuckInput = document.getElementById('mx-stuck-seconds');
+    stuckInput.min = String(MIN_STUCK_SECONDS);
+    stuckInput.max = String(MAX_STUCK_SECONDS);
+    stuckInput.value = String(stuckSeconds);
+    stuckInput.onchange = () => {
+      stuckSeconds = parseThresholdSeconds(stuckInput.value);
+      stuckInput.value = String(stuckSeconds);
+      writeStored(STUCK_SECONDS_KEY, String(stuckSeconds));
+      for (const tile of tiles.values()) renderTileStatus(tile);
+    };
+
+    /* A gesture anywhere in the shell lets the browser start the alert sound. */
+    for (const type of ['pointerdown', 'keydown']) {
+      document.addEventListener(type, () => {
+        const ctx = audioContext();
+        if (soundOn && ctx?.state === 'suspended') ctx.resume().catch(() => { /* still locked */ });
+      });
+    }
+
     function translateShell() {
       applyTranslations();
       document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
       document.title = `SafetyProto — ${t('multiTitle')}`;
+      renderSoundButton();
       layout();
     }
 
@@ -222,4 +411,5 @@
     applyTheme();
     loadStations();
     render();
+    audioContext();
     translateShell();
