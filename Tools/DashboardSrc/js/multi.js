@@ -273,7 +273,7 @@
 
     function alertText(verdict) {
       const detail = verdict.reason === 'idle' ? tf('stuckIdle', { seconds: verdict.secondsWithoutProgress })
-        : verdict.reason === 'focus' ? `${t('stuckFocus')} · ${verdict.pauseSources.map(pauseSourceLabel).join(' + ')}`
+        : verdict.reason === 'focus' ? verdict.pauseSources.map(pauseSourceLabel).join(' + ')
         : `${tf('stuckHint', { level: verdict.hint.level })}${verdict.hint.taskName ? ` · ${verdict.hint.taskName}` : ''}`;
       return `${t('stuckBadge')} · ${detail}`;
     }

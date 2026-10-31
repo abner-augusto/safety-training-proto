@@ -113,9 +113,11 @@ test('popup and pause-menu pauses are not stuck, however long they last', () => 
   }
 });
 
-test('a focus token among several holds is enough', () => {
+test('a focus token among several holds is enough, and only the focus tokens are reported', () => {
   const p = replay([started, ['SessionPaused', { pauseSources: ['Popup', 'XrSessionUnfocused'] }, 5]]);
-  assert.equal(check(p, 5).reason, 'focus');
+  const r = check(p, 5);
+  assert.equal(r.reason, 'focus');
+  assert.deepEqual(r.pauseSources, ['XrSessionUnfocused']);
 });
 
 test('the single pauseSource field of an older relay still counts', () => {

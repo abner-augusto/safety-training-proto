@@ -121,7 +121,7 @@
         // stuck alert (multi-headset shell)
         stuckLimitLabel: 'Stuck after', stuckLimitUnit: 's',
         soundLabel: 'Alert sound', soundOn: 'on', soundOff: 'off', soundBlocked: 'click to enable',
-        stuckBadge: 'Stuck', stuckIdle: 'no progress for {seconds} s', stuckFocus: 'focus lost', stuckHint: 'hint level {level}',
+        stuckBadge: 'Stuck', stuckIdle: 'no progress for {seconds} s', stuckHint: 'hint level {level}',
         logHintShown: 'Hint level {level}: {task} ({seconds} s without progress)',
         // quick actions on a tile, and the intervention history of the session
         tileActionsLabel: 'Quick actions',
@@ -250,7 +250,7 @@
         multiKeypad: 'teclado liberado ao participante',
         stuckLimitLabel: 'Travado após', stuckLimitUnit: 's',
         soundLabel: 'Som do alerta', soundOn: 'ligado', soundOff: 'desligado', soundBlocked: 'clique para ativar',
-        stuckBadge: 'Travado', stuckIdle: 'sem progresso há {seconds} s', stuckFocus: 'foco perdido', stuckHint: 'dica nível {level}',
+        stuckBadge: 'Travado', stuckIdle: 'sem progresso há {seconds} s', stuckHint: 'dica nível {level}',
         logHintShown: 'Dica nível {level}: {task} ({seconds} s sem progresso)',
         tileActionsLabel: 'Ações rápidas',
         tileReturnObjects: 'Recolher objetos', tileRecenter: 'Recentralizar', tileReset: 'Reiniciar',

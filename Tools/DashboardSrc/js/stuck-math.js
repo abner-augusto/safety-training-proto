@@ -30,8 +30,12 @@ export function parseThresholdSeconds(raw) {
   return Math.min(MAX_STUCK_SECONDS, Math.max(MIN_STUCK_SECONDS, Math.round(n)));
 }
 
+function focusSources(pauseSources) {
+  return Array.isArray(pauseSources) ? pauseSources.filter(token => FOCUS_PAUSE_SOURCES.has(token)) : [];
+}
+
 export function focusLost(pauseSources) {
-  return Array.isArray(pauseSources) && pauseSources.some(token => FOCUS_PAUSE_SOURCES.has(token));
+  return focusSources(pauseSources).length > 0;
 }
 
 export function createProgress() {
@@ -126,7 +130,7 @@ export function evaluateStuck(progress, { connected, now, thresholdSeconds }) {
   const secondsWithoutProgress = Math.max(0, Math.floor((now - progress.lastProgressAt) / 1000));
   const verdict = (reason, extra) => ({ stuck: reason !== null, reason, secondsWithoutProgress, ...extra });
   if (!connected || !progress.active) return verdict(null);
-  if (focusLost(progress.pauseSources)) return verdict('focus', { pauseSources: progress.pauseSources });
+  if (focusLost(progress.pauseSources)) return verdict('focus', { pauseSources: focusSources(progress.pauseSources) });
   if (progress.pauseSources.length > 0) return verdict(null);
   if (progress.hint && progress.hint.level >= HINT_ALERT_LEVEL) return verdict('hint', { hint: progress.hint });
   if (secondsWithoutProgress >= thresholdSeconds) return verdict('idle');
