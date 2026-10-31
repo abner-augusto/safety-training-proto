@@ -25,7 +25,7 @@ namespace SafetyProto.Runtime.Scaffolding
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(Grabbable))]
-    public class ScaffoldPieceInstaller : MonoBehaviour, ISessionResettable
+    public class ScaffoldPieceInstaller : MonoBehaviour, ISessionResettable, ISecuredPlacement
     {
         public enum InstallMode { SingleSocket, TwoSockets }
 
@@ -145,6 +145,7 @@ namespace SafetyProto.Runtime.Scaffolding
         private System.Action<PopupClosedEventArgs> _onPopupClosed;
 
         public bool IsInstalled        => _isInstalled;
+        bool ISecuredPlacement.IsSecured => _isInstalled;
         public bool IsValidInstallPose => HasValidInstallPose();
 
         /// <summary>How many hands are currently holding the piece.</summary>
@@ -272,10 +273,7 @@ namespace SafetyProto.Runtime.Scaffolding
             ResetInstall();
 
             if (returnHome != null)
-            {
-                returnHome.enabled = true;
                 returnHome.BeginReturnNow();
-            }
 
             onInstallReverted?.Invoke();
             SafetyLog.Info($"[ScaffoldPieceInstaller] '{name}' desinstalado — tentativa recusada pelas regras de segurança.", this);
@@ -292,7 +290,6 @@ namespace SafetyProto.Runtime.Scaffolding
                 SetCollidersEnabled(true);
             SetPhysicsEnabled(true);
             SetGrabEnabled(true);
-            if (returnHome != null) returnHome.enabled = true;
             SetFeedbackColor(idleColor);
             UpdateTargetPreviewVisibility();
         }
@@ -361,10 +358,7 @@ namespace SafetyProto.Runtime.Scaffolding
             _isInstalled = true;
 
             if (returnHome != null)
-            {
                 returnHome.CancelReturn();
-                returnHome.enabled = false;
-            }
 
             if (lockAfterInstalled)
                 SetPhysicsEnabled(false);

@@ -18,7 +18,7 @@ namespace SafetyProto.Runtime.PPE
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(PPEItem))]
-    public class PPESnapItem : MonoBehaviour, IPoseAttachment
+    public class PPESnapItem : MonoBehaviour, IPoseAttachment, ISecuredPlacement
     {
         [Header("Snap")]
         [Tooltip("Fallback radius to search for a compatible slot on release (helps if trigger exit happens right as you let go).")]
@@ -45,7 +45,7 @@ namespace SafetyProto.Runtime.PPE
         [SerializeField] private HandGrabInteractable handGrabInteractable;
 
         [Header("Optional Behaviors")]
-        [Tooltip("If present, this will be disabled while snapped so it doesn't fight the snap pose. Auto-found if left empty.")]
+        [Tooltip("Sends the item home after it is taken off a slot without a hand holding it. Auto-found if left empty.")]
         [SerializeField] private ReturnObjectHome returnObjectHome;
 
         [Header("Audio Feedback")]
@@ -68,6 +68,8 @@ namespace SafetyProto.Runtime.PPE
 
         /// <summary>Whether this item is currently attached to a body slot.</summary>
         public bool IsSnapped => _isSnapped && _currentSlot != null;
+
+        bool ISecuredPlacement.IsSecured => IsSnapped;
 
         /// <summary>Whether a hand is holding this item.</summary>
         public bool IsGrabbed => _isGrabbed;
@@ -220,12 +222,6 @@ namespace SafetyProto.Runtime.PPE
                 return;
             }
 
-            if (returnObjectHome != null)
-            {
-                returnObjectHome.CancelReturn();
-                returnObjectHome.enabled = false;
-            }
-
             if (_isSnapped)
                 SafetyLog.Info($"PPESnapItem [{name}]: grabbed while snapped, monitoring pull distance.", this);
         }
@@ -238,12 +234,7 @@ namespace SafetyProto.Runtime.PPE
             PPESnapSlot slot = FindSlotToSnap();
             if (slot != null && slot.TryAcceptSnap(this))
                 SnapTo(slot);
-            else if (returnObjectHome != null)
-            {
-                returnObjectHome.enabled = true;
-                returnObjectHome.RequestReturn();
-            }
-            else
+            else if (returnObjectHome == null)
                 SetPhysicsEnabled(true);
         }
 
@@ -303,9 +294,6 @@ namespace SafetyProto.Runtime.PPE
             ApplySnapPose(slot.transform.position, slot.transform.rotation, true);
             SetPhysicsEnabled(false);
 
-            if (returnObjectHome != null)
-                returnObjectHome.enabled = false;
-
             PlaySnapAudio();
             SafetyLog.Info($"PPESnapItem [{name}]: snapped to {slot.name}", this);
         }
@@ -322,10 +310,7 @@ namespace SafetyProto.Runtime.PPE
             PlayUnsnapAudio();
 
             if (returnObjectHome != null && !_isGrabbed)
-            {
-                returnObjectHome.enabled = true;
                 returnObjectHome.RequestReturn();
-            }
         }
 
         private void LateUpdate()
