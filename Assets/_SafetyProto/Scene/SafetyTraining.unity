@@ -12890,6 +12890,50 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 521882658}
   m_Mesh: {fileID: 8017350016548043389, guid: 9b1545b790c85354a9b6449bb3dee586, type: 3}
+--- !u!1 &529125584
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 529125585}
+  - component: {fileID: 529125586}
+  m_Layer: 0
+  m_Name: HighlightTargetCommandHandler
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &529125585
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 529125584}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7322035375745015844}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &529125586
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 529125584}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35d298385dda93547a1dd01c534ec59b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Networking.Unity::SafetyProto.Runtime.HighlightTargetCommandHandler
 --- !u!1 &543328884
 GameObject:
   m_ObjectHideFlags: 0
@@ -58728,6 +58772,54 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1013343662}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1969495573
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1969495574}
+  - component: {fileID: 1969495575}
+  m_Layer: 0
+  m_Name: AttentionService
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1969495574
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1969495573}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7322035375745015844}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1969495575
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1969495573}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55839cfde558bfb4db095eb5f65f27a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Feedback.AttentionService
+  pulseShader: {fileID: 4800000, guid: 58b142d597652ed47929332783cfe897, type: 3}
+  pingClip: {fileID: 8300000, guid: 35219044b859c854db170f30da70d5f7, type: 3}
+  pingVolume: 0.8
+  pingIntervalSeconds: 1.5
 --- !u!1 &1969975395
 GameObject:
   m_ObjectHideFlags: 0
@@ -70438,6 +70530,8 @@ Transform:
   - {fileID: 1554790567}
   - {fileID: 1420690869}
   - {fileID: 54888882}
+  - {fileID: 1969495574}
+  - {fileID: 529125585}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7322035375745015845

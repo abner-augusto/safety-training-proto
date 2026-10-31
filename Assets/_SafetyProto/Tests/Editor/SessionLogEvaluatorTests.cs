@@ -76,6 +76,22 @@ namespace SafetyProto.Tests.Editor
             StringAssert.Contains("2 EPIs", (string?)entry["details"]);
         }
 
+        [Test]
+        public void HighlightCommand_IsLoggedWithItsTarget()
+        {
+            _bus.Publish(new SessionStartedEventArgs { SessionId = "S1", TotalTasks = 9, TimestampMs = 1000L, Attempt = 1 });
+            _bus.Publish(new EvaluatorCommandEventArgs
+            {
+                SessionId = "S1", Command = "highlight_target", Target = "ppe:Safety_Helmet",
+                Summary = "Capacete destacado por 8 s.", TimestampMs = 7000L
+            });
+
+            var entry = ((JArray)WriteLog()["entries"]!).Single(e => (string?)e["eventName"] == "EvaluatorCommand");
+            Assert.AreEqual("highlight_target", (string?)entry["data"]!["command"]);
+            Assert.AreEqual("ppe:Safety_Helmet", (string?)entry["data"]!["target"]);
+            StringAssert.Contains("chamar atenção", (string?)entry["details"]);
+        }
+
         private JObject WriteLog()
         {
             var path = _logger.WriteLogAsync().GetAwaiter().GetResult();

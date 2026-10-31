@@ -148,6 +148,12 @@ namespace SafetyProto.Runtime.Scaffolding
         bool ISecuredPlacement.IsSecured => _isInstalled;
         public bool IsValidInstallPose => HasValidInstallPose();
 
+        /// <summary>The action this piece publishes when installed.</summary>
+        public string ActionId => GetConfiguredActionId();
+
+        /// <summary>The ghost on the scaffold socket, or null.</summary>
+        public Renderer TargetPreviewRenderer => targetPreviewRenderer;
+
         /// <summary>How many hands are currently holding the piece.</summary>
         public int SelectingHandCount  => grabbable != null ? grabbable.SelectingPointsCount : 0;
 

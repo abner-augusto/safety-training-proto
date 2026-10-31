@@ -236,6 +236,24 @@ namespace SafetyProto.Domain.Dashboard
         public string reason;
     }
 
+    /// <summary>One object the evaluator can make pulse with highlight_target.</summary>
+    [Serializable]
+    public struct HighlightTargetDto
+    {
+        public string id;
+        /// <summary>Portuguese label shown in the dashboard's picker.</summary>
+        public string label;
+        /// <summary>Grouping token: ppe, distractor, slot, piece, socket, anchor, lanyard, action, tool.</summary>
+        public string kind;
+    }
+
+    /// <summary>Every attention target of the loaded scene, sent on every RequestSync.</summary>
+    [Serializable]
+    public struct HighlightTargetsDto
+    {
+        public HighlightTargetDto[] targets;
+    }
+
     /// <summary>Static scene geometry for the dashboard viewport, sent on every RequestSync.
     /// Positions and rotations are Unity world space; the dashboard mirrors Z.</summary>
     [Serializable]

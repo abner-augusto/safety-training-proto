@@ -37,6 +37,9 @@ namespace SafetyProto.Runtime.PPE
 
         public bool IsTriggered => _triggered;
 
+        /// <summary>The action this object publishes when grabbed.</summary>
+        public string ActionId => string.IsNullOrWhiteSpace(actionId) ? string.Empty : actionId.Trim();
+
         private string ResolvedSourceId => string.IsNullOrWhiteSpace(sourceId) ? name : sourceId.Trim();
 
         private void Awake()

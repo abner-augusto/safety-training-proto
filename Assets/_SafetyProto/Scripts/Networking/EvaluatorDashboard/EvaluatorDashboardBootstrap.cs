@@ -322,7 +322,8 @@ namespace SafetyProto.Networking.Dashboard
                 EventBus.Instance.Publish(new EvaluatorCommandEventArgs
                 {
                     Command = command.command,
-                    Summary = reason ?? string.Empty
+                    Summary = reason ?? string.Empty,
+                    Target = command.args?.targetId ?? string.Empty
                 });
             }
 
@@ -385,6 +386,10 @@ namespace SafetyProto.Networking.Dashboard
             var sceneLayout = FindAnyObjectByType<DashboardSceneLayout>();
             if (sceneLayout != null)
                 _wsServer.SendToClient(client, "SceneLayout", sceneLayout.Build());
+
+            if (SafetyProto.Runtime.Feedback.AttentionService.Instance != null)
+                _wsServer.SendToClient(client, "HighlightTargets",
+                    DashboardDtoMapper.ToHighlightTargets(SafetyProto.Runtime.Feedback.AttentionService.Instance.Targets));
 
             var sessionId = EventContext.CurrentSessionId;
             if (string.IsNullOrEmpty(sessionId)) return;

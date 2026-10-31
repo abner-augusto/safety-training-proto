@@ -76,6 +76,7 @@ namespace SafetyProto.Domain.Sessions
             public string[]? pauseSources;
             public bool held;
             public string command;
+            public string target;
             public string previousSessionId;
             public int attempt;
         }
@@ -290,7 +291,7 @@ namespace SafetyProto.Domain.Sessions
             };
             _onEvaluatorCommand = args => LogEvent("EvaluatorCommand", DescribeEvaluatorCommand(args),
                 args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
-                new LogData { command = args.Command ?? string.Empty, message = args.Summary ?? string.Empty });
+                new LogData { command = args.Command ?? string.Empty, message = args.Summary ?? string.Empty, target = args.Target ?? string.Empty });
             _onPauseHoldChanged = args =>
             {
                 _activeHolds = args.ActiveSources ?? Array.Empty<PauseSource>();
@@ -377,6 +378,7 @@ namespace SafetyProto.Domain.Sessions
                 "recenter_player" => "recentralizar jogador",
                 "calibrate_room_center" => "calibrar centro da sala",
                 "return_all_ppe" => "recolher objetos soltos",
+                "highlight_target" => "chamar atenção",
                 _ => args.Command ?? string.Empty
             };
             return string.IsNullOrWhiteSpace(args.Summary)

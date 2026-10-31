@@ -127,6 +127,19 @@ namespace SafetyProto.Runtime.PPE
                 Destroy(_highlightMaterial);
         }
 
+        /// <summary>The PPE types this slot takes, as authored in its action mappings; empty when it takes any.</summary>
+        public System.Collections.Generic.IReadOnlyList<PPEType> AcceptedTypes
+        {
+            get
+            {
+                var types = new System.Collections.Generic.List<PPEType>();
+                if (ppeActionMappings != null)
+                    foreach (var mapping in ppeActionMappings)
+                        if (!types.Contains(mapping.ppeType)) types.Add(mapping.ppeType);
+                return types;
+            }
+        }
+
         public bool Accepts(PPEType type)
         {
             if (ppeActionMappings != null && ppeActionMappings.Length > 0)

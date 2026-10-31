@@ -356,6 +356,8 @@ namespace SafetyProto.Core
         public string Command;
         /// <summary>Portuguese result summary from the handler; empty when it gave none.</summary>
         public string Summary;
+        /// <summary>Id of the object the command acted on ("ppe:Safety_Helmet"); empty for commands without one.</summary>
+        public string Target;
     }
 
     [System.Serializable]

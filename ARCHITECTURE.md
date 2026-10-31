@@ -690,14 +690,19 @@ domain:
   starts `EvaluatorWebSocketServer` and `MiniHttpServer`, serves the generated
   dashboard files from `Resources/Dashboard/`, and runs `PoseSender`.
 - Telemetry is one-way. Two inbound envelopes exist: `RequestSync`, answered
-  with the scene layout, session, manifest, and score for that client only, and
-  `Command`, routed to scene components that implement
+  with the scene layout, the attention targets, session, manifest, and score for
+  that client only, and `Command`, routed to scene components that implement
   `IDashboardCommandHandler` (`recenter_player`, `calibrate_room_center`,
-  `return_all_ppe`, `reset_session`, and `start_session`, whose
-  `IDashboardCommandWithArgs` handler reads the envelope's `args`) and
+  `return_all_ppe`, `reset_session`, `start_session` and `highlight_target`; the
+  last two are `IDashboardCommandWithArgs` handlers that read the envelope's
+  `args`) and
   acknowledged with `CommandAckDto`; an accepted ack may carry a result summary.
   Accepted in-session commands are published as `EvaluatorCommandEventArgs` for
-  the session log. The bootstrap also pushes `StationStatus` (waiting for a
+  the session log, with the target id when the command has one.
+  `highlight_target` goes through `AttentionService` (`Runtime/Feedback`), which
+  lists every interactive thing in the scene and makes it pulse with an overlay
+  copy of its mesh, so the cue works on any base shader; the onboarding
+  highlight uses the same service. The bootstrap also pushes `StationStatus` (waiting for a
   start, session state, battery, device) on sync, after commands, on session
   start and completion, and every 5 s. Handlers are discovered by type when the
   scene loads; no command reaches the domain, and the event protocol stays

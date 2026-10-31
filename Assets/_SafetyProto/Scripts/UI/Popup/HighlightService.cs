@@ -1,36 +1,27 @@
 using SafetyProto.Core.Logging;
+using SafetyProto.Runtime.Feedback;
 using UnityEngine;
 
 namespace SafetyProto.UI
 {
+    /// <summary>The onboarding's highlight: keeps a target pulsing through <see cref="AttentionService"/>.</summary>
     public static class HighlightService
     {
-        private static readonly int OutlineEnabledId =
-            Shader.PropertyToID("_OutlineEnabled");
-        private static readonly MaterialPropertyBlock _mpb =
-            new MaterialPropertyBlock();
+        private static bool _warned;
 
-        public static void Enable(GameObject target)  => SetOutline(target, 1f);
-        public static void Disable(GameObject target) => SetOutline(target, 0f);
-
-        private static void SetOutline(GameObject target, float value)
+        public static void Enable(GameObject target)
         {
-            if (target == null) return;
-
-            var renderers = target.GetComponentsInChildren<Renderer>(includeInactive: true);
-            if (renderers.Length == 0)
+            var service = AttentionService.Instance;
+            if (service == null)
             {
-                SafetyLog.Warning(
-                    $"HighlightService: nenhum Renderer encontrado em '{target.name}'.");
+                if (!_warned)
+                    SafetyLog.Warning("HighlightService: nenhum AttentionService na cena; o destaque do onboarding não aparece.");
+                _warned = true;
                 return;
             }
-
-            foreach (var r in renderers)
-            {
-                r.GetPropertyBlock(_mpb);
-                _mpb.SetFloat(OutlineEnabledId, value);
-                r.SetPropertyBlock(_mpb);
-            }
+            service.Hold(target);
         }
+
+        public static void Disable(GameObject target) => AttentionService.Instance?.Release(target);
     }
 }

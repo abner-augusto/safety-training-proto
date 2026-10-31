@@ -36,5 +36,9 @@ namespace SafetyProto.Networking.Dashboard
         public string participantCode = string.Empty;
         /// <summary>Session mode token, "guiado" or "avaliacao", for start_session.</summary>
         public string mode = string.Empty;
+        /// <summary>Attention target id from the HighlightTargets list, for highlight_target.</summary>
+        public string targetId = string.Empty;
+        /// <summary>How long the target pulses, for highlight_target; 0 takes the default.</summary>
+        public float durationSeconds;
     }
 }
