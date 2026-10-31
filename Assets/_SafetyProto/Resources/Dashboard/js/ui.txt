@@ -307,7 +307,7 @@
       }
     }
 
-    /* ── Interventions: the evaluator commands of this session, newest first ── */
+    /** The evaluator commands of this session, newest first. */
     const INTERVENTION_LOG_TYPE = { accepted: 'success', rejected: 'violation', noResponse: 'violation', pending: 'caution' };
     /* The app's own reason (accepted summary or refusal) wins; these cover an ack without one. */
     const INTERVENTION_FALLBACK_KEY = {

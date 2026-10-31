@@ -45,6 +45,7 @@ export function createProgress() {
     sessionId: null,
     lastProgressAt: 0,        // ms, the page's own clock
     pauseSources: [],
+    pausedAt: 0,              // ms when the current pause began; 0 while running
     hint: null,               // { level, taskId, taskName, secondsWithoutProgress, at }
     attempt: null,            // the last ActionAttempt, kept so a refusal can undo it
     lastRefusalAt: 0,
@@ -62,14 +63,23 @@ function stop(progress) {
 function startSession(progress, sessionId, now) {
   // RequestSync replays SessionStarted after a reconnect: whatever happened during the gap is unknown.
   if (progress.active && progress.sessionId === sessionId) return { ...progress, lastProgressAt: now };
-  return { ...createProgress(), active: true, sessionId, lastProgressAt: now, pauseSources: progress.pauseSources };
+  return { ...createProgress(), active: true, sessionId, lastProgressAt: now,
+    pauseSources: progress.pauseSources, pausedAt: progress.pauseSources.length ? now : 0 };
 }
 
-/* Time spent paused is not idle time, so the clock restarts when the last hold is released. */
+/* Time spent paused is not idle time: when the last hold goes, the idle clock skips the paused
+   stretch. A pause is not progress either, so a hint alert stays until the participant moves on;
+   the headset releases a feedback popup's hold while the participant is still stuck. */
 function withPauseSources(progress, sources, now) {
   const pauseSources = sources.filter(Boolean);
-  const released = progress.pauseSources.length > 0 && pauseSources.length === 0;
-  return released ? { ...advance(progress, now), pauseSources } : { ...progress, pauseSources };
+  const wasPaused = progress.pauseSources.length > 0;
+  const isPaused = pauseSources.length > 0;
+  if (!wasPaused && isPaused) return { ...progress, pauseSources, pausedAt: now };
+  if (wasPaused && !isPaused) {
+    const pausedFor = progress.pausedAt ? Math.max(0, now - progress.pausedAt) : 0;
+    return { ...progress, pauseSources, pausedAt: 0, lastProgressAt: progress.lastProgressAt + pausedFor };
+  }
+  return { ...progress, pauseSources };
 }
 
 function acceptAttempt(progress, now) {

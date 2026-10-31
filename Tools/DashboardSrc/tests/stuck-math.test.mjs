@@ -132,13 +132,13 @@ test('the single pauseSource field of an older relay still counts', () => {
   assert.equal(check(p, 5).reason, 'focus');
 });
 
-test('resuming clears the alert and restarts the idle clock', () => {
+test('resuming clears the focus alert, and the paused time does not count as idle', () => {
   const paused = replay([started, ['SessionPaused', { pauseSources: ['XrSessionUnfocused'] }, 5]]);
   assert.equal(check(paused, 200).stuck, true);
   const resumed = trackProgress(paused, 'SessionResumed', { pauseSource: 'XrSessionUnfocused', pauseSources: [] }, T0 + sec(200));
   assert.equal(check(resumed, 200).stuck, false);
-  assert.equal(check(resumed, 259).stuck, false);
-  assert.equal(check(resumed, 260).stuck, true);
+  assert.equal(check(resumed, 254).stuck, false, '5 s before the pause + 54 s after');
+  assert.equal(check(resumed, 255).stuck, true);
 });
 
 test('the last hold being released through PauseHoldChanged or StationStatus also clears it', () => {
@@ -146,7 +146,7 @@ test('the last hold being released through PauseHoldChanged or StationStatus als
   assert.equal(check(held, 300).stuck, false);
   const released = trackProgress(held, 'PauseHoldChanged', { pauseSource: 'Popup', pauseSources: [], held: false }, T0 + sec(300));
   assert.equal(check(released, 301).stuck, false);
-  assert.equal(check(released, 360).stuck, true);
+  assert.equal(check(released, 355).stuck, true);
 
   const viaStatus = replay([started, ['StationStatus', { sessionActive: true, pauseSources: ['ApplicationFocus'] }, 5],
     ['StationStatus', { sessionActive: true, pauseSources: [] }, 100]]);
@@ -177,15 +177,23 @@ test('a hint does not count as progress', () => {
   assert.equal(check(p, 60).stuck, true);
 });
 
-test('progress or a resume clears a hint alert', () => {
+test('progress clears a hint alert', () => {
   const hinted = replay([started, ['HintShown', { level: 3, taskId: 'a' }, 10]]);
   for (const [type, payload] of [['TaskCompleted', { taskId: 'a' }], ['TaskStarted', { taskId: 'b' }], ['ActionAttempt', { actionId: 'x' }]]) {
     const cleared = trackProgress(hinted, type, payload, T0 + sec(20));
     assert.equal(check(cleared, 21).stuck, false, type);
   }
-  const paused = trackProgress(hinted, 'SessionPaused', { pauseSources: ['Popup'] }, T0 + sec(20));
-  const resumed = trackProgress(paused, 'SessionResumed', { pauseSources: [] }, T0 + sec(30));
-  assert.equal(check(resumed, 31).stuck, false);
+});
+
+test('a feedback popup opening and closing does not clear a hint alert or reset the idle clock', () => {
+  // A participant stuck in a refusal loop: every refused try opens a warning whose hold ends while
+  // the participant is still stuck.
+  const hinted = replay([started, ['HintShown', { level: 3, taskId: 'a' }, 60],
+    ['PauseHoldChanged', { pauseSources: ['Popup'] }, 70], ['PauseHoldChanged', { pauseSources: [] }, 76]]);
+  const r = check(hinted, 77);
+  assert.equal(r.stuck, true);
+  assert.equal(r.reason, 'hint');
+  assert.equal(r.secondsWithoutProgress, 71, '77 s since the start minus the 6 s paused');
 });
 
 test('a hint with a missing or garbled level never raises the alert', () => {

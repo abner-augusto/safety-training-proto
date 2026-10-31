@@ -90,7 +90,7 @@
       return tile.status && Date.now() - tile.lastStatusAt <= SILENT_AFTER_MS ? tile.status : null;
     }
 
-    /* ── Alert sound: synthesized, so no audio asset has to ship with the dashboard ── */
+    // The alert sound is synthesized, so no audio asset has to ship with the dashboard.
     let audioCtx = null;
     let soundOn = readStored(SOUND_KEY) !== 'off';
     let lastBeepAt = 0;
@@ -155,7 +155,6 @@
       renderSoundButton();
     };
 
-    /* ── Tiles ── */
     function sendToStation(iframe, envelope) {
       if (!iframe.contentWindow) return false;
       postTo(iframe, { type: 'sp-command', envelope });

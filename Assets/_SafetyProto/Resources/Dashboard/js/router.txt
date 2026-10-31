@@ -228,8 +228,8 @@
       else if (p.kind === 'RoomCenterDiscarded') addLog(t('logRoomCenterDiscarded'), 'caution');
     });
 
-    /* The app's graded help (not emitted yet): the shell raises the stuck alert from the progress
-       state; this only puts the line in the log. */
+    /* The app's graded help: the shell raises the stuck alert from the progress state; this only
+       puts the line in the log. */
     on('HintShown', p => {
       const seconds = Math.round(Number(p.secondsWithoutProgress) || 0);
       addLog(tf('logHintShown', { level: p.level, task: p.taskName || p.taskId || '—', seconds }), 'caution');

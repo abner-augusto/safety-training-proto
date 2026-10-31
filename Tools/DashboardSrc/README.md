@@ -54,7 +54,8 @@ did not refuse; N
 defaults to 60 and is kept in `localStorage` as `sp_stuck_seconds`), at once when
 the session is paused by a focus token (`ApplicationFocus`, `ApplicationPause`,
 `XrSessionUnfocused`; `Popup` and `PauseMenu` are not stuck), and at once on a
-`HintShown` event of level 3. Resuming or progressing clears it. The chime is
+`HintShown` event of level 3. Resuming clears a focus alert; only progress
+clears the others, and time spent paused never counts as idle. The chime is
 synthesized with Web Audio (no asset to ship) and plays once per alert; browsers
 start audio only after a click in the shell, so the sound button says "clique
 para ativar" until then.
