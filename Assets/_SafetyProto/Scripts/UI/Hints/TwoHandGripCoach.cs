@@ -9,8 +9,8 @@ namespace SafetyProto.UI
     /// <summary>
     /// Tells a participant holding a two-hand piece (the toeboard) with one hand to use both: the
     /// spot where the second hand goes pulses, a short cue sounds, and the first time in the
-    /// session a voice line says it. On 28/10 a participant tried for a long time with one hand,
-    /// with nothing telling them why the piece would not install. Covers every
+    /// session a voice line says it; otherwise nothing tells the participant why the piece will
+    /// not install. Covers every
     /// <see cref="ScaffoldPieceInstaller"/> whose <see cref="ScaffoldPieceInstaller.RequiresTwoHands"/>
     /// is set; pieces that accept one hand never warn.
     /// </summary>
