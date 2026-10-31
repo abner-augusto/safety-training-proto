@@ -85,6 +85,7 @@
           <span id="session-id-label">—</span>
           <span id="conn-status-label">Desconectado</span>
           <span id="pause-chip" class="pause-chip" hidden>—</span>
+          <span id="practice-chip" class="practice-chip" data-i18n="practiceChip" hidden>Em prática</span>
         </div>
         <div class="s-header-meta station-meta">
           <span id="device-label" hidden>—</span>
@@ -159,6 +160,14 @@
             <div class="command-control">
               <button class="report-btn secondary command-btn" id="btn-calibrate-center" data-i18n="calibrateCenterButton">Calibrar centro (participante no X)</button>
               <div class="command-status" id="calibrate-center-status" aria-live="polite"></div>
+            </div>
+          </div>
+          <!-- Only while the participant is in the practice area (renderPractice in station.js) -->
+          <div id="practice-controls" hidden>
+            <div class="command-group-label" data-i18n="practiceGroup">Prática</div>
+            <div class="command-control">
+              <button class="report-btn secondary command-btn" id="btn-end-practice" data-i18n="endPracticeButton">Encerrar prática</button>
+              <div class="command-status" id="end-practice-status" aria-live="polite"></div>
             </div>
           </div>
           <div class="command-group-label" data-i18n="objectsGroup">Objetos</div>

@@ -113,6 +113,7 @@
         paused: 'Paused', battery: 'Battery', charging: 'charging',
         pauseSrcPopup: 'popup', pauseSrcPauseMenu: 'pause menu', pauseSrcXrSessionUnfocused: 'system menu / headset off',
         pauseSrcApplicationPause: 'headset asleep', pauseSrcApplicationFocus: 'focus lost', pauseSrcUnspecified: 'unknown source',
+        pauseSrcPractice: 'practice area',
         detailHeld: 'held', detailReleased: 'released', detailRestartOf: 'restart of',
         multiTitle: 'Several headsets', multiAddPlaceholder: 'Headset IP (e.g. 192.168.0.12)', multiAdd: 'Add',
         multiRemove: 'Remove', multiExpand: 'Expand', multiCollapse: 'Show all', multiOpen: 'Open in a new tab',
@@ -147,6 +148,16 @@
         handsGroup: 'Hands (interaction test)', handPush: 'Push the objects', handPassThrough: 'Pass through the objects',
         handApply: 'Apply to the hands', handSuccess: 'Hand mode changed.', handFailed: 'Hand mode refused.',
         command_start_session: 'Start session',
+        // practice area (before the training): chip, end button, tile action, event feed
+        practiceChip: 'Practicing', practiceGroup: 'Practice',
+        endPracticeButton: 'End practice', endPracticeSuccess: 'Practice ended.', endPracticeFailed: 'End refused.',
+        tileEndPractice: 'End practice', multiPractice: 'practicing',
+        command_end_practice: 'End practice',
+        logPracticeStarted: 'Practice area opened',
+        logPracticeEnded: 'Practice area closed {reason} · {seconds} s · interactions done: {tried}',
+        practiceReason_continue: 'by the participant', practiceReason_timeout: 'when time ran out',
+        practiceReason_evaluator: 'by the evaluator', practiceReason_unknown: 'for an unknown reason',
+        practiceTried: 'interactions done',
       },
       pt: {
         currentScore: 'Pontuação',
@@ -255,6 +266,7 @@
         paused: 'Pausada', battery: 'Bateria', charging: 'carregando',
         pauseSrcPopup: 'popup', pauseSrcPauseMenu: 'menu de pausa', pauseSrcXrSessionUnfocused: 'menu do sistema / óculos retirado',
         pauseSrcApplicationPause: 'óculos em repouso', pauseSrcApplicationFocus: 'foco perdido', pauseSrcUnspecified: 'origem desconhecida',
+        pauseSrcPractice: 'área de prática',
         detailHeld: 'retida', detailReleased: 'liberada', detailRestartOf: 'reinício de',
         multiTitle: 'Vários óculos', multiAddPlaceholder: 'IP do óculos (ex.: 192.168.0.12)', multiAdd: 'Adicionar',
         multiRemove: 'Remover', multiExpand: 'Ampliar', multiCollapse: 'Mostrar todos', multiOpen: 'Abrir em nova aba',
@@ -287,6 +299,15 @@
         handsGroup: 'Mãos (teste de interação)', handPush: 'Empurram os objetos', handPassThrough: 'Atravessam os objetos',
         handApply: 'Aplicar às mãos', handSuccess: 'Modo das mãos alterado.', handFailed: 'Modo das mãos recusado.',
         command_start_session: 'Iniciar sessão',
+        practiceChip: 'Em prática', practiceGroup: 'Prática',
+        endPracticeButton: 'Encerrar prática', endPracticeSuccess: 'Prática encerrada.', endPracticeFailed: 'Encerramento recusado.',
+        tileEndPractice: 'Encerrar prática', multiPractice: 'em prática',
+        command_end_practice: 'Encerrar prática',
+        logPracticeStarted: 'Área de prática aberta',
+        logPracticeEnded: 'Área de prática encerrada {reason} · {seconds} s · interações feitas: {tried}',
+        practiceReason_continue: 'pelo participante', practiceReason_timeout: 'por tempo esgotado',
+        practiceReason_evaluator: 'pelo avaliador', practiceReason_unknown: 'por motivo desconhecido',
+        practiceTried: 'interações feitas',
       }
     };
 
@@ -343,6 +364,9 @@
     export const tf = (k, vars) => t(k).replace(/\{(\w+)\}/g, (m, name) => (vars && name in vars ? String(vars[name]) : m));
     /** Short label for a PauseSource token. */
     export const pauseSourceLabel = token => t(`pauseSrc${token || 'Unspecified'}`);
+    /** How a practice area ended ("continue" | "timeout" | "evaluator"), worded to follow "encerrada". */
+    export const practiceReasonLabel = reason =>
+      t(i18n.pt[`practiceReason_${reason}`] ? `practiceReason_${reason}` : 'practiceReason_unknown');
     /** Label for an evaluator command's wire name; a command this page does not know shows its name. */
     export const commandLabel = command => i18n[lang][`command_${command}`] ?? i18n.pt[`command_${command}`] ?? String(command || '—');
     export function setLang(next) {

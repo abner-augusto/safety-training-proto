@@ -47,7 +47,34 @@
       state.station = payload ?? null;
       // A page that connected mid-pause never saw the hold events; the status carries them.
       if (Array.isArray(payload?.pauseSources)) state.pauseSources = payload.pauseSources.filter(Boolean);
+      // An app that predates the practice area omits the flag, and then the events decide.
+      if (typeof payload?.practice === 'boolean') state.practice = payload.practice;
       renderStation();
+    }
+
+    /** Routed from PracticeStarted and PracticeEnded; the status confirms it on the next sync. */
+    export function setPractice(practicing) {
+      state.practice = !!practicing;
+      renderStation();
+    }
+
+    let practiceShown = false;
+
+    /* The practice chip and the end-practice control exist only while the participant is in the
+       practice area. The control's status line is cleared on each appearance: the ack of the last
+       end arrives after the control is already hidden, and would otherwise greet the next one. */
+    function renderPractice() {
+      const practicing = state.connected && state.practice;
+      const chip = document.getElementById('practice-chip');
+      if (chip) chip.hidden = !practicing;
+      const controls = document.getElementById('practice-controls');
+      if (!controls) return;
+      controls.hidden = !practicing;
+      if (practicing && !practiceShown) {
+        const status = document.getElementById('end-practice-status');
+        if (status) { status.textContent = ''; status.className = 'command-status'; }
+      }
+      practiceShown = practicing;
     }
 
     export function setPauseSources(list) {
@@ -110,6 +137,7 @@
       if (form) form.classList.toggle('disabled', phase === 'offline');
       renderDeviceChips();
       renderPauseChip();
+      renderPractice();
       refreshCommandControls();
       notifyShell();
     }
@@ -282,12 +310,13 @@
         ['btn-recenter', 'recenter-status', 'recenter_player', 'recenterButton', 'commandConfirmButton', 'recenterSuccess', 'recenterFailed'],
         ['btn-calibrate-center', 'calibrate-center-status', 'calibrate_room_center', 'calibrateCenterButton', 'commandConfirmButton', 'calibrateCenterSuccess', 'calibrateCenterFailed'],
         ['btn-return-objects', 'return-objects-status', 'return_all_ppe', 'returnObjectsButton', 'commandConfirmButton', 'returnObjectsSuccess', 'returnObjectsFailed'],
+        ['btn-end-practice', 'end-practice-status', 'end_practice', 'endPracticeButton', 'commandConfirmButton', 'endPracticeSuccess', 'endPracticeFailed'],
       ];
       for (const [btnId, statusId, command, button, confirm, success, failed] of inSession) {
         const control = createCommandControl({
           btnId, statusId, command,
           keys: { ...commandStatusKeys, button, confirm, success, failed },
-          isBlocked: offline,
+          isBlocked: () => offline() || (command === 'end_practice' && !state.practice),
         });
         document.getElementById(btnId).onclick = () => control.click(ws);
       }

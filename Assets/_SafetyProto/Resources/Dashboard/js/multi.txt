@@ -3,7 +3,7 @@
     import { applyTheme, toggleTheme } from './theme.js';
     import { createCommandControl, refreshCommandControls, resolveCommandAck } from './ui.js';
     import { MIN_STUCK_SECONDS, MAX_STUCK_SECONDS, parseThresholdSeconds, evaluateStuck, alertChange } from './stuck-math.js';
-    import { TILE_ACTIONS, isActionBlocked } from './tile-actions.js';
+    import { TILE_ACTIONS, isActionBlocked, isActionVisible } from './tile-actions.js';
     import { highlightArgs } from './highlight-targets.js';
     import { fillHighlightPicker } from './station.js';
 
@@ -169,6 +169,7 @@
       const statusId = `mx-${tile.id}-status`;
       tile.el.querySelector('.mx-quick > .command-status').id = statusId;
       const sender = { send: envelope => sendToStation(tile.iframe, envelope) };
+      tile.actionButtons = [];
       for (const action of TILE_ACTIONS) {
         const btnId = `mx-${tile.id}-${action.command}`;
         let picker = null;
@@ -184,6 +185,7 @@
         button.id = btnId;
         button.className = `report-btn secondary command-btn${action.danger ? ' danger' : ''}`;
         buttons.appendChild(button);
+        tile.actionButtons.push({ action, button });
         const control = createCommandControl({
           btnId, statusId, command: action.command,
           keys: {
@@ -330,6 +332,7 @@
           badges.append(badge(`${t('paused')} · ${s.pauseSources.map(pauseSourceLabel).join(' + ')}`, 'orange'));
           if (level !== 'alert') level = 'caution';
         }
+        if (s.practice) badges.append(badge(t('multiPractice'), 'blue'));
         if (s.participantKeypadOpen) { badges.append(badge(t('multiKeypad'), 'orange')); if (level !== 'alert') level = 'caution'; }
         else if (s.awaitingStart) badges.append(badge(t('multiWaiting'), 'blue'));
         const charging = s.batteryStatus === 'Charging' || s.batteryStatus === 'Full';
@@ -351,6 +354,7 @@
       if (level) tile.el.classList.add(level);
 
       if (tile.highlightPicker) fillHighlightPicker(tile.highlightPicker, last ? last.highlightTargets : []);
+      for (const { action, button } of tile.actionButtons) button.hidden = !isActionVisible(action, s);
 
       const count = s ? s.interventionCount : 0;
       tile.el.querySelector('.mx-quick-count').textContent = count > 0 ? `${t('interventionsShort')}: ${count}` : '';

@@ -232,6 +232,7 @@
     .s-header-meta.station-meta { margin-top: 8px; }
     .s-header-meta span[hidden] { display: none; }
     .s-header-meta .pause-chip { color: var(--orange); border-color: var(--orange); font-weight: 600; }
+    .s-header-meta .practice-chip { color: var(--accent); border-color: var(--accent); font-weight: 600; }
     .s-header-meta .battery-chip.warn { color: var(--orange); border-color: var(--orange); }
     .s-header-meta .battery-chip.low  { color: var(--red); border-color: var(--red); font-weight: 600; }
 
@@ -510,6 +511,7 @@
       color: var(--text-dim); margin: 12px 0 6px;
     }
     .command-group-label:first-of-type { margin-top: 0; }
+    #practice-controls { margin-top: 12px; }
 
     /* ── Session: station state + start form ─────────────────────── */
     .station-state {
