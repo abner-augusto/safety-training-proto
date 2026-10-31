@@ -196,6 +196,19 @@ namespace SafetyProto.Runtime.PPE
         /// <summary>The action context of an item a hand let go of at the slot.</summary>
         public const string HandReleaseContext = "ppe_snap";
 
+        /// <summary>
+        /// Whether <see cref="TryAcceptSnap"/> would take the item, without its side effects: a
+        /// decoy or an out-of-order item is refused here with no charge, no note and no popup.
+        /// </summary>
+        public bool CanAccept(PPESnapItem item)
+        {
+            if (item == null) return false;
+            var ppeItem = item.GetComponent<PPEItem>();
+            if (ppeItem != null && ppeItem.isDistractor) return false;
+            if (!Accepts(item.PpeType) || !HasAvailableSpace || ContainsItem(item)) return false;
+            return _taskManager == null || !_taskManager.IsPpeAheadOfCurrentStep(item.PpeType);
+        }
+
         /// <param name="context">Recorded on the action attempt, so the log tells a hand letting go
         /// from a grip the headset lost at the slot.</param>
         public bool TryAcceptSnap(PPESnapItem item, string context = HandReleaseContext)

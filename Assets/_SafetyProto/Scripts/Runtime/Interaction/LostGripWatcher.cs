@@ -26,6 +26,7 @@ namespace SafetyProto.Runtime.Interaction
         private Vector3 _lastPosition;
         private bool _hasLastPosition;
         private bool _disarmed;
+        private static Transform _trackingSpace;
 
         public LostGripWatcher(Rigidbody body, float graceSeconds, float confirmSeconds, float jumpSpeed)
         {
@@ -60,24 +61,29 @@ namespace SafetyProto.Runtime.Interaction
         {
             if (_disarmed || Releasing) return LostGripCause.None;
 
+            // Measured in the tracking space: a teleport or a turn of the rig moves the item in the
+            // world without the hand moving, and must not read as a jump.
+            Vector3 tracked = TrackingSpace() != null ? _trackingSpace.InverseTransformPoint(position) : position;
             float dt = Time.deltaTime;
-            float speed = _hasLastPosition && dt > 0f ? Vector3.Distance(position, _lastPosition) / dt : 0f;
-            _lastPosition = position;
+            float speed = _hasLastPosition && dt > 0f ? Vector3.Distance(tracked, _lastPosition) / dt : 0f;
+            _lastPosition = tracked;
             _hasLastPosition = true;
 
             CollectHoldingHands();
             LostGripCause cause = _policy.Observe(Time.time, nearSlot, HoldingHandsTracked(), speed);
             if (cause == LostGripCause.None || !canSnap) return LostGripCause.None;
 
-            _forcedCause = cause;
-            _forcedUntil = Time.time + ForcedReleaseWindowSeconds;
             _forced.Clear();
             foreach (var grab in _grabs)
                 foreach (var interactor in grab.SelectingInteractors)
-                {
-                    interactor.ForceRelease();
                     _forced.Add(interactor);
-                }
+            // Nothing to release (a grab this watcher cannot drive): leave the hold alone.
+            if (_forced.Count == 0) return LostGripCause.None;
+
+            foreach (var interactor in _forced)
+                interactor.ForceRelease();
+            _forcedCause = cause;
+            _forcedUntil = Time.time + ForcedReleaseWindowSeconds;
             return cause;
         }
 
@@ -98,15 +104,25 @@ namespace SafetyProto.Runtime.Interaction
             return cause;
         }
 
-        // ForceRelease leaves an unselect override that only an Unselect clears. A hand the headset
+        // ForceRelease leaves an unselect override that only Unselect() clears. A hand the headset
         // dropped is disabled instead, which keeps the override, and its next grab would let go at
-        // once. ForceRelease on an interactor that no longer selects clears it.
+        // once. This runs inside the release event, while the interactor still reports Select, so
+        // clear it without looking at the state.
         private void ClearForcedOverrides()
         {
             foreach (var interactor in _forced)
-                if (interactor != null && interactor.State != InteractorState.Select)
-                    interactor.ForceRelease();
+                if (interactor != null) interactor.ClearComputeShouldUnselectOverride();
             _forced.Clear();
+        }
+
+        private static Transform TrackingSpace()
+        {
+            if (_trackingSpace == null)
+            {
+                var rig = Object.FindAnyObjectByType<OVRCameraRig>();
+                if (rig != null) _trackingSpace = rig.trackingSpace;
+            }
+            return _trackingSpace;
         }
 
         private void CollectHoldingHands()

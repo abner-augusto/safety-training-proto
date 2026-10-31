@@ -250,8 +250,8 @@ namespace SafetyProto.Runtime.PPE
 
             PPESnapSlot slot = FindSlotToSnap();
             LostGripCause lostGrip = snapOnLostGrip ? _lostGrip.TakeOnRelease(slot != null) : LostGripCause.None;
-            if (slot == null && lostGrip != LostGripCause.None)
-                slot = UsableRecentSlot();
+            if (lostGrip != LostGripCause.None)
+                slot = UsableRecentSlot() ?? (slot != null && slot.CanAccept(this) ? slot : null);
             ForgetLostGrip();
 
             string context = lostGrip == LostGripCause.None ? PPESnapSlot.HandReleaseContext : LostGripContext(lostGrip);
@@ -261,8 +261,10 @@ namespace SafetyProto.Runtime.PPE
                 SetPhysicsEnabled(true);
         }
 
+        // Only a slot that would take the item: an inferred release must never turn into a decoy
+        // charge or a wrong-order note for a let-go the participant did not make.
         private PPESnapSlot UsableRecentSlot() =>
-            _recentSlot != null && !_recentSlot.IsOccupied && _recentSlot.Accepts(_ppeItem.ppeType) ? _recentSlot : null;
+            _recentSlot != null && _recentSlot.CanAccept(this) ? _recentSlot : null;
 
         private static string LostGripContext(LostGripCause cause) =>
             cause == LostGripCause.Jump ? "ppe_snap:grip_lost=jump" : "ppe_snap:grip_lost=tracking";
@@ -277,7 +279,8 @@ namespace SafetyProto.Runtime.PPE
         {
             if (!snapOnLostGrip || !_isGrabbed || _grabDisabled) return;
 
-            PPESnapSlot near = FindSlotToSnap();
+            // The hover trigger is enough here; the overlap search stays a fallback for the release.
+            PPESnapSlot near = _hoveringSlot != null && _hoveringSlot.CanAccept(this) ? _hoveringSlot : null;
             if (near != null) _recentSlot = near;
 
             LostGripCause cause = _lostGrip.Watch(transform.position, near != null, UsableRecentSlot() != null);

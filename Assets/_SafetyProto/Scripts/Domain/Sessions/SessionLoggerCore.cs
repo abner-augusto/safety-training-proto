@@ -49,7 +49,7 @@ namespace SafetyProto.Domain.Sessions
         public struct LogData
         {
             public string actionId;
-            public string context;
+            public string? context;
             public string ppeType;
             public bool wearing;
             public int delta;
@@ -338,7 +338,7 @@ namespace SafetyProto.Domain.Sessions
             };
             // A null context stays out of the entry, so an ordinary equip logs as it always did.
             _onPpeStateChanged       = args => LogEvent("PpeStateChanged",   $"EPI={PpeLabels.DisplayName(args.PpeType)}, Equipado={(args.IsWearing ? "Sim" : "Não")}", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
-                new LogData { ppeType = args.PpeType.ToString(), wearing = args.IsWearing, context = args.Context! });
+                new LogData { ppeType = args.PpeType.ToString(), wearing = args.IsWearing, context = args.Context });
             _onTaskLifecycle = args =>
             {
                 string eventName = args.Phase switch
