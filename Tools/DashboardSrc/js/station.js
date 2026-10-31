@@ -300,6 +300,17 @@
       if (targetSelect) targetSelect.onchange = () => highlightControl.disarm();
       if (secondsSelect) secondsSelect.onchange = () => highlightControl.disarm();
 
+      const handSelect = document.getElementById('hand-collision-mode');
+      const handControl = createCommandControl({
+        btnId: 'btn-hand-collision', statusId: 'hand-collision-status', command: 'set_hand_collision',
+        keys: { ...commandStatusKeys, button: 'handApply', confirm: 'commandConfirmButton',
+                success: 'handSuccess', failed: 'handFailed' },
+        args: () => ({ args: { mode: handSelect ? handSelect.value : 'push' } }),
+        isBlocked: () => offline() || !(state.station && state.station.handCollision),
+      });
+      document.getElementById('btn-hand-collision').onclick = () => handControl.click(ws);
+      if (handSelect) handSelect.onchange = () => handControl.disarm();
+
       window.addEventListener('sp-connection', renderStation);
       renderStation();
     }

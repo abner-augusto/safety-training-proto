@@ -56,6 +56,8 @@ namespace SafetyProto.Domain.Dashboard
         public float batteryLevel;
         /// <summary>UnityEngine.BatteryStatus name: Charging, Discharging, NotCharging, Full, Unknown.</summary>
         public string batteryStatus;
+        /// <summary>"push" | "pass_through": whether the physical hands push interactive objects; empty when the scene cannot switch it.</summary>
+        public string handCollision;
         public long timestampMs;
     }
 

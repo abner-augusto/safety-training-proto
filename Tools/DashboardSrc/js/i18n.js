@@ -142,6 +142,9 @@
         command_recenter_player: 'Recenter player', command_calibrate_room_center: 'Calibrate room center',
         command_return_all_ppe: 'Return loose objects', command_reset_session: 'Restart session',
         command_highlight_target: 'Call attention',
+        command_set_hand_collision: 'Hand collision',
+        handsGroup: 'Hands (interaction test)', handPush: 'Push the objects', handPassThrough: 'Pass through the objects',
+        handApply: 'Apply to the hands', handSuccess: 'Hand mode changed.', handFailed: 'Hand mode refused.',
         command_start_session: 'Start session',
       },
       pt: {
@@ -279,6 +282,9 @@
         command_recenter_player: 'Recentralizar jogador', command_calibrate_room_center: 'Calibrar centro da sala',
         command_return_all_ppe: 'Recolher objetos soltos', command_reset_session: 'Reiniciar sessão',
         command_highlight_target: 'Chamar atenção',
+        command_set_hand_collision: 'Colisão das mãos',
+        handsGroup: 'Mãos (teste de interação)', handPush: 'Empurram os objetos', handPassThrough: 'Atravessam os objetos',
+        handApply: 'Aplicar às mãos', handSuccess: 'Modo das mãos alterado.', handFailed: 'Modo das mãos recusado.',
         command_start_session: 'Iniciar sessão',
       }
     };

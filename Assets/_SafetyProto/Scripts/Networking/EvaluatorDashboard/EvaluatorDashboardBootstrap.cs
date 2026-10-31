@@ -375,6 +375,9 @@ namespace SafetyProto.Networking.Dashboard
                 appVersion = Application.version,
                 batteryLevel = SystemInfo.batteryLevel,
                 batteryStatus = SystemInfo.batteryStatus.ToString(),
+                handCollision = SafetyProto.Runtime.Interaction.HandObjectCollision.Instance != null
+                    ? SafetyProto.Runtime.Interaction.HandObjectCollision.Token(SafetyProto.Runtime.Interaction.HandObjectCollision.Instance.Current)
+                    : string.Empty,
                 timestampMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
             };
         }

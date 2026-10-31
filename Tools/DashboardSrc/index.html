@@ -174,6 +174,17 @@
             <button class="report-btn secondary command-btn" id="btn-highlight" data-i18n="highlightButton">Chamar atenção</button>
             <div class="command-status" id="highlight-status" aria-live="polite"></div>
           </div>
+          <div class="command-group-label" data-i18n="handsGroup">Mãos (teste de interação)</div>
+          <div class="highlight-picker">
+            <select id="hand-collision-mode" class="hl-select" aria-label="Colisão das mãos">
+              <option value="push" data-i18n="handPush">Empurram os objetos</option>
+              <option value="pass_through" data-i18n="handPassThrough">Atravessam os objetos</option>
+            </select>
+          </div>
+          <div class="command-control">
+            <button class="report-btn secondary command-btn" id="btn-hand-collision" data-i18n="handApply">Aplicar às mãos</button>
+            <div class="command-status" id="hand-collision-status" aria-live="polite"></div>
+          </div>
         </div>
 
         <!-- Interventions: the evaluator commands of this session -->

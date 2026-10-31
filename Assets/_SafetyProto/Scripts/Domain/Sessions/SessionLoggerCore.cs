@@ -395,6 +395,7 @@ namespace SafetyProto.Domain.Sessions
                 "calibrate_room_center" => "calibrar centro da sala",
                 "return_all_ppe" => "recolher objetos soltos",
                 "highlight_target" => "chamar atenção",
+                "set_hand_collision" => "colisão das mãos",
                 _ => args.Command ?? string.Empty
             };
             return string.IsNullOrWhiteSpace(args.Summary)

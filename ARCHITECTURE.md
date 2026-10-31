@@ -695,9 +695,9 @@ domain:
   with the scene layout, the attention targets, session, manifest, and score for
   that client only, and `Command`, routed to scene components that implement
   `IDashboardCommandHandler` (`recenter_player`, `calibrate_room_center`,
-  `return_all_ppe`, `reset_session`, `start_session` and `highlight_target`; the
-  last two are `IDashboardCommandWithArgs` handlers that read the envelope's
-  `args`) and
+  `return_all_ppe`, `reset_session`, `start_session`, `highlight_target` and
+  `set_hand_collision`; the last three are `IDashboardCommandWithArgs` handlers
+  that read the envelope's `args`) and
   acknowledged with `CommandAckDto`; an accepted ack may carry a result summary.
   Accepted in-session commands are published as `EvaluatorCommandEventArgs` for
   the session log, with the target id when the command has one.
