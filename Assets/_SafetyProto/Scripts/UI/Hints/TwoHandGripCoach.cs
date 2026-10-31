@@ -64,7 +64,8 @@ namespace SafetyProto.UI
             foreach (var watch in _watches)
             {
                 if (watch.Piece == null) continue;
-                int hands = watch.Piece.IsInstalled ? 0 : watch.Piece.SelectingHandCount;
+                // A hidden piece's Grabbable may never have woken up, and nobody can hold it anyway.
+                int hands = watch.Piece.IsInstalled || !watch.Piece.isActiveAndEnabled ? 0 : watch.Piece.SelectingHandCount;
                 var step = watch.Policy.Tick(Time.time, hands);
 
                 if (watch.Policy.Showing && watch.Piece.TryGetFreeGripPosition(out var grip))
