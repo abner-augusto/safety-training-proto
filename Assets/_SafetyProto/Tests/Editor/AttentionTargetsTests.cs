@@ -67,8 +67,8 @@ namespace SafetyProto.Tests.Editor
         {
             var dto = DashboardDtoMapper.ToHighlightTargets(new[]
             {
-                AttentionTargets.ForAnchor("Olhal"),
-                AttentionTargets.ForLanyard("LanyardTip")
+                AttentionTargets.ForAnchor("Olhal", "connect_harness"),
+                AttentionTargets.ForLanyard("LanyardTip", "connect_harness")
             });
 
             Assert.AreEqual(2, dto.targets.Length);

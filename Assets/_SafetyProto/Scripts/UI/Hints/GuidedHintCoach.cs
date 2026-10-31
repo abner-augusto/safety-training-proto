@@ -78,9 +78,16 @@ namespace SafetyProto.UI
             int level = _ladder.Advance(Time.deltaTime);
             if (level == 0) return;
 
-            if (level == 1) PulseTargets(task);
-            if (level == 2) Narrate(task);
-            InteractionEvents.RaiseHintShown(level, task.id, task.taskName, _ladder.SecondsWithoutProgress);
+            // The log counts hints as an analysis covariate: only help that reached the participant
+            // (or the evaluator, at level 3) is a hint.
+            bool delivered = level switch
+            {
+                1 => PulseTargets(task),
+                2 => Narrate(task),
+                _ => true,
+            };
+            if (delivered)
+                InteractionEvents.RaiseHintShown(level, task.id, task.taskName, _ladder.SecondsWithoutProgress);
         }
 
         private void Progress()
@@ -89,10 +96,10 @@ namespace SafetyProto.UI
             StopPulses();
         }
 
-        private void PulseTargets(ISafetyTask task)
+        private bool PulseTargets(ISafetyTask task)
         {
             var service = AttentionService.Instance;
-            if (service == null) return;
+            if (service == null) return false;
             CollectTargets(task, service);
             foreach (var target in _targets)
             {
@@ -101,6 +108,7 @@ namespace SafetyProto.UI
                 service.Hold(host);
                 _pulsing.Add(host);
             }
+            return _pulsing.Count > 0;
         }
 
         private void StopPulses()
@@ -111,10 +119,12 @@ namespace SafetyProto.UI
             _pulsing.Clear();
         }
 
-        private void Narrate(ISafetyTask task)
+        private bool Narrate(ISafetyTask task)
         {
             var clip = hintClips.Find(NarrationKeys.ForTaskHint(task.id));
-            if (clip != null && narrationVoice != null) narrationVoice.PlayAfterCurrent(clip);
+            if (clip == null || narrationVoice == null) return false;
+            narrationVoice.PlayAfterCurrent(clip);
+            return true;
         }
 
         /// <summary>

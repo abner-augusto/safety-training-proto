@@ -41,10 +41,10 @@ namespace SafetyProto.Domain.Feedback
     }
 
     /// <summary>
-    /// Decides when a loose object travels back home. Every input is measured afresh each frame
-    /// (held, secured, where the object is), never kept from grab events: an event that a disabled
-    /// listener missed used to leave a PPE item marked as held forever, so it never came back after
-    /// its first grab. A pending return survives frames without a tick, so an object switched off
+    /// Decides when a loose object travels back home. Feed it what is measured each frame (held,
+    /// secured, where the object is), never state kept from grab events: a listener that misses an
+    /// event, for instance because another component disabled it, would leave the object marked
+    /// as held for good. A pending return survives frames without a tick, so an object switched off
     /// during the wait still returns once it is switched back on.
     /// </summary>
     public sealed class ReturnHomePolicy

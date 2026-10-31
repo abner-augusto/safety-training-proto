@@ -47,9 +47,6 @@ namespace SafetyProto.Domain.Feedback
         public const float MinSeconds = 2f;
         public const float MaxSeconds = 30f;
 
-        /// <summary>Key of the lanyard and anchor targets: the action that connects them.</summary>
-        public const string ConnectLanyardKey = "connect_harness";
-
         /// <summary>The requested duration, or the default when absent, kept inside the allowed range.</summary>
         public static float ClampSeconds(float requested)
         {
@@ -98,13 +95,14 @@ namespace SafetyProto.Domain.Feedback
             => new AttentionTargetInfo(IdFor(AttentionTargetKind.ScaffoldSocket, objectName), AttentionTargetKind.ScaffoldSocket,
                 $"Local de instalação: {TaskOr(taskName, objectName)}", actionId);
 
-        public static AttentionTargetInfo ForAnchor(string objectName)
+        /// <param name="connectActionId">The action the lanyard publishes when it locks here.</param>
+        public static AttentionTargetInfo ForAnchor(string objectName, string connectActionId)
             => new AttentionTargetInfo(IdFor(AttentionTargetKind.Anchor, objectName), AttentionTargetKind.Anchor,
-                "Ponto de ancoragem", ConnectLanyardKey);
+                "Ponto de ancoragem", connectActionId ?? string.Empty);
 
-        public static AttentionTargetInfo ForLanyard(string objectName)
+        public static AttentionTargetInfo ForLanyard(string objectName, string connectActionId)
             => new AttentionTargetInfo(IdFor(AttentionTargetKind.Lanyard, objectName), AttentionTargetKind.Lanyard,
-                "Talabarte (mosquetão)", ConnectLanyardKey);
+                "Talabarte (mosquetão)", connectActionId ?? string.Empty);
 
         public static AttentionTargetInfo ForActionObject(string objectName, string actionId, string? taskName)
             => new AttentionTargetInfo(IdFor(AttentionTargetKind.ActionObject, objectName), AttentionTargetKind.ActionObject,

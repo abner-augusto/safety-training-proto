@@ -89,7 +89,7 @@ namespace SafetyProto.Runtime.Feedback
         {
             EnsureScanned();
             foreach (var entry in _entries)
-                if (entry.Info.Kind == kind && string.Equals(entry.Info.Key, key, System.StringComparison.Ordinal))
+                if (entry.Info.Kind == kind && string.Equals(entry.Info.Key, key, System.StringComparison.OrdinalIgnoreCase))
                     yield return entry.Info;
         }
 
@@ -154,7 +154,7 @@ namespace SafetyProto.Runtime.Feedback
             var groups = TaskManager.Instance != null ? TaskManager.Instance.RuntimeGroups : null;
             var claimed = new HashSet<GameObject>();
 
-            foreach (var item in FindObjectsByType<PPEItem>())
+            foreach (var item in FindObjectsByType<PPEItem>(FindObjectsInactive.Include))
             {
                 if (!claimed.Add(item.gameObject)) continue;
                 var info = item.isDistractor
@@ -163,11 +163,11 @@ namespace SafetyProto.Runtime.Feedback
                 Add(info, item.gameObject);
             }
 
-            foreach (var slot in FindObjectsByType<PPESnapSlot>())
+            foreach (var slot in FindObjectsByType<PPESnapSlot>(FindObjectsInactive.Include))
                 if (claimed.Add(slot.gameObject))
                     Add(AttentionTargets.ForBodySlot(slot.name, slot.AcceptedTypes), slot.gameObject);
 
-            foreach (var piece in FindObjectsByType<ScaffoldPieceInstaller>())
+            foreach (var piece in FindObjectsByType<ScaffoldPieceInstaller>(FindObjectsInactive.Include))
             {
                 if (!claimed.Add(piece.gameObject)) continue;
                 string task = TaskNameFor(groups, piece.ActionId);
@@ -178,25 +178,28 @@ namespace SafetyProto.Runtime.Feedback
                         new[] { preview });
             }
 
-            foreach (var anchor in FindObjectsByType<AnchorPoint>())
+            var lanyards = FindObjectsByType<RetractableLanyardController>(FindObjectsInactive.Include);
+            string connectAction = lanyards.Length > 0 ? lanyards[0].ConnectActionId : string.Empty;
+
+            foreach (var anchor in FindObjectsByType<AnchorPoint>(FindObjectsInactive.Include))
                 if (anchor.isCorrectAnchor && claimed.Add(anchor.gameObject))
-                    Add(AttentionTargets.ForAnchor(anchor.name), anchor.gameObject, null, anchor.AttachPosition);
+                    Add(AttentionTargets.ForAnchor(anchor.name, connectAction), anchor.gameObject, null, anchor.AttachPosition);
 
-            foreach (var lanyard in FindObjectsByType<RetractableLanyardController>())
+            foreach (var lanyard in lanyards)
                 if (claimed.Add(lanyard.gameObject))
-                    Add(AttentionTargets.ForLanyard(lanyard.name), lanyard.gameObject);
+                    Add(AttentionTargets.ForLanyard(lanyard.name, lanyard.ConnectActionId), lanyard.gameObject);
 
-            foreach (var trigger in FindObjectsByType<SimpleActionTrigger>())
+            foreach (var trigger in FindObjectsByType<SimpleActionTrigger>(FindObjectsInactive.Include))
                 if (claimed.Add(trigger.gameObject))
                     Add(AttentionTargets.ForActionObject(trigger.name, trigger.ActionId, TaskNameFor(groups, trigger.ActionId)),
                         trigger.gameObject);
 
-            foreach (var reporter in FindObjectsByType<SafetyProto.Runtime.Safety.SafetyIssueReporter>())
+            foreach (var reporter in FindObjectsByType<SafetyProto.Runtime.Safety.SafetyIssueReporter>(FindObjectsInactive.Include))
                 if (claimed.Add(reporter.gameObject))
                     Add(AttentionTargets.ForActionObject(reporter.name, reporter.ActionId, TaskNameFor(groups, reporter.ActionId)),
                         reporter.gameObject);
 
-            foreach (var home in FindObjectsByType<ReturnObjectHome>())
+            foreach (var home in FindObjectsByType<ReturnObjectHome>(FindObjectsInactive.Include))
                 if (claimed.Add(home.gameObject))
                     Add(AttentionTargets.ForTool(home.name), home.gameObject);
         }

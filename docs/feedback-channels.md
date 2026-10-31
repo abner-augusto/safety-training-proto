@@ -13,7 +13,7 @@ Popups play no opening sound; the voice line is what makes a popup audible to a 
 |---|---|---|---|---|---|
 | Decoy PPE released on a body slot | popup "EPI Incorreto" | `distractor:<id>` | — | popup; item returns home | stays until the next action |
 | PPE out of order | popup "Ordem Incorreta" (+ task hint) | `ordem_incorreta` | — | popup; item returns home | stays until the next action |
-| Task refused, lanyard not anchored | popup "Conecte-se Primeiro" | `conecte_se_primeiro` | — | popup; the scaffold piece returns after the popup closes | stays until the next action |
+| Task refused, lanyard not anchored | popup "Conecte-se Primeiro" | `conecte_se_primeiro` | — | popup; the scaffold piece returns when the popup closes, or after 10 s | stays until the next action |
 | Task completed without its PPE | popup "EPI Incorreto" (`ppeAdvice`) | `ppe_advice:<taskId>` | unsafe-success sound | popup | stays until the next action |
 | Two-hand piece held with one hand | — | first time in the session | short cue (cooldown 8 s) | second grab spot pulses | no text: the cue is about the hands, not the task |
 
@@ -25,8 +25,8 @@ Popups play no opening sound; the voice line is what makes a popup audible to a 
 |---|---|---|
 | Held away from the socket | silent | ghost orange |
 | In position, wrong angle | tick, repeated every 0.6 s | ghost yellow |
-| Valid pose | chime, repeated every 1 s | ghost green |
-| Released in a wrong pose | invalid-release sound | ghost flashes orange for 1 s |
+| Valid pose (with both hands, for a two-hand piece) | chime, repeated every 1 s | ghost green |
+| Released near the socket in a wrong pose | invalid-release sound | ghost flashes orange for 1 s (setting the piece down away from the socket is silent) |
 | Installed | install sound | piece locks in place, ghost hides |
 | Lanyard carabiner within reach of an anchor | carabiner opens (animation) | the anchor pulses |
 | Lanyard locked | lock sound | carabiner stays on the anchor |

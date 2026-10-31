@@ -94,14 +94,6 @@ namespace SafetyProto.Runtime.Feedback
             if (_holds > 0) _holds--;
         }
 
-        /// <summary>Ends every flash and hold at once.</summary>
-        public void StopAll()
-        {
-            _holds = 0;
-            _flashUntil = 0f;
-            _pingUntil = 0f;
-        }
-
         private void Update()
         {
             float target = IsWanted ? 1f : 0f;
@@ -138,8 +130,9 @@ namespace SafetyProto.Runtime.Feedback
                 return;
             }
 
+            // A statically batched renderer's filter holds the combined batch mesh, not its own.
             var filter = source.GetComponent<MeshFilter>();
-            if (!(source is MeshRenderer) || filter == null || filter.sharedMesh == null) return;
+            if (!(source is MeshRenderer) || source.isPartOfStaticBatch || filter == null || filter.sharedMesh == null) return;
 
             var shell = new GameObject("AttentionShell") { layer = source.gameObject.layer };
             shell.transform.SetParent(source.transform, false);
@@ -156,7 +149,7 @@ namespace SafetyProto.Runtime.Feedback
         {
             var marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             marker.name = "AttentionMarker";
-            Destroy(marker.GetComponent<Collider>());
+            DestroyImmediate(marker.GetComponent<Collider>());
             marker.layer = gameObject.layer;
             marker.transform.SetParent(transform, true);
             marker.transform.position = position;

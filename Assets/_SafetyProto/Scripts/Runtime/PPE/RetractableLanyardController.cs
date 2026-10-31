@@ -131,6 +131,7 @@ namespace SafetyProto.Runtime.PPE
         private AnchorPoint _lockedAnchor;
         private AnchorPoint _cuedAnchor;
         private float _grabbedAt;
+        private bool _heldReported;
 
         private static readonly int TriggerOpenClose  = Animator.StringToHash("Open_Close");
         private static readonly int TriggerCloseOpen  = Animator.StringToHash("Close_Open");
@@ -185,6 +186,7 @@ namespace SafetyProto.Runtime.PPE
 
         private void OnDestroy()
         {
+            SetAnchorCue(null);
             if (grabbable != null)
                 grabbable.WhenPointerEventRaised -= OnPointerEvent;
             if (handGrabInteractable != null)
@@ -249,6 +251,26 @@ namespace SafetyProto.Runtime.PPE
                 OnGrabbed();
             else if (evt.Type == PointerEventType.Unselect || evt.Type == PointerEventType.Cancel)
                 OnReleased();
+            else
+                return;
+            ReportHeld(grabbable != null ? grabbable.SelectingPointsCount > 0 : _isGrabbed);
+        }
+
+        /// <summary>Publishes grab and release on held-state edges only, so a second hand or an SDK
+        /// hand-off does not count as another grab, matching <see cref="ReturnObjectHome"/>.</summary>
+        private void ReportHeld(bool held)
+        {
+            if (held == _heldReported) return;
+            _heldReported = held;
+            if (held)
+            {
+                _grabbedAt = Time.time;
+                InteractionEvents.RaiseObjectGrabbed(name);
+            }
+            else
+            {
+                InteractionEvents.RaiseObjectReleased(name, Time.time - _grabbedAt, IsLocked);
+            }
         }
 
         private void OnGrabStateChanged(InteractableStateChangeArgs args)
@@ -260,13 +282,12 @@ namespace SafetyProto.Runtime.PPE
                 OnGrabbed();
             else if (wasGrabbed && !_isGrabbed)
                 OnReleased();
+            ReportHeld(_isGrabbed);
         }
 
         private void OnGrabbed()
         {
             _isGrabbed = true;
-            _grabbedAt = Time.time;
-            InteractionEvents.RaiseObjectGrabbed(name);
 
             if (_retractCoroutine != null)
             {
@@ -292,8 +313,6 @@ namespace SafetyProto.Runtime.PPE
                 if (anchor != null) EnterLocked(anchor);
                 else EnterRetracting();
             }
-
-            InteractionEvents.RaiseObjectReleased(name, Time.time - _grabbedAt, IsLocked);
         }
 
         private void EnterIdle()
@@ -570,6 +589,9 @@ namespace SafetyProto.Runtime.PPE
         /// Whether the lanyard is currently locked to an anchor.
         /// </summary>
         public bool IsLocked => state == LanyardState.Locked;
+
+        /// <summary>The action published when the lanyard locks onto an anchor.</summary>
+        public string ConnectActionId => string.IsNullOrWhiteSpace(connectActionId) ? string.Empty : connectActionId.Trim();
 
         /// <summary>
         /// Whether the lanyard is locked to the CORRECT anchor (olhal de ancoragem).

@@ -108,7 +108,8 @@ namespace SafetyProto.UI
             _onGrabbed = _ => NotifyParticipantAction();
             _onAttempt = _ => NotifyParticipantAction();
             _onPpeChanged = _ => NotifyParticipantAction();
-            _onTask = _ => NotifyParticipantAction();
+            // The next task starts by itself a moment after a completion; only the completion is the participant's.
+            _onTask = args => { if (args.Phase == TaskPhase.Completed) NotifyParticipantAction(); };
             bus.Subscribe(_onGrabbed);
             bus.Subscribe(_onAttempt);
             bus.Subscribe(_onPpeChanged);

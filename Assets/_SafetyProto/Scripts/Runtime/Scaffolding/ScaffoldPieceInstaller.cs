@@ -159,6 +159,7 @@ namespace SafetyProto.Runtime.Scaffolding
         private PlacementCuePolicy _cuePolicy;
         private Transform[] _gripPoints;
         private float _invalidFlashUntil;
+        private PlacementPose _lastPose = PlacementPose.Away;
         private System.Action<ActionRefusedEventArgs> _onActionRefused;
         private System.Action<PopupClosedEventArgs> _onPopupClosed;
 
@@ -279,6 +280,7 @@ namespace SafetyProto.Runtime.Scaffolding
             if (_isInstalled) return;
 
             var pose = ClassifyPose();
+            _lastPose = _isGrabbed ? pose : PlacementPose.Away;
             bool valid = pose == PlacementPose.Valid;
             if (valid != _wasValidPose)
             {
@@ -307,8 +309,12 @@ namespace SafetyProto.Runtime.Scaffolding
             if (!HasEnoughHandsForInstall() || !HasValidInstallPose())
             {
                 onInvalidRelease?.Invoke();
-                PlayClip(invalidReleaseSound, invalidReleaseVolume);
-                _invalidFlashUntil = Time.time + invalidReleaseFlashSeconds;
+                // Setting the piece down far from the socket is not a failed attempt.
+                if (_lastPose != PlacementPose.Away)
+                {
+                    PlayClip(invalidReleaseSound, invalidReleaseVolume);
+                    _invalidFlashUntil = Time.time + invalidReleaseFlashSeconds;
+                }
                 return;
             }
 
@@ -492,9 +498,12 @@ namespace SafetyProto.Runtime.Scaffolding
 
         private bool IsFlashingInvalid => Time.time < _invalidFlashUntil;
 
+        /// <summary>Valid only when releasing now would install: a two-hand piece held with one
+        /// hand stays a near miss, so the ghost never turns green while the two-hand cue pulses.</summary>
         private PlacementPose ClassifyPose()
         {
-            if (HasValidInstallPose()) return PlacementPose.Valid;
+            if (HasValidInstallPose())
+                return HasEnoughHandsForInstall() ? PlacementPose.Valid : PlacementPose.WrongAngle;
             return HasAnchorsInPosition() ? PlacementPose.WrongAngle : PlacementPose.Away;
         }
 

@@ -22,7 +22,20 @@ namespace SafetyProto.Tests.Editor
         public void EachStateHasItsOwnCueOnEntry()
         {
             Assert.AreEqual(PlacementCue.NearMiss, _policy.Tick(0f, true, PlacementPose.WrongAngle));
-            Assert.AreEqual(PlacementCue.Valid, _policy.Tick(0.1f, true, PlacementPose.Valid));
+            Assert.AreEqual(PlacementCue.Valid, _policy.Tick(0.3f, true, PlacementPose.Valid));
+        }
+
+        [Test]
+        public void JitterOnTheToleranceEdge_DoesNotBurst()
+        {
+            int cues = 0;
+            for (int frame = 0; frame < 20; frame++)
+            {
+                var pose = frame % 2 == 0 ? PlacementPose.Valid : PlacementPose.WrongAngle;
+                if (_policy.Tick(frame * 0.05f, true, pose) != PlacementCue.None) cues++;
+            }
+
+            Assert.LessOrEqual(cues, 4, "one second of flips, at most one cue per 0.25 s");
         }
 
         [Test]
@@ -32,9 +45,9 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual(PlacementCue.None, _policy.Tick(0.9f, true, PlacementPose.Valid));
             Assert.AreEqual(PlacementCue.Valid, _policy.Tick(1.0f, true, PlacementPose.Valid));
 
-            Assert.AreEqual(PlacementCue.NearMiss, _policy.Tick(1.1f, true, PlacementPose.WrongAngle));
-            Assert.AreEqual(PlacementCue.None, _policy.Tick(1.6f, true, PlacementPose.WrongAngle));
-            Assert.AreEqual(PlacementCue.NearMiss, _policy.Tick(1.7f, true, PlacementPose.WrongAngle));
+            Assert.AreEqual(PlacementCue.NearMiss, _policy.Tick(1.3f, true, PlacementPose.WrongAngle));
+            Assert.AreEqual(PlacementCue.None, _policy.Tick(1.8f, true, PlacementPose.WrongAngle));
+            Assert.AreEqual(PlacementCue.NearMiss, _policy.Tick(1.9f, true, PlacementPose.WrongAngle));
         }
 
         [Test]
@@ -54,7 +67,7 @@ namespace SafetyProto.Tests.Editor
             _policy.Tick(0f, true, PlacementPose.Valid);
 
             Assert.AreEqual(PlacementCue.None, _policy.Tick(0.1f, held: false, PlacementPose.Valid));
-            Assert.AreEqual(PlacementCue.Valid, _policy.Tick(0.2f, held: true, PlacementPose.Valid));
+            Assert.AreEqual(PlacementCue.Valid, _policy.Tick(0.3f, held: true, PlacementPose.Valid));
         }
     }
 }
