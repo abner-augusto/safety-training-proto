@@ -4,6 +4,7 @@ using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
 using SafetyProto.Domain.Feedback;
 using SafetyProto.Runtime.PPE;
+using SafetyProto.Runtime.Practice;
 using SafetyProto.Runtime.Scaffolding;
 using SafetyProto.Runtime.Task;
 using UnityEngine;
@@ -154,6 +155,13 @@ namespace SafetyProto.Runtime.Feedback
             var groups = TaskManager.Instance != null ? TaskManager.Instance.RuntimeGroups : null;
             var claimed = new HashSet<GameObject>();
 
+            // The practice props are not the training's objects: claiming them first keeps them
+            // out of the evaluator's picker and the guided hints.
+            foreach (var prop in FindObjectsByType<PracticeProp>(FindObjectsInactive.Include))
+                ClaimTree(prop.transform, claimed);
+            foreach (var area in FindObjectsByType<PracticeArea>(FindObjectsInactive.Include))
+                ClaimTree(area.transform, claimed);
+
             foreach (var item in FindObjectsByType<PPEItem>(FindObjectsInactive.Include))
             {
                 if (!claimed.Add(item.gameObject)) continue;
@@ -179,7 +187,9 @@ namespace SafetyProto.Runtime.Feedback
             }
 
             var lanyards = FindObjectsByType<RetractableLanyardController>(FindObjectsInactive.Include);
-            string connectAction = lanyards.Length > 0 ? lanyards[0].ConnectActionId : string.Empty;
+            string connectAction = string.Empty;
+            foreach (var lanyard in lanyards)
+                if (!claimed.Contains(lanyard.gameObject)) { connectAction = lanyard.ConnectActionId; break; }
 
             foreach (var anchor in FindObjectsByType<AnchorPoint>(FindObjectsInactive.Include))
                 if (anchor.isCorrectAnchor && claimed.Add(anchor.gameObject))
@@ -202,6 +212,12 @@ namespace SafetyProto.Runtime.Feedback
             foreach (var home in FindObjectsByType<ReturnObjectHome>(FindObjectsInactive.Include))
                 if (claimed.Add(home.gameObject))
                     Add(AttentionTargets.ForTool(home.name), home.gameObject);
+        }
+
+        private static void ClaimTree(Transform root, HashSet<GameObject> claimed)
+        {
+            foreach (var t in root.GetComponentsInChildren<Transform>(true))
+                claimed.Add(t.gameObject);
         }
 
         private void Add(AttentionTargetInfo info, GameObject host, Renderer[] renderers = null, Vector3? marker = null)

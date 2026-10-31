@@ -127,16 +127,18 @@ namespace SafetyProto.Runtime.Practice
         {
             yield return recenterService.RecenterTo(practiceAnchor, Fade(() =>
             {
+                SetShown(true);
                 CollectResettables();
                 foreach (var prop in _resettables) prop.ResetForPractice();
-                SetShown(true);
                 RefreshChecklist();
                 RefreshCountdown();
             }));
 
             _openedAt = Time.time;
             _counting = true;
-            if (_pendingClose != null) Close(_pendingClose);
+            var pending = _pendingClose;
+            _pendingClose = null;
+            if (pending != null) Close(pending);
         }
 
         private IEnumerator CloseRoutine(string reason)
@@ -210,7 +212,8 @@ namespace SafetyProto.Runtime.Practice
             foreach (var interaction in interactions)
             {
                 bool done = _tried.Contains(interaction.id);
-                sb.Append(done ? "<color=#3DA35D>✔</color> " : "<color=#9AA0A6>○</color> ");
+                // ASCII marks: the panel font has no check or circle glyphs.
+                sb.Append(done ? "<color=#2E8B57><b>[x]</b></color> " : "<color=#8A8F96>[  ]</color> ");
                 sb.AppendLine(interaction.label);
             }
             checklistText.text = sb.ToString();

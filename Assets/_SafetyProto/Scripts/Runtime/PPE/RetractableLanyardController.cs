@@ -552,7 +552,8 @@ namespace SafetyProto.Runtime.PPE
             string actionId = string.IsNullOrWhiteSpace(connectActionId) ? string.Empty : connectActionId.Trim();
             if (string.IsNullOrEmpty(actionId))
             {
-                SafetyLog.Warning($"[RetractableLanyardController] Nenhum ActionId configurado em {name}. Conexão sem evento de tarefa.", this);
+                if (!SafetyProto.Runtime.Practice.PracticeProp.IsPractice(this))
+                    SafetyLog.Warning($"[RetractableLanyardController] Nenhum ActionId configurado em {name}. Conexão sem evento de tarefa.", this);
                 return;
             }
 

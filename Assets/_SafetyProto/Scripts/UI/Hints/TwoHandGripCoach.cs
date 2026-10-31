@@ -40,7 +40,8 @@ namespace SafetyProto.UI
         private void Start()
         {
             if (narrationVoice == null) narrationVoice = FindAnyObjectByType<NarrationVoice>();
-            foreach (var piece in FindObjectsByType<ScaffoldPieceInstaller>())
+            // Inactive too: the practice area's bar is hidden until the area opens.
+            foreach (var piece in FindObjectsByType<ScaffoldPieceInstaller>(FindObjectsInactive.Include))
             {
                 if (!piece.RequiresTwoHands) continue;
                 _watches.Add(new Watch

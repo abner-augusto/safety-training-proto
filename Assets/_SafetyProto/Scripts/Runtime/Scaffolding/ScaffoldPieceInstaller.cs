@@ -587,7 +587,8 @@ namespace SafetyProto.Runtime.Scaffolding
             var actionId = GetConfiguredActionId();
             if (string.IsNullOrEmpty(actionId))
             {
-                SafetyLog.Warning($"[ScaffoldPieceInstaller] Nenhum ActionId configurado em {name}. Instalação concluída sem evento de tarefa.", this);
+                if (!SafetyProto.Runtime.Practice.PracticeProp.IsPractice(this))
+                    SafetyLog.Warning($"[ScaffoldPieceInstaller] Nenhum ActionId configurado em {name}. Instalação concluída sem evento de tarefa.", this);
                 return;
             }
 
