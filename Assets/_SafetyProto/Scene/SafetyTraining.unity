@@ -54348,6 +54348,56 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1829961583}
   m_Mesh: {fileID: -8129463908900427295, guid: 9b1545b790c85354a9b6449bb3dee586, type: 3}
+--- !u!1 &1831557578
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1831557579}
+  - component: {fileID: 1831557580}
+  m_Layer: 0
+  m_Name: TwoHandGripCoach
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1831557579
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1831557578}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7322035375745015844}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1831557580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1831557578}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea001eb268792854a894a3ab2d06ddb4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.UI.Unity::SafetyProto.UI.TwoHandGripCoach
+  narrationVoice: {fileID: 1602798036}
+  firstTimeNarration: {fileID: 0}
+  cueClip: {fileID: 8300000, guid: 35219044b859c854db170f30da70d5f7, type: 3}
+  cueVolume: 0.8
+  delaySeconds: 0.8
+  cueCooldownSeconds: 8
 --- !u!114 &1831965155 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5132080673206253129, guid: 0a7d2469f24041c4284c66706f84c45e, type: 3}
@@ -70548,6 +70598,7 @@ Transform:
   - {fileID: 54888882}
   - {fileID: 1969495574}
   - {fileID: 529125585}
+  - {fileID: 1831557579}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7322035375745015845

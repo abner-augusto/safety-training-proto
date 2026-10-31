@@ -154,6 +154,7 @@ namespace SafetyProto.Runtime.Scaffolding
 
         private readonly RefusedAttemptTracker _refusalTracker = new RefusedAttemptTracker();
         private PlacementCuePolicy _cuePolicy;
+        private Transform[] _gripPoints;
         private System.Action<ActionRefusedEventArgs> _onActionRefused;
         private System.Action<PopupClosedEventArgs> _onPopupClosed;
 
@@ -169,6 +170,41 @@ namespace SafetyProto.Runtime.Scaffolding
 
         /// <summary>How many hands are currently holding the piece.</summary>
         public int SelectingHandCount  => grabbable != null ? grabbable.SelectingPointsCount : 0;
+
+        /// <summary>Whether the piece installs only when both hands hold it.</summary>
+        public bool RequiresTwoHands => installMode == InstallMode.TwoSockets && requireTwoHandsForTwoSockets;
+
+        /// <summary>
+        /// While one hand holds the piece, where the other hand should grab: of the authored grab
+        /// poses, or of the two piece anchors (its ends) when the grab is free, the one farthest
+        /// from the holding hand. False when not exactly one hand holds it.
+        /// </summary>
+        public bool TryGetFreeGripPosition(out Vector3 position)
+        {
+            position = default;
+            if (grabbable == null || grabbable.SelectingPointsCount != 1) return false;
+            _gripPoints ??= GripCandidates();
+            if (_gripPoints.Length == 0) return false;
+
+            var held = grabbable.SelectingPoints[0].position;
+            float farthest = -1f;
+            foreach (var point in _gripPoints)
+            {
+                if (point == null) continue;
+                float d = (point.position - held).sqrMagnitude;
+                if (d <= farthest) continue;
+                farthest = d;
+                position = point.position;
+            }
+            return farthest >= 0f;
+        }
+
+        private Transform[] GripCandidates()
+        {
+            var poses = GetComponentsInChildren<HandGrabPose>(includeInactive: true);
+            if (poses.Length > 0) return System.Array.ConvertAll(poses, pose => pose.transform);
+            return pieceAnchorB != null ? new[] { pieceAnchorA, pieceAnchorB } : System.Array.Empty<Transform>();
+        }
 
         private void Awake()
         {

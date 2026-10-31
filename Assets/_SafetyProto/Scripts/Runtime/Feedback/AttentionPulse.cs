@@ -15,7 +15,7 @@ namespace SafetyProto.Runtime.Feedback
     {
         private static readonly int PulseAmountId = Shader.PropertyToID("_PulseAmount");
         private const float FadeSeconds = 0.25f;
-        private const float MarkerDiameter = 0.08f;
+        private const float MarkerDiameter = 0.12f;
 
         private readonly List<Renderer> _shells = new List<Renderer>();
         private readonly List<SkinnedMeshRenderer> _skinned = new List<SkinnedMeshRenderer>();
