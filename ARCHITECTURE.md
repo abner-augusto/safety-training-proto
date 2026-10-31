@@ -202,6 +202,7 @@ and `Core/Events/`:
 | `EvaluatorCommandEventArgs`     | `EvaluatorDashboardBootstrap` (accepted in-session commands) | logger (never scored) |
 | `ObjectGrabbedEventArgs` / `ObjectReleasedEventArgs` | `ReturnObjectHome`, `RetractableLanyardController` (held-state edges) | logger, `PopupService` (next action), `GuidedHintCoach` (progress) (never scored) |
 | `HintShownEventArgs`            | `GuidedHintCoach` (Guided mode only) | logger, dashboard relay (level 3 raises the stuck alert; never scored) |
+| `PracticeEventArgs`             | `PracticeArea` (start and end of the practice area) | logger, dashboard relay (never scored) |
 | `ActionRefusedEventArgs`        | `SafetyRuleEngineCore`          | the emitter of the refused attempt (`ScaffoldPieceInstaller`, `SafetyIssueReporter`) |
 | `PopupClosedEventArgs`          | `PopupService`                  | gameplay objects waiting on a warning |
 | `PopupShownEventArgs`           | `PopupService`                  | popup camera (`FadeHandOverlay`)      |

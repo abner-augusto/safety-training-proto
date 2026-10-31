@@ -16,7 +16,9 @@ namespace SafetyProto.Core.Events
         /// guardian, or a headset just taken off and not yet asleep.</summary>
         XrSessionUnfocused,
         Popup,
-        PauseMenu
+        PauseMenu,
+        /// <summary>The practice area before the training is open.</summary>
+        Practice
     }
 
     /// <summary>

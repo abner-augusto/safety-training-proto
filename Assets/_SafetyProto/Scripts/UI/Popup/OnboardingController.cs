@@ -1,5 +1,6 @@
 using System.Collections;
 using SafetyProto.Core.Logging;
+using SafetyProto.Runtime.Practice;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -14,6 +15,8 @@ namespace SafetyProto.UI
         [SerializeField] private bool autoStartOnEnable = true;
         [Tooltip("Frames to wait before showing the first popup, giving OVR time to initialize stereo matrices.")]
         [SerializeField, Min(0)] private int startDelayFrames = 10;
+        [Tooltip("Opened by the step marked 'opensPracticeArea'. Optional: without it that step just moves on.")]
+        [SerializeField] private PracticeArea practiceArea;
 
         [Header("Skip / Completion")]
         [Tooltip("Fired when onboarding finishes — either all steps completed OR skipped. Wire this " +
@@ -114,7 +117,15 @@ namespace SafetyProto.UI
             data.onActionPressed.AddListener(() =>
             {
                 step.onStepConfirmed?.Invoke();
-                ShowNext();
+                if (step.opensPracticeArea && practiceArea != null)
+                {
+                    EndSequence();
+                    practiceArea.Begin(ShowNext);
+                }
+                else
+                {
+                    ShowNext();
+                }
             });
 
             if (_currentIndex == 0)

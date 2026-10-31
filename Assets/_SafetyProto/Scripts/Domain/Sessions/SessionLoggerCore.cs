@@ -82,6 +82,7 @@ namespace SafetyProto.Domain.Sessions
             public string handCollision;
             public string previousSessionId;
             public int attempt;
+            public string[]? tried;
         }
 
         [Serializable]
@@ -217,6 +218,7 @@ namespace SafetyProto.Domain.Sessions
         private readonly Action<ObjectGrabbedEventArgs>           _onObjectGrabbed;
         private readonly Action<ObjectReleasedEventArgs>          _onObjectReleased;
         private readonly Action<HintShownEventArgs>               _onHintShown;
+        private readonly Action<PracticeEventArgs>                _onPractice;
 
         private bool _subscribed;
         private bool _disposed;
@@ -307,6 +309,13 @@ namespace SafetyProto.Domain.Sessions
                 $"Ajuda nível {args.Level} em '{args.TaskName}' após {args.SecondsWithoutProgress.ToString("0", CultureInfo.InvariantCulture)} s sem progresso",
                 args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                 new LogData { level = args.Level, taskId = args.TaskId ?? string.Empty, durationSeconds = args.SecondsWithoutProgress });
+            _onPractice = args => LogEvent(
+                args.Phase == PracticePhase.Started ? "PracticeStarted" : "PracticeEnded",
+                args.Phase == PracticePhase.Started
+                    ? "Área de prática aberta"
+                    : $"Área de prática encerrada ({DescribePracticeEnd(args.Reason)}) após {args.Seconds.ToString("0", CultureInfo.InvariantCulture)} s",
+                args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                new LogData { reason = args.Reason ?? string.Empty, durationSeconds = args.Seconds, tried = args.Tried });
             _onEvaluatorCommand = args => LogEvent("EvaluatorCommand", DescribeEvaluatorCommand(args),
                 args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                 new LogData { command = args.Command ?? string.Empty, message = args.Summary ?? string.Empty, target = args.Target ?? string.Empty });
@@ -399,12 +408,21 @@ namespace SafetyProto.Domain.Sessions
                 "return_all_ppe" => "recolher objetos soltos",
                 "highlight_target" => "chamar atenção",
                 "set_hand_collision" => "colisão das mãos",
+                "end_practice" => "encerrar prática",
                 _ => args.Command ?? string.Empty
             };
             return string.IsNullOrWhiteSpace(args.Summary)
                 ? $"Comando do avaliador: {label}"
                 : $"Comando do avaliador: {label} ({args.Summary})";
         }
+
+        private static string DescribePracticeEnd(string? reason) => reason switch
+        {
+            "continue" => "participante tocou em Continuar",
+            "timeout" => "tempo esgotado",
+            "evaluator" => "pelo avaliador",
+            _ => reason ?? string.Empty
+        };
 
         private static string DescribePlayspaceNotice(PlayspaceNoticeEventArgs args) => args.Kind switch
         {
@@ -436,6 +454,7 @@ namespace SafetyProto.Domain.Sessions
             _eventBus.Subscribe(_onObjectGrabbed);
             _eventBus.Subscribe(_onObjectReleased);
             _eventBus.Subscribe(_onHintShown);
+            _eventBus.Subscribe(_onPractice);
             _subscribed = true;
         }
 
@@ -460,6 +479,7 @@ namespace SafetyProto.Domain.Sessions
             _eventBus.Unsubscribe(_onObjectGrabbed);
             _eventBus.Unsubscribe(_onObjectReleased);
             _eventBus.Unsubscribe(_onHintShown);
+            _eventBus.Unsubscribe(_onPractice);
             _subscribed = false;
         }
 

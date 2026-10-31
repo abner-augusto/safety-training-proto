@@ -24,5 +24,8 @@ namespace SafetyProto.UI
 
         [Tooltip("Callback extra ao confirmar o step. Opcional.")]
         public UnityEvent onStepConfirmed;
+
+        [Tooltip("Confirming this step opens the practice area; the next step shows when it closes.")]
+        public bool opensPracticeArea;
     }
 }

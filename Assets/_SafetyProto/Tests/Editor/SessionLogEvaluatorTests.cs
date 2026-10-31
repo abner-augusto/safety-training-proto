@@ -124,6 +124,26 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
+        public void Practice_IsLoggedWithHowItEndedAndWhatWasTried()
+        {
+            _bus.Publish(new SessionStartedEventArgs { SessionId = "S1", TotalTasks = 9, TimestampMs = 1000L, Attempt = 1 });
+            _bus.Publish(new PracticeEventArgs { SessionId = "S1", Phase = PracticePhase.Started, Reason = string.Empty, TimestampMs = 2000L });
+            _bus.Publish(new PracticeEventArgs
+            {
+                SessionId = "S1", Phase = PracticePhase.Ended, Reason = "continue", Seconds = 95f,
+                Tried = new[] { "equip_cube", "two_hand_bar" }, TimestampMs = 97000L
+            });
+
+            var entries = (JArray)WriteLog()["entries"]!;
+            Assert.AreEqual(1, entries.Count(e => (string?)e["eventName"] == "PracticeStarted"));
+            var ended = entries.Single(e => (string?)e["eventName"] == "PracticeEnded");
+            Assert.AreEqual("continue", (string?)ended["data"]!["reason"]);
+            Assert.AreEqual(95f, (float?)ended["data"]!["durationSeconds"]);
+            CollectionAssert.AreEqual(new[] { "equip_cube", "two_hand_bar" }, ended["data"]!["tried"]!.Select(t => (string?)t).ToArray());
+            StringAssert.Contains("Continuar", (string?)ended["details"]);
+        }
+
+        [Test]
         public void HintShown_IsLoggedWithLevelTaskAndWaitingTime()
         {
             _bus.Publish(new SessionStartedEventArgs { SessionId = "S1", TotalTasks = 9, TimestampMs = 1000L, Attempt = 1 });

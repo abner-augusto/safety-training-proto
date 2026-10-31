@@ -14,6 +14,22 @@ namespace SafetyProto.Core.Events
             });
         }
 
+        public static void RaisePracticeStarted()
+        {
+            EventBus.Instance?.Publish(new PracticeEventArgs { Phase = PracticePhase.Started, Reason = string.Empty });
+        }
+
+        public static void RaisePracticeEnded(string reason, float seconds, string[] tried)
+        {
+            EventBus.Instance?.Publish(new PracticeEventArgs
+            {
+                Phase = PracticePhase.Ended,
+                Reason = reason ?? string.Empty,
+                Seconds = seconds,
+                Tried = tried
+            });
+        }
+
         public static void RaiseObjectGrabbed(string target)
         {
             EventBus.Instance?.Publish(new ObjectGrabbedEventArgs { Target = target ?? string.Empty });
