@@ -496,6 +496,13 @@
     .command-control { display: flex; flex-direction: column; gap: 8px; }
     .command-control + .command-control { margin-top: 10px; }
     .command-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .highlight-picker { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 6px; }
+    .hl-select {
+      font: inherit; font-size: 13px; color: var(--text); background: var(--bg-elev);
+      border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; min-width: 0;
+    }
+    .hl-select:disabled { color: var(--text-dim); }
+    .mx-hl-select { max-width: 180px; padding: 3px 6px; font-size: 12px; }
     .command-row .command-control + .command-control { margin-top: 0; }
     .command-group-label {
       font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;

@@ -29,6 +29,7 @@
       lastCriticalAt: 0,      // Date.now() of the last CriticalSafetyFailure
       progress: createProgress(),   // what the stuck alert reads (stuck-math.js)
       interventions: [],      // evaluator commands sent in this session (interventions.js)
+      highlightTargets: [],   // what highlight_target can point at (HighlightTargets from the headset)
     };
 
     /* ── Live session timer (driven by session lifecycle events) ── */

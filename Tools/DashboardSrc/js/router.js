@@ -2,7 +2,7 @@
     import { tasks, wornPpe, state, sessionTimer } from './state.js';
     import { addLog, setScoreUI, renderCluster, renderTasks, resetTaskUI, emptyState, renderReportSection, resolveCommandAck } from './ui.js';
     import { saveSessionToHistory } from './history.js';
-    import { setStationStatus, setPauseSources, renderStation, clearStartCode, settleIntervention, clearInterventions } from './station.js';
+    import { setStationStatus, setPauseSources, renderStation, clearStartCode, settleIntervention, clearInterventions, setHighlightTargets } from './station.js';
     import { notifyShell, relayAck } from './embed.js';
     import { trackProgress } from './stuck-math.js';
 
@@ -24,6 +24,7 @@
     }
 
     on('StationStatus', setStationStatus);
+    on('HighlightTargets', p => setHighlightTargets(p?.targets ?? []));
 
     on('SceneLayout', p => {
       window.__spViewport?.setLayout(p);

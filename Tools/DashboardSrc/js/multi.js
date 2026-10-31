@@ -3,6 +3,8 @@
     import { createCommandControl, refreshCommandControls, resolveCommandAck } from './ui.js';
     import { MIN_STUCK_SECONDS, MAX_STUCK_SECONDS, parseThresholdSeconds, evaluateStuck, alertChange } from './stuck-math.js';
     import { TILE_ACTIONS, isActionBlocked } from './tile-actions.js';
+    import { highlightArgs } from './highlight-targets.js';
+    import { fillHighlightPicker } from './station.js';
 
     /* ================================================================
      * MULTI-HEADSET SHELL (multi.html) — one station page per headset in
@@ -169,6 +171,14 @@
       const sender = { send: envelope => sendToStation(tile.iframe, envelope) };
       for (const action of TILE_ACTIONS) {
         const btnId = `mx-${tile.id}-${action.command}`;
+        let picker = null;
+        if (action.needsTarget) {
+          picker = document.createElement('select');
+          picker.className = 'hl-select mx-hl-select';
+          picker.setAttribute('aria-label', t('highlightTargetLabel'));
+          buttons.appendChild(picker);
+          tile.highlightPicker = picker;
+        }
         const button = document.createElement('button');
         button.type = 'button';
         button.id = btnId;
@@ -180,8 +190,13 @@
             pending: 'commandPending', noConnection: 'commandNoConnection', noResponse: 'commandNoResponse',
             button: action.labelKey, confirm: action.confirmKey, success: action.successKey, failed: action.failedKey,
           },
+          args: picker ? () => {
+            const checked = highlightArgs(picker.value);
+            return checked.errorKey ? { error: t(checked.errorKey) } : { args: checked.args };
+          } : undefined,
           isBlocked: () => isActionBlocked(action, liveStatus(tile)),
         });
+        if (picker) picker.onchange = () => control.disarm();
         button.onclick = () => control.click(sender);
       }
     }
@@ -334,6 +349,8 @@
 
       tile.el.classList.remove('ok', 'caution', 'alert');
       if (level) tile.el.classList.add(level);
+
+      if (tile.highlightPicker) fillHighlightPicker(tile.highlightPicker, last ? last.highlightTargets : []);
 
       const count = s ? s.interventionCount : 0;
       tile.el.querySelector('.mx-quick-count').textContent = count > 0 ? `${t('interventionsShort')}: ${count}` : '';

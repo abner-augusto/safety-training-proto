@@ -26,6 +26,7 @@ concern lives in its own ES module under `js/`, one file per concern:
 | `js/stuck-math.js` | pure stuck-participant logic: folds routed events into a progress object, decides when a tile is stuck (tested by `tests/stuck-math.test.mjs`) |
 | `js/interventions.js` | pure log of the evaluator commands of one session (tested by `tests/interventions.test.mjs`) |
 | `js/tile-actions.js` | the quick actions of a headset tile and when they are blocked (tested by `tests/tile-actions.test.mjs`) |
+| `js/highlight-targets.js` | the "Chamar atenção" picker: groups the headset's `HighlightTargets` list and builds the `highlight_target` arguments (tested by `tests/highlight-targets.test.mjs`) |
 | `js/router.js` | event router: handler map + `route` |
 | `js/viewport.js` | `EvaluatorViewport` (Three.js instrument scene) |
 | `js/scene-layout.js` | `SceneLayoutView`: walkable floors + task-spot markers (Three.js) |

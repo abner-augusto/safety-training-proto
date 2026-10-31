@@ -3,10 +3,19 @@ import assert from 'node:assert/strict';
 import { TILE_ACTIONS, isTileCommand, isActionBlocked } from '../js/tile-actions.js';
 
 const action = command => TILE_ACTIONS.find(a => a.command === command);
-const running = { connected: true, hasStationStatus: true, sessionActive: true, sessionCompleted: false };
+const running = { connected: true, hasStationStatus: true, sessionActive: true, sessionCompleted: false,
+  highlightTargets: [{ id: 'ppe:Safety_Helmet', label: 'Capacete', kind: 'ppe' }] };
 
-test('the tile offers collect objects, recenter and restart, wired to the app commands', () => {
-  assert.deepEqual(TILE_ACTIONS.map(a => a.command), ['return_all_ppe', 'recenter_player', 'reset_session']);
+test('the tile offers collect objects, recenter, call attention and restart, wired to the app commands', () => {
+  assert.deepEqual(TILE_ACTIONS.map(a => a.command), ['return_all_ppe', 'recenter_player', 'highlight_target', 'reset_session']);
+});
+
+test('call attention waits for the headset to send what it can point at', () => {
+  assert.equal(isActionBlocked(action('highlight_target'), { ...running, highlightTargets: [] }), true);
+  assert.equal(isActionBlocked(action('highlight_target'), { ...running, highlightTargets: undefined }), true);
+  assert.equal(isActionBlocked(action('highlight_target'), running), false);
+  assert.equal(isTileCommand({ eventType: 'Command', command: 'highlight_target', requestId: 'r1',
+    args: { targetId: 'ppe:Safety_Helmet', durationSeconds: 8 } }), true);
 });
 
 test('every action names the strings its button needs', () => {

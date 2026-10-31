@@ -7,6 +7,8 @@ export const TILE_ACTIONS = [
     successKey: 'returnObjectsSuccess', failedKey: 'returnObjectsFailed' },
   { command: 'recenter_player', labelKey: 'tileRecenter', confirmKey: 'commandConfirmButton',
     successKey: 'recenterSuccess', failedKey: 'recenterFailed' },
+  { command: 'highlight_target', labelKey: 'tileHighlight', confirmKey: 'commandConfirmButton',
+    successKey: 'highlightSuccess', failedKey: 'highlightFailed', needsTarget: true },
   { command: 'reset_session', labelKey: 'tileReset', confirmKey: 'tileResetConfirm',
     successKey: 'resetSessionSuccess', failedKey: 'resetSessionFailed', danger: true, needsSession: true },
 ];
@@ -23,6 +25,7 @@ export function isTileCommand(envelope) {
    StationStatus. */
 export function isActionBlocked(action, status) {
   if (!status || !status.connected) return true;
+  if (action.needsTarget && !(Array.isArray(status.highlightTargets) && status.highlightTargets.length)) return true;
   if (action.needsSession) return !!status.hasStationStatus && !status.sessionActive && !status.sessionCompleted;
   return false;
 }

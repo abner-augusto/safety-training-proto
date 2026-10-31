@@ -119,6 +119,31 @@
         multiEmpty: 'Add the IP of each headset (shown on the in-VR menu).', multiDisconnected: 'disconnected',
         multiBatteryLow: 'low battery', multiCritical: 'critical failure', multiWaiting: 'waiting to start',
         multiKeypad: 'participant keypad open',
+        // stuck alert (multi-headset shell)
+        stuckLimitLabel: 'Stuck after', stuckLimitUnit: 's',
+        soundLabel: 'Alert sound', soundOn: 'on', soundOff: 'off', soundBlocked: 'click to enable',
+        stuckBadge: 'Stuck', stuckIdle: 'no progress for {seconds} s', stuckHint: 'hint level {level}',
+        logHintShown: 'Hint level {level}: {task} ({seconds} s without progress)',
+        // quick actions on a tile, and the intervention history of the session
+        tileActionsLabel: 'Quick actions',
+        tileReturnObjects: 'Collect objects', tileRecenter: 'Recenter', tileReset: 'Restart',
+        tileHighlight: 'Call attention',
+        highlightGroup: 'Call attention', highlightButton: 'Call attention',
+        highlightConfirm: 'Highlight {target}?', highlightSuccess: 'Highlight shown.', highlightFailed: 'Highlight refused.',
+        highlightTargetLabel: 'Object to highlight', highlightSecondsLabel: 'Duration',
+        highlightPickTarget: 'Pick the object to highlight.', highlightNoTargets: 'No object list from the headset yet',
+        highlightKind_ppe: 'PPE', highlightKind_slot: 'Body slots', highlightKind_distractor: 'Distractors',
+        highlightKind_anchor: 'Anchorage', highlightKind_lanyard: 'Lanyard', highlightKind_piece: 'Scaffold pieces',
+        highlightKind_socket: 'Install spots', highlightKind_action: 'Actions', highlightKind_tool: 'Tools',
+        tileResetConfirm: 'Confirm? Progress is lost',
+        interventionsTitle: 'Interventions', interventionsShort: 'Interventions',
+        interventionsEmpty: 'No intervention in this session.',
+        interventionPending: 'sending…', interventionAccepted: 'accepted', interventionRejected: 'refused',
+        interventionNoResponse: 'no response',
+        command_recenter_player: 'Recenter player', command_calibrate_room_center: 'Calibrate room center',
+        command_return_all_ppe: 'Return loose objects', command_reset_session: 'Restart session',
+        command_highlight_target: 'Call attention',
+        command_start_session: 'Start session',
       },
       pt: {
         currentScore: 'Pontuação',
@@ -233,6 +258,29 @@
         multiEmpty: 'Adicione o IP de cada óculos (aparece no menu dentro da RV).', multiDisconnected: 'desconectado',
         multiBatteryLow: 'bateria baixa', multiCritical: 'falha crítica', multiWaiting: 'aguardando início',
         multiKeypad: 'teclado liberado ao participante',
+        stuckLimitLabel: 'Travado após', stuckLimitUnit: 's',
+        soundLabel: 'Som do alerta', soundOn: 'ligado', soundOff: 'desligado', soundBlocked: 'clique para ativar',
+        stuckBadge: 'Travado', stuckIdle: 'sem progresso há {seconds} s', stuckHint: 'dica nível {level}',
+        logHintShown: 'Dica nível {level}: {task} ({seconds} s sem progresso)',
+        tileActionsLabel: 'Ações rápidas',
+        tileReturnObjects: 'Recolher objetos', tileRecenter: 'Recentralizar', tileReset: 'Reiniciar',
+        tileHighlight: 'Chamar atenção',
+        highlightGroup: 'Chamar atenção', highlightButton: 'Chamar atenção',
+        highlightConfirm: 'Destacar {target}?', highlightSuccess: 'Destaque exibido.', highlightFailed: 'Destaque recusado.',
+        highlightTargetLabel: 'Objeto a destacar', highlightSecondsLabel: 'Duração',
+        highlightPickTarget: 'Escolha o objeto a destacar.', highlightNoTargets: 'Lista de objetos ainda não recebida',
+        highlightKind_ppe: 'EPIs', highlightKind_slot: 'Encaixes no corpo', highlightKind_distractor: 'Distratores',
+        highlightKind_anchor: 'Ancoragem', highlightKind_lanyard: 'Talabarte', highlightKind_piece: 'Peças do andaime',
+        highlightKind_socket: 'Locais de instalação', highlightKind_action: 'Ações', highlightKind_tool: 'Ferramentas',
+        tileResetConfirm: 'Confirmar? O progresso será perdido',
+        interventionsTitle: 'Intervenções', interventionsShort: 'Intervenções',
+        interventionsEmpty: 'Nenhuma intervenção nesta sessão.',
+        interventionPending: 'enviando…', interventionAccepted: 'aceito', interventionRejected: 'recusado',
+        interventionNoResponse: 'sem resposta',
+        command_recenter_player: 'Recentralizar jogador', command_calibrate_room_center: 'Calibrar centro da sala',
+        command_return_all_ppe: 'Recolher objetos soltos', command_reset_session: 'Reiniciar sessão',
+        command_highlight_target: 'Chamar atenção',
+        command_start_session: 'Iniciar sessão',
       }
     };
 
@@ -289,6 +337,8 @@
     export const tf = (k, vars) => t(k).replace(/\{(\w+)\}/g, (m, name) => (vars && name in vars ? String(vars[name]) : m));
     /** Short label for a PauseSource token. */
     export const pauseSourceLabel = token => t(`pauseSrc${token || 'Unspecified'}`);
+    /** Label for an evaluator command's wire name; a command this page does not know shows its name. */
+    export const commandLabel = command => i18n[lang][`command_${command}`] ?? i18n.pt[`command_${command}`] ?? String(command || '—');
     export function setLang(next) {
       if (next !== 'pt' && next !== 'en') return;
       lang = next;

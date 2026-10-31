@@ -5,6 +5,7 @@
     import { notifyShell } from './embed.js';
     import { recordSent, settle } from './interventions.js';
     import { COMMAND_ACK_TIMEOUT_MS } from './constants.js';
+    import { HIGHLIGHT_DURATIONS, DEFAULT_HIGHLIGHT_SECONDS, groupTargets, targetLabel, highlightArgs, targetsSignature } from './highlight-targets.js';
 
     /* ================================================================
      * STATION — what the headset is doing (StationStatus), and the
@@ -83,6 +84,7 @@
     }
 
     export function renderStation() {
+      fillHighlightPicker(document.getElementById('highlight-target'), state.highlightTargets);
       const phase = stationPhase();
       const el = document.getElementById('station-state');
       if (el) {
@@ -167,6 +169,45 @@
       interventionsChanged();
     }
 
+    /** Fills a target picker with the headset's list, keeping the current choice when it survives. */
+    export function fillHighlightPicker(select, targets) {
+      if (!select) return;
+      const signature = `${targetsSignature(targets)}#${t('highlightKind_ppe')}`;
+      if (select.dataset.signature === signature) return;
+      const kept = select.value;
+      select.dataset.signature = signature;
+      select.replaceChildren();
+      const groups = groupTargets(targets);
+      if (groups.length === 0) {
+        select.append(new Option(t('highlightNoTargets'), ''));
+        select.disabled = true;
+        return;
+      }
+      select.disabled = false;
+      for (const group of groups) {
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = t(group.labelKey);
+        for (const target of group.targets) optgroup.append(new Option(target.label, target.id));
+        select.append(optgroup);
+      }
+      if (kept && [...select.options].some(o => o.value === kept)) select.value = kept;
+    }
+
+    /** Fills the seconds picker; the default stays selected. */
+    export function fillSecondsPicker(select) {
+      if (!select || select.options.length) return;
+      for (const seconds of HIGHLIGHT_DURATIONS) select.append(new Option(`${seconds} s`, String(seconds)));
+      select.value = String(DEFAULT_HIGHLIGHT_SECONDS);
+    }
+
+    /** Routed from the HighlightTargets message, sent on every sync. */
+    export function setHighlightTargets(targets) {
+      state.highlightTargets = Array.isArray(targets) ? targets : [];
+      fillHighlightPicker(document.getElementById('highlight-target'), state.highlightTargets);
+      refreshCommandControls();
+      notifyShell();
+    }
+
     /** Wires the session form, the restart button and the in-session commands. */
     export function initStationControls(ws, commandStatusKeys) {
       const input = document.getElementById('code-number');
@@ -239,6 +280,25 @@
         });
         document.getElementById(btnId).onclick = () => control.click(ws);
       }
+
+      const targetSelect = document.getElementById('highlight-target');
+      const secondsSelect = document.getElementById('highlight-seconds');
+      fillHighlightPicker(targetSelect, state.highlightTargets);
+      fillSecondsPicker(secondsSelect);
+      const highlightControl = createCommandControl({
+        btnId: 'btn-highlight', statusId: 'highlight-status', command: 'highlight_target',
+        keys: { ...commandStatusKeys, button: 'highlightButton', confirm: 'highlightConfirm',
+                success: 'highlightSuccess', failed: 'highlightFailed' },
+        args: () => {
+          const checked = highlightArgs(targetSelect?.value, secondsSelect?.value);
+          return checked.errorKey ? { error: t(checked.errorKey) } : { args: checked.args };
+        },
+        confirmLabel: () => tf('highlightConfirm', { target: targetLabel(state.highlightTargets, targetSelect?.value) }),
+        isBlocked: () => offline() || state.highlightTargets.length === 0,
+      });
+      document.getElementById('btn-highlight').onclick = () => highlightControl.click(ws);
+      if (targetSelect) targetSelect.onchange = () => highlightControl.disarm();
+      if (secondsSelect) secondsSelect.onchange = () => highlightControl.disarm();
 
       window.addEventListener('sp-connection', renderStation);
       renderStation();

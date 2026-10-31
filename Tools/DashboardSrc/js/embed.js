@@ -28,6 +28,7 @@
         lastCriticalAt: state.lastCriticalAt,
         progress: state.progress,
         interventionCount: state.interventions.length,
+        highlightTargets: state.highlightTargets,
         deviceModel: s.deviceModel ?? '',
         appVersion: s.appVersion ?? '',
         batteryLevel: typeof s.batteryLevel === 'number' ? s.batteryLevel : -1,

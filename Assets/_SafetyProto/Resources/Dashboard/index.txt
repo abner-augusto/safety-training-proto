@@ -166,6 +166,25 @@
             <button class="report-btn secondary command-btn" id="btn-return-objects" data-i18n="returnObjectsButton">Recolher objetos soltos</button>
             <div class="command-status" id="return-objects-status" aria-live="polite"></div>
           </div>
+          <div class="command-group-label" data-i18n="highlightGroup">Chamar atenção</div>
+          <div class="highlight-picker">
+            <select id="highlight-target" class="hl-select" aria-label="Objeto a destacar"></select>
+            <select id="highlight-seconds" class="hl-select hl-seconds" aria-label="Duração"></select>
+          </div>
+          <div class="command-control">
+            <button class="report-btn secondary command-btn" id="btn-highlight" data-i18n="highlightButton">Chamar atenção</button>
+            <div class="command-status" id="highlight-status" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <!-- Interventions: the evaluator commands of this session -->
+        <div class="section" id="interventions-section">
+          <div class="section-title" style="display:flex; align-items:center;">
+            <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v3"/><path d="M5.6 5.6l2.1 2.1"/><path d="M18.4 5.6l-2.1 2.1"/><path d="M8 21v-6a4 4 0 0 1 8 0v6"/></svg>
+            <span data-i18n="interventionsTitle">Intervenções</span>
+            <span class="history-count iv-count" id="interventions-count"></span>
+          </div>
+          <div class="log-container" id="interventions-list" aria-live="polite"></div>
         </div>
 
         <!-- Tasks -->
