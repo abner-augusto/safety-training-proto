@@ -9,3 +9,5 @@
     export const MAX_LOG_ITEMS     = 60;
     // Meta Quest player casting (opened on demand in a side-by-side popup).
     export const CAST_URL          = 'https://horizon.meta.com/casting/';
+    // Evaluator commands: how long the app has to acknowledge one before the page gives up.
+    export const COMMAND_ACK_TIMEOUT_MS = 5_000;

@@ -1,0 +1,28 @@
+import { COMMAND_ACK_TIMEOUT_MS } from './constants.js';
+
+/* Pure log of the evaluator commands sent during one session: no DOM, no state, so node --test
+   can import it. The page keeps the list in state.interventions and clears it with the session. */
+
+export const MAX_INTERVENTIONS = 50;
+
+/* Appends a Command envelope as a pending entry; anything else is not an intervention. */
+export function recordSent(list, envelope, now) {
+  if (!envelope || envelope.eventType !== 'Command' || !envelope.command || !envelope.requestId) return list;
+  const entry = { requestId: envelope.requestId, command: envelope.command, sentAt: now, accepted: null, reason: '' };
+  return [...list, entry].slice(-MAX_INTERVENTIONS);
+}
+
+/* Matches a CommandAck to its entry by requestId; an ack for another page or a repeat is ignored. */
+export function settle(list, ack) {
+  if (!ack || ack.requestId == null) return list;
+  const index = list.findIndex(entry => entry.requestId === ack.requestId && entry.accepted === null);
+  if (index < 0) return list;
+  const settled = { ...list[index], accepted: !!ack.accepted, reason: ack.reason ?? '' };
+  return [...list.slice(0, index), settled, ...list.slice(index + 1)];
+}
+
+export function outcomeOf(entry, now) {
+  if (entry.accepted === true) return 'accepted';
+  if (entry.accepted === false) return 'rejected';
+  return now - entry.sentAt > COMMAND_ACK_TIMEOUT_MS ? 'noResponse' : 'pending';
+}

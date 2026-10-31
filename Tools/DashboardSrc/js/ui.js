@@ -1,5 +1,5 @@
     import { t, getLang, locale, ppeLabel, violationLabel, violationMessage, pauseSourceLabel } from './i18n.js';
-    import { MAX_LOG_ITEMS } from './constants.js';
+    import { MAX_LOG_ITEMS, COMMAND_ACK_TIMEOUT_MS } from './constants.js';
     import { tasks, wornPpe, state } from './state.js';
 
     /* ================================================================
@@ -417,7 +417,6 @@
        the evaluator is never left staring at a button that silently did nothing — the headset is
        on the participant's head and the dashboard is the evaluator's only window into it. ── */
     const COMMAND_CONFIRM_WINDOW_MS = 4000;
-    const COMMAND_ACK_TIMEOUT_MS = 5000;
     const _commandControls = [];
 
     /** Wires one evaluator command button. `keys` names the i18n strings for the button label,
