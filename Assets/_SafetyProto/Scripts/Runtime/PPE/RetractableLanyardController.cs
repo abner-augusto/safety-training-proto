@@ -130,6 +130,7 @@ namespace SafetyProto.Runtime.PPE
         private Coroutine _retractCoroutine;
         private AnchorPoint _lockedAnchor;
         private AnchorPoint _cuedAnchor;
+        private float _grabbedAt;
 
         private static readonly int TriggerOpenClose  = Animator.StringToHash("Open_Close");
         private static readonly int TriggerCloseOpen  = Animator.StringToHash("Close_Open");
@@ -264,6 +265,8 @@ namespace SafetyProto.Runtime.PPE
         private void OnGrabbed()
         {
             _isGrabbed = true;
+            _grabbedAt = Time.time;
+            InteractionEvents.RaiseObjectGrabbed(name);
 
             if (_retractCoroutine != null)
             {
@@ -283,18 +286,14 @@ namespace SafetyProto.Runtime.PPE
         {
             _isGrabbed = false;
 
-            if (state != LanyardState.Pulling) return;
-
-            AnchorPoint anchor = FindNearestAnchor();
-
-            if (anchor != null)
+            if (state == LanyardState.Pulling)
             {
-                EnterLocked(anchor);
+                AnchorPoint anchor = FindNearestAnchor();
+                if (anchor != null) EnterLocked(anchor);
+                else EnterRetracting();
             }
-            else
-            {
-                EnterRetracting();
-            }
+
+            InteractionEvents.RaiseObjectReleased(name, Time.time - _grabbedAt, IsLocked);
         }
 
         private void EnterIdle()

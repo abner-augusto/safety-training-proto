@@ -1,4 +1,5 @@
 using Oculus.Interaction;
+using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Domain.Feedback;
 using UnityEngine;
@@ -46,6 +47,8 @@ namespace SafetyProto.Runtime.Feedback
 
         private bool _returning;
         private bool _physicsOwed;
+        private bool _wasHeld;
+        private float _heldSince;
         private float _returnProgress;
         private Vector3 _returnFromPosition;
         private Quaternion _returnFromRotation;
@@ -149,6 +152,7 @@ namespace SafetyProto.Runtime.Feedback
         private void Update()
         {
             bool held = IsHeld;
+            ReportHandling(held);
 
             if (_returning)
             {
@@ -174,6 +178,21 @@ namespace SafetyProto.Runtime.Feedback
 
             if (_policy.Tick(Time.deltaTime, Observe(held), out _))
                 BeginReturn();
+        }
+
+        private void ReportHandling(bool held)
+        {
+            if (held == _wasHeld) return;
+            _wasHeld = held;
+            if (held)
+            {
+                _heldSince = Time.time;
+                InteractionEvents.RaiseObjectGrabbed(name);
+            }
+            else
+            {
+                InteractionEvents.RaiseObjectReleased(name, Time.time - _heldSince, IsSecured);
+            }
         }
 
         private ReturnHomeObservation Observe(bool held)

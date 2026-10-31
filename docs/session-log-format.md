@@ -51,8 +51,16 @@ to keep it small, and fields the event does not use are omitted from the JSON.
 | `SessionStarted` | `source` (who set the participant id), `previousSessionId` (the interrupted session this one restarts), `attempt` |
 | `EvaluatorCommand` | `command` (`recenter_player`, `calibrate_room_center`, `return_all_ppe`, `highlight_target`), `message` (the handler's result summary), `target` (`highlight_target` only: the target id, e.g. `ppe:Safety_Helmet`, `socket:GuardRailPiece`) |
 | `PauseHoldChanged` | `pauseSource`, `held` (omitted when false), `pauseSources` (active after the change; omitted when none) |
+| `ObjectGrabbed` | `target` (scene name of the object a hand took hold of) |
+| `ObjectReleased` | `target`, `durationSeconds` (how long it was held), `secured` (`true` when the release left it worn, installed or anchored; omitted for a drop) |
 
 Notes for analysis:
+
+- Grab attempts per object: count `ObjectGrabbed` by `target`. An
+  `ObjectReleased` without `secured` shortly after its grab is a drop; a long
+  hold that ends without `secured` usually means the object was put down to
+  free the hands. Both pairs include the evaluator-free automatic returns, which
+  never raise a grab.
 
 - `context` is free-form: `gaze_dwell`, or `gaze_dwell:option=loose_fixing` for
   a hazard-classification report.

@@ -5,6 +5,7 @@ using System.Linq;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using SafetyProto.Core;
+using SafetyProto.Core.Events;
 using SafetyProto.Domain.Sessions;
 using SafetyProto.Tests.Editor.Support;
 
@@ -90,6 +91,24 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual("highlight_target", (string?)entry["data"]!["command"]);
             Assert.AreEqual("ppe:Safety_Helmet", (string?)entry["data"]!["target"]);
             StringAssert.Contains("chamar atenção", (string?)entry["details"]);
+        }
+
+        [Test]
+        public void GrabsAndReleases_AreLoggedPerObject_TellingDropsFromPlacements()
+        {
+            _bus.Publish(new SessionStartedEventArgs { SessionId = "S1", TotalTasks = 9, TimestampMs = 1000L, Attempt = 1 });
+            _bus.Publish(new ObjectGrabbedEventArgs { SessionId = "S1", Target = "ToeboardPiece", TimestampMs = 2000L });
+            _bus.Publish(new ObjectReleasedEventArgs { SessionId = "S1", Target = "ToeboardPiece", HeldSeconds = 1.5f, Secured = false, TimestampMs = 3500L });
+            _bus.Publish(new ObjectGrabbedEventArgs { SessionId = "S1", Target = "ToeboardPiece", TimestampMs = 5000L });
+            _bus.Publish(new ObjectReleasedEventArgs { SessionId = "S1", Target = "ToeboardPiece", HeldSeconds = 4f, Secured = true, TimestampMs = 9000L });
+
+            var entries = (JArray)WriteLog()["entries"]!;
+            Assert.AreEqual(2, entries.Count(e => (string?)e["eventName"] == "ObjectGrabbed"));
+            var releases = entries.Where(e => (string?)e["eventName"] == "ObjectReleased").ToList();
+            Assert.AreEqual("ToeboardPiece", (string?)releases[0]["data"]!["target"]);
+            Assert.AreEqual(1.5f, (float?)releases[0]["data"]!["durationSeconds"]);
+            Assert.IsNull(releases[0]["data"]!["secured"], "a drop omits the default flag");
+            Assert.AreEqual(true, (bool?)releases[1]["data"]!["secured"]);
         }
 
         private JObject WriteLog()
