@@ -68188,6 +68188,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 8300000, guid: 4e46243262590b1478c87d42c366ec53, type: 3}
     - target: {fileID: 2313486299481544854, guid: 04e5c8ea1403d6045969e57384101b02, type: 3}
+      propertyPath: nearMissSound
+      value: 
+      objectReference: {fileID: 8300000, guid: f460907ea2b3a5d42be84c86dcee77a4, type: 3}
+    - target: {fileID: 2313486299481544854, guid: 04e5c8ea1403d6045969e57384101b02, type: 3}
       propertyPath: targetSocketA
       value: 
       objectReference: {fileID: 6135892287642540639}
@@ -68199,6 +68203,10 @@ PrefabInstance:
       propertyPath: validPoseSound
       value: 
       objectReference: {fileID: 8300000, guid: d0fd6f347e782914d8e4f3bc782f215e, type: 3}
+    - target: {fileID: 2313486299481544854, guid: 04e5c8ea1403d6045969e57384101b02, type: 3}
+      propertyPath: invalidReleaseSound
+      value: 
+      objectReference: {fileID: 8300000, guid: 7b6d04fe9ebb3cf42b3f2b8eb852a6cc, type: 3}
     - target: {fileID: 2313486299481544854, guid: 04e5c8ea1403d6045969e57384101b02, type: 3}
       propertyPath: targetPreviewRenderer
       value: 
@@ -69715,6 +69723,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 8300000, guid: cf58c0713fa6d6041ae74cf275540346, type: 3}
     - target: {fileID: 813077568891646507, guid: b33fea9bbb0248944a1970bd972e51fa, type: 3}
+      propertyPath: nearMissSound
+      value: 
+      objectReference: {fileID: 8300000, guid: f460907ea2b3a5d42be84c86dcee77a4, type: 3}
+    - target: {fileID: 813077568891646507, guid: b33fea9bbb0248944a1970bd972e51fa, type: 3}
       propertyPath: targetSocketA
       value: 
       objectReference: {fileID: 10941564199238874}
@@ -69726,6 +69738,10 @@ PrefabInstance:
       propertyPath: validPoseSound
       value: 
       objectReference: {fileID: 8300000, guid: d0fd6f347e782914d8e4f3bc782f215e, type: 3}
+    - target: {fileID: 813077568891646507, guid: b33fea9bbb0248944a1970bd972e51fa, type: 3}
+      propertyPath: invalidReleaseSound
+      value: 
+      objectReference: {fileID: 8300000, guid: 7b6d04fe9ebb3cf42b3f2b8eb852a6cc, type: 3}
     - target: {fileID: 813077568891646507, guid: b33fea9bbb0248944a1970bd972e51fa, type: 3}
       propertyPath: handGrabInteractable
       value: 
