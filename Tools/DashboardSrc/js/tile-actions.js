@@ -11,6 +11,8 @@ export const TILE_ACTIONS = [
     successKey: 'highlightSuccess', failedKey: 'highlightFailed', needsTarget: true },
   { command: 'reset_session', labelKey: 'tileReset', confirmKey: 'tileResetConfirm',
     successKey: 'resetSessionSuccess', failedKey: 'resetSessionFailed', danger: true, needsSession: true },
+  { command: 'end_practice', labelKey: 'tileEndPractice', confirmKey: 'commandConfirmButton',
+    successKey: 'endPracticeSuccess', failedKey: 'endPracticeFailed', onlyWhilePracticing: true },
 ];
 
 /* Boundary check for a message from the parent window: only a listed command with a request id
@@ -28,4 +30,12 @@ export function isActionBlocked(action, status) {
   if (action.needsTarget && !(Array.isArray(status.highlightTargets) && status.highlightTargets.length)) return true;
   if (action.needsSession) return !!status.hasStationStatus && !status.sessionActive && !status.sessionCompleted;
   return false;
+}
+
+/* Whether the tile draws the button at all. Most actions stay on the tile and are only blocked;
+   an `onlyWhilePracticing` action appears with the practice area and goes with it, so the tile
+   never carries a button that can only be refused. */
+export function isActionVisible(action, status) {
+  if (!action.onlyWhilePracticing) return true;
+  return !!status && !!status.connected && status.practice === true;
 }

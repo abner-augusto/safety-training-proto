@@ -12,8 +12,9 @@ export const MAX_STUCK_SECONDS = 600;
 /* A hint this deep means the app has already run out of gentler help. */
 export const HINT_ALERT_LEVEL = 3;
 
-/* PauseSource wire tokens (PauseSourceLabels.cs). Popup and PauseMenu are deliberate pauses by
-   the app or the participant; the three below are the headset losing the participant. */
+/* PauseSource wire tokens (PauseSourceLabels.cs). Popup, PauseMenu and Practice are deliberate
+   pauses by the app, the participant or the evaluator; the three below are the headset losing the
+   participant. A token missing from this set silences the idle rule without raising an alert. */
 const FOCUS_PAUSE_SOURCES = new Set(['ApplicationFocus', 'ApplicationPause', 'XrSessionUnfocused']);
 
 /* The attempt and its refusal come from one publish on the headset but reach the dashboard in
@@ -137,7 +138,7 @@ export function trackProgress(progress, eventType, payload, now) {
 }
 
 /* Whether the tile should raise the alert now. A focus loss and a deep hint raise it at once; a
-   popup or pause-menu hold silences the idle rule. */
+   popup, pause-menu or practice-area hold silences the idle rule. */
 export function evaluateStuck(progress, { connected, now, thresholdSeconds }) {
   const secondsWithoutProgress = Math.max(0, Math.floor((now - progress.lastProgressAt) / 1000));
   const verdict = (reason, extra) => ({ stuck: reason !== null, reason, secondsWithoutProgress, ...extra });

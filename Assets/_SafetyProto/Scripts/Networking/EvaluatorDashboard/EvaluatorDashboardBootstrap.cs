@@ -388,8 +388,17 @@ namespace SafetyProto.Networking.Dashboard
                 handCollision = SafetyProto.Runtime.Interaction.HandObjectCollision.Instance != null
                     ? SafetyProto.Runtime.Interaction.HandObjectCollision.Token(SafetyProto.Runtime.Interaction.HandObjectCollision.Instance.Current)
                     : string.Empty,
+                practice = IsPracticing(),
                 timestampMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
             };
+        }
+
+        // The area stays Active through its fade back, but PracticeEnded has already reached the
+        // dashboard by then; reporting it as open would bring the end button back for a moment.
+        private static bool IsPracticing()
+        {
+            var area = SafetyProto.Runtime.Practice.PracticeArea.Active;
+            return area != null && !area.IsClosing;
         }
 
         private void HandleRequestSync(EvaluatorWebSocketServer.ClientConnection client)

@@ -1,13 +1,33 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { TILE_ACTIONS, isTileCommand, isActionBlocked } from '../js/tile-actions.js';
+import { TILE_ACTIONS, isTileCommand, isActionBlocked, isActionVisible } from '../js/tile-actions.js';
 
 const action = command => TILE_ACTIONS.find(a => a.command === command);
 const running = { connected: true, hasStationStatus: true, sessionActive: true, sessionCompleted: false,
   highlightTargets: [{ id: 'ppe:Safety_Helmet', label: 'Capacete', kind: 'ppe' }] };
 
-test('the tile offers collect objects, recenter, call attention and restart, wired to the app commands', () => {
-  assert.deepEqual(TILE_ACTIONS.map(a => a.command), ['return_all_ppe', 'recenter_player', 'highlight_target', 'reset_session']);
+test('the tile offers collect objects, recenter, call attention, restart and end practice, wired to the app commands', () => {
+  assert.deepEqual(TILE_ACTIONS.map(a => a.command),
+    ['return_all_ppe', 'recenter_player', 'highlight_target', 'reset_session', 'end_practice']);
+});
+
+test('end practice is offered only while that headset is in the practice area', () => {
+  const endPractice = action('end_practice');
+  assert.equal(isActionVisible(endPractice, { ...running, practice: true }), true);
+  assert.equal(isActionVisible(endPractice, { ...running, practice: false }), false);
+  assert.equal(isActionVisible(endPractice, running), false, 'an app that predates the flag never shows it');
+  assert.equal(isActionVisible(endPractice, null), false);
+  assert.equal(isActionVisible(endPractice, { ...running, connected: false, practice: true }), false);
+  for (const a of TILE_ACTIONS.filter(a => a.command !== 'end_practice')) {
+    assert.equal(isActionVisible(a, running), true, a.command);
+    assert.equal(isActionVisible(a, null), true, `${a.command} stays drawn while the headset is silent, only blocked`);
+  }
+});
+
+test('end practice travels the same embedded path and is blocked while the headset is silent', () => {
+  assert.equal(isTileCommand({ eventType: 'Command', command: 'end_practice', requestId: 'r1' }), true);
+  assert.equal(isActionBlocked(action('end_practice'), null), true);
+  assert.equal(isActionBlocked(action('end_practice'), { ...running, practice: true }), false);
 });
 
 test('call attention waits for the headset to send what it can point at', () => {

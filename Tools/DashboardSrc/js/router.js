@@ -1,8 +1,8 @@
-    import { t, tf, actionLabel, ppeLabel, violationLabel, violationMessage, applyTranslations, pauseSourceLabel } from './i18n.js';
+    import { t, tf, actionLabel, ppeLabel, violationLabel, violationMessage, applyTranslations, pauseSourceLabel, practiceReasonLabel } from './i18n.js';
     import { tasks, wornPpe, state, sessionTimer } from './state.js';
     import { addLog, setScoreUI, renderCluster, renderTasks, resetTaskUI, emptyState, renderReportSection, resolveCommandAck } from './ui.js';
     import { saveSessionToHistory } from './history.js';
-    import { setStationStatus, setPauseSources, renderStation, clearStartCode, settleIntervention, clearInterventions, setHighlightTargets } from './station.js';
+    import { setStationStatus, setPauseSources, setPractice, renderStation, clearStartCode, settleIntervention, clearInterventions, setHighlightTargets } from './station.js';
     import { notifyShell, relayAck } from './embed.js';
     import { trackProgress } from './stuck-math.js';
 
@@ -132,6 +132,7 @@
       state.currentScore  = 0;
       state.currentMode = null;
       state.currentAttempt = 0;
+      state.practice = false;
       setPauseSources([]);
       sessionTimer.reset();
       setScoreUI(0);
@@ -232,6 +233,21 @@
     on('HintShown', p => {
       const seconds = Math.round(Number(p.secondsWithoutProgress) || 0);
       addLog(tf('logHintShown', { level: p.level, task: p.taskName || p.taskId || '—', seconds }), 'caution');
+    });
+
+    /* The practice area before the training: the clock is held (the pause events say so) and
+       nothing in it is scored. The station page shows the state and the end button. */
+    on('PracticeStarted', () => {
+      setPractice(true);
+      addLog(t('logPracticeStarted'), 'caution');
+    });
+    on('PracticeEnded', p => {
+      setPractice(false);
+      addLog(tf('logPracticeEnded', {
+        reason: practiceReasonLabel(p?.reason),
+        seconds: Math.round(Number(p?.seconds) || 0),
+        tried: Array.isArray(p?.tried) ? p.tried.length : 0,
+      }), 'caution');
     });
 
     /* ── Evaluator commands ── */

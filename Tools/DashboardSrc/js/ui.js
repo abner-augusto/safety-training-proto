@@ -1,4 +1,4 @@
-    import { t, getLang, locale, ppeLabel, violationLabel, violationMessage, pauseSourceLabel, commandLabel } from './i18n.js';
+    import { t, getLang, locale, ppeLabel, violationLabel, violationMessage, pauseSourceLabel, commandLabel, practiceReasonLabel } from './i18n.js';
     import { MAX_LOG_ITEMS, COMMAND_ACK_TIMEOUT_MS } from './constants.js';
     import { tasks, wornPpe, state } from './state.js';
     import { outcomeOf } from './interventions.js';
@@ -89,6 +89,8 @@
           SessionReset: 'Sessão reiniciada',
           PauseHoldChanged: 'Origem de pausa',
           EvaluatorCommand: 'Comando do avaliador',
+          PracticeStarted: 'Área de prática aberta',
+          PracticeEnded: 'Área de prática encerrada',
           PlayspaceNotice: 'Aviso de espaço físico',
           ActionAttempt: 'Tentativa de ação',
           PpeStateChanged: 'EPI alterado',
@@ -110,6 +112,8 @@
           SessionReset: 'Session reset',
           PauseHoldChanged: 'Pause source',
           EvaluatorCommand: 'Evaluator command',
+          PracticeStarted: 'Practice area opened',
+          PracticeEnded: 'Practice area closed',
           PlayspaceNotice: 'Playspace notice',
           ActionAttempt: 'Action attempt',
           PpeStateChanged: 'PPE changed',
@@ -194,6 +198,8 @@
           return `${pauseSourceLabel(d.pauseSource)} · ${d.held ? t('detailHeld') : t('detailReleased')}`;
         case 'EvaluatorCommand':
           return entry.details || d.command || '';
+        case 'PracticeEnded':
+          return `${practiceReasonLabel(d.reason)} · ${Math.round(Number(d.durationSeconds) || 0)} s · ${t('practiceTried')}: ${Array.isArray(d.tried) ? d.tried.length : 0}`;
         case 'PlayspaceNotice':
           return entry.details || '';
         case 'SessionCompleted': {

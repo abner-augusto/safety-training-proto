@@ -202,7 +202,7 @@ and `Core/Events/`:
 | `EvaluatorCommandEventArgs`     | `EvaluatorDashboardBootstrap` (accepted in-session commands) | logger (never scored) |
 | `ObjectGrabbedEventArgs` / `ObjectReleasedEventArgs` | `ReturnObjectHome`, `RetractableLanyardController` (held-state edges) | logger, `PopupService` (next action), `GuidedHintCoach` (progress) (never scored) |
 | `HintShownEventArgs`            | `GuidedHintCoach` (Guided mode only) | logger, dashboard relay (level 3 raises the stuck alert; never scored) |
-| `PracticeEventArgs`             | `PracticeArea` (start and end of the practice area) | logger, dashboard relay (never scored) |
+| `PracticeEventArgs`             | `PracticeArea` (start and end of the practice area) | logger, dashboard relay (the station page and tile show the area; never scored) |
 | `ActionRefusedEventArgs`        | `SafetyRuleEngineCore`          | the emitter of the refused attempt (`ScaffoldPieceInstaller`, `SafetyIssueReporter`) |
 | `PopupClosedEventArgs`          | `PopupService`                  | gameplay objects waiting on a warning |
 | `PopupShownEventArgs`           | `PopupService`                  | popup camera (`FadeHandOverlay`)      |
@@ -683,7 +683,8 @@ channel**, and the seam between gameplay and transport is drawn inside the
 domain:
 
 - `DashboardEventRelay` (`Domain/Dashboard`, pure C#) subscribes through
-  `IEventBus` to the thirteen protocol events an evaluator needs, maps each to
+  `IEventBus` to the protocol events an evaluator needs (the practice area's
+  `PracticeStarted` and `PracticeEnded` among them), maps each to
   a DTO via `DashboardDtoMapper`, and hands it to an `IDashboardHost`. The host
   interface is the whole transport contract: broadcast, build the session
   manifest, resolve a timestamp, remember known groups. `FakeDashboardHost`
@@ -696,9 +697,11 @@ domain:
   with the scene layout, the attention targets, session, manifest, and score for
   that client only, and `Command`, routed to scene components that implement
   `IDashboardCommandHandler` (`recenter_player`, `calibrate_room_center`,
-  `return_all_ppe`, `reset_session`, `start_session`, `highlight_target` and
-  `set_hand_collision`; the last three are `IDashboardCommandWithArgs` handlers
-  that read the envelope's `args`) and
+  `return_all_ppe`, `reset_session`, `start_session`, `highlight_target`,
+  `set_hand_collision` and `end_practice`; `start_session`, `highlight_target`
+  and `set_hand_collision` are `IDashboardCommandWithArgs` handlers that read
+  the envelope's `args`, and `end_practice` closes the practice area, refused
+  when none is open) and
   acknowledged with `CommandAckDto`; an accepted ack may carry a result summary.
   Accepted in-session commands are published as `EvaluatorCommandEventArgs` for
   the session log, with the target id when the command has one.
@@ -706,7 +709,7 @@ domain:
   lists every interactive thing in the scene and makes it pulse with an overlay
   copy of its mesh, so the cue works on any base shader; the onboarding
   highlight uses the same service. The bootstrap also pushes `StationStatus` (waiting for a
-  start, session state, battery, device) on sync, after commands, on session
+  start, session state, practice area open, battery, device) on sync, after commands, on session
   start and completion, and every 5 s. Handlers are discovered by type when the
   scene loads; no command reaches the domain, and the event protocol stays
   publish-only. The channel carries no authentication yet; that is deferred on

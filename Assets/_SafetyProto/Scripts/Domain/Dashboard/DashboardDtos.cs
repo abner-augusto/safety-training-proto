@@ -58,6 +58,8 @@ namespace SafetyProto.Domain.Dashboard
         public string batteryStatus;
         /// <summary>"push" | "pass_through": whether the physical hands push interactive objects; empty when the scene cannot switch it.</summary>
         public string handCollision;
+        /// <summary>The participant is in the practice area (session clock held); false once it starts closing.</summary>
+        public bool practice;
         public long timestampMs;
     }
 
@@ -187,6 +189,20 @@ namespace SafetyProto.Domain.Dashboard
         public string taskId;
         public string taskName;
         public float secondsWithoutProgress;
+        public long timestampMs;
+    }
+
+    /// <summary>PracticeStarted and PracticeEnded: the practice area before the training opened or closed.</summary>
+    [Serializable]
+    public struct PracticeDto
+    {
+        public string sessionId;
+        /// <summary>How it ended: "continue", "timeout" or "evaluator"; empty on start.</summary>
+        public string reason;
+        /// <summary>Seconds spent in the area; 0 on start.</summary>
+        public float seconds;
+        /// <summary>Stable ids of the interactions done there, in the order first done; empty on start.</summary>
+        public string[] tried;
         public long timestampMs;
     }
 

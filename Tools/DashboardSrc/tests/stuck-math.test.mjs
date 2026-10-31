@@ -120,6 +120,29 @@ test('popup and pause-menu pauses are not stuck, however long they last', () => 
   }
 });
 
+test('the practice area is a deliberate pause, not stuck however long it lasts', () => {
+  const p = replay([started, ['PauseHoldChanged', { pauseSource: 'Practice', pauseSources: ['Practice'], held: true }, 5]]);
+  assert.equal(check(p, 5).stuck, false);
+  assert.equal(check(p, 900).stuck, false);
+  const sessionPaused = replay([started, ['SessionPaused', { pauseSource: 'Practice', pauseSources: ['Practice'] }, 5]]);
+  assert.equal(check(sessionPaused, 900).stuck, false);
+});
+
+test('the time spent in the practice area does not count as idle once it closes', () => {
+  const practicing = replay([started, ['PauseHoldChanged', { pauseSource: 'Practice', pauseSources: ['Practice'], held: true }, 5]]);
+  const closed = trackProgress(practicing, 'SessionResumed', { pauseSource: 'Practice', pauseSources: [] }, T0 + sec(155));
+  assert.equal(check(closed, 155).stuck, false);
+  assert.equal(check(closed, 209).stuck, false, '5 s before the practice + 54 s after');
+  assert.equal(check(closed, 210).stuck, true);
+});
+
+test('losing focus during the practice still raises the alert, naming only the focus token', () => {
+  const p = replay([started, ['SessionPaused', { pauseSources: ['Practice', 'ApplicationPause'] }, 5]]);
+  const r = check(p, 5);
+  assert.equal(r.reason, 'focus');
+  assert.deepEqual(r.pauseSources, ['ApplicationPause']);
+});
+
 test('a focus token among several holds is enough, and only the focus tokens are reported', () => {
   const p = replay([started, ['SessionPaused', { pauseSources: ['Popup', 'XrSessionUnfocused'] }, 5]]);
   const r = check(p, 5);
@@ -240,6 +263,7 @@ test('focusLost accepts only the focus tokens', () => {
   assert.equal(focusLost(['ApplicationFocus']), true);
   assert.equal(focusLost(['Popup', 'ApplicationPause']), true);
   assert.equal(focusLost(['Popup', 'PauseMenu', 'Unspecified']), false);
+  assert.equal(focusLost(['Practice']), false);
   assert.equal(focusLost([]), false);
   assert.equal(focusLost(undefined), false);
 });

@@ -62,6 +62,12 @@ namespace SafetyProto.Runtime.Practice
         /// <summary>Whether the participant is in the area (or on the way in or out).</summary>
         public bool IsOpen => Active == this;
 
+        /// <summary>
+        /// A close was requested, so the participant is on the way out (or will be once the fade
+        /// in ends) even though <see cref="Active"/> stays set until the fade back finishes.
+        /// </summary>
+        public bool IsClosing => _closing || _pendingClose != null;
+
         public float SecondsLeft => _secondsLeft;
 
         private void Awake() => SetShown(false);

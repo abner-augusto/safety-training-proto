@@ -23,6 +23,7 @@
         mode: state.currentMode,
         sessionId: state.currentSessionId,
         pauseSources: state.pauseSources,
+        practice: state.practice,
         violations: state.violationCount,
         score: state.currentScore,
         lastCriticalAt: state.lastCriticalAt,
