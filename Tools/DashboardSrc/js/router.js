@@ -1,9 +1,10 @@
-    import { t, actionLabel, ppeLabel, violationLabel, violationMessage, applyTranslations, pauseSourceLabel } from './i18n.js';
+    import { t, tf, actionLabel, ppeLabel, violationLabel, violationMessage, applyTranslations, pauseSourceLabel } from './i18n.js';
     import { tasks, wornPpe, state, sessionTimer } from './state.js';
     import { addLog, setScoreUI, renderCluster, renderTasks, resetTaskUI, emptyState, renderReportSection, resolveCommandAck } from './ui.js';
     import { saveSessionToHistory } from './history.js';
-    import { setStationStatus, setPauseSources, renderStation, clearStartCode } from './station.js';
-    import { notifyShell } from './embed.js';
+    import { setStationStatus, setPauseSources, renderStation, clearStartCode, settleIntervention, clearInterventions } from './station.js';
+    import { notifyShell, relayAck } from './embed.js';
+    import { trackProgress } from './stuck-math.js';
 
     /* ================================================================
      * EVENT ROUTER — declarative handler map
@@ -15,6 +16,7 @@
     export function route(envelope) {
       const { eventType, payload } = envelope;
       if (!eventType) return;
+      state.progress = trackProgress(state.progress, eventType, payload, Date.now());
       const fn = handlers[eventType];
       if (fn) { try { fn(payload); } catch (e) { console.error(`[handler:${eventType}]`, e); } }
       // PoseFrame handled inline (high frequency — skip addLog)
@@ -60,6 +62,7 @@
         state.violationCount = 0;
         wornPpe.clear();
         clearStartCode();
+        clearInterventions();
         const attempt = state.currentAttempt > 1 ? ` · ${t('attempt')} ${state.currentAttempt}` : '';
         addLog(`${t('logSessionStarted')} · ${state.currentParticipantId}${attempt}`, 'success');
       }
@@ -134,6 +137,7 @@
       resetTaskUI();
       state.violationCount = 0;
       wornPpe.clear();
+      clearInterventions();
       renderCluster();
       window.__spViewport?.clearSession();   // sem malhas de EPI órfãs entre participantes
       document.getElementById('report-section').innerHTML = emptyState('', t('reportAfterSession'));
@@ -222,8 +226,19 @@
       else if (p.kind === 'RoomCenterDiscarded') addLog(t('logRoomCenterDiscarded'), 'caution');
     });
 
+    /* The app's graded help (not emitted yet): the shell raises the stuck alert from the progress
+       state; this only puts the line in the log. */
+    on('HintShown', p => {
+      const seconds = Math.round(Number(p.secondsWithoutProgress) || 0);
+      addLog(tf('logHintShown', { level: p.level, task: p.taskName || p.taskId || '—', seconds }), 'caution');
+    });
+
     /* ── Evaluator commands ── */
-    on('CommandAck', resolveCommandAck);
+    on('CommandAck', p => {
+      resolveCommandAck(p);
+      settleIntervention(p);
+      relayAck(p);
+    });
 
     /* ── Session Log File ── */
     on('SessionLogFile', p => {

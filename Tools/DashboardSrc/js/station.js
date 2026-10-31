@@ -1,8 +1,10 @@
     import { t, tf, locale, pauseSourceLabel } from './i18n.js';
     import { state } from './state.js';
-    import { createCommandControl, refreshCommandControls } from './ui.js';
+    import { createCommandControl, refreshCommandControls, renderInterventions } from './ui.js';
     import { findCompletedSession } from './history.js';
     import { notifyShell } from './embed.js';
+    import { recordSent, settle } from './interventions.js';
+    import { COMMAND_ACK_TIMEOUT_MS } from './constants.js';
 
     /* ================================================================
      * STATION — what the headset is doing (StationStatus), and the
@@ -128,6 +130,41 @@
       }
       el.textContent = warnings.join(' ');
       el.hidden = warnings.length === 0;
+    }
+
+    function interventionsChanged() {
+      renderInterventions();
+      notifyShell();
+    }
+
+    /** Wraps the socket so every Command it sends, from this page's buttons or from the
+        multi-headset shell, joins the session's intervention list. */
+    export function recordingSender(ws) {
+      return {
+        send(envelope) {
+          const sent = ws.send(envelope);
+          if (!sent) return false;
+          state.interventions = recordSent(state.interventions, envelope, Date.now());
+          interventionsChanged();
+          // An unanswered entry turns into "no response" with time, not with an event.
+          setTimeout(renderInterventions, COMMAND_ACK_TIMEOUT_MS + 100);
+          return true;
+        },
+      };
+    }
+
+    /** Routed from the CommandAck event. */
+    export function settleIntervention(ack) {
+      const next = settle(state.interventions, ack);
+      if (next === state.interventions) return;
+      state.interventions = next;
+      interventionsChanged();
+    }
+
+    /** A new session starts with an empty list. */
+    export function clearInterventions() {
+      state.interventions = [];
+      interventionsChanged();
     }
 
     /** Wires the session form, the restart button and the in-session commands. */

@@ -2,8 +2,8 @@
     import { applyTranslations, toggleLang, setLang } from './js/i18n.js';
     import { applyTheme, toggleTheme, setTheme } from './js/theme.js';
     import { state } from './js/state.js';
-    import { renderTasks, closeReportModal } from './js/ui.js';
-    import { initStationControls, renderStation } from './js/station.js';
+    import { renderTasks, closeReportModal, renderInterventions } from './js/ui.js';
+    import { initStationControls, renderStation, recordingSender } from './js/station.js';
     import { initEmbed } from './js/embed.js';
     import { loadHistory, renderHistory, clearHistory, exportAllHistory } from './js/history.js';
     import { route } from './js/router.js';
@@ -60,6 +60,7 @@
       renderTasks();
       renderHistory();
       renderStation();
+      renderInterventions();
       window.__spViewport?.invalidate();   /* floor dimension labels are formatted per language at render */
     }
     document.getElementById('btn-lang').onclick = () => {
@@ -127,14 +128,18 @@
     renderHistory();
 
     /* ── Evaluator command controls: session form, restart, playspace, objects ── */
-    initStationControls(ws, {
+    const commands = recordingSender(ws);
+    initStationControls(commands, {
       pending: 'commandPending', noConnection: 'commandNoConnection', noResponse: 'commandNoResponse',
     });
+    renderInterventions();
 
-    /* Inside the multi-headset shell, theme and language follow the shell. */
+    /* Inside the multi-headset shell, theme and language follow the shell, and the tiles'
+       quick-action commands arrive here to go out over this page's socket. */
     initEmbed({
       onTheme: next => setTheme(next),
       onLang: next => { setLang(next); refreshLanguage(); },
+      sendCommand: envelope => commands.send(envelope),
     });
 
     /* Gancho de teste: permite injetar eventos/poses pelo console do

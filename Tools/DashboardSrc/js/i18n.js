@@ -118,6 +118,22 @@
         multiEmpty: 'Add the IP of each headset (shown on the in-VR menu).', multiDisconnected: 'disconnected',
         multiBatteryLow: 'low battery', multiCritical: 'critical failure', multiWaiting: 'waiting to start',
         multiKeypad: 'participant keypad open',
+        // stuck alert (multi-headset shell)
+        stuckLimitLabel: 'Stuck after', stuckLimitUnit: 's',
+        soundLabel: 'Alert sound', soundOn: 'on', soundOff: 'off', soundBlocked: 'click to enable',
+        stuckBadge: 'Stuck', stuckIdle: 'no progress for {seconds} s', stuckFocus: 'focus lost', stuckHint: 'hint level {level}',
+        logHintShown: 'Hint level {level}: {task} ({seconds} s without progress)',
+        // quick actions on a tile, and the intervention history of the session
+        tileActionsLabel: 'Quick actions',
+        tileReturnObjects: 'Collect objects', tileRecenter: 'Recenter', tileReset: 'Restart',
+        tileResetConfirm: 'Confirm? Progress is lost',
+        interventionsTitle: 'Interventions', interventionsShort: 'Interventions',
+        interventionsEmpty: 'No intervention in this session.',
+        interventionPending: 'sending…', interventionAccepted: 'accepted', interventionRejected: 'refused',
+        interventionNoResponse: 'no response',
+        command_recenter_player: 'Recenter player', command_calibrate_room_center: 'Calibrate room center',
+        command_return_all_ppe: 'Return loose objects', command_reset_session: 'Restart session',
+        command_start_session: 'Start session',
       },
       pt: {
         currentScore: 'Pontuação',
@@ -232,6 +248,20 @@
         multiEmpty: 'Adicione o IP de cada óculos (aparece no menu dentro da RV).', multiDisconnected: 'desconectado',
         multiBatteryLow: 'bateria baixa', multiCritical: 'falha crítica', multiWaiting: 'aguardando início',
         multiKeypad: 'teclado liberado ao participante',
+        stuckLimitLabel: 'Travado após', stuckLimitUnit: 's',
+        soundLabel: 'Som do alerta', soundOn: 'ligado', soundOff: 'desligado', soundBlocked: 'clique para ativar',
+        stuckBadge: 'Travado', stuckIdle: 'sem progresso há {seconds} s', stuckFocus: 'foco perdido', stuckHint: 'dica nível {level}',
+        logHintShown: 'Dica nível {level}: {task} ({seconds} s sem progresso)',
+        tileActionsLabel: 'Ações rápidas',
+        tileReturnObjects: 'Recolher objetos', tileRecenter: 'Recentralizar', tileReset: 'Reiniciar',
+        tileResetConfirm: 'Confirmar? O progresso será perdido',
+        interventionsTitle: 'Intervenções', interventionsShort: 'Intervenções',
+        interventionsEmpty: 'Nenhuma intervenção nesta sessão.',
+        interventionPending: 'enviando…', interventionAccepted: 'aceito', interventionRejected: 'recusado',
+        interventionNoResponse: 'sem resposta',
+        command_recenter_player: 'Recentralizar jogador', command_calibrate_room_center: 'Calibrar centro da sala',
+        command_return_all_ppe: 'Recolher objetos soltos', command_reset_session: 'Reiniciar sessão',
+        command_start_session: 'Iniciar sessão',
       }
     };
 
@@ -288,6 +318,8 @@
     export const tf = (k, vars) => t(k).replace(/\{(\w+)\}/g, (m, name) => (vars && name in vars ? String(vars[name]) : m));
     /** Short label for a PauseSource token. */
     export const pauseSourceLabel = token => t(`pauseSrc${token || 'Unspecified'}`);
+    /** Label for an evaluator command's wire name; a command this page does not know shows its name. */
+    export const commandLabel = command => i18n[lang][`command_${command}`] ?? i18n.pt[`command_${command}`] ?? String(command || '—');
     export function setLang(next) {
       if (next !== 'pt' && next !== 'en') return;
       lang = next;

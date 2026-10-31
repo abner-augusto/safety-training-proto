@@ -1,6 +1,7 @@
-    import { t, getLang, locale, ppeLabel, violationLabel, violationMessage, pauseSourceLabel } from './i18n.js';
+    import { t, getLang, locale, ppeLabel, violationLabel, violationMessage, pauseSourceLabel, commandLabel } from './i18n.js';
     import { MAX_LOG_ITEMS, COMMAND_ACK_TIMEOUT_MS } from './constants.js';
     import { tasks, wornPpe, state } from './state.js';
+    import { outcomeOf } from './interventions.js';
 
     /* ================================================================
      * UI HELPERS
@@ -290,6 +291,7 @@
 
     export function addLog(message, type = 'info') {
       const container = document.getElementById('log-container');
+      if (!container) return;   // the multi-headset shell reuses the command controls but has no log
       const empty = container.querySelector('.empty-state');
       if (empty) container.innerHTML = '';
 
@@ -302,6 +304,35 @@
       while (container.children.length > MAX_LOG_ITEMS) {
         container.removeChild(container.lastChild);
       }
+    }
+
+    /* ── Interventions: the evaluator commands of this session, newest first ── */
+    const INTERVENTION_LOG_TYPE = { accepted: 'success', rejected: 'violation', noResponse: 'violation', pending: 'caution' };
+    /* The app's own reason (accepted summary or refusal) wins; these cover an ack without one. */
+    const INTERVENTION_FALLBACK_KEY = {
+      accepted: 'interventionAccepted', rejected: 'interventionRejected',
+      noResponse: 'interventionNoResponse', pending: 'interventionPending',
+    };
+
+    export function renderInterventions() {
+      const list = document.getElementById('interventions-list');
+      if (!list) return;
+      const count = document.getElementById('interventions-count');
+      if (count) count.textContent = state.interventions.length ? String(state.interventions.length) : '';
+      if (state.interventions.length === 0) {
+        list.innerHTML = `<div class="iv-empty">${esc(t('interventionsEmpty'))}</div>`;
+        return;
+      }
+      const now = Date.now();
+      list.replaceChildren(...[...state.interventions].reverse().map(entry => {
+        const outcome = outcomeOf(entry, now);
+        const result = entry.reason || t(INTERVENTION_FALLBACK_KEY[outcome]);
+        const time = new Date(entry.sentAt).toLocaleTimeString(locale(), { hour12: false });
+        const item = document.createElement('div');
+        item.className = `log-item iv-item ${INTERVENTION_LOG_TYPE[outcome]}`;
+        item.innerHTML = `<span class="log-time">${time}</span><span class="g">${LOG_GLYPH[INTERVENTION_LOG_TYPE[outcome]]}</span><span>${esc(commandLabel(entry.command))} · ${esc(result)}</span>`;
+        return item;
+      }));
     }
 
     /* ── Report Section — documento carimbado (régua dupla) ── */
