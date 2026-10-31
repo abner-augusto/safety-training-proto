@@ -40,6 +40,17 @@ namespace SafetyProto.UI
                  "O auto-fechamento nunca corta a locução.")]
         [SerializeField, Min(0f)] private float narrationCloseTail = 1f;
 
+        [Header("Avisos de feedback")]
+        [Tooltip("Um aviso de feedback (EPI incorreto, ordem incorreta, pré-requisito, conclusão insegura) " +
+                 "fica na tela até a próxima ação do participante. Este é o tempo máximo (s) sem ação.")]
+        [SerializeField, Min(1f)] private float feedbackMaxSeconds = 30f;
+
+        private StickyPopupPolicy _sticky;
+        private System.Action<ObjectGrabbedEventArgs> _onGrabbed;
+        private System.Action<ActionAttemptedEvent> _onAttempt;
+        private System.Action<PPEStateChangedEventArgs> _onPpeChanged;
+        private System.Action<TaskEventArgs> _onTask;
+
         /// <summary>Clip narrating the popup on screen; stopped when the popup closes.</summary>
         private AudioClip _popupClip;
 
@@ -68,6 +79,7 @@ namespace SafetyProto.UI
 
             popupPanel.Hidden += OnPanelHidden;
             popupPanel.Shown += OnPanelShown;
+            SubscribeParticipantActions();
 
             if (popupPanel.gameObject.activeSelf)
             {
@@ -78,6 +90,7 @@ namespace SafetyProto.UI
 
         private void OnDestroy()
         {
+            UnsubscribeParticipantActions();
             if (popupPanel != null)
             {
                 popupPanel.Hidden -= OnPanelHidden;
@@ -88,8 +101,44 @@ namespace SafetyProto.UI
                 Instance = null;
         }
 
+        private void SubscribeParticipantActions()
+        {
+            var bus = EventBus.Instance;
+            if (bus == null) return;
+            _onGrabbed = _ => NotifyParticipantAction();
+            _onAttempt = _ => NotifyParticipantAction();
+            _onPpeChanged = _ => NotifyParticipantAction();
+            _onTask = _ => NotifyParticipantAction();
+            bus.Subscribe(_onGrabbed);
+            bus.Subscribe(_onAttempt);
+            bus.Subscribe(_onPpeChanged);
+            bus.Subscribe(_onTask);
+        }
+
+        private void UnsubscribeParticipantActions()
+        {
+            var bus = EventBus.Instance;
+            if (bus == null || _onGrabbed == null) return;
+            bus.Unsubscribe(_onGrabbed);
+            bus.Unsubscribe(_onAttempt);
+            bus.Unsubscribe(_onPpeChanged);
+            bus.Unsubscribe(_onTask);
+        }
+
+        private void NotifyParticipantAction() => _sticky?.NotifyAction(Time.time);
+
+        private void Update()
+        {
+            if (_sticky == null) return;
+            if (!_sticky.HoldsClock(Time.time))
+                SessionPause.Release(PauseSource.Popup);
+            if (_sticky.ShouldClose(Time.time))
+                Hide();
+        }
+
         private void OnPanelHidden()
         {
+            _sticky = null;
             StopPopupNarration();
             SessionPause.Release(PauseSource.Popup);
 
@@ -122,6 +171,13 @@ namespace SafetyProto.UI
             if (clip != null && narrationVoice != null)
                 data.autoCloseSeconds = NarrationTiming.AutoCloseSeconds(
                     data.autoCloseSeconds, WaitBeforeNarration(), clip.length, narrationCloseTail);
+
+            _sticky = null;
+            if (data.staysUntilAction)
+            {
+                _sticky = new StickyPopupPolicy(Time.time, data.autoCloseSeconds, feedbackMaxSeconds);
+                data.autoCloseSeconds = 0f;
+            }
 
             popupPanel.Show(data);
             StartPopupNarration(clip);
@@ -232,6 +288,18 @@ namespace SafetyProto.UI
                                 string narrationKey = null)
             => Show(new PopupData { type = PopupType.Warning, title = title, body = body, autoCloseSeconds = autoCloseSeconds,
                                     narrationKey = narrationKey },
+                    reasonCode);
+
+        /// <summary>
+        /// A feedback warning that stays until the participant acts (grabs, attempts, equips) instead
+        /// of closing on a timer: <paramref name="readSeconds"/> holds the session clock, as the
+        /// self-closing warning did, and a line of narration extends it; then the popup stays,
+        /// without holding the clock, until the next action or the ceiling.
+        /// </summary>
+        public void ShowFeedbackWarning(string title, string body, float readSeconds, string reasonCode = "",
+                                        string narrationKey = null)
+            => Show(new PopupData { type = PopupType.Warning, title = title, body = body, autoCloseSeconds = readSeconds,
+                                    narrationKey = narrationKey, staysUntilAction = true },
                     reasonCode);
 
         public void ShowInteractive(string title, string body, string buttonLabel, UnityAction onAction,

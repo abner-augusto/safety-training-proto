@@ -111,6 +111,9 @@ namespace SafetyProto.Runtime.Scaffolding
         [Tooltip("In position but turned the wrong way.")]
         [SerializeField] private Color nearMissColor = new Color(1f,  0.85f, 0.1f,  0.4f);
         [SerializeField] private Color invalidColor = new Color(1f,   0.45f, 0.2f,  0.35f);
+        [Tooltip("Seconds the slot ghost stays visible in the invalid colour after a release in a wrong " +
+                 "pose, so the invalid-release sound has a visual twin.")]
+        [SerializeField, Range(0f, 3f)] private float invalidReleaseFlashSeconds = 1f;
 
         [Header("Audio Feedback")]
         [Tooltip("AudioSource used to play 3D spatialized placement/install sounds. Auto-found or created if null.")]
@@ -155,6 +158,7 @@ namespace SafetyProto.Runtime.Scaffolding
         private readonly RefusedAttemptTracker _refusalTracker = new RefusedAttemptTracker();
         private PlacementCuePolicy _cuePolicy;
         private Transform[] _gripPoints;
+        private float _invalidFlashUntil;
         private System.Action<ActionRefusedEventArgs> _onActionRefused;
         private System.Action<PopupClosedEventArgs> _onPopupClosed;
 
@@ -289,7 +293,7 @@ namespace SafetyProto.Runtime.Scaffolding
                 case PlacementCue.NearMiss: PlayClip(nearMissSound, nearMissVolume); break;
             }
 
-            SetFeedbackColor(!_isGrabbed ? idleColor
+            SetFeedbackColor(!_isGrabbed ? (IsFlashingInvalid ? invalidColor : idleColor)
                 : pose == PlacementPose.Valid ? validColor
                 : pose == PlacementPose.WrongAngle ? nearMissColor
                 : invalidColor);
@@ -304,6 +308,7 @@ namespace SafetyProto.Runtime.Scaffolding
             {
                 onInvalidRelease?.Invoke();
                 PlayClip(invalidReleaseSound, invalidReleaseVolume);
+                _invalidFlashUntil = Time.time + invalidReleaseFlashSeconds;
                 return;
             }
 
@@ -485,6 +490,8 @@ namespace SafetyProto.Runtime.Scaffolding
             return false;
         }
 
+        private bool IsFlashingInvalid => Time.time < _invalidFlashUntil;
+
         private PlacementPose ClassifyPose()
         {
             if (HasValidInstallPose()) return PlacementPose.Valid;
@@ -620,7 +627,7 @@ namespace SafetyProto.Runtime.Scaffolding
         private void UpdateTargetPreviewVisibility()
         {
             if (targetPreviewRenderer == null || _isInstalled) return;
-            targetPreviewRenderer.enabled = !showTargetPreviewOnlyWhileGrabbed || _isGrabbed;
+            targetPreviewRenderer.enabled = !showTargetPreviewOnlyWhileGrabbed || _isGrabbed || IsFlashingInvalid;
         }
 
         private void WarnIfAudioRunsOnCodeDefaults()

@@ -20,8 +20,9 @@ namespace SafetyProto.UI
         [Tooltip("Título do alerta quando a tarefa é recusada porque o pré-requisito do grupo (ex.: talabarte ancorado) ainda está pendente.")]
         [SerializeField] private string prerequisiteTitle = "Conecte-se Primeiro";
 
-        [Header("Auto-fechamento")]
-        [Tooltip("Tempo (s) para auto-fechar os alertas de task/EPI (ordem incorreta, EPI errado, etc.). 0 = sem timeout.")]
+        [Header("Leitura")]
+        [Tooltip("Tempo mínimo (s) de leitura dos alertas de task/EPI, com o relógio da sessão parado. " +
+                 "Depois o alerta fica na tela até a próxima ação do participante.")]
         [SerializeField] private float autoCloseSeconds = 6f;
 
         private TaskManager _taskManager;
@@ -70,7 +71,8 @@ namespace SafetyProto.UI
             {
                 var ppeText = args.Task?.ppeAdvice;
                 if (!string.IsNullOrWhiteSpace(ppeText))
-                    PopupService.Instance?.ShowWarning(ppeTitle, ppeText, autoCloseSeconds);
+                    PopupService.Instance?.ShowFeedbackWarning(ppeTitle, ppeText, autoCloseSeconds,
+                        narrationKey: NarrationKeys.ForPpeAdvice(args.Task?.id));
             }
         }
 
@@ -85,7 +87,7 @@ namespace SafetyProto.UI
             if (args.ViolationCode != ViolationCodes.PrerequisitePending) return;
             if (string.IsNullOrWhiteSpace(args.Message)) return;
 
-            PopupService.Instance?.ShowWarning(prerequisiteTitle, args.Message, autoCloseSeconds,
+            PopupService.Instance?.ShowFeedbackWarning(prerequisiteTitle, args.Message, autoCloseSeconds,
                 ViolationCodes.PrerequisitePending, NarrationKeys.PrerequisitePending);
         }
 
@@ -108,7 +110,7 @@ namespace SafetyProto.UI
 
             // Narrated per decoy (not per text): only an authored decoy has a voice-over.
             var narrationKey = match != null ? NarrationKeys.ForDistractor(match.Distractor.Id) : null;
-            PopupService.Instance?.ShowWarning(ppeTitle, body, autoCloseSeconds, narrationKey: narrationKey);
+            PopupService.Instance?.ShowFeedbackWarning(ppeTitle, body, autoCloseSeconds, narrationKey: narrationKey);
         }
 
         private void OnWrongOrderSnapAttempted(PPEType attempted)
@@ -119,7 +121,8 @@ namespace SafetyProto.UI
                 ? $"Este equipamento ainda não é o próximo da sequência.\n\nDica: {hint}"
                 : "Este equipamento ainda não é o próximo da sequência. Siga a ordem correta das tarefas.";
 
-            PopupService.Instance?.ShowWarning(wrongOrderTitle, body, autoCloseSeconds);
+            PopupService.Instance?.ShowFeedbackWarning(wrongOrderTitle, body, autoCloseSeconds,
+                narrationKey: NarrationKeys.WrongOrder);
         }
     }
 }
