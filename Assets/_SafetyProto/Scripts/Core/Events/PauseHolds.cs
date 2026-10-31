@@ -34,6 +34,9 @@ namespace SafetyProto.Core.Events
 
         public bool IsHeldBy(PauseSource source) => _sources.Contains(source);
 
+        /// <summary>Whether <paramref name="source"/> is the one and only hold.</summary>
+        public bool IsHeldOnlyBy(PauseSource source) => _sources.Count == 1 && _sources.Contains(source);
+
         /// <summary>The sources holding the pause right now, in declaration order.</summary>
         public PauseSource[] ActiveSources()
         {

@@ -160,7 +160,11 @@ namespace SafetyProto.Runtime.Feedback
             foreach (var prop in FindObjectsByType<PracticeProp>(FindObjectsInactive.Include))
                 ClaimTree(prop.transform, claimed);
             foreach (var area in FindObjectsByType<PracticeArea>(FindObjectsInactive.Include))
+            {
                 ClaimTree(area.transform, claimed);
+                foreach (var root in area.ShownWhileOpen)
+                    if (root != null) ClaimTree(root.transform, claimed);
+            }
 
             foreach (var item in FindObjectsByType<PPEItem>(FindObjectsInactive.Include))
             {

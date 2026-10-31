@@ -1,8 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Oculus.Interaction;
+using Oculus.Interaction.HandGrab;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
+using SafetyProto.Runtime.Feedback;
 using TMPro;
 using UnityEngine;
 
@@ -53,6 +56,7 @@ namespace SafetyProto.Runtime.Practice
         private readonly List<IPracticeResettable> _resettables = new List<IPracticeResettable>();
         private Action _onClosed;
         private float _openedAt;
+        private float _counted;
         private float _secondsLeft;
         private bool _counting;
         private bool _closing;
@@ -69,6 +73,13 @@ namespace SafetyProto.Runtime.Practice
         public bool IsClosing => _closing || _pendingClose != null;
 
         public float SecondsLeft => _secondsLeft;
+
+        /// <summary>Where the participant stands in the area; a recenter while it is open lands here.</summary>
+        public Transform PracticeAnchor => practiceAnchor;
+
+        /// <summary>Everything the area shows while open: the area itself, the practice body slots, the
+        /// lanyard tip (which leaves the area's hierarchy once it runs).</summary>
+        public IReadOnlyList<GameObject> ShownWhileOpen => shownWhileOpen ?? Array.Empty<GameObject>();
 
         private void Awake() => SetShown(false);
 
@@ -100,7 +111,9 @@ namespace SafetyProto.Runtime.Practice
             _pendingClose = null;
             _closing = false;
             _secondsLeft = durationSeconds;
+            _counted = 0f;
             _shownSecond = -1;
+            ReleaseHeldObjects();
             SessionPause.Hold(PauseSource.Practice);
             InteractionEvents.RaisePracticeStarted();
             StartCoroutine(OpenRoutine());
@@ -131,8 +144,10 @@ namespace SafetyProto.Runtime.Practice
 
         private IEnumerator OpenRoutine()
         {
+            while (recenterService.IsBusy) yield return null;
             yield return recenterService.RecenterTo(practiceAnchor, Fade(() =>
             {
+                SendLooseObjectsHome();
                 SetShown(true);
                 CollectResettables();
                 foreach (var prop in _resettables) prop.ResetForPractice();
@@ -155,6 +170,7 @@ namespace SafetyProto.Runtime.Practice
             InteractionEvents.RaisePracticeEnded(reason, seconds, _tried.ToArray());
             SafetyLog.Info($"[PracticeArea] Área de prática encerrada ({reason}) após {seconds:0} s.", this);
 
+            while (recenterService.IsBusy) yield return null;
             yield return recenterService.RecenterTo(returnAnchor, Fade(() =>
             {
                 foreach (var prop in _resettables) prop.ResetForPractice();
@@ -172,7 +188,10 @@ namespace SafetyProto.Runtime.Practice
         private void Update()
         {
             if (!_counting) return;
-            _secondsLeft = Mathf.Max(0f, durationSeconds - (Time.time - _openedAt));
+            // Only the practice's own hold counts down: the pause menu or a headset taken off
+            // does not spend the participant's time.
+            if (SessionPause.IsHeldOnlyBy(PauseSource.Practice)) _counted += Time.deltaTime;
+            _secondsLeft = Mathf.Max(0f, durationSeconds - _counted);
             RefreshCountdown();
             if (_secondsLeft <= 0f) Close("timeout");
         }
@@ -186,6 +205,20 @@ namespace SafetyProto.Runtime.Practice
             LocomotorHandling = LocomotorMode.ToggleEnabled,
             OnBlackout = onBlackout
         };
+
+        // A PPE item carried into the area could be equipped there with the clock held, so the
+        // hands let go of whatever they hold as the area opens.
+        private static void ReleaseHeldObjects()
+        {
+            foreach (var interactor in FindObjectsByType<HandGrabInteractor>(FindObjectsSortMode.None))
+                if (interactor.State == InteractorState.Select) interactor.ForceRelease();
+        }
+
+        private static void SendLooseObjectsHome()
+        {
+            foreach (var home in FindObjectsByType<ReturnObjectHome>(FindObjectsSortMode.None))
+                if (!PracticeProp.IsPractice(home)) home.ResetSession();
+        }
 
         private void CollectResettables()
         {
