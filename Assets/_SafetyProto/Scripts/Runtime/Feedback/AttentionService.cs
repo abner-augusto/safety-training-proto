@@ -96,6 +96,9 @@ namespace SafetyProto.Runtime.Feedback
         /// <summary>The scene object behind a target id, or null.</summary>
         public GameObject HostOf(string id) => Find(id)?.Host;
 
+        /// <summary>The target a scene object stands for, or null when it is not one.</summary>
+        public AttentionTargetInfo InfoOf(GameObject host) => host != null ? FindByHost(host)?.Info : null;
+
         /// <summary>Keeps <paramref name="target"/> pulsing until <see cref="Release"/>; used by the onboarding.</summary>
         public void Hold(GameObject target) => PulseOn(target)?.Hold();
 
@@ -187,6 +190,11 @@ namespace SafetyProto.Runtime.Feedback
                 if (claimed.Add(trigger.gameObject))
                     Add(AttentionTargets.ForActionObject(trigger.name, trigger.ActionId, TaskNameFor(groups, trigger.ActionId)),
                         trigger.gameObject);
+
+            foreach (var reporter in FindObjectsByType<SafetyProto.Runtime.Safety.SafetyIssueReporter>())
+                if (claimed.Add(reporter.gameObject))
+                    Add(AttentionTargets.ForActionObject(reporter.name, reporter.ActionId, TaskNameFor(groups, reporter.ActionId)),
+                        reporter.gameObject);
 
             foreach (var home in FindObjectsByType<ReturnObjectHome>())
                 if (claimed.Add(home.gameObject))

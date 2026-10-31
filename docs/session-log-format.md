@@ -52,6 +52,7 @@ to keep it small, and fields the event does not use are omitted from the JSON.
 | `EvaluatorCommand` | `command` (`recenter_player`, `calibrate_room_center`, `return_all_ppe`, `highlight_target`), `message` (the handler's result summary), `target` (`highlight_target` only: the target id, e.g. `ppe:Safety_Helmet`, `socket:GuardRailPiece`) |
 | `PauseHoldChanged` | `pauseSource`, `held` (omitted when false), `pauseSources` (active after the change; omitted when none) |
 | `ObjectGrabbed` | `target` (scene name of the object a hand took hold of) |
+| `HintShown` | `level` (1 = the next object pulses, 2 = the step is said aloud, 3 = the evaluator is alerted), `taskId`, `durationSeconds` (seconds without progress when it fired). Guided mode only |
 | `ObjectReleased` | `target`, `durationSeconds` (how long it was held), `secured` (`true` when the release left it worn, installed or anchored; omitted for a drop) |
 
 Notes for analysis:

@@ -50600,6 +50600,56 @@ LightProbeGroup:
   - {x: 3.3000002, y: 1.8, z: 2.35}
   - {x: 3.3000002, y: 2.5, z: 2.35}
   m_Dering: 1
+--- !u!1 &1705536276
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1705536277}
+  - component: {fileID: 1705536278}
+  m_Layer: 0
+  m_Name: GuidedHintCoach
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1705536277
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1705536276}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7322035375745015844}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1705536278
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1705536276}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f217a8178a7380479278b13db933436, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.UI.Unity::SafetyProto.UI.GuidedHintCoach
+  narrationVoice: {fileID: 1602798036}
+  hintClips:
+    entries: []
+  pulseAfterSeconds: 15
+  narrateAfterSeconds: 30
+  alertAfterSeconds: 60
 --- !u!1 &1708245725
 GameObject:
   m_ObjectHideFlags: 0
@@ -67787,6 +67837,7 @@ MonoBehaviour:
     - key: report:report_damaged_safety_mesh
       clip: {fileID: 8300000, guid: 99aae3b02266f8f4d8dac901b95a995e, type: 3}
   narrationCloseTail: 1
+  feedbackMaxSeconds: 30
 --- !u!33 &5493516858789556511
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -70599,6 +70650,7 @@ Transform:
   - {fileID: 1969495574}
   - {fileID: 529125585}
   - {fileID: 1831557579}
+  - {fileID: 1705536277}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7322035375745015845

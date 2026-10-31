@@ -44,6 +44,7 @@ namespace SafetyProto.Domain.Dashboard
             _bus.Subscribe<CriticalSafetyFailureEventArgs>(OnCriticalSafetyFailure);
             _bus.Subscribe<SafetyErrorEventArgs>(OnSafetyError);
             _bus.Subscribe<PlayspaceNoticeEventArgs>(OnPlayspaceNotice);
+            _bus.Subscribe<HintShownEventArgs>(OnHintShown);
             _bus.Subscribe<PauseHoldChangedEventArgs>(OnPauseHoldChanged);
         }
 
@@ -63,6 +64,7 @@ namespace SafetyProto.Domain.Dashboard
             _bus.Unsubscribe<CriticalSafetyFailureEventArgs>(OnCriticalSafetyFailure);
             _bus.Unsubscribe<SafetyErrorEventArgs>(OnSafetyError);
             _bus.Unsubscribe<PlayspaceNoticeEventArgs>(OnPlayspaceNotice);
+            _bus.Unsubscribe<HintShownEventArgs>(OnHintShown);
             _bus.Unsubscribe<PauseHoldChangedEventArgs>(OnPauseHoldChanged);
         }
 
@@ -238,6 +240,17 @@ namespace SafetyProto.Domain.Dashboard
                 kind = args.Kind.ToString(),
                 area = args.Area,
                 durationSeconds = args.DurationSeconds,
+                timestampMs = _host.ResolveTimestamp(args.TimestampMs)
+            });
+
+        private void OnHintShown(HintShownEventArgs args) =>
+            _host.Broadcast("HintShown", new HintDto
+            {
+                sessionId = args.SessionId,
+                level = args.Level,
+                taskId = args.TaskId,
+                taskName = args.TaskName,
+                secondsWithoutProgress = args.SecondsWithoutProgress,
                 timestampMs = _host.ResolveTimestamp(args.TimestampMs)
             });
 

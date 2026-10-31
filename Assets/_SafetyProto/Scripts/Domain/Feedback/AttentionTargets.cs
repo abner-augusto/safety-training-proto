@@ -74,9 +74,20 @@ namespace SafetyProto.Domain.Feedback
             var labels = new List<string>(accepts.Count);
             foreach (var type in accepts) labels.Add(PpeLabels.DisplayName(type));
             string what = labels.Count > 0 ? string.Join(" / ", labels) : objectName;
-            string key = accepts.Count > 0 ? accepts[0].ToString() : string.Empty;
+            var names = new List<string>(accepts.Count);
+            foreach (var type in accepts) names.Add(type.ToString());
+            string key = string.Join(",", names);
             return new AttentionTargetInfo(IdFor(AttentionTargetKind.BodySlot, objectName), AttentionTargetKind.BodySlot,
                 $"Encaixe no corpo: {what}", key);
+        }
+
+        /// <summary>Whether a body-slot target takes <paramref name="type"/>.</summary>
+        public static bool SlotTakes(AttentionTargetInfo slot, PPEType type)
+        {
+            if (slot.Kind != AttentionTargetKind.BodySlot || string.IsNullOrEmpty(slot.Key)) return false;
+            foreach (var name in slot.Key.Split(','))
+                if (name == type.ToString()) return true;
+            return false;
         }
 
         public static AttentionTargetInfo ForScaffoldPiece(string objectName, string actionId, string? taskName)

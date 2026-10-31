@@ -43,6 +43,7 @@
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Events\PopupShownEventArgs.cs" Link="Core\Events\PopupShownEventArgs.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Events\PauseHolds.cs"          Link="Core\Events\PauseHolds.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Events\ObjectHandledEventArgs.cs" Link="Core\Events\ObjectHandledEventArgs.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\Events\HintShownEventArgs.cs" Link="Core\Events\HintShownEventArgs.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Scripts\Core\RuntimeSafetyTask.cs" Link="Core\RuntimeSafetyTask.cs" />
 
     <!-- Part 4 additions -->

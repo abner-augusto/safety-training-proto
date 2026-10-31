@@ -78,6 +78,7 @@ namespace SafetyProto.Domain.Sessions
             public string command;
             public string target;
             public bool secured;
+            public int level;
             public string previousSessionId;
             public int attempt;
         }
@@ -214,6 +215,7 @@ namespace SafetyProto.Domain.Sessions
         private readonly Action<EvaluatorCommandEventArgs>        _onEvaluatorCommand;
         private readonly Action<ObjectGrabbedEventArgs>           _onObjectGrabbed;
         private readonly Action<ObjectReleasedEventArgs>          _onObjectReleased;
+        private readonly Action<HintShownEventArgs>               _onHintShown;
 
         private bool _subscribed;
         private bool _disposed;
@@ -299,6 +301,10 @@ namespace SafetyProto.Domain.Sessions
                 args.Secured ? $"Soltou {args.Target} no lugar" : $"Soltou {args.Target}",
                 args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                 new LogData { target = args.Target ?? string.Empty, durationSeconds = args.HeldSeconds, secured = args.Secured });
+            _onHintShown = args => LogEvent("HintShown",
+                $"Ajuda nível {args.Level} em '{args.TaskName}' após {args.SecondsWithoutProgress.ToString("0", CultureInfo.InvariantCulture)} s sem progresso",
+                args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                new LogData { level = args.Level, taskId = args.TaskId ?? string.Empty, durationSeconds = args.SecondsWithoutProgress });
             _onEvaluatorCommand = args => LogEvent("EvaluatorCommand", DescribeEvaluatorCommand(args),
                 args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                 new LogData { command = args.Command ?? string.Empty, message = args.Summary ?? string.Empty, target = args.Target ?? string.Empty });
@@ -425,6 +431,7 @@ namespace SafetyProto.Domain.Sessions
             _eventBus.Subscribe(_onEvaluatorCommand);
             _eventBus.Subscribe(_onObjectGrabbed);
             _eventBus.Subscribe(_onObjectReleased);
+            _eventBus.Subscribe(_onHintShown);
             _subscribed = true;
         }
 
@@ -448,6 +455,7 @@ namespace SafetyProto.Domain.Sessions
             _eventBus.Unsubscribe(_onEvaluatorCommand);
             _eventBus.Unsubscribe(_onObjectGrabbed);
             _eventBus.Unsubscribe(_onObjectReleased);
+            _eventBus.Unsubscribe(_onHintShown);
             _subscribed = false;
         }
 

@@ -175,6 +175,19 @@ namespace SafetyProto.Domain.Dashboard
         public long timestampMs;
     }
 
+    /// <summary>A guided hint; level 3 raises the stuck alert on the evaluator's tile.</summary>
+    [Serializable]
+    public struct HintDto
+    {
+        public string sessionId;
+        /// <summary>1 = the next object pulses, 2 = the step is said aloud, 3 = the evaluator is alerted.</summary>
+        public int level;
+        public string taskId;
+        public string taskName;
+        public float secondsWithoutProgress;
+        public long timestampMs;
+    }
+
     /// <summary>SessionPaused, SessionResumed and PauseHoldChanged. Tokens are PauseSource names.</summary>
     [Serializable]
     public struct PauseDto

@@ -45,7 +45,9 @@ namespace SafetyProto.Tests.Editor
 
             Assert.AreEqual("slot:PPESlot(Head)", info.Id);
             Assert.AreEqual("Encaixe no corpo: Capacete / Óculos de proteção", info.Label);
-            Assert.AreEqual("Helmet", info.Key);
+            Assert.IsTrue(AttentionTargets.SlotTakes(info, PPEType.Helmet));
+            Assert.IsTrue(AttentionTargets.SlotTakes(info, PPEType.Goggles));
+            Assert.IsFalse(AttentionTargets.SlotTakes(info, PPEType.Boots));
         }
 
         [Test]

@@ -15,6 +15,7 @@ namespace SafetyProto.Domain.Feedback
         private const string DistractorPrefix = "distractor:";
         private const string HazardReportPrefix = "report:";
         private const string PpeAdvicePrefix = "ppe_advice:";
+        private const string TaskHintPrefix = "hint:";
 
         /// <summary>The "EPI Incorreto" warning for one decoy, keyed by its scenario <c>distractorId</c>.
         /// Empty for an empty id, so an unauthored decoy stays silent.</summary>
@@ -25,6 +26,9 @@ namespace SafetyProto.Domain.Feedback
 
         /// <summary>The "EPI Incorreto" warning of a task completed without its PPE, keyed by the task id.</summary>
         public static string ForPpeAdvice(string taskId) => Prefixed(PpeAdvicePrefix, taskId);
+
+        /// <summary>The guided hint that says a task's step aloud, keyed by the task id.</summary>
+        public static string ForTaskHint(string taskId) => Prefixed(TaskHintPrefix, taskId);
 
         private static string Prefixed(string prefix, string id)
             => string.IsNullOrWhiteSpace(id) ? string.Empty : prefix + id.Trim();

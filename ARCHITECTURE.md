@@ -200,7 +200,8 @@ and `Core/Events/`:
 | `SafetyErrorEventArgs`          | `EventBus` itself (queue overflow, listener threw), `TimerSystem` | `LogHUD`, logger, dashboard relay |
 | `PlayspaceNoticeEventArgs`      | `WalkableZoneGuard`, `RecenterService` | logger, dashboard relay (never scored) |
 | `EvaluatorCommandEventArgs`     | `EvaluatorDashboardBootstrap` (accepted in-session commands) | logger (never scored) |
-| `ObjectGrabbedEventArgs` / `ObjectReleasedEventArgs` | `ReturnObjectHome`, `RetractableLanyardController` (held-state edges) | logger, `PopupService` (next action) (never scored) |
+| `ObjectGrabbedEventArgs` / `ObjectReleasedEventArgs` | `ReturnObjectHome`, `RetractableLanyardController` (held-state edges) | logger, `PopupService` (next action), `GuidedHintCoach` (progress) (never scored) |
+| `HintShownEventArgs`            | `GuidedHintCoach` (Guided mode only) | logger, dashboard relay (level 3 raises the stuck alert; never scored) |
 | `ActionRefusedEventArgs`        | `SafetyRuleEngineCore`          | the emitter of the refused attempt (`ScaffoldPieceInstaller`, `SafetyIssueReporter`) |
 | `PopupClosedEventArgs`          | `PopupService`                  | gameplay objects waiting on a warning |
 | `PopupShownEventArgs`           | `PopupService`                  | popup camera (`FadeHandOverlay`)      |

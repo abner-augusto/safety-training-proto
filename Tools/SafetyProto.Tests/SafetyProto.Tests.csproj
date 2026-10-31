@@ -70,6 +70,7 @@
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\PlacementCuePolicyTests.cs"        Link="PlacementCuePolicyTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\TwoHandHintPolicyTests.cs"         Link="TwoHandHintPolicyTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\StickyPopupPolicyTests.cs"         Link="StickyPopupPolicyTests.cs" />
+    <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\HintLadderTests.cs"                Link="HintLadderTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\OutgoingMessageBufferTests.cs"       Link="OutgoingMessageBufferTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\EventMetadataTests.cs"              Link="EventMetadataTests.cs" />
     <Compile Include="..\..\Assets\_SafetyProto\Tests\Editor\ViolationCodesTests.cs"             Link="ViolationCodesTests.cs" />

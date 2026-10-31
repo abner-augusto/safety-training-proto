@@ -111,6 +111,22 @@ namespace SafetyProto.Tests.Editor
             Assert.AreEqual(true, (bool?)releases[1]["data"]!["secured"]);
         }
 
+        [Test]
+        public void HintShown_IsLoggedWithLevelTaskAndWaitingTime()
+        {
+            _bus.Publish(new SessionStartedEventArgs { SessionId = "S1", TotalTasks = 9, TimestampMs = 1000L, Attempt = 1 });
+            _bus.Publish(new HintShownEventArgs
+            {
+                SessionId = "S1", Level = 2, TaskId = "install_toeboard", TaskName = "Instalar Rodapé",
+                SecondsWithoutProgress = 30f, TimestampMs = 31000L
+            });
+
+            var entry = ((JArray)WriteLog()["entries"]!).Single(e => (string?)e["eventName"] == "HintShown");
+            Assert.AreEqual(2, (int?)entry["data"]!["level"]);
+            Assert.AreEqual("install_toeboard", (string?)entry["data"]!["taskId"]);
+            Assert.AreEqual(30f, (float?)entry["data"]!["durationSeconds"]);
+        }
+
         private JObject WriteLog()
         {
             var path = _logger.WriteLogAsync().GetAwaiter().GetResult();

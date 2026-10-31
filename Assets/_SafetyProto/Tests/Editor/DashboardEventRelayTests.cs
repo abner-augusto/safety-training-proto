@@ -119,5 +119,21 @@ namespace SafetyProto.Tests.Editor
             _bus.Publish(new SessionEndedEventArgs { SessionId = "S1", TimestampMs = 1L });
             Assert.AreEqual(0, _host.Count("SessionEnded"));
         }
+
+        [Test]
+        public void HintShown_ReachesTheDashboardWithItsLevelAndTask()
+        {
+            _bus.Publish(new HintShownEventArgs
+            {
+                SessionId = "S1", Level = 3, TaskId = "install_guardrail", TaskName = "Instalar Guarda-corpo",
+                SecondsWithoutProgress = 60f, TimestampMs = 9L
+            });
+
+            var dto = _host.Last<HintDto>("HintShown");
+            Assert.AreEqual(3, dto.level);
+            Assert.AreEqual("install_guardrail", dto.taskId);
+            Assert.AreEqual("Instalar Guarda-corpo", dto.taskName);
+            Assert.AreEqual(60f, dto.secondsWithoutProgress);
+        }
     }
 }
