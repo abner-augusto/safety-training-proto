@@ -111,6 +111,17 @@ namespace SafetyProto.UI
         {
             if (popupPanel == null) return;
 
+            if (!PopupPreemption.MayReplace(popupPanel.VisibleType == PopupType.Interactive,
+                    data.type == PopupType.Interactive))
+            {
+                SafetyLog.Info($"[PopupService] Aviso '{data.title}' suprimido — um popup aguarda resposta do participante.", this);
+                // A refused piece waits for its warning to close before reverting; this warning
+                // will never show, so release that wait now instead of at its fallback deadline.
+                if (!string.IsNullOrEmpty(reasonCode))
+                    PopupEvents.RaisePopupClosed(reasonCode);
+                return;
+            }
+
             _currentReasonCode = reasonCode ?? string.Empty;
 
             SessionPause.Hold(PauseSource.Popup);

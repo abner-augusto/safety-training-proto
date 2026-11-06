@@ -62,6 +62,9 @@ namespace SafetyProto.UI
 
         public bool IsVisible { get; private set; }
 
+        /// <summary>Type of the popup on screen, or null while hidden or fading out.</summary>
+        public PopupType? VisibleType => IsVisible && _currentData != null ? _currentData.type : (PopupType?)null;
+
         /// <summary>
         /// Raised when the panel starts hiding, no matter the trigger (close button or
         /// programmatic <see cref="Hide"/>). PopupService listens to this to resume the
