@@ -10,19 +10,19 @@ namespace SafetyProto.UI
         [TextArea(2, 5)] public string body;
         public string actionButtonLabel = "Prosseguir";
 
-        [Tooltip("Ícone customizado para este step. Null = usa o ícone padrão do tipo Interactive.")]
+        [Tooltip("Custom icon for this step. Null = the default icon of the Interactive type.")]
         public Sprite icon;
 
-        [Tooltip("Ilustração no lugar do ícone. Com mais de um quadro, eles alternam em crossfade (ex.: mão aberta → punho fechado).")]
+        [Tooltip("Illustration in place of the icon. With more than one frame, they alternate with a crossfade (e.g. open hand → closed fist).")]
         public Sprite[] illustrationFrames;
 
-        [Tooltip("Narração tocada quando este step abre. Null = sem narração.")]
+        [Tooltip("Narration played when this step opens. Null = no narration.")]
         public AudioClip narration;
 
-        [Tooltip("GameObject a destacar quando este step abrir. Null = sem highlight.")]
+        [Tooltip("GameObject to highlight when this step opens. Null = no highlight.")]
         public GameObject highlightTarget;
 
-        [Tooltip("Callback extra ao confirmar o step. Opcional.")]
+        [Tooltip("Extra callback when the step is confirmed. Optional.")]
         public UnityEvent onStepConfirmed;
     }
 }

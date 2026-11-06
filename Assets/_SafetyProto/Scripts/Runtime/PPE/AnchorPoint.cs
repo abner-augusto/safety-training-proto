@@ -14,8 +14,9 @@ namespace SafetyProto.Runtime.PPE
     /// </summary>
     public class AnchorPoint : MonoBehaviour
     {
-        [Tooltip("True for olhal de ancoragem (ponto de ancoragem fixo, NR-35 compliant). " +
-                 "False for incorrect anchor points like scaffold montantes.")]
+        [Tooltip("True for an anchorage eyebolt (olhal de ancoragem: a fixed, NR-35 compliant " +
+                 "anchor point). False for incorrect anchor points like the scaffold uprights " +
+                 "(montantes).")]
         public bool isCorrectAnchor = true;
 
         [Tooltip("Transform where the lanyard tip should attach. " +

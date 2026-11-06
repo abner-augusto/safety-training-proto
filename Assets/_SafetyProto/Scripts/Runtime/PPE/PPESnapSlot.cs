@@ -23,7 +23,7 @@ namespace SafetyProto.Runtime.PPE
         [SerializeField] private int slotCapacity = DefaultCapacity;
 
         [Header("Behavior")]
-        [Tooltip("Impede que o item seja removido do slot após ser equipado.")]
+        [Tooltip("Prevents the item from being removed from the slot once equipped.")]
         [SerializeField] private bool lockAfterEquipped;
 
         public bool IsLocked => lockAfterEquipped && OccupiedCount > 0 && !_unlocked;
@@ -31,8 +31,8 @@ namespace SafetyProto.Runtime.PPE
         private bool _unlocked;
 
         [Header("Events")]
-        [Tooltip("Disparado quando um item distrator tenta encaixar neste slot. " +
-                 "Passa o PPEType tentado e o distractorId do item para o TaskFeedbackController.")]
+        [Tooltip("Raised when a distractor item tries to snap into this slot. Passes the " +
+                 "attempted PPEType and the item's distractorId to the TaskFeedbackController.")]
         public UnityEvent<PPEType, string> onDistractorSnapAttempted;
 
         [Tooltip("Raised when a valid item is snapped out of the task's expected order. " +
@@ -40,7 +40,7 @@ namespace SafetyProto.Runtime.PPE
         public UnityEvent<PPEType> onWrongOrderSnapAttempted;
 
         [Header("Task Integration")]
-        [Tooltip("Opcional. Mapeia PPEType -> actionId para emissão de ActionAttemptedEvent por tipo de EPI encaixado.")]
+        [Tooltip("Optional. Maps PPEType -> actionId to emit an ActionAttemptedEvent per snapped PPE type.")]
         [SerializeField] private PPEActionMapping[] ppeActionMappings;
 
         [System.Serializable]

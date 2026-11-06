@@ -17,7 +17,7 @@ namespace SafetyProto.UI
         private static string KeepHyphenatedWordsTogether(string text) =>
             string.IsNullOrEmpty(text) ? text : HyphenatedWord.Replace(text, "<nobr>$0</nobr>");
 
-        [Header("Referências UI")]
+        [Header("UI References")]
         [SerializeField] private TextMeshProUGUI titleText;
         [SerializeField] private TextMeshProUGUI bodyText;
         [SerializeField] private Image backgroundImage;
@@ -25,39 +25,39 @@ namespace SafetyProto.UI
         [SerializeField] private GameObject actionButtonRoot;
         [SerializeField] private TextMeshProUGUI actionButtonLabel;
         [SerializeField] private GameObject closeButtonRoot;
-        [Tooltip("Botão secundário opcional 'Pular' (onboarding) / 'Cancelar' (confirmações). Exibido apenas quando PopupData.showSkipButton.")]
+        [Tooltip("Optional secondary button, 'Pular' (onboarding) / 'Cancelar' (confirmations). Shown only when PopupData.showSkipButton.")]
         [SerializeField] private GameObject skipButtonRoot;
-        [Tooltip("Rótulo do botão secundário. Permite reusá-lo como 'Cancelar' em confirmações. Opcional.")]
+        [Tooltip("Secondary button label. Lets the button be reused as 'Cancelar' in confirmations. Optional.")]
         [SerializeField] private TextMeshProUGUI skipButtonLabel;
-        [Tooltip("Campo de texto opcional (identificação do participante). Exibido apenas quando PopupData.showInputField.")]
+        [Tooltip("Optional text field (participant identification). Shown only when PopupData.showInputField.")]
         [SerializeField] private GameObject inputFieldRoot;
-        [Tooltip("Root do layout a reconstruir após mudar o conteúdo (geralmente o background ou este próprio RectTransform).")]
+        [Tooltip("Layout root to rebuild after the content changes (usually the background or this RectTransform itself).")]
         [SerializeField] private RectTransform layoutRoot;
-        [Tooltip("Margem transparente entre o card (Background) e a borda do canvas, em cada lado. O OVROverlayCanvas só desenha o rect do canvas; a margem deixa o botão fechar sobrar além do card sem ser cortado. Deve bater com o recuo do Background no prefab.")]
+        [Tooltip("Transparent margin between the card (Background) and the canvas edge, on each side. OVROverlayCanvas only draws the canvas rect; the margin lets the close button stick out past the card without being clipped. Must match the Background inset in the prefab.")]
         [SerializeField, Min(0f)] private float cardMargin = 40f;
 
-        [Header("Teclado numérico")]
-        [Tooltip("Tamanho de cada tecla do teclado numérico construído sob o campo de texto.")]
+        [Header("Numeric Keypad")]
+        [Tooltip("Size of each key of the numeric keypad built below the text field.")]
         [SerializeField] private Vector2 keypadCellSize = new Vector2(132f, 72f);
         [SerializeField] private Vector2 keypadSpacing = new Vector2(12f, 12f);
         [SerializeField] private string keypadBackspaceLabel = "Apagar";
         [SerializeField] private string keypadClearLabel = "Limpar";
 
-        [Header("Ilustração")]
-        [Tooltip("Área da ilustração que substitui a faixa do ícone quando PopupData.illustrationFrames é definido.")]
+        [Header("Illustration")]
+        [Tooltip("Size of the illustration area that replaces the icon strip when PopupData.illustrationFrames is set.")]
         [SerializeField] private Vector2 illustrationSize = new Vector2(500f, 280f);
-        [Tooltip("Tempo em que cada quadro fica parado antes do crossfade para o próximo.")]
+        [Tooltip("Time each frame holds still before the crossfade to the next.")]
         [SerializeField, Min(0.1f)] private float illustrationHoldSeconds = 1.4f;
         [SerializeField, Min(0.05f)] private float illustrationFadeSeconds = 0.6f;
 
-        [Header("Estilos por tipo")]
+        [Header("Styles per Type")]
         [SerializeField] private Color normalColor      = new Color(0.086f, 0.110f, 0.157f, 0.88f);
         [SerializeField] private Color warningColor     = new Color(0.118f, 0.071f, 0.039f, 0.92f);
         [SerializeField] private Color interactiveColor = new Color(0.086f, 0.110f, 0.157f, 0.88f);
         [SerializeField] private Sprite warningIcon;
         [SerializeField] private Sprite infoIcon;
 
-        [Header("Animação")]
+        [Header("Animation")]
         [SerializeField] private float fadeDuration = 0.25f;
 
         public bool IsVisible { get; private set; }

@@ -16,16 +16,16 @@ namespace SafetyProto.UI
         [SerializeField] private Transform taskListContainer;
         [SerializeField] private GameObject taskEntryPrefab;
 
-        [Header("Janela Deslizante")]
+        [Header("Sliding Window")]
         [SerializeField] private int maxVisibleTasks = 5;
         [SerializeField] private float completedLingerDuration = 1.5f;
         [SerializeField] private float entryAnimDuration = 0.2f;
 
-        [Header("Rodapé")]
+        [Header("Footer")]
         [SerializeField] private TMP_Text remainingTasksText;
 
-        [Header("Modo Avaliação")]
-        [Tooltip("Text shown INSTEAD of the task list in Avaliação: the group's objective sentence from the scenario JSON.")]
+        [Header("Evaluation Mode")]
+        [Tooltip("Text shown INSTEAD of the task list in Evaluation mode: the group's objective sentence from the scenario JSON.")]
         [SerializeField] private TMP_Text objectiveText;
 
         private ITaskGroup _activeGroup;

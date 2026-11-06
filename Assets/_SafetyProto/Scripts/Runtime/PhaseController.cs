@@ -39,56 +39,56 @@ namespace SafetyProto.Runtime
         [Tooltip("Shared fade -> recenter -> reground sequence and busy guard.")]
         [SerializeField] private RecenterService recenterService;
 
-        [Header("Zonas (opcional)")]
-        [Tooltip("GameObjects a desativar ao sair do Canteiro. Deixe vazio se não usar.")]
+        [Header("Zones (optional)")]
+        [Tooltip("GameObjects to deactivate when leaving the Canteiro. Leave empty if unused.")]
         [SerializeField] private GameObject[] objectsToHide;
-        [Tooltip("GameObjects a ativar ao entrar no Andaime. Deixe vazio se não usar.")]
+        [Tooltip("GameObjects to activate when entering the Andaime. Leave empty if unused.")]
         [SerializeField] private GameObject[] objectsToShow;
         [Tooltip("Deactivate every PPE item still loose (neither worn nor held) when the canteiro " +
                  "hides. Its shelves hide with the zone, so a loose item would fall, be returned " +
                  "home in mid-air and fall again for the rest of the session, out of reach.")]
         [SerializeField] private bool hideLoosePPE = true;
-        [Tooltip("Objetos movidos para outra pose durante o blackout, para que uma única " +
-                 "instância atenda as duas fases. A pose original volta a cada nova sessão.")]
+        [Tooltip("Objects moved to another pose during the blackout, so that a single instance " +
+                 "serves both phases. The original pose is restored at each new session.")]
         [SerializeField] private PhaseRelocation[] objectsToRelocate;
 
-        [Header("Transição")]
+        [Header("Transition")]
         [SerializeField] private float fadeOutDuration = 0.8f;
         [SerializeField] private float holdBlackDuration = 1.5f;
         [SerializeField] private float fadeInDuration = 0.8f;
 
-        [Header("UI de Contexto")]
+        [Header("Context UI")]
         [SerializeField] private GameObject transitionPanel;
 
-        [Header("Confirmação")]
+        [Header("Confirmation")]
         [Tooltip("Popup provider (PopupService) implementing IPopupFeedback. When set, the teleport waits for a confirmation button instead of firing on group completion.")]
         [SerializeField] private MonoBehaviour popupFeedbackProvider;
         [SerializeField] private string confirmTitle = "Fase concluída";
         [SerializeField, TextArea(2, 3)] private string confirmBody = "Você será levado ao andaime para a próxima etapa.";
         [SerializeField] private string confirmButtonLabel = "Ir para o andaime";
 
-        [Header("Botão de Avanço")]
-        [Tooltip("Botão visível apenas no modo Avaliação. No modo Guiado é oculto; o popup de confirmação aparece automaticamente quando o grupo completa.")]
+        [Header("Advance Button")]
+        [Tooltip("Button visible only in Evaluation mode. In Guided mode it is hidden; the confirmation popup appears automatically when the group completes.")]
         [SerializeField] private GameObject[] advanceButtonObjects;
-        [Tooltip("TaskManager da cena. Auto-resolvido se vazio.")]
+        [Tooltip("Scene TaskManager. Auto-resolved if empty.")]
         [SerializeField] private TaskManager taskManager;
-        [Tooltip("Grupo alvo (id). Comparado contra TaskGroupDef.id do JSON.")]
+        [Tooltip("Target group (id). Compared against TaskGroupDef.id from the JSON.")]
         [SerializeField] private string targetGroupId = "ppe_selection";
 
         private SafetyProto.Core.Interfaces.IPopupFeedback _popupFeedback;
 
         [Header("Trigger")]
-        [Tooltip("Nome do grupo-gatilho (id). Comparado contra o TaskGroupDef vindo do JSON.")]
+        [Tooltip("Trigger group name, matched against TaskGroupDef.groupName from the scenario JSON.")]
         [SerializeField] private string triggerGroupName = string.Empty;
 
-        [Header("Anti-queda no teleporte")]
-        [Tooltip("Layers consideradas 'chão' na sondagem pós-teleporte.")]
+        [Header("Teleport Fall Guard")]
+        [Tooltip("Layers treated as 'ground' by the post-teleport probe.")]
         [SerializeField] private LayerMask groundMask = ~0;
-        [Tooltip("Distância máxima da sondagem para baixo a partir do spawn.")]
+        [Tooltip("Maximum downward probe distance from the spawn.")]
         [SerializeField] private float groundProbeDistance = 5f;
-        [Tooltip("Raio do SphereCast da sondagem de chão.")]
+        [Tooltip("SphereCast radius of the ground probe.")]
         [SerializeField] private float groundProbeRadius = 0.25f;
-        [Tooltip("Tempo máximo aguardando o chão registrar antes de religar o locomotor (rede de segurança).")]
+        [Tooltip("Maximum time to wait for the ground to register before re-enabling the locomotor (safety net).")]
         [SerializeField] private float groundWaitTimeout = 3f;
 
         private bool _transitionExecuted;

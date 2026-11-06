@@ -15,7 +15,7 @@ namespace SafetyProto.Runtime.Feedback
         [Serializable]
         public sealed class Entry
         {
-            [Tooltip("Chave da narração (ex.: 'fase_concluida', 'distractor:flip_flops', 'report:<taskId>').")]
+            [Tooltip("Narration key (e.g. 'fase_concluida', 'distractor:flip_flops', 'report:<taskId>').")]
             public string key;
             public AudioClip clip;
         }

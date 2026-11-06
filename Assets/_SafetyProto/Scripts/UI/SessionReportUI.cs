@@ -82,11 +82,12 @@ namespace SafetyProto.UI
         [SerializeField] private AudioClip completionSound;
         [SerializeField] private AudioClip confettiSound;
 
-        [Header("Narração")]
-        [Tooltip("Canal de voz compartilhado. Vazio = resumo final sem narração.")]
+        [Header("Narration")]
+        [Tooltip("Shared voice channel. Empty = final summary without narration.")]
         [SerializeField] private NarrationVoice narrationVoice;
-        [Tooltip("Locução do resumo final para cada dica de finishTips, na mesma ordem (VO_Resumo_Dica0, 1, …). " +
-                 "Toca a da dica sorteada, depois de uma DICA que ainda esteja tocando.")]
+        [Tooltip("Final-summary voice-over for each tip in finishTips, in the same order " +
+                 "(VO_Resumo_Dica0, 1, …). Plays the one for the drawn tip, after any DICA that is " +
+                 "still playing.")]
         [SerializeField] private AudioClip[] finishTipNarrations;
 
         private AudioClip _reportClip;

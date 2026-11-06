@@ -40,7 +40,7 @@ namespace SafetyProto.Runtime.Safety
         [SerializeField] private Transform collapsePivot;
         [Tooltip("Local axis of collapsePivot the structure tips around. X tips forward for the default Blender import orientation; flip the sign to tip the other way.")]
         [SerializeField] private Vector3 tiltAxis = Vector3.right;
-        [Tooltip("The 'tela_proteção' GameObject that tears away. Optional.")]
+        [Tooltip("The safety netting GameObject ('tela_proteção') that tears away. Optional.")]
         [SerializeField] private GameObject safetyMesh;
         [Tooltip("OVRCameraRig root. The rig rides the pivot, then falls.")]
         [SerializeField] private Transform playerRig;

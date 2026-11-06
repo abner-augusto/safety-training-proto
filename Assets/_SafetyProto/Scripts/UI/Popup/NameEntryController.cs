@@ -38,38 +38,41 @@ namespace SafetyProto.UI
         [SerializeField] private TMP_InputField nameField;
         [SerializeField] private string confirmLabel = "Confirmar";
 
-        [Header("Início pelo avaliador")]
-        [Tooltip("Coleta: o avaliador define código e modo pelo painel, e o participante só vê a tela de espera. " +
-                 "Desmarque para usar o teclado e o seletor de modo em RV (desenvolvimento).")]
+        [Header("Evaluator Start")]
+        [Tooltip("Data collection: the evaluator sets code and mode from the dashboard, and the " +
+                 "participant only sees the waiting screen. Uncheck to use the keypad and the mode " +
+                 "picker in VR (development).")]
         [SerializeField] private bool waitForEvaluator = true;
         [SerializeField] private string waitingTitle = "Aguardando o pesquisador";
         [SerializeField, TextArea(2, 4)]
         private string waitingBody = "O pesquisador vai iniciar o treinamento em instantes. Aguarde nesta posição.";
-        [Tooltip("Sem painel conectado por este tempo na tela de espera, o óculos abre o teclado para o participante " +
-                 "digitar o código (sem o botão Pular). O painel ainda pode iniciar a sessão depois. 0 = nunca.")]
+        [Tooltip("With no dashboard connected for this long on the waiting screen, the headset " +
+                 "opens the keypad for the participant to type the code (without the 'Pular' " +
+                 "button). The dashboard can still start the session later. 0 = never.")]
         [SerializeField, Min(0f)] private float keypadFallbackSeconds = 90f;
 
-        [Header("Modo de entrada")]
-        [Tooltip("NumericKeypad: teclado numérico no painel para o código do participante (coleta do mestrado). " +
-                 "SystemKeyboard: teclado do sistema Meta para o primeiro nome (testes fora do estudo).")]
+        [Header("Input Mode")]
+        [Tooltip("NumericKeypad: numeric keypad on the panel for the participant code (study " +
+                 "data collection). SystemKeyboard: Meta system keyboard for the first name " +
+                 "(testing outside the study).")]
         [SerializeField] private ParticipantInputMode inputMode = ParticipantInputMode.NumericKeypad;
 
-        [Header("Teclado numérico (código do participante)")]
+        [Header("Numeric Keypad (participant code)")]
         [SerializeField] private string codeTitle = "Código do participante";
         [SerializeField, TextArea(2, 4)]
         private string codeBody = "Digite o número de participante informado pelo pesquisador.";
         [SerializeField] private string codePlaceholder = "Número";
-        [Tooltip("Prefixo do id do participante, unido ao número por hífen (7 → P-07). O id resultante " +
-                 "identifica a sessão nos logs, no dashboard e no menu.")]
+        [Tooltip("Participant id prefix, joined to the number with a hyphen (7 → P-07). The resulting id " +
+                 "identifies the session in the logs, the dashboard and the menu.")]
         [SerializeField] private string codePrefix = "P";
         [SerializeField, Min(1)] private int codeMaxDigits = 3;
-        [Tooltip("Zeros à esquerda até este número de dígitos (2: 7 → 07).")]
+        [Tooltip("Left-pads with zeros up to this number of digits (2: 7 → 07).")]
         [SerializeField, Min(1)] private int codeMinDigits = 2;
-        [Tooltip("Narração tocada quando o teclado numérico abre. Opcional.")]
+        [Tooltip("Narration played when the numeric keypad opens. Optional.")]
         [SerializeField] private AudioClip codeNarration;
         [SerializeField] private NarrationVoice narrationVoice;
 
-        [Header("Teclado do sistema (primeiro nome)")]
+        [Header("System Keyboard (first name)")]
         [SerializeField] private string title = "Antes de começar";
         [SerializeField, TextArea(2, 4)]
         private string body = "Digite seu primeiro nome para iniciar o treinamento. Seus dados serão anonimizados.";
@@ -77,7 +80,7 @@ namespace SafetyProto.UI
         [Header("Flow")]
         [Tooltip("Onboarding started after the name is submitted or skipped.")]
         [SerializeField] private OnboardingController onboarding;
-        [Tooltip("Optional mode picker shown after the name resolves and before the session starts. When absent the session runs Guiado.")]
+        [Tooltip("Optional mode picker shown after the name resolves and before the session starts. When absent the session runs in Guided mode.")]
         [SerializeField] private SessionModeSelectionController modeSelection;
         [Tooltip("Session manager whose BeginSession() is called once the participant id is set.")]
         [SerializeField] private TrainingSessionManager sessionManager;

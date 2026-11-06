@@ -23,21 +23,21 @@ namespace SafetyProto.UI
             public Sprite[] frames;
         }
 
-        [Tooltip("Ilustração aplicada a qualquer popup com este título exato, para os avisos " +
-                 "abertos por sistemas que não conhecem sprites (EPI incorreto, ordem incorreta…).")]
+        [Tooltip("Illustration applied to any popup with this exact title, for the warnings opened " +
+                 "by systems that know nothing about sprites (wrong PPE, wrong order…).")]
         [SerializeField] private TitleIllustration[] illustrationsByTitle;
 
-        [Header("Narração")]
-        [Tooltip("Canal de voz compartilhado (o mesmo do onboarding e das DICAs). Vazio = popups sem narração.")]
+        [Header("Narration")]
+        [Tooltip("Shared voice channel (the same one onboarding and the DICA tips use). Empty = popups without narration.")]
         [SerializeField] private NarrationVoice narrationVoice;
 
-        [Tooltip("Locução de cada popup narrado, pela chave que o emissor passa (NarrationKeys): " +
+        [Tooltip("Voice-over for each narrated popup, by the key the sender passes (NarrationKeys): " +
                  "'fase_concluida', 'inspecao_concluida', 'conecte_se_primeiro', 'distractor:<distractorId>', " +
-                 "'report:<taskId>'. A narração começa quando o popup abre e para quando ele fecha.")]
+                 "'report:<taskId>'. Narration starts when the popup opens and stops when it closes.")]
         [SerializeField] private NarrationClipTable narrationClips = new();
 
-        [Tooltip("Folga (s) após o fim da locução antes do auto-fechamento de um aviso narrado. " +
-                 "O auto-fechamento nunca corta a locução.")]
+        [Tooltip("Slack (s) after the voice-over ends before a narrated warning auto-closes. " +
+                 "Auto-close never cuts the voice-over short.")]
         [SerializeField, Min(0f)] private float narrationCloseTail = 1f;
 
         /// <summary>Clip narrating the popup on screen; stopped when the popup closes.</summary>

@@ -74,18 +74,18 @@ namespace SafetyProto.Runtime.Scaffolding
         [Tooltip("Disables non-trigger colliders after install to prevent physics overlap artifacts.")]
         [SerializeField] private bool disableCollidersAfterInstalled = true;
 
-        [Header("Instalação Recusada")]
-        [Tooltip("Desfaz a instalação e devolve a peça quando as regras de segurança recusam a " +
-                 "tentativa (ex.: talabarte ainda não ancorado, no modo Guiado). A peça só volta " +
-                 "depois que o popup de aviso é fechado.")]
+        [Header("Refused Install")]
+        [Tooltip("Undoes the install and returns the piece when the safety rules refuse the " +
+                 "attempt (e.g. lanyard not yet anchored, in Guided mode). The piece only returns " +
+                 "after the warning popup is closed.")]
         [SerializeField] private bool revertInstallWhenRefused = true;
-        [Tooltip("Rede de segurança: se nenhum popup fechar nesse tempo (s) após a recusa, a peça " +
-                 "volta assim mesmo, para não travar a tarefa. 0 = esperar apenas pelo popup.")]
+        [Tooltip("Safety net: if no popup closes within this time (s) after the refusal, the piece " +
+                 "returns anyway, so the task does not stall. 0 = wait for the popup only.")]
         [SerializeField] private float revertFallbackSeconds = 10f;
-        [Tooltip("Códigos de recusa cujo aviso a peça espera ser fechado antes de voltar. Uma " +
-                 "recusa com código fora desta lista volta imediatamente — é o caso de " +
-                 "WRONG_ACTION, que hoje não abre nenhum popup, então esperar por um travaria a " +
-                 "peça até o tempo limite.")]
+        [Tooltip("Refusal codes whose warning must close before the piece returns. A refusal " +
+                 "with a code outside this list returns immediately. That is the case for " +
+                 "WRONG_ACTION, which opens no popup today, so waiting for one would hold the " +
+                 "piece until the timeout.")]
         [SerializeField] private string[] waitForPopupOnCodes = { ViolationCodes.PrerequisitePending };
 
         [Header("Meta SDK References")]
@@ -125,8 +125,8 @@ namespace SafetyProto.Runtime.Scaffolding
         public UnityEvent onExitedValidPose;
         public UnityEvent onInstalled;
         public UnityEvent onInvalidRelease;
-        [Tooltip("Disparado quando uma instalação já concluída é desfeita porque a tentativa foi " +
-                 "recusada. Use para reverter o que onInstalled tiver acionado.")]
+        [Tooltip("Raised when a completed install is undone because the attempt was refused. " +
+                 "Use it to revert whatever onInstalled triggered.")]
         public UnityEvent onInstallReverted;
 
         private Rigidbody  _rigidbody;

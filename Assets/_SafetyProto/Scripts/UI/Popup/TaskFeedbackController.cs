@@ -11,17 +11,17 @@ namespace SafetyProto.UI
 {
     public class TaskFeedbackController : MonoBehaviour
     {
-        [Header("PPE Snap Slots — arrastar todos os slots do body rig")]
+        [Header("PPE Snap Slots — drag in every slot of the body rig")]
         [SerializeField] private PPESnapSlot[] snapSlots;
 
-        [Header("Títulos dos popups")]
+        [Header("Popup Titles")]
         [SerializeField] private string ppeTitle = "EPI Incorreto";
         [SerializeField] private string wrongOrderTitle = "Ordem Incorreta";
-        [Tooltip("Título do alerta quando a tarefa é recusada porque o pré-requisito do grupo (ex.: talabarte ancorado) ainda está pendente.")]
+        [Tooltip("Alert title when the task is refused because the group prerequisite (e.g. lanyard anchored) is still pending.")]
         [SerializeField] private string prerequisiteTitle = "Conecte-se Primeiro";
 
-        [Header("Auto-fechamento")]
-        [Tooltip("Tempo (s) para auto-fechar os alertas de task/EPI (ordem incorreta, EPI errado, etc.). 0 = sem timeout.")]
+        [Header("Auto-close")]
+        [Tooltip("Time (s) before the task/PPE alerts auto-close (wrong order, wrong PPE, etc.). 0 = no timeout.")]
         [SerializeField] private float autoCloseSeconds = 6f;
 
         private TaskManager _taskManager;

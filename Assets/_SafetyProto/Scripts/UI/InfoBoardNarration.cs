@@ -16,23 +16,23 @@ namespace SafetyProto.UI
     /// </summary>
     public class InfoBoardNarration : MonoBehaviour
     {
-        [Header("Narração")]
-        [Tooltip("Canal de voz compartilhado (o mesmo dos popups e das DICAs).")]
+        [Header("Narration")]
+        [Tooltip("Shared voice channel (the same one the popups and DICA tips use).")]
         [SerializeField] private NarrationVoice narrationVoice;
         [SerializeField] private AudioClip narration;
 
-        [Header("Olhar")]
-        [Tooltip("Cabeça do participante (CenterEyeAnchor). Vazio = câmera com a tag MainCamera.")]
+        [Header("Gaze")]
+        [Tooltip("Participant's head (CenterEyeAnchor). Empty = the camera tagged MainCamera.")]
         [SerializeField] private Transform head;
-        [Tooltip("Ponto que o participante precisa olhar. Vazio = este transform (centro do painel).")]
+        [Tooltip("Point the participant must look at. Empty = this transform (panel center).")]
         [SerializeField] private Transform lookTarget;
-        [Tooltip("Ângulo máximo (graus) entre a direção do olhar e o centro do painel.")]
+        [Tooltip("Maximum angle (degrees) between the gaze direction and the panel center.")]
         [SerializeField, Range(1f, 60f)] private float maxAngle = 20f;
-        [Tooltip("Distância máxima (m) entre a cabeça e o centro do painel.")]
+        [Tooltip("Maximum distance (m) between the head and the panel center.")]
         [SerializeField, Min(0.1f)] private float maxDistance = 4f;
-        [Tooltip("Tempo (s) olhando o painel antes de a narração começar.")]
+        [Tooltip("Time (s) spent looking at the panel before the narration starts.")]
         [SerializeField, Min(0.05f)] private float dwellSeconds = 1f;
-        [Tooltip("Perdas de olhar mais curtas que isto (s) não interrompem a contagem.")]
+        [Tooltip("Gaze losses shorter than this (s) do not interrupt the count.")]
         [SerializeField, Min(0f)] private float graceSeconds = 0.3f;
 
         // A line that stopped this close to its end finished on its own.

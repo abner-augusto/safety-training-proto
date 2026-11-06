@@ -13,7 +13,7 @@ namespace SafetyProto.UI
         [Tooltip("Assign your TimerSystem here (not EventBus).")]
         public TimerSystem timerSystem;
 
-        [Tooltip("Rótulo acima do valor. Alterna entre contagem regressiva e cronômetro.")]
+        [Tooltip("Label above the value. Switches between countdown and stopwatch.")]
         [SerializeField] private TextMeshProUGUI timerLabel;
         [SerializeField] private string countdownLabel = "TEMPO RESTANTE";
         [SerializeField] private string stopwatchLabel = "TEMPO";

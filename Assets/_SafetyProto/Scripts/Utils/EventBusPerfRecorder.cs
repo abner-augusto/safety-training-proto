@@ -22,10 +22,10 @@ namespace SafetyProto.Utils
     [DisallowMultipleComponent]
     public class EventBusPerfRecorder : MonoBehaviour, IEventBusFlushProbe, ISessionResettable
     {
-        [Tooltip("Grava o custo do EventBus e o tempo de quadro de cada sessão em perf/*.csv. Desligue para não coletar.")]
+        [Tooltip("Records the EventBus cost and frame time of each session to perf/*.csv. Turn off to skip collection.")]
         [SerializeField] private bool recordingEnabled = true;
 
-        [Tooltip("Quadros reservados por sessão (200 000 ≈ 46 min a 72 Hz, ~9,6 MB). Além disso, a gravação para.")]
+        [Tooltip("Frames reserved per session (200 000 ≈ 46 min at 72 Hz, ~9.6 MB). Recording stops beyond that.")]
         [SerializeField, Min(1000)] private int capacityFrames = 200_000;
 
         /// <summary>The recorder in the scene, so the session logger can embed its summary.</summary>

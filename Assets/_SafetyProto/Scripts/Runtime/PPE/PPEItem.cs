@@ -10,16 +10,17 @@ namespace SafetyProto.Runtime.PPE
         public PPEType ppeType = PPEType.None;
 
         [Header("Snap Behavior")]
-        [Tooltip("Esconde o item (SetActive false) quando encaixado num slot. Carregar no item permite que cada EPI decida seu próprio comportamento independente do slot.")]
+        [Tooltip("Hides the item (SetActive false) when snapped into a slot. Keeping it on the item lets each PPE decide its own behavior, independent of the slot.")]
         public bool hideWhenEquipped = false;
 
         [Header("Distractor")]
-        [Tooltip("Marcar true para EPIs incorretos (ex: capacete sem jugular, cinto abdominal). " +
-                 "Distradores disparam popup educativo ao tentar encaixar num slot.")]
+        [Tooltip("Set true for incorrect PPE (e.g. helmet without chinstrap, waist belt). " +
+                 "Distractors raise an educational popup when snapped into a slot.")]
         public bool isDistractor = false;
 
-        [Tooltip("Id do distrator no cenário (campo 'distractors' da tarefa de equipar). Define qual " +
-                 "explicação o popup mostra e a qual tarefa o desconto é atribuído. Só vale com isDistractor.")]
+        [Tooltip("Distractor id in the scenario (the equip task's 'distractors' field). Selects " +
+                 "which explanation the popup shows and which task the deduction is charged to. " +
+                 "Only applies with isDistractor.")]
         public string distractorId = string.Empty;
 
         private void Awake()

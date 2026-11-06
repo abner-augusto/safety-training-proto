@@ -8,14 +8,14 @@ namespace SafetyProto.Core
     {
         public UnityEvent onQuitApp;
 
-        [Header("Confirmação")]
-        [Tooltip("Título do popup de confirmação exibido antes de fechar o app.")]
+        [Header("Confirmation")]
+        [Tooltip("Title of the confirmation popup shown before closing the app.")]
         [SerializeField] private string confirmTitle = "Fechar aplicativo";
-        [Tooltip("Mensagem do popup de confirmação.")]
+        [Tooltip("Confirmation popup message.")]
         [SerializeField] private string confirmBody = "Deseja realmente fechar o aplicativo?";
-        [Tooltip("Rótulo do botão que confirma o fechamento.")]
+        [Tooltip("Label of the button that confirms closing.")]
         [SerializeField] private string confirmButtonLabel = "Fechar";
-        [Tooltip("Rótulo do botão que cancela o fechamento.")]
+        [Tooltip("Label of the button that cancels closing.")]
         [SerializeField] private string cancelButtonLabel = "Cancelar";
 
         /// <summary>
