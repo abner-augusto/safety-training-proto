@@ -25,6 +25,11 @@ namespace SafetyProto.Domain.Safety
         private ISafetyTask? _activeSequentialTask;
         private readonly List<ISafetyTask> _activeFreeOrderTasks = new List<ISafetyTask>();
 
+        /// <summary>Tasks this engine completed inside the active group, by reference. A
+        /// Sequential task stays <see cref="_activeSequentialTask"/> until the next TaskStarted,
+        /// which the orchestrator delays, so without this a repeated action completes it twice.</summary>
+        private readonly List<ISafetyTask> _completedInGroup = new List<ISafetyTask>();
+
         /// <summary>Ids completed inside the active group, used to resolve a group's
         /// prerequisite independently of execution mode. Cleared on every group start.
         /// Timed-out tasks are deliberately absent so an unmet prerequisite keeps blocking.</summary>
@@ -109,6 +114,7 @@ namespace SafetyProto.Domain.Safety
             _activeSequentialTask = null;
             _activeFreeOrderTasks.Clear();
             _satisfiedPrerequisiteIds.Clear();
+            _completedInGroup.Clear();
 
             if (_activeGroup != null && TaskExecutionRules.EffectiveMode(_activeGroup, CurrentMode) == TaskExecutionModeShared.FreeOrder)
             {
@@ -144,6 +150,7 @@ namespace SafetyProto.Domain.Safety
             _activeSequentialTask = null;
             _activeFreeOrderTasks.Clear();
             _satisfiedPrerequisiteIds.Clear();
+            _completedInGroup.Clear();
         }
 
         private void HandlePpeStateChanged(PPEStateChangedEventArgs args)
@@ -240,6 +247,15 @@ namespace SafetyProto.Domain.Safety
                     return;
                 }
 
+                if (IsCompletedInGroup(_activeSequentialTask))
+                {
+                    if (_verboseLogging)
+                    {
+                        _logger?.Info($"SafetyRuleEngineCore: Ignoring repeat action {actionId} (already completed).");
+                    }
+                    return;
+                }
+
                 targetTask = _activeSequentialTask;
             }
             else
@@ -275,6 +291,13 @@ namespace SafetyProto.Domain.Safety
             {
                 RefuseAttempt(refusalCode, refusalMessage, targetTask, _activeGroup, actionId, args.SourceId);
             }
+        }
+
+        private bool IsCompletedInGroup(ISafetyTask task)
+        {
+            for (int i = 0; i < _completedInGroup.Count; i++)
+                if (ReferenceEquals(_completedInGroup[i], task)) return true;
+            return false;
         }
 
         private bool IsActionAlreadyCompleted(string actionId)
@@ -397,6 +420,7 @@ namespace SafetyProto.Domain.Safety
             }
 
             _satisfiedPrerequisiteIds.Add(task.id);
+            _completedInGroup.Add(task);
 
             _bus.Publish(new TaskEventArgs(task, null, TaskPhase.Completed)
             {
