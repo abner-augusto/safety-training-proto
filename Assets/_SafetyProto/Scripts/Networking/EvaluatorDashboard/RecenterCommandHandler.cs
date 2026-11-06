@@ -4,9 +4,8 @@ using UnityEngine;
 namespace SafetyProto.Runtime
 {
     /// <summary>
-    /// Evaluator dashboard command handler for "recenter_player" — the R3 mid-session fix from
-    /// plans/026-evaluator-recenter-playspace.md. Recenters the participant onto the current
-    /// phase's anchor (see IRecenterAnchorProvider) through the shared RecenterService.
+    /// Evaluator dashboard command handler for "recenter_player". Recenters the participant
+    /// onto the current phase's anchor (see IRecenterAnchorProvider) through the shared RecenterService.
     ///
     /// No active session is deliberately NOT a rejection: recentering before SessionStarted
     /// (menu, name entry, onboarding) is the primary calibration case, not an edge case.
@@ -28,7 +27,7 @@ namespace SafetyProto.Runtime
         [Tooltip("Answers where the current phase's anchor is. Must implement IRecenterAnchorProvider (e.g. PhaseController).")]
         [SerializeField] private MonoBehaviour anchorProviderBehaviour;
 
-        [Header("Blackout message (Passo 6)")]
+        [Header("Blackout message")]
         [Tooltip("Popup provider (PopupService) implementing IPopupFeedback. Optional — leave empty to teleport silently.")]
         [SerializeField] private MonoBehaviour popupFeedbackProvider;
         [SerializeField] private string blackoutTitle = "Reposicionando…";

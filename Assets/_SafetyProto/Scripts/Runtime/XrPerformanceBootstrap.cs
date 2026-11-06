@@ -12,10 +12,8 @@ namespace SafetyProto.Runtime
     /// can only be set at runtime (there is no URP asset render-scale to edit, and the
     /// Meta XR Foveation OpenXR feature exposes no static level field).
     ///
-    /// Baseline from plan 036's on-device F3 profiling (2026-09-07): the app holds
-    /// ~68 fps at ~83% dynamic render scale, GPU/fill-rate bound, with fixed foveated
-    /// rendering reported as level 3 (foveation_mode: 0). This caps the eye-texture
-    /// resolution and turns foveation on.
+    /// The app is GPU/fill-rate bound on the headset, so this caps the eye-texture resolution
+    /// and turns foveation on.
     ///
     /// Place this on a bootstrap GameObject in the scene. Values are tunable in the Inspector;
     /// re-capture OVR Metrics on hardware after changing them.
@@ -52,8 +50,8 @@ namespace SafetyProto.Runtime
         [Tooltip("Permits eye-tracked (gaze-contingent) foveated rendering on devices that support " +
                  "it, by setting XRDisplaySubsystem.FoveatedRenderingFlags.GazeAllowed. This is not " +
                  "a load-adaptive control and does not change foveation strength (see " +
-                 "foveationLevel). No effect on Quest 3, which has no eye tracking; all plan 036 " +
-                 "runs report foveation_mode: 0 (fixed) regardless of this flag.")]
+                 "foveationLevel). No effect on Quest 3, which has no eye tracking: it reports " +
+                 "foveation_mode: 0 (fixed) regardless of this flag.")]
         [FormerlySerializedAs("dynamicFoveation")]
         [SerializeField] private bool allowGazeFoveation = true;
 

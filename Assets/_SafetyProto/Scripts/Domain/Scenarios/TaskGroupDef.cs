@@ -6,9 +6,8 @@ using SafetyProto.Core.Interfaces;
 namespace SafetyProto.Domain.Scenarios
 {
     /// <summary>
-    /// JSON-backed, engine-independent <see cref="ITaskGroup"/>. Replaces the Unity
-    /// <c>TaskGroup</c> ScriptableObject (as the runtime source) and the CLI's old
-    /// <c>InMemoryTaskGroup</c>.
+    /// JSON-backed, engine-independent <see cref="ITaskGroup"/>: the runtime source of truth,
+    /// shared by the Unity runtime and the CLI harness.
     /// </summary>
     public sealed class TaskGroupDef : ITaskGroup
     {

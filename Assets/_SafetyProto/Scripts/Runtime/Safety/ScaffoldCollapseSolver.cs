@@ -35,7 +35,6 @@ namespace SafetyProto.Runtime.Safety
     /// Pure maths behind the scaffold collapse. Every member is static and side-effect free, and
     /// nothing here touches a scene, a component, or time — the MonoBehaviour samples the
     /// AnimationCurve and passes the 0..1 result in, so tests never have to build a curve.
-    /// See plans/027-scaffold-collapse-design.md for the beat sheet these functions serve.
     /// </summary>
     public static class ScaffoldCollapseSolver
     {

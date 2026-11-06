@@ -7,7 +7,7 @@ namespace SafetyProto.Runtime
     /// <summary>
     /// Renders an <see cref="OVROverlayCanvas"/> only when its content changes, instead of every
     /// <c>renderInterval</c> frames while it is in view. Each render is a main-thread camera render
-    /// of the canvas, so a board whose content never changes was paying for dozens of identical
+    /// of the canvas, so a board whose content never changes would pay for dozens of identical
     /// renders a second.
     ///
     /// The canvas switches to <c>manualRedraw</c> and is marked dirty when any of its graphics

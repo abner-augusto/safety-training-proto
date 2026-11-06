@@ -44,9 +44,8 @@ namespace SafetyProto.Domain.Scenarios
     }
 
     /// <summary>
-    /// JSON-backed, engine-independent <see cref="ISafetyTask"/>. Replaces both the
-    /// Unity <c>SafetyTask</c> ScriptableObject (as the runtime source of truth) and
-    /// the CLI harness's old <c>InMemorySafetyTask</c>. One model, all hosts.
+    /// JSON-backed, engine-independent <see cref="ISafetyTask"/>: the runtime source of truth,
+    /// shared by the Unity runtime and the CLI harness.
     /// </summary>
     /// <remarks>
     /// Raw string fields (<see cref="RequiredPpeNames"/>) come straight from JSON and

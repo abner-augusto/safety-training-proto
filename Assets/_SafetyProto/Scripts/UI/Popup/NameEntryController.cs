@@ -25,7 +25,7 @@ namespace SafetyProto.UI
     /// picks a mode. A restart after an interrupted session skips the screen and starts again
     /// with the same code and mode (<see cref="SessionHandoff"/>).
     ///
-    /// With <c>waitForEvaluator</c> off — development outside the study — it shows the old
+    /// With <c>waitForEvaluator</c> off — development outside the study — it shows the
     /// identification popup: a numeric keypad for the participant code (7 → P-07), or the
     /// Horizon OS system keyboard for a first name, where a name or a skip gets a random
     /// anonymized id; then the mode picker. Either way it then starts the session and onboarding.

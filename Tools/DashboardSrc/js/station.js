@@ -25,7 +25,7 @@
       return { id: `${prefix}-${digits.padStart(2, '0')}`, number: Number(digits) };
     }
 
-    /** Where the headset is in the session lifecycle. 'unknown' = an app that predates StationStatus. */
+    /** Where the headset is in the session lifecycle. 'unknown' = the app sends no StationStatus. */
     export function stationPhase() {
       if (!state.connected) return 'offline';
       const s = state.station;

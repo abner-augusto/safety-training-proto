@@ -14,7 +14,7 @@ namespace SafetyProto.Tests.Editor
     ///
     /// Unity does not run <c>Awake</c> or <c>OnEnable</c> on a MonoBehaviour added outside Play
     /// Mode, so an EditMode fixture cannot exercise a host component that wires itself up there
-    /// (<c>ScoreManagerAdapter</c> is the one this fixture used to reach for). Those bridges are
+    /// (such as <c>ScoreManagerAdapter</c>). Those bridges are
     /// covered engine-independently by <c>SessionIntegrationTests</c> through
     /// <c>SessionTestHarness</c>; reaching them through their real MonoBehaviour would need a
     /// PlayMode fixture, which this project does not have.

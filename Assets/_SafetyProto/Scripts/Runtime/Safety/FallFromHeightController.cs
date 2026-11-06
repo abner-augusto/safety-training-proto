@@ -8,7 +8,7 @@ using UnityEngine;
 namespace SafetyProto.Runtime.Safety
 {
     /// <summary>
-    /// A3 — controls the player's fall-from-height behaviour on the scaffold.
+    /// Controls the player's fall-from-height behaviour on the scaffold.
     ///
     /// The Meta <see cref="FirstPersonLocomotor"/> applies gravity whenever the player is not
     /// grounded (e.g. they step off a scaffold edge). That is undesirable while the player is
@@ -112,7 +112,7 @@ namespace SafetyProto.Runtime.Safety
         /// Plays the fall consequence: restore gravity, then hand off to the scaffold collapse,
         /// which ends with the player mid-fall under a fully black screen. Deliberately does NOT
         /// recenter — the consequence is terminal and the caller shows the finish screen over the
-        /// still-black fade (see plans/027-scaffold-collapse-design.md). Skipped when the player is
+        /// still-black fade. Skipped when the player is
         /// correctly anchored. Yield this from the gate's consequence coroutine.
         /// </summary>
         public IEnumerator TriggerControlledFall()

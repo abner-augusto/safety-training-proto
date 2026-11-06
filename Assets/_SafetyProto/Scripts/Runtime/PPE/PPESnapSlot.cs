@@ -57,7 +57,7 @@ namespace SafetyProto.Runtime.PPE
         [SerializeField] private Color hoverColor = new Color(0.2f, 0.8f, 0.2f, 0.5f);
         [SerializeField] private Color occupiedColor = new Color(0.2f, 0.4f, 1f, 0.5f);
 
-        [Tooltip("De-flicker (B10): seconds to keep the hover highlight after the last hover blip " +
+        [Tooltip("De-flicker: seconds to keep the hover highlight after the last hover blip " +
                  "clears, so a flickering boundary trigger (e.g. boot MeshCollider vs slope sphere) " +
                  "doesn't strobe the highlight on/off.")]
         [SerializeField, Range(0f, 0.5f)] private float hoverHoldSeconds = 0.15f;

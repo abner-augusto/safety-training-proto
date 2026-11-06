@@ -21,8 +21,8 @@ namespace SafetyProto.Domain.Sessions
         /// <see cref="SerializeIndentedOmittingDefaults"/> as the injected
         /// <c>Func&lt;SessionLog, string&gt;</c>. It uses Newtonsoft.Json (a shared dependency of the
         /// Domain assembly) with <c>DefaultValueHandling.Ignore</c> so each entry emits only the
-        /// fields that actually carry a value — an all-default <see cref="LogData"/> is dropped
-        /// entirely instead of the old wall of empty fields. Newtonsoft serializes the public fields
+        /// fields that actually carry a value, and an all-default <see cref="LogData"/> is
+        /// dropped entirely. Newtonsoft serializes the public fields
         /// of these DTOs by default, so no attributes are required.
         /// </summary>
         public static string SerializeIndentedOmittingDefaults(SessionLog log) =>
@@ -100,31 +100,31 @@ namespace SafetyProto.Domain.Sessions
             /// <c>true</c> only when the session reached <c>SessionCompleted</c>. When the
             /// participant resets or abandons mid-session the summary is synthesized from the
             /// events logged so far and this stays <c>false</c> (and <see cref="totalTasks"/>
-            /// is 0/unknown), so a reset session no longer masquerades as an all-zero completion.
+            /// is 0/unknown): never read a summary with this false as an all-zero completion.
             /// </summary>
             public bool completed;
             /// <summary>Participant id the session ran under: the code typed at onboarding
             /// ("P-07"), a random anonymized id when skipped, or "SIM-…" for the simulator.
-            /// Empty on logs written before this field existed.</summary>
+            /// Empty in logs from earlier builds.</summary>
             public string participantId = string.Empty;
             /// <summary>App build version the session ran on (Unity <c>Application.version</c>),
             /// so collected data can be traced to the build that produced it. Empty when the host
-            /// supplies none, and on logs written before this field existed.</summary>
+            /// supplies none, and in logs from earlier builds.</summary>
             public string appVersion = string.Empty;
             /// <summary>Git commit of the build ("35c7f99", or "35c7f99-dirty" when built with
             /// uncommitted changes). Tells apart builds that share an <see cref="appVersion"/>.
             /// Empty when the host supplies none.</summary>
             public string commit = string.Empty;
             /// <summary>"guiado" | "avaliacao" — captured at SessionStarted so collected
-            /// data can be split by mode. Empty on logs written before this field existed.</summary>
+            /// data can be split by mode. Empty in logs from earlier builds.</summary>
             public string mode = string.Empty;
             /// <summary>Who set <see cref="participantId"/>: "dashboard" (the evaluator), "keypad",
-            /// "system_keyboard", "skipped" (random id) or "simulator". Empty on older logs.</summary>
+            /// "system_keyboard", "skipped" (random id) or "simulator". Empty in logs from earlier builds.</summary>
             public string participantSource = string.Empty;
             /// <summary>The interrupted session this one restarted, when it is a restart.</summary>
             public string previousSessionId = string.Empty;
             /// <summary>1 for a first attempt, +1 per interrupted session restarted for the same person.
-            /// 0 on logs written before this field existed.</summary>
+            /// 0 in logs from earlier builds.</summary>
             public int attempt;
             public float totalElapsedTime;
             public int totalScore;
@@ -183,7 +183,7 @@ namespace SafetyProto.Domain.Sessions
 
         /// <summary>
         /// Optional actionId → friendly-name resolver (host injects it, backed by the action
-        /// catalog). When null the raw action id is logged as the detail, preserving old behavior.
+        /// catalog). When null the raw action id is logged as the detail.
         /// </summary>
         private readonly Func<string, string>? _actionNameResolver;
         private readonly Func<string>? _outputDirectoryResolver;

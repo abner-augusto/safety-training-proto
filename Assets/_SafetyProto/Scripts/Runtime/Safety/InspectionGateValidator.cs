@@ -89,7 +89,7 @@ namespace SafetyProto.Runtime.Safety
         /// <summary>ActionIds that were pending on the last failed attempt.</summary>
         public IReadOnlyList<string> LastPendingTaskIds => _lastPendingTaskIds.AsReadOnly();
 
-        /// <summary>Used only by the Editor-only simulator to dismiss confirmation UI.</summary>
+        /// <summary>Set by the session simulator to skip the confirmation UI.</summary>
         public void SetSimulationAutoConfirm(bool enabled)
         {
             _simulationAutoConfirm = enabled;

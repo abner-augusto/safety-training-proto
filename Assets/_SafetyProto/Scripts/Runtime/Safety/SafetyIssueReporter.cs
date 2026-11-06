@@ -220,8 +220,7 @@ namespace SafetyProto.Runtime.Safety
             HideButton();
         }
 
-        /// <summary>Delegates to the pure <see cref="HazardClassificationPolicy"/> so the
-        /// scoring/violation logic is unit-testable without a MonoBehaviour.</summary>
+        /// <summary>Whether a task completed, safe or unsafe.</summary>
         private static bool IsFinished(TaskState state) =>
             state == TaskState.CompletedSuccess || state == TaskState.CompletedSuccessButUnsafe;
 

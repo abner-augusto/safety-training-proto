@@ -46,8 +46,8 @@ namespace SafetyProto.Core
 
         /// <summary>
         /// At or above this level a task counts as an eliminatory fault: failing, omitting or
-        /// completing it without PPE caps the medal. Maps the old <c>Critical</c> rule forward
-        /// and, being a threshold, automatically covers <see cref="RiskLevel.Intolerable"/>.
+        /// completing it without PPE caps the medal. Being a threshold, it also covers
+        /// <see cref="RiskLevel.Intolerable"/>.
         /// </summary>
         public const RiskLevel EliminatoryThreshold = RiskLevel.Substantial;
 

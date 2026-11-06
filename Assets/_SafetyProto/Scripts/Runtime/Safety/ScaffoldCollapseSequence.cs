@@ -16,8 +16,6 @@ namespace SafetyProto.Runtime.Safety
     /// writes playerRig.position/rotation directly, reparenting the OVR rig would fight OVRCameraRig
     /// and the locomotion stack, and only explicit writes let the inherited rotation be clamped at
     /// MaxFollowTiltDegrees while translation still follows the pivot in full.
-    ///
-    /// See plans/027-scaffold-collapse-design.md for the beat sheet and the timing rationale.
     /// </summary>
     public class ScaffoldCollapseSequence : MonoBehaviour, ISessionResettable
     {

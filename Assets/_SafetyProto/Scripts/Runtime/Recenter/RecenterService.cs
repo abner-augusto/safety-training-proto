@@ -62,9 +62,8 @@ namespace SafetyProto.Runtime
     /// <summary>
     /// Owns the single fade -> recenter -> reground coroutine and the single busy guard shared by
     /// every teleport trigger (phase transition, evaluator dashboard recenter).
-    /// See plans/026-evaluator-recenter-playspace.md for the extraction rationale — the two
-    /// original call sites diverge deliberately (ground probe, DashboardGate suspension,
-    /// locomotor handling, fade-time restore); RecenterOptions is how each keeps its own shape.
+    /// The callers differ deliberately (ground probe, DashboardGate suspension, locomotor
+    /// handling, fade-time restore); RecenterOptions is how each keeps its own shape.
     /// Also owns the <see cref="RoomCenterCalibration"/> every placement uses, so the physical
     /// room center, not wherever the participant stands, maps onto each phase's anchor.
     /// </summary>
@@ -111,12 +110,12 @@ namespace SafetyProto.Runtime
         private void OnDestroy()
         {
             if (_subscribedDisplay != null)
+                _subscribedDisplay.RecenteredPose -= OnSystemRecentered;
 
             // A reset reloads the scene mid-sequence and kills the caller's coroutine before the
             // gate is lifted; the gate is process-wide, so it would mute the pose stream for every
             // later session.
             CancelActive();
-                _subscribedDisplay.RecenteredPose -= OnSystemRecentered;
         }
 
         private void OnSystemRecentered()

@@ -149,7 +149,7 @@ namespace SafetyProto.Domain.Tasks
 
         /// <summary>
         /// The single way a group is closed while tasks are still open, used by BOTH gates
-        /// (the Phase 1 advance button and the inspection gate) and by the group timer.
+        /// (the Evaluation advance button and the inspection gate) and by the group timer.
         /// Marks every pending task in the CURRENT group <see cref="TaskState.NotPerformed"/>,
         /// raises one <c>TASK_NOT_PERFORMED</c> violation per task, then replays the normal
         /// completion orchestration so GroupCompleted / next group / EndSession fire exactly
@@ -212,7 +212,7 @@ namespace SafetyProto.Domain.Tasks
         ///
         /// Always by id, never "the current group": a group that completes naturally is no
         /// longer current the moment its last task lands — the core has already moved on — so a
-        /// gate that judges that group (the Phase 1 advance button) would otherwise measure the
+        /// gate that judges that group (the Evaluation advance button) would otherwise measure the
         /// group that came after it.
         /// </summary>
         public IReadOnlyList<string> GetCompletionOrderDeviations(string groupId)

@@ -16,8 +16,8 @@ namespace SafetyProto.Domain.Feedback
     /// Picks the one sound that plays when several feedback events land at once.
     ///
     /// A single action routinely raises more than one: completing a task without the required
-    /// PPE publishes both the violation and the unsafe completion, so the failure and the
-    /// unsafe-success clips used to be mixed on top of each other. Two rules solve that:
+    /// PPE publishes both the violation and the unsafe completion, and their clips must not
+    /// play on top of each other. Two rules decide:
     /// requests arriving in the same frame collapse to the most important one, and a clip
     /// already sounding is only interrupted by something strictly more important than itself —
     /// anything else is dropped rather than layered.
