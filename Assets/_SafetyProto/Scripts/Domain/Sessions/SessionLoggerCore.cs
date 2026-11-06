@@ -607,6 +607,17 @@ namespace SafetyProto.Domain.Sessions
 
         public void ResetSession()
         {
+            // No session ran in this scene (waiting screen, or a second reset in the same frame
+            // after the first cleared the tallies): writing would leave an id-less file among the
+            // collected logs.
+            if (string.IsNullOrEmpty(_sessionId))
+            {
+                _log.entries.Clear();
+                _log.summary = null;
+                ResetTallies(0);
+                return;
+            }
+
             LogEvent(
                 "SessionReset",
                 "A sessão foi reiniciada manualmente.",
