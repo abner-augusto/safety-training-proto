@@ -47,10 +47,11 @@ namespace SafetyProto.Tests.Editor.Support
     ///
     /// REAL    — everything else (<see cref="TaskManagerCore"/>, <see cref="ScoreService"/>,
     ///           both rule engines) is the genuine production
-    ///           code under test, unmodified. The <c>timer</c> and <c>scheduler</c> are passed
-    ///           null (matching <c>Program.cs</c>): with no scheduler and zero inter-task delay
-    ///           the orchestration runs synchronously, so the whole session resolves inside the
-    ///           call that publishes the triggering event.
+    ///           code under test, unmodified. The <c>timer</c> is null and, by default, so is
+    ///           the <c>scheduler</c> (matching <c>Program.cs</c>): with no scheduler and zero
+    ///           inter-task delay the orchestration runs synchronously, so the whole session
+    ///           resolves inside the call that publishes the triggering event. A case that needs
+    ///           the headset's inter-task gap passes a <c>FakeAsyncScheduler</c> and a delay.
     ///
     /// Engine-independent by construction: this file references zero UnityEngine types, so the
     /// SAME .cs compiles into a standalone .NET test project, mirroring
@@ -66,7 +67,8 @@ namespace SafetyProto.Tests.Editor.Support
 
         private bool _disposed;
 
-        public SessionTestHarness(IReadOnlyList<ITaskGroup> taskGroups, string scenarioName = "TestScenario", string participantId = "P-TEST", SessionMode mode = SessionMode.Guided)
+        public SessionTestHarness(IReadOnlyList<ITaskGroup> taskGroups, string scenarioName = "TestScenario", string participantId = "P-TEST", SessionMode mode = SessionMode.Guided,
+            IAsyncScheduler? scheduler = null, float delayBetweenTasks = 0f)
         {
             if (taskGroups == null) throw new ArgumentNullException(nameof(taskGroups));
 
@@ -89,9 +91,9 @@ namespace SafetyProto.Tests.Editor.Support
                 scoreService: Score,
                 taskGroups: taskGroups,
                 timer: null,
-                scheduler: null,        // null scheduler + 0 delay ⇒ synchronous orchestration
+                scheduler: scheduler,   // null scheduler + 0 delay ⇒ synchronous orchestration
                 logger: null,
-                delayBetweenTasks: 0f,
+                delayBetweenTasks: delayBetweenTasks,
                 modeSource: () => mode);
             TaskManager.Subscribe();
 
