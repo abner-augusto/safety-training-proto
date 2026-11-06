@@ -1,5 +1,6 @@
 using SafetyProto.Core;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Dashboard;
 using SafetyProto.Domain.Sessions;
 using SafetyProto.Runtime;
 using SafetyProto.Runtime.Session;
@@ -64,7 +65,14 @@ namespace SafetyProto.Networking.Dashboard
 
             string label = $"{participantId} · {(mode == SessionMode.Evaluation ? "Avaliação" : "Guiado")}";
 
-            if (!sessionManager.IsSessionStarted)
+            var action = StartSessionPolicy.Decide(sessionManager.IsSessionStarted, args?.replace ?? false);
+            if (action == StartSessionAction.RefuseLive)
+            {
+                reason = "Uma sessão já está em andamento. Confira o painel e confirme a substituição.";
+                return false;
+            }
+
+            if (action == StartSessionAction.StartNow)
             {
                 var starter = FindStarter();
                 if (starter == null)

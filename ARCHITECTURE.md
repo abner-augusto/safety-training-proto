@@ -694,8 +694,9 @@ domain:
   `Command`, routed to scene components that implement
   `IDashboardCommandHandler` (`recenter_player`, `calibrate_room_center`,
   `return_all_ppe`, `reset_session`, and `start_session`, whose
-  `IDashboardCommandWithArgs` handler reads the envelope's `args`) and
-  acknowledged with `CommandAckDto`; an accepted ack may carry a result summary.
+  `IDashboardCommandWithArgs` handler reads the envelope's `args`; it ends a
+  running session only when `args.replace` says the evaluator armed it over one)
+  and acknowledged with `CommandAckDto`; an accepted ack may carry a result summary.
   Accepted in-session commands are published as `EvaluatorCommandEventArgs` for
   the session log. The bootstrap also pushes `StationStatus` (waiting for a
   start, session state, battery, device) on sync, after commands, on session

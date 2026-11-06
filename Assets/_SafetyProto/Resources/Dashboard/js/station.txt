@@ -161,7 +161,12 @@
                 success: 'startSuccess', failed: 'startFailed' },
         args: () => {
           const code = normalizeCode(codeKind, input ? input.value : '');
-          return code.error ? { error: code.error } : { args: { participantCode: code.id, mode: selectedMode } };
+          if (code.error) return { error: code.error };
+          // Captured when the button is armed: the server replaces a running session only if
+          // the evaluator saw one, so a stale tab or a retried start cannot end it.
+          const phase = stationPhase();
+          const replace = phase === 'active' || phase === 'completed';
+          return { args: { participantCode: code.id, mode: selectedMode, replace } };
         },
         buttonLabel: () => {
           const phase = stationPhase();

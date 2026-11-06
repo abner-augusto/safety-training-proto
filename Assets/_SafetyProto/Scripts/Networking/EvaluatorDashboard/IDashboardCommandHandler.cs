@@ -36,5 +36,8 @@ namespace SafetyProto.Networking.Dashboard
         public string participantCode = string.Empty;
         /// <summary>Session mode token, "guiado" or "avaliacao", for start_session.</summary>
         public string mode = string.Empty;
+        /// <summary>start_session: the evaluator armed the button while the headset showed a
+        /// session, so ending it was confirmed. False means "start on the waiting screen".</summary>
+        public bool replace;
     }
 }
