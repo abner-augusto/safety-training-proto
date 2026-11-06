@@ -6,6 +6,7 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Safety;
 using SafetyProto.Domain.Scoring;
 using SafetyProto.Domain.Sessions;
 using SafetyProto.Runtime.Task;
@@ -453,6 +454,11 @@ namespace SafetyProto.Runtime.Safety
         {
             if (_simulationCancellationRequested) return;
             HideGateButtons();
+
+            // The list was taken when the gate was pressed; the participant keeps acting while the
+            // confirmation is open, and a task done meanwhile must not play its consequence (a
+            // lanyard locked during the prompt would otherwise stage a fall that did not happen).
+            pendingTasks = GateFinish.StillPending(pendingTasks);
 
             if (pendingTasks.Count == 0)
             {
