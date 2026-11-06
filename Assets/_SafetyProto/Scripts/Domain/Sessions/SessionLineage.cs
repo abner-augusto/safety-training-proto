@@ -51,8 +51,14 @@ namespace SafetyProto.Domain.Sessions
     /// </summary>
     public static class SessionLineage
     {
-        public static SessionStartRequest? Next(SessionSnapshot current, SessionStartRequest? requested)
+        /// <param name="carried">The start an earlier reset left for this scene, still unconsumed:
+        /// a reset that lands during the reload, before the new scene began, must not drop it.</param>
+        public static SessionStartRequest? Next(SessionSnapshot current, SessionStartRequest? requested,
+                                                SessionStartRequest? carried = null)
         {
+            if (!current.Started && carried != null)
+                return requested == null ? carried : Supersede(carried, requested);
+
             bool interrupted = current.Started && !current.Completed;
 
             // A simulator run restarted for real would start a participant session nobody drives.
@@ -68,6 +74,17 @@ namespace SafetyProto.Domain.Sessions
                 ? (current.Attempt < 1 ? 1 : current.Attempt) + 1
                 : 1;
             return identity.ChainedTo(current.SessionId ?? string.Empty, attempt);
+        }
+
+        /// <summary>
+        /// An explicit start that replaces a start still waiting to be consumed. It keeps the
+        /// pending start's link to the session it restarts; the same code keeps that attempt
+        /// number, another code starts at 1.
+        /// </summary>
+        public static SessionStartRequest Supersede(SessionStartRequest pending, SessionStartRequest requested)
+        {
+            int attempt = requested.ParticipantId == pending.ParticipantId ? pending.Attempt : 1;
+            return requested.ChainedTo(pending.PreviousSessionId, attempt);
         }
     }
 }

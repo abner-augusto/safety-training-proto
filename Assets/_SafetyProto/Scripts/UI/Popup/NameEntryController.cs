@@ -251,7 +251,12 @@ namespace SafetyProto.UI
                 reason = "A sessão já foi iniciada.";
                 return false;
             }
-            StartSession(participantId, ParticipantSources.Dashboard, mode, string.Empty, 1);
+            // Landing before Begin, this start replaces the restart a reset left for this scene
+            // and must keep its link to the interrupted session.
+            var start = new SessionStartRequest(participantId, ParticipantSources.Dashboard, mode);
+            if (SessionHandoff.TryConsume(out var pending))
+                start = SessionLineage.Supersede(pending, start);
+            StartSession(start.ParticipantId, start.Source, start.Mode, start.PreviousSessionId, start.Attempt);
             reason = string.Empty;
             return true;
         }

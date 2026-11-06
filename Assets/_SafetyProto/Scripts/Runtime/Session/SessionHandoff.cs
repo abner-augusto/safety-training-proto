@@ -21,7 +21,7 @@ namespace SafetyProto.Runtime.Session
         /// scene will start a session on its own.</summary>
         public static bool HandOver(SessionSnapshot outgoing)
         {
-            _pending = SessionLineage.Next(outgoing, _requested);
+            _pending = SessionLineage.Next(outgoing, _requested, carried: _pending);
             _requested = null;
             return _pending != null;
         }
