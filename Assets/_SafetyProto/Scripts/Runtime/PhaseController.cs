@@ -234,7 +234,7 @@ namespace SafetyProto.Runtime
 
             var currentGroup = taskManager.GetCurrentGroup();
             var decision = PhaseAdvanceGate.Decide(currentGroup?.id, targetGroupId,
-                WasCompletedNaturally(targetGroupId));
+                IsGroupAlreadyClosed(targetGroupId));
 
             if (decision == PhaseAdvanceAction.Ignore)
             {
@@ -281,8 +281,8 @@ namespace SafetyProto.Runtime
             }
         }
 
-        /// <summary>True when the group finished on its own, so it is no longer the current group.</summary>
-        private bool WasCompletedNaturally(string groupId) => taskManager.IsGroupCompleted(groupId);
+        /// <summary>True once the group has closed, on its own or through a gate.</summary>
+        private bool IsGroupAlreadyClosed(string groupId) => taskManager.IsGroupCompleted(groupId);
 
         private void RecordOrderDeviations(string groupId)
         {
