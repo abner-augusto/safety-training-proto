@@ -13,5 +13,9 @@ namespace SafetyProto.Runtime.Analytics
     public static class DashboardGate
     {
         public static bool PoseBroadcastSuspended;
+
+        // Domain reload is disabled on Play Mode entry; static state persists between runs.
+        [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetOnPlay() => PoseBroadcastSuspended = false;
     }
 }

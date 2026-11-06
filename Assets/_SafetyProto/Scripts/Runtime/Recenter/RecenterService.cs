@@ -111,6 +111,11 @@ namespace SafetyProto.Runtime
         private void OnDestroy()
         {
             if (_subscribedDisplay != null)
+
+            // A reset reloads the scene mid-sequence and kills the caller's coroutine before the
+            // gate is lifted; the gate is process-wide, so it would mute the pose stream for every
+            // later session.
+            CancelActive();
                 _subscribedDisplay.RecenteredPose -= OnSystemRecentered;
         }
 
