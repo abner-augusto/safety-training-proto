@@ -380,6 +380,12 @@ namespace SafetyProto.Runtime
                 },
             };
 
+            // RecenterTo refuses while another sequence (a dashboard recenter) is in flight, and the
+            // anchor has already flipped to the andaime: without waiting, the teleport would be
+            // dropped and the participant left in the PPE room with the scaffold-phase guards on.
+            while (recenterService.IsBusy)
+                yield return null;
+
             yield return recenterService.RecenterTo(spawnPointAndaime, options);
 
             SafetyLog.Info("[PhaseController] Transição concluída. ZonaAndaime ativa.", this);
