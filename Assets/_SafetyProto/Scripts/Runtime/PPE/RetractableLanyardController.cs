@@ -121,6 +121,10 @@ namespace SafetyProto.Runtime.PPE
         [Tooltip("Fired when the lanyard returns to idle.")]
         public UnityEvent onLanyardRetracted;
 
+        [Tooltip("Fired when a locked lanyard leaves its anchor, including when the participant " +
+                 "grabs the carabiner and so no retract follows yet.")]
+        public UnityEvent onLanyardUnlocked = new UnityEvent();
+
         private VerletLanyard _verletLanyard;
         private Rigidbody _rb;
         private Vector3 _lastHarnessPosition;
@@ -402,6 +406,7 @@ namespace SafetyProto.Runtime.PPE
 
             FireTrigger(TriggerCloseOpen);
             transform.SetParent(null);
+            onLanyardUnlocked?.Invoke();
             if (!_isGrabbed) EnterRetracting();
         }
 

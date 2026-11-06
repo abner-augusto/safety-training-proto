@@ -60,6 +60,7 @@ namespace SafetyProto.Runtime.Safety
             {
                 lanyard.onLanyardLocked.AddListener(OnLanyardLocked);
                 lanyard.onLanyardRetracted.AddListener(OnLanyardRetracted);
+                lanyard.onLanyardUnlocked.AddListener(OnLanyardUnlocked);
             }
             else
             {
@@ -73,6 +74,7 @@ namespace SafetyProto.Runtime.Safety
             {
                 lanyard.onLanyardLocked.RemoveListener(OnLanyardLocked);
                 lanyard.onLanyardRetracted.RemoveListener(OnLanyardRetracted);
+                lanyard.onLanyardUnlocked.RemoveListener(OnLanyardUnlocked);
             }
         }
 
@@ -83,6 +85,10 @@ namespace SafetyProto.Runtime.Safety
         }
 
         private void OnLanyardRetracted() => RestoreFall();
+
+        // Re-grabbing a locked carabiner unhooks it without retracting: the participant is no
+        // longer anchored even though no retract event follows until release.
+        private void OnLanyardUnlocked() => RestoreFall();
 
         /// <summary>Stop the player from falling (anchored) while keeping horizontal walking.</summary>
         public void SuspendFall()
