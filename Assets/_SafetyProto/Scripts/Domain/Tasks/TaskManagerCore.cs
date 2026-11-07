@@ -36,6 +36,7 @@ namespace SafetyProto.Domain.Tasks
         private int _currentTaskIndex = -1;
         private SessionCompletedEventArgs? _lastSessionSummary;
         private bool _terminal;
+        private int _sessionGeneration;
 
         private readonly Action<TaskEventArgs> _onTaskLifecycle;
         private CancellationTokenSource? _taskDelayCts;
@@ -87,6 +88,7 @@ namespace SafetyProto.Domain.Tasks
 
         public void StartSession()
         {
+            _sessionGeneration++;
             if (_terminal) return;
             StartNextGroup();
         }
@@ -432,6 +434,7 @@ namespace SafetyProto.Domain.Tasks
             _taskDelayCts?.Dispose();
             _taskDelayCts = new CancellationTokenSource();
             var token = _taskDelayCts.Token;
+            var sessionGeneration = _sessionGeneration;
 
             try
             {
@@ -442,10 +445,8 @@ namespace SafetyProto.Domain.Tasks
                 return;
             }
 
-            // A scheduler may complete instead of throwing when cancelled; after a reset the
-            // state guards below are back at their initial values and would let this start a
-            // session that was just torn down.
-            if (token.IsCancellationRequested || _terminal || _currentTask != null) return;
+            if (sessionGeneration != _sessionGeneration || token.IsCancellationRequested ||
+                _terminal || _currentTask != null) return;
             StartNextTask();
         }
 
@@ -656,6 +657,7 @@ namespace SafetyProto.Domain.Tasks
 
         public void ResetSession()
         {
+            _sessionGeneration++;
             _taskDelayCts?.Cancel();
             _taskDelayCts?.Dispose();
             _taskDelayCts = null;
