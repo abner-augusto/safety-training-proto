@@ -39,5 +39,9 @@ namespace SafetyProto.Networking.Dashboard
         /// <summary>start_session: the evaluator armed the button while the headset showed a
         /// session, so ending it was confirmed. False means "start on the waiting screen".</summary>
         public bool replace;
+        /// <summary>Attention target id from the HighlightTargets list, for highlight_target.</summary>
+        public string targetId = string.Empty;
+        /// <summary>How long the target pulses, for highlight_target; 0 takes the default.</summary>
+        public float durationSeconds;
     }
 }

@@ -90,6 +90,9 @@ namespace SafetyProto.Runtime.Safety
         /// <summary>True once the participant has filed the report.</summary>
         public bool HasReported { get; private set; }
 
+        /// <summary>The action the report publishes.</summary>
+        public string ActionId => string.IsNullOrWhiteSpace(_actionId) ? string.Empty : _actionId.Trim();
+
         private bool _choiceOpen;
 
         private readonly RefusedAttemptTracker _refusalTracker = new RefusedAttemptTracker();

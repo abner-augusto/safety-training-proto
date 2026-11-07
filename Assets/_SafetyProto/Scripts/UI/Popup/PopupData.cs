@@ -45,5 +45,9 @@ namespace SafetyProto.UI
         /// <summary>Key of the voice-over that narrates this popup (see Domain.Feedback.NarrationKeys),
         /// resolved by PopupService. Empty keeps the popup silent.</summary>
         [System.NonSerialized] public string narrationKey;
+        /// <summary>A feedback warning that stays until the participant's next action instead of
+        /// closing on <see cref="autoCloseSeconds"/>, which becomes its reading time (see
+        /// Domain.Feedback.StickyPopupPolicy).</summary>
+        [System.NonSerialized] public bool staysUntilAction;
     }
 }

@@ -16,7 +16,9 @@ namespace SafetyProto.Core.Events
         /// guardian, or a headset just taken off and not yet asleep.</summary>
         XrSessionUnfocused,
         Popup,
-        PauseMenu
+        PauseMenu,
+        /// <summary>The practice area before the training is open.</summary>
+        Practice
     }
 
     /// <summary>
@@ -31,6 +33,9 @@ namespace SafetyProto.Core.Events
         public bool IsPaused => _sources.Count > 0;
 
         public bool IsHeldBy(PauseSource source) => _sources.Contains(source);
+
+        /// <summary>Whether <paramref name="source"/> is the one and only hold.</summary>
+        public bool IsHeldOnlyBy(PauseSource source) => _sources.Count == 1 && _sources.Contains(source);
 
         /// <summary>The sources holding the pause right now, in declaration order.</summary>
         public PauseSource[] ActiveSources()

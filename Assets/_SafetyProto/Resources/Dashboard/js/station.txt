@@ -1,9 +1,12 @@
 // GENERATED FILE — DO NOT EDIT. Source: Tools/DashboardSrc/js/station.js (menu: SafetyProto → Sync Dashboard Source)
     import { t, tf, locale, pauseSourceLabel } from './i18n.js';
     import { state } from './state.js';
-    import { createCommandControl, refreshCommandControls } from './ui.js';
+    import { createCommandControl, refreshCommandControls, renderInterventions } from './ui.js';
     import { findCompletedSession } from './history.js';
     import { notifyShell } from './embed.js';
+    import { recordSent, settle } from './interventions.js';
+    import { COMMAND_ACK_TIMEOUT_MS } from './constants.js';
+    import { HIGHLIGHT_DURATIONS, DEFAULT_HIGHLIGHT_SECONDS, groupTargets, targetLabel, highlightArgs, targetsSignature } from './highlight-targets.js';
 
     /* ================================================================
      * STATION — what the headset is doing (StationStatus), and the
@@ -44,7 +47,34 @@
       state.station = payload ?? null;
       // A page that connected mid-pause never saw the hold events; the status carries them.
       if (Array.isArray(payload?.pauseSources)) state.pauseSources = payload.pauseSources.filter(Boolean);
+      // An app that predates the practice area omits the flag, and then the events decide.
+      if (typeof payload?.practice === 'boolean') state.practice = payload.practice;
       renderStation();
+    }
+
+    /** Routed from PracticeStarted and PracticeEnded; the status confirms it on the next sync. */
+    export function setPractice(practicing) {
+      state.practice = !!practicing;
+      renderStation();
+    }
+
+    let practiceShown = false;
+
+    /* The practice chip and the end-practice control exist only while the participant is in the
+       practice area. The control's status line is cleared on each appearance: the ack of the last
+       end arrives after the control is already hidden, and would otherwise greet the next one. */
+    function renderPractice() {
+      const practicing = state.connected && state.practice;
+      const chip = document.getElementById('practice-chip');
+      if (chip) chip.hidden = !practicing;
+      const controls = document.getElementById('practice-controls');
+      if (!controls) return;
+      controls.hidden = !practicing;
+      if (practicing && !practiceShown) {
+        const status = document.getElementById('end-practice-status');
+        if (status) { status.textContent = ''; status.className = 'command-status'; }
+      }
+      practiceShown = practicing;
     }
 
     export function setPauseSources(list) {
@@ -82,6 +112,8 @@
     }
 
     export function renderStation() {
+      fillHighlightPicker(document.getElementById('highlight-target'), state.highlightTargets);
+      syncHandPicker();
       const phase = stationPhase();
       const el = document.getElementById('station-state');
       if (el) {
@@ -105,6 +137,7 @@
       if (form) form.classList.toggle('disabled', phase === 'offline');
       renderDeviceChips();
       renderPauseChip();
+      renderPractice();
       refreshCommandControls();
       notifyShell();
     }
@@ -129,6 +162,89 @@
       }
       el.textContent = warnings.join(' ');
       el.hidden = warnings.length === 0;
+    }
+
+    function interventionsChanged() {
+      renderInterventions();
+      notifyShell();
+    }
+
+    /** Wraps the socket so every Command it sends, from this page's buttons or from the
+        multi-headset shell, joins the session's intervention list. */
+    export function recordingSender(ws) {
+      return {
+        send(envelope) {
+          const sent = ws.send(envelope);
+          if (!sent) return false;
+          state.interventions = recordSent(state.interventions, envelope, Date.now());
+          interventionsChanged();
+          // An unanswered entry turns into "no response" with time, not with an event.
+          setTimeout(renderInterventions, COMMAND_ACK_TIMEOUT_MS + 100);
+          return true;
+        },
+      };
+    }
+
+    /** Routed from the CommandAck event. */
+    export function settleIntervention(ack) {
+      const next = settle(state.interventions, ack);
+      if (next === state.interventions) return;
+      state.interventions = next;
+      interventionsChanged();
+    }
+
+    /** A new session starts with an empty list. */
+    export function clearInterventions() {
+      state.interventions = [];
+      interventionsChanged();
+    }
+
+    /** Fills a target picker with the headset's list, keeping the current choice when it survives. */
+    export function fillHighlightPicker(select, targets) {
+      if (!select) return;
+      const signature = `${targetsSignature(targets)}#${t('highlightKind_ppe')}`;
+      if (select.dataset.signature === signature) return;
+      const kept = select.value;
+      select.dataset.signature = signature;
+      select.replaceChildren();
+      const groups = groupTargets(targets);
+      if (groups.length === 0) {
+        select.append(new Option(t('highlightNoTargets'), ''));
+        select.disabled = true;
+        return;
+      }
+      select.disabled = false;
+      for (const group of groups) {
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = t(group.labelKey);
+        for (const target of group.targets) optgroup.append(new Option(target.label, target.id));
+        select.append(optgroup);
+      }
+      if (kept && [...select.options].some(o => o.value === kept)) select.value = kept;
+    }
+
+    /** Fills the seconds picker; the default stays selected. */
+    export function fillSecondsPicker(select) {
+      if (!select || select.options.length) return;
+      for (const seconds of HIGHLIGHT_DURATIONS) select.append(new Option(`${seconds} s`, String(seconds)));
+      select.value = String(DEFAULT_HIGHLIGHT_SECONDS);
+    }
+
+    /* Shows the headset's actual hand mode, which survives a restart, unless the evaluator is
+       choosing another one right now. */
+    function syncHandPicker() {
+      const select = document.getElementById('hand-collision-mode');
+      const actual = state.station && state.station.handCollision;
+      if (!select || !actual || document.activeElement === select || select.dataset.dirty === '1') return;
+      select.value = actual;
+    }
+
+    /** Routed from the HighlightTargets message, sent on every sync. */
+    export function setHighlightTargets(targets) {
+      state.highlightTargets = Array.isArray(targets) ? targets : [];
+      fillHighlightPicker(document.getElementById('highlight-target'), state.highlightTargets);
+      refreshCommandControls();
+      notifyShell();
     }
 
     /** Wires the session form, the restart button and the in-session commands. */
@@ -199,15 +315,50 @@
         ['btn-recenter', 'recenter-status', 'recenter_player', 'recenterButton', 'commandConfirmButton', 'recenterSuccess', 'recenterFailed'],
         ['btn-calibrate-center', 'calibrate-center-status', 'calibrate_room_center', 'calibrateCenterButton', 'commandConfirmButton', 'calibrateCenterSuccess', 'calibrateCenterFailed'],
         ['btn-return-objects', 'return-objects-status', 'return_all_ppe', 'returnObjectsButton', 'commandConfirmButton', 'returnObjectsSuccess', 'returnObjectsFailed'],
+        ['btn-end-practice', 'end-practice-status', 'end_practice', 'endPracticeButton', 'commandConfirmButton', 'endPracticeSuccess', 'endPracticeFailed'],
       ];
       for (const [btnId, statusId, command, button, confirm, success, failed] of inSession) {
         const control = createCommandControl({
           btnId, statusId, command,
           keys: { ...commandStatusKeys, button, confirm, success, failed },
-          isBlocked: offline,
+          isBlocked: () => offline() || (command === 'end_practice' && !state.practice),
         });
         document.getElementById(btnId).onclick = () => control.click(ws);
       }
+
+      const targetSelect = document.getElementById('highlight-target');
+      const secondsSelect = document.getElementById('highlight-seconds');
+      fillHighlightPicker(targetSelect, state.highlightTargets);
+      fillSecondsPicker(secondsSelect);
+      const highlightControl = createCommandControl({
+        btnId: 'btn-highlight', statusId: 'highlight-status', command: 'highlight_target',
+        keys: { ...commandStatusKeys, button: 'highlightButton', confirm: 'highlightConfirm',
+                success: 'highlightSuccess', failed: 'highlightFailed' },
+        args: () => {
+          const checked = highlightArgs(targetSelect?.value, secondsSelect?.value);
+          return checked.errorKey ? { error: t(checked.errorKey) } : { args: checked.args };
+        },
+        confirmLabel: () => tf('highlightConfirm', { target: targetLabel(state.highlightTargets, targetSelect?.value) }),
+        isBlocked: () => offline() || state.highlightTargets.length === 0,
+      });
+      document.getElementById('btn-highlight').onclick = () => highlightControl.click(ws);
+      if (targetSelect) targetSelect.onchange = () => highlightControl.disarm();
+      if (secondsSelect) secondsSelect.onchange = () => highlightControl.disarm();
+
+      const handSelect = document.getElementById('hand-collision-mode');
+      const handControl = createCommandControl({
+        btnId: 'btn-hand-collision', statusId: 'hand-collision-status', command: 'set_hand_collision',
+        keys: { ...commandStatusKeys, button: 'handApply', confirm: 'commandConfirmButton',
+                success: 'handSuccess', failed: 'handFailed' },
+        args: () => {
+          window.dispatchEvent(new Event('sp-hand-mode-sent'));
+          return { args: { mode: handSelect ? handSelect.value : 'push' } };
+        },
+        isBlocked: () => offline() || !(state.station && state.station.handCollision),
+      });
+      document.getElementById('btn-hand-collision').onclick = () => handControl.click(ws);
+      if (handSelect) handSelect.onchange = () => { handSelect.dataset.dirty = '1'; handControl.disarm(); };
+      window.addEventListener('sp-hand-mode-sent', () => { if (handSelect) handSelect.dataset.dirty = ''; });
 
       window.addEventListener('sp-connection', renderStation);
       renderStation();

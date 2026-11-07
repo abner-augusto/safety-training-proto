@@ -18,6 +18,7 @@ namespace SafetyProto.Domain.Sessions
             PauseSource.XrSessionUnfocused => "sessão XR sem foco (menu do sistema ou óculos retirados)",
             PauseSource.Popup => "popup aberto",
             PauseSource.PauseMenu => "menu de pausa",
+            PauseSource.Practice => "área de prática",
             _ => "origem não informada"
         };
 

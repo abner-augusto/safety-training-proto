@@ -49,7 +49,7 @@ namespace SafetyProto.Domain.Sessions
         public struct LogData
         {
             public string actionId;
-            public string context;
+            public string? context;
             public string ppeType;
             public bool wearing;
             public int delta;
@@ -76,8 +76,13 @@ namespace SafetyProto.Domain.Sessions
             public string[]? pauseSources;
             public bool held;
             public string command;
+            public string target;
+            public bool secured;
+            public int level;
+            public string handCollision;
             public string previousSessionId;
             public int attempt;
+            public string[]? tried;
         }
 
         [Serializable]
@@ -210,6 +215,10 @@ namespace SafetyProto.Domain.Sessions
         private readonly Action<PlayspaceNoticeEventArgs>         _onPlayspaceNotice;
         private readonly Action<PauseHoldChangedEventArgs>        _onPauseHoldChanged;
         private readonly Action<EvaluatorCommandEventArgs>        _onEvaluatorCommand;
+        private readonly Action<ObjectGrabbedEventArgs>           _onObjectGrabbed;
+        private readonly Action<ObjectReleasedEventArgs>          _onObjectReleased;
+        private readonly Action<HintShownEventArgs>               _onHintShown;
+        private readonly Action<PracticeEventArgs>                _onPractice;
 
         private bool _subscribed;
         private bool _disposed;
@@ -262,7 +271,8 @@ namespace SafetyProto.Domain.Sessions
                 _completionWriteStarted = false;
                 LogEvent("SessionStarted", DescribeSessionStart(),
                     _sessionId, _playerId, _scenarioId, args.TimestampMs,
-                    new LogData { source = _participantSource, previousSessionId = _previousSessionId, attempt = _attempt });
+                    new LogData { source = _participantSource, previousSessionId = _previousSessionId, attempt = _attempt,
+                                  handCollision = args.HandCollision ?? string.Empty });
                 if (_activeHolds.Length > 0)
                 {
                     _pauseStartMs = ResolveTimestamp(args.TimestampMs);
@@ -288,9 +298,27 @@ namespace SafetyProto.Domain.Sessions
                     args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                     new LogData { pauseSource = args.Source.ToString(), durationSeconds = seconds });
             };
+            _onObjectGrabbed = args => LogEvent("ObjectGrabbed", $"Pegou {args.Target}",
+                args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                new LogData { target = args.Target ?? string.Empty });
+            _onObjectReleased = args => LogEvent("ObjectReleased",
+                args.Secured ? $"Soltou {args.Target} no lugar" : $"Soltou {args.Target}",
+                args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                new LogData { target = args.Target ?? string.Empty, durationSeconds = args.HeldSeconds, secured = args.Secured });
+            _onHintShown = args => LogEvent("HintShown",
+                $"Ajuda nível {args.Level} em '{args.TaskName}' após {args.SecondsWithoutProgress.ToString("0", CultureInfo.InvariantCulture)} s sem progresso",
+                args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                new LogData { level = args.Level, taskId = args.TaskId ?? string.Empty, durationSeconds = args.SecondsWithoutProgress });
+            _onPractice = args => LogEvent(
+                args.Phase == PracticePhase.Started ? "PracticeStarted" : "PracticeEnded",
+                args.Phase == PracticePhase.Started
+                    ? "Área de prática aberta"
+                    : $"Área de prática encerrada ({DescribePracticeEnd(args.Reason)}) após {args.Seconds.ToString("0", CultureInfo.InvariantCulture)} s",
+                args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                new LogData { reason = args.Reason ?? string.Empty, durationSeconds = args.Seconds, tried = args.Tried });
             _onEvaluatorCommand = args => LogEvent("EvaluatorCommand", DescribeEvaluatorCommand(args),
                 args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
-                new LogData { command = args.Command ?? string.Empty, message = args.Summary ?? string.Empty });
+                new LogData { command = args.Command ?? string.Empty, message = args.Summary ?? string.Empty, target = args.Target ?? string.Empty });
             _onPauseHoldChanged = args =>
             {
                 _activeHolds = args.ActiveSources ?? Array.Empty<PauseSource>();
@@ -308,8 +336,9 @@ namespace SafetyProto.Domain.Sessions
                 LogEvent("ActionAttempt", details, args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                     new LogData { actionId = actionId, context = args.Context ?? string.Empty });
             };
+            // A null context stays out of the entry, so an ordinary equip logs as it always did.
             _onPpeStateChanged       = args => LogEvent("PpeStateChanged",   $"EPI={PpeLabels.DisplayName(args.PpeType)}, Equipado={(args.IsWearing ? "Sim" : "Não")}", args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
-                new LogData { ppeType = args.PpeType.ToString(), wearing = args.IsWearing });
+                new LogData { ppeType = args.PpeType.ToString(), wearing = args.IsWearing, context = args.Context });
             _onTaskLifecycle = args =>
             {
                 string eventName = args.Phase switch
@@ -377,12 +406,23 @@ namespace SafetyProto.Domain.Sessions
                 "recenter_player" => "recentralizar jogador",
                 "calibrate_room_center" => "calibrar centro da sala",
                 "return_all_ppe" => "recolher objetos soltos",
+                "highlight_target" => "chamar atenção",
+                "set_hand_collision" => "colisão das mãos",
+                "end_practice" => "encerrar prática",
                 _ => args.Command ?? string.Empty
             };
             return string.IsNullOrWhiteSpace(args.Summary)
                 ? $"Comando do avaliador: {label}"
                 : $"Comando do avaliador: {label} ({args.Summary})";
         }
+
+        private static string DescribePracticeEnd(string? reason) => reason switch
+        {
+            "continue" => "participante tocou em Continuar",
+            "timeout" => "tempo esgotado",
+            "evaluator" => "pelo avaliador",
+            _ => reason ?? string.Empty
+        };
 
         private static string DescribePlayspaceNotice(PlayspaceNoticeEventArgs args) => args.Kind switch
         {
@@ -411,6 +451,10 @@ namespace SafetyProto.Domain.Sessions
             _eventBus.Subscribe(_onPlayspaceNotice);
             _eventBus.Subscribe(_onPauseHoldChanged);
             _eventBus.Subscribe(_onEvaluatorCommand);
+            _eventBus.Subscribe(_onObjectGrabbed);
+            _eventBus.Subscribe(_onObjectReleased);
+            _eventBus.Subscribe(_onHintShown);
+            _eventBus.Subscribe(_onPractice);
             _subscribed = true;
         }
 
@@ -432,6 +476,10 @@ namespace SafetyProto.Domain.Sessions
             _eventBus.Unsubscribe(_onPlayspaceNotice);
             _eventBus.Unsubscribe(_onPauseHoldChanged);
             _eventBus.Unsubscribe(_onEvaluatorCommand);
+            _eventBus.Unsubscribe(_onObjectGrabbed);
+            _eventBus.Unsubscribe(_onObjectReleased);
+            _eventBus.Unsubscribe(_onHintShown);
+            _eventBus.Unsubscribe(_onPractice);
             _subscribed = false;
         }
 

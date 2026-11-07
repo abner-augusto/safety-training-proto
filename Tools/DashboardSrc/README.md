@@ -20,9 +20,13 @@ concern lives in its own ES module under `js/`, one file per concern:
 | `js/ui.js` | DOM rendering: cluster, tasks, log, report section + modal |
 | `js/ws.js` | `WsManager` (reconnect/backoff WebSocket client) |
 | `js/history.js` | session history persisted in localStorage |
-| `js/station.js` | headset state (`StationStatus`), session start form, restart and in-session command buttons, pause and battery chips |
-| `js/embed.js` | `?embed=1` mode inside the multi-headset shell: theme/language from the shell, status up to it |
-| `js/multi.js` | the multi-headset shell itself (entry point of `multi.html`, not of `app.js`) |
+| `js/station.js` | headset state (`StationStatus`), session start form, restart and in-session command buttons, pause, battery and practice chips |
+| `js/embed.js` | `?embed=1` mode inside the multi-headset shell: theme/language and tile commands from the shell, status and command acks up to it |
+| `js/multi.js` | the multi-headset shell itself (entry point of `multi.html`, not of `app.js`): tiles, stuck alert and sound, quick actions |
+| `js/stuck-math.js` | pure stuck-participant logic: folds routed events into a progress object, decides when a tile is stuck (tested by `tests/stuck-math.test.mjs`) |
+| `js/interventions.js` | pure log of the evaluator commands of one session (tested by `tests/interventions.test.mjs`) |
+| `js/tile-actions.js` | the quick actions of a headset tile and when they are blocked (tested by `tests/tile-actions.test.mjs`) |
+| `js/highlight-targets.js` | the "Chamar atenção" picker: groups the headset's `HighlightTargets` list and builds the `highlight_target` arguments (tested by `tests/highlight-targets.test.mjs`) |
 | `js/router.js` | event router: handler map + `route` |
 | `js/viewport.js` | `EvaluatorViewport` (Three.js instrument scene) |
 | `js/scene-layout.js` | `SceneLayoutView`: walkable floors + task-spot markers (Three.js) |
@@ -37,8 +41,51 @@ import each other with `./state.js`. The import graph is acyclic —
 `multi.html` is a second page: one iframe per headset
 (`http://<headset>:8080/?embed=1`), side by side, so one evaluator can watch
 and drive two headsets from one tab. Each iframe is a complete station page
-talking to its own headset; the shell only lays them out, forwards theme and
-language, and shows each station's status in its tile bar.
+talking to its own headset; the shell lays them out, forwards theme and
+language, shows each station's status in its tile bar, and watches for a
+participant who is stuck.
+
+Stuck alert: the router folds every event into `state.progress`
+(`stuck-math.js`), the embed snapshot carries it to the shell, and the shell
+re-evaluates every tile once a second, because a participant who stops moving
+sends no event. A tile is stuck after N seconds without progress (a task
+started or completed, a PPE item put on, or an action attempt the rule engine
+did not refuse; N
+defaults to 60 and is kept in `localStorage` as `sp_stuck_seconds`), at once when
+the session is paused by a focus token (`ApplicationFocus`, `ApplicationPause`,
+`XrSessionUnfocused`; `Popup`, `PauseMenu` and `Practice` are deliberate pauses and
+not stuck), and at once on a
+`HintShown` event of level 3. Resuming clears a focus alert; only progress
+clears the others, and time spent paused never counts as idle. The chime is
+synthesized with Web Audio (no asset to ship) and plays once per alert; browsers
+start audio only after a click in the shell, so the sound button says "clique
+para ativar" until then.
+
+Quick actions: each tile has confirm-then-send buttons built from `TILE_ACTIONS`
+in `js/tile-actions.js`. The shell posts the `Command` envelope to the tile's
+iframe, the embedded page sends it over its own WebSocket, and the `CommandAck`
+comes back up as a message. To add an action (for example "Chamar atenção"),
+append an entry to `TILE_ACTIONS`, add its strings to both tables in
+`js/i18n.js` and its label as `command_<wire name>`; the embedded page accepts
+only commands listed there. An action flagged `onlyWhilePracticing` (the "Encerrar
+prática" button, command `end_practice`) is drawn only while that headset reports
+`practice: true`; the other actions stay on the tile and are only blocked.
+
+Practice area: the headset opens it between onboarding steps 4 and 5 with the
+session clock held. The page learns of it from `PracticeStarted` /
+`PracticeEnded` and from the `practice` flag of `StationStatus`, shows an "Em
+prática" chip, and offers "Encerrar prática" (`end_practice`) in the station
+page and on the tile, hidden otherwise.
+
+Intervention history: the station page records every command it sends, from its
+own buttons or the shell's tiles, in `state.interventions` (time, command label,
+ack reason) and lists them in the "Intervenções" section. A new session, or a
+reset to the waiting screen, clears the list, so a restart or a start belongs to
+the session it was sent in. The tile shows the count.
+
+The pure modules import nothing that touches `document` or `localStorage`, so
+`node --test Tools/DashboardSrc/tests/<name>.test.mjs` runs their tests (pass
+file paths; the directory form does not work on every Node version).
 
 Adding a module: create `js/<name>.js`, import it where needed. The sync
 mirrors it to `Resources/Dashboard/js/<name>.txt` and

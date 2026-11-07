@@ -4,6 +4,7 @@ using SafetyProto.Core;
 using SafetyProto.Core.Events;
 using SafetyProto.Core.Interfaces;
 using SafetyProto.Core.Logging;
+using SafetyProto.Domain.Feedback;
 using SafetyProto.Domain.Safety;
 using SafetyProto.Runtime.Actions;
 using SafetyProto.Runtime.Feedback;
@@ -25,7 +26,7 @@ namespace SafetyProto.Runtime.Scaffolding
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(Grabbable))]
-    public class ScaffoldPieceInstaller : MonoBehaviour, ISessionResettable
+    public class ScaffoldPieceInstaller : MonoBehaviour, ISessionResettable, ISecuredPlacement
     {
         public enum InstallMode { SingleSocket, TwoSockets }
 
@@ -107,18 +108,32 @@ namespace SafetyProto.Runtime.Scaffolding
         [SerializeField] private bool hideTargetPreviewAfterInstalled = true;
         [SerializeField] private Color idleColor    = new Color(1f,   1f,   1f,  0.12f);
         [SerializeField] private Color validColor   = new Color(0.2f, 0.85f, 0.35f, 0.45f);
+        [Tooltip("In position but turned the wrong way.")]
+        [SerializeField] private Color nearMissColor = new Color(1f,  0.85f, 0.1f,  0.4f);
         [SerializeField] private Color invalidColor = new Color(1f,   0.45f, 0.2f,  0.35f);
+        [Tooltip("Seconds the slot ghost stays visible in the invalid colour after a release in a wrong " +
+                 "pose, so the invalid-release sound has a visual twin.")]
+        [SerializeField, Range(0f, 3f)] private float invalidReleaseFlashSeconds = 1f;
 
         [Header("Audio Feedback")]
         [Tooltip("AudioSource used to play 3D spatialized placement/install sounds. Auto-found or created if null.")]
         [SerializeField] private AudioSource audioSource;
         [Tooltip("Sound played when the piece is successfully installed and locked.")]
         [SerializeField] private AudioClip installSound;
-        [Tooltip("Optional hint chime when entering valid install pose.")]
+        [Tooltip("Chime while the held piece is in a valid install pose.")]
         [SerializeField] private AudioClip validPoseSound;
-        [Tooltip("Optional sound when released in an invalid pose.")]
+        [Tooltip("Sound while the held piece is in position but turned the wrong way.")]
+        [SerializeField] private AudioClip nearMissSound;
+        [Tooltip("Sound when the piece is released in an invalid pose.")]
         [SerializeField] private AudioClip invalidReleaseSound;
         [SerializeField, Range(0f, 1f)] private float installVolume = 1.0f;
+        [SerializeField, Range(0f, 1f)] private float validPoseVolume = 0.9f;
+        [SerializeField, Range(0f, 1f)] private float nearMissVolume = 0.6f;
+        [SerializeField, Range(0f, 1f)] private float invalidReleaseVolume = 0.8f;
+        [Tooltip("Seconds between valid-pose chimes while the piece stays valid. 0 = once per entry.")]
+        [SerializeField, Range(0f, 3f)] private float validPoseRepeatSeconds = 1f;
+        [Tooltip("Seconds between near-miss sounds while the piece stays in position at the wrong angle. 0 = once per entry.")]
+        [SerializeField, Range(0f, 3f)] private float nearMissRepeatSeconds = 0.6f;
 
         [Header("Events")]
         public UnityEvent onEnteredValidPose;
@@ -141,14 +156,60 @@ namespace SafetyProto.Runtime.Scaffolding
         private Transform _activeSocket;
 
         private readonly RefusedAttemptTracker _refusalTracker = new RefusedAttemptTracker();
+        private PlacementCuePolicy _cuePolicy;
+        private Transform[] _gripPoints;
+        private float _invalidFlashUntil;
+        private PlacementPose _lastPose = PlacementPose.Away;
         private System.Action<ActionRefusedEventArgs> _onActionRefused;
         private System.Action<PopupClosedEventArgs> _onPopupClosed;
 
         public bool IsInstalled        => _isInstalled;
+        bool ISecuredPlacement.IsSecured => _isInstalled;
         public bool IsValidInstallPose => HasValidInstallPose();
+
+        /// <summary>The action this piece publishes when installed.</summary>
+        public string ActionId => GetConfiguredActionId();
+
+        /// <summary>The ghost on the scaffold socket, or null.</summary>
+        public Renderer TargetPreviewRenderer => targetPreviewRenderer;
 
         /// <summary>How many hands are currently holding the piece.</summary>
         public int SelectingHandCount  => grabbable != null ? grabbable.SelectingPointsCount : 0;
+
+        /// <summary>Whether the piece installs only when both hands hold it.</summary>
+        public bool RequiresTwoHands => installMode == InstallMode.TwoSockets && requireTwoHandsForTwoSockets;
+
+        /// <summary>
+        /// While one hand holds the piece, where the other hand should grab: of the authored grab
+        /// poses, or of the two piece anchors (its ends) when the grab is free, the one farthest
+        /// from the holding hand. False when not exactly one hand holds it.
+        /// </summary>
+        public bool TryGetFreeGripPosition(out Vector3 position)
+        {
+            position = default;
+            if (grabbable == null || grabbable.SelectingPointsCount != 1) return false;
+            _gripPoints ??= GripCandidates();
+            if (_gripPoints.Length == 0) return false;
+
+            var held = grabbable.SelectingPoints[0].position;
+            float farthest = -1f;
+            foreach (var point in _gripPoints)
+            {
+                if (point == null) continue;
+                float d = (point.position - held).sqrMagnitude;
+                if (d <= farthest) continue;
+                farthest = d;
+                position = point.position;
+            }
+            return farthest >= 0f;
+        }
+
+        private Transform[] GripCandidates()
+        {
+            var poses = GetComponentsInChildren<HandGrabPose>(includeInactive: true);
+            if (poses.Length > 0) return System.Array.ConvertAll(poses, pose => pose.transform);
+            return pieceAnchorB != null ? new[] { pieceAnchorA, pieceAnchorB } : System.Array.Empty<Transform>();
+        }
 
         private void Awake()
         {
@@ -166,6 +227,7 @@ namespace SafetyProto.Runtime.Scaffolding
                 audioSource = GetComponent<AudioSource>();
 
             WarnIfAudioRunsOnCodeDefaults();
+            _cuePolicy = new PlacementCuePolicy(nearMissRepeatSeconds, validPoseRepeatSeconds);
 
             _colliders = GetComponentsInChildren<Collider>(includeInactive: false);
 
@@ -217,26 +279,26 @@ namespace SafetyProto.Runtime.Scaffolding
 
             if (_isInstalled) return;
 
-            bool valid = HasValidInstallPose();
+            var pose = ClassifyPose();
+            _lastPose = _isGrabbed ? pose : PlacementPose.Away;
+            bool valid = pose == PlacementPose.Valid;
             if (valid != _wasValidPose)
             {
                 _wasValidPose = valid;
-                if (valid)
-                {
-                    onEnteredValidPose?.Invoke();
-                    if (validPoseSound != null && _isGrabbed)
-                    {
-                        EnsureAudioSource();
-                        audioSource.PlayOneShot(validPoseSound, 0.4f);
-                    }
-                }
-                else
-                {
-                    onExitedValidPose?.Invoke();
-                }
+                if (valid) onEnteredValidPose?.Invoke();
+                else onExitedValidPose?.Invoke();
             }
 
-            SetFeedbackColor(_isGrabbed ? (valid ? validColor : invalidColor) : idleColor);
+            switch (_cuePolicy.Tick(Time.time, _isGrabbed, pose))
+            {
+                case PlacementCue.Valid: PlayClip(validPoseSound, validPoseVolume); break;
+                case PlacementCue.NearMiss: PlayClip(nearMissSound, nearMissVolume); break;
+            }
+
+            SetFeedbackColor(!_isGrabbed ? (IsFlashingInvalid ? invalidColor : idleColor)
+                : pose == PlacementPose.Valid ? validColor
+                : pose == PlacementPose.WrongAngle ? nearMissColor
+                : invalidColor);
             UpdateTargetPreviewVisibility();
         }
 
@@ -247,10 +309,11 @@ namespace SafetyProto.Runtime.Scaffolding
             if (!HasEnoughHandsForInstall() || !HasValidInstallPose())
             {
                 onInvalidRelease?.Invoke();
-                if (invalidReleaseSound != null)
+                // Setting the piece down far from the socket is not a failed attempt.
+                if (_lastPose != PlacementPose.Away)
                 {
-                    EnsureAudioSource();
-                    audioSource.PlayOneShot(invalidReleaseSound, 0.5f);
+                    PlayClip(invalidReleaseSound, invalidReleaseVolume);
+                    _invalidFlashUntil = Time.time + invalidReleaseFlashSeconds;
                 }
                 return;
             }
@@ -272,10 +335,7 @@ namespace SafetyProto.Runtime.Scaffolding
             ResetInstall();
 
             if (returnHome != null)
-            {
-                returnHome.enabled = true;
                 returnHome.BeginReturnNow();
-            }
 
             onInstallReverted?.Invoke();
             SafetyLog.Info($"[ScaffoldPieceInstaller] '{name}' desinstalado — tentativa recusada pelas regras de segurança.", this);
@@ -292,7 +352,6 @@ namespace SafetyProto.Runtime.Scaffolding
                 SetCollidersEnabled(true);
             SetPhysicsEnabled(true);
             SetGrabEnabled(true);
-            if (returnHome != null) returnHome.enabled = true;
             SetFeedbackColor(idleColor);
             UpdateTargetPreviewVisibility();
         }
@@ -361,10 +420,7 @@ namespace SafetyProto.Runtime.Scaffolding
             _isInstalled = true;
 
             if (returnHome != null)
-            {
                 returnHome.CancelReturn();
-                returnHome.enabled = false;
-            }
 
             if (lockAfterInstalled)
                 SetPhysicsEnabled(false);
@@ -382,11 +438,14 @@ namespace SafetyProto.Runtime.Scaffolding
 
             PublishInstalledAction();
             onInstalled?.Invoke();
-            if (installSound != null)
-            {
-                EnsureAudioSource();
-                audioSource.PlayOneShot(installSound, installVolume);
-            }
+            PlayClip(installSound, installVolume);
+        }
+
+        private void PlayClip(AudioClip clip, float volume)
+        {
+            if (clip == null) return;
+            EnsureAudioSource();
+            audioSource.PlayOneShot(clip, volume);
         }
 
         private bool HasEnoughHandsForInstall()
@@ -437,6 +496,40 @@ namespace SafetyProto.Runtime.Scaffolding
             return false;
         }
 
+        private bool IsFlashingInvalid => Time.time < _invalidFlashUntil;
+
+        /// <summary>Valid only when releasing now would install: a two-hand piece held with one
+        /// hand stays a near miss, so the ghost never turns green while the two-hand cue pulses.</summary>
+        private PlacementPose ClassifyPose()
+        {
+            if (HasValidInstallPose())
+                return HasEnoughHandsForInstall() ? PlacementPose.Valid : PlacementPose.WrongAngle;
+            return HasAnchorsInPosition() ? PlacementPose.WrongAngle : PlacementPose.Away;
+        }
+
+        /// <summary>The same socket pairings as <see cref="HasValidInstallPose"/>, by position only.</summary>
+        private bool HasAnchorsInPosition()
+        {
+            if (!HasRequiredReferences()) return false;
+
+            if (IsAnchorNear(pieceAnchorA, targetSocketA) &&
+                (installMode == InstallMode.SingleSocket || IsAnchorNear(pieceAnchorB, targetSocketB)))
+                return true;
+
+            if (!allowAnySlotDirection) return false;
+
+            if (targetSocketB != null && IsAnchorNear(pieceAnchorA, targetSocketB) &&
+                (installMode == InstallMode.SingleSocket || IsAnchorNear(pieceAnchorB, targetSocketA)))
+                return true;
+
+            return installMode == InstallMode.SingleSocket && pieceAnchorB != null &&
+                   (IsAnchorNear(pieceAnchorB, targetSocketA) ||
+                    (targetSocketB != null && IsAnchorNear(pieceAnchorB, targetSocketB)));
+        }
+
+        private bool IsAnchorNear(Transform pieceAnchor, Transform socket) =>
+            Vector3.Distance(pieceAnchor.position, socket.position) <= positionTolerance;
+
         private bool HasRequiredReferences()
         {
             if (pieceAnchorA == null || targetSocketA == null) return false;
@@ -447,7 +540,7 @@ namespace SafetyProto.Runtime.Scaffolding
 
         private bool IsAnchorAligned(Transform pieceAnchor, Transform socket)
         {
-            if (Vector3.Distance(pieceAnchor.position, socket.position) > positionTolerance)
+            if (!IsAnchorNear(pieceAnchor, socket))
                 return false;
 
             if (IsRotationAligned(pieceAnchor.rotation, socket.rotation)) return true;
@@ -494,7 +587,8 @@ namespace SafetyProto.Runtime.Scaffolding
             var actionId = GetConfiguredActionId();
             if (string.IsNullOrEmpty(actionId))
             {
-                SafetyLog.Warning($"[ScaffoldPieceInstaller] Nenhum ActionId configurado em {name}. Instalação concluída sem evento de tarefa.", this);
+                if (!SafetyProto.Runtime.Practice.PracticeProp.IsPractice(this))
+                    SafetyLog.Warning($"[ScaffoldPieceInstaller] Nenhum ActionId configurado em {name}. Instalação concluída sem evento de tarefa.", this);
                 return;
             }
 
@@ -543,13 +637,13 @@ namespace SafetyProto.Runtime.Scaffolding
         private void UpdateTargetPreviewVisibility()
         {
             if (targetPreviewRenderer == null || _isInstalled) return;
-            targetPreviewRenderer.enabled = !showTargetPreviewOnlyWhileGrabbed || _isGrabbed;
+            targetPreviewRenderer.enabled = !showTargetPreviewOnlyWhileGrabbed || _isGrabbed || IsFlashingInvalid;
         }
 
         private void WarnIfAudioRunsOnCodeDefaults()
         {
             if (audioSource != null) return;
-            if (installSound == null && validPoseSound == null && invalidReleaseSound == null) return;
+            if (installSound == null && validPoseSound == null && nearMissSound == null && invalidReleaseSound == null) return;
 
             SafetyLog.Warning(
                 $"[ScaffoldPieceInstaller] '{name}' tem clipe de áudio mas nenhum AudioSource. " +

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using SafetyProto.Core;
 using SafetyProto.Core.Interfaces;
+using SafetyProto.Domain.Feedback;
 using SafetyProto.Domain.Scoring;
 
 namespace SafetyProto.Domain.Dashboard
@@ -18,6 +19,22 @@ namespace SafetyProto.Domain.Dashboard
     /// </summary>
     public static class DashboardDtoMapper
     {
+        public static HighlightTargetsDto ToHighlightTargets(IReadOnlyList<AttentionTargetInfo> targets)
+        {
+            var dtos = new HighlightTargetDto[targets?.Count ?? 0];
+            for (int i = 0; i < dtos.Length; i++)
+            {
+                var target = targets![i];
+                dtos[i] = new HighlightTargetDto
+                {
+                    id = target.Id,
+                    label = target.Label,
+                    kind = AttentionTargets.Token(target.Kind)
+                };
+            }
+            return new HighlightTargetsDto { targets = dtos };
+        }
+
         public static string ResolveTaskStatus(TaskState state)
         {
             switch (state)

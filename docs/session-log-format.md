@@ -39,7 +39,7 @@ to keep it small, and fields the event does not use are omitted from the JSON.
 | Event | Fields filled |
 | --- | --- |
 | `ActionAttempt` | `actionId` (stable id; the friendly name is in `details`), `context` |
-| `PpeStateChanged` | `ppeType`, `wearing` |
+| `PpeStateChanged` | `ppeType`, `wearing`, `context` (only on an inferred equip, see below) |
 | `ScoreChanged` | `delta`, `totalScore` |
 | `Task*` events | `riskLevel`, `riskSeverity`, `riskProbability` |
 | `SafetyViolation` | `violationCode`, `message`, `taskId`, `groupId` |
@@ -48,14 +48,30 @@ to keep it small, and fields the event does not use are omitted from the JSON.
 | `SessionCompleted` | `totalScore`, `totalElapsedTime`, `tasksCompleted`, `totalTasks` |
 | `SessionPaused` | `pauseSource` (the hold that started the pause), `pauseSources` (every hold active then), `context = pre_session` when the hold began before `SessionStarted` |
 | `SessionResumed` | `pauseSource` (the release that ended the pause), `durationSeconds` |
-| `SessionStarted` | `source` (who set the participant id), `previousSessionId` (the interrupted session this one restarts), `attempt` |
-| `EvaluatorCommand` | `command` (`recenter_player`, `calibrate_room_center`, `return_all_ppe`), `message` (the handler's result summary) |
+| `SessionStarted` | `source` (who set the participant id), `previousSessionId` (the interrupted session this one restarts), `attempt`, `handCollision` (`push` or `pass_through`: whether the hands pushed interactive objects in this session) |
+| `EvaluatorCommand` | `command` (`recenter_player`, `calibrate_room_center`, `return_all_ppe`, `highlight_target`, `set_hand_collision`, `end_practice`), `message` (the handler's result summary), `target` (`highlight_target`: the target id, e.g. `ppe:Safety_Helmet`, `socket:GuardRailPiece`; `set_hand_collision`: the mode chosen, `push` or `pass_through`) |
 | `PauseHoldChanged` | `pauseSource`, `held` (omitted when false), `pauseSources` (active after the change; omitted when none) |
+| `ObjectGrabbed` | `target` (scene name of the object a hand took hold of) |
+| `HintShown` | `level` (1 = the next object pulses, 2 = the step is said aloud, 3 = the evaluator is alerted), `taskId`, `durationSeconds` (seconds without progress when it fired). Guided mode only |
+| `PracticeStarted` / `PracticeEnded` | the practice area before the training, between onboarding steps 4 and 5; `PracticeEnded`: `reason` (`continue`, `timeout`, `evaluator`), `durationSeconds`, `tried` (interaction ids done there: `equip_head`, `equip_foot`, `connect_anchor`, `two_hand_bar`, `install_bar`). The session clock is paused throughout (`pauseSource` `Practice`); grabs of practice props are logged as `ObjectGrabbed`/`ObjectReleased` with the `Pratica_` names |
+| `ObjectReleased` | `target`, `durationSeconds` (how long it was held), `secured` (`true` when the release left it worn, installed or anchored; omitted for a drop) |
 
 Notes for analysis:
 
+- Grab attempts per object: count `ObjectGrabbed` by `target`. An
+  `ObjectReleased` without `secured` shortly after its grab is a drop; a long
+  hold that ends without `secured` usually means the object was put down to
+  free the hands. Both pairs include the evaluator-free automatic returns, which
+  never raise a grab.
+
 - `context` is free-form: `gaze_dwell`, or `gaze_dwell:option=loose_fixing` for
   a hazard-classification report.
+- A `PpeStateChanged` entry with `wearing` true carries `context` only when the
+  equip was inferred: `ppe_snap:grip_lost=tracking` when the headset lost the
+  holding hand while the item was at the slot, `ppe_snap:grip_lost=jump` when
+  the item leapt out of the slot faster than a hand moves. Both count as
+  letting go at the slot. A slot that emits an `ActionAttempt` records the same
+  value as its `context` (otherwise `ppe_snap`).
 - `Task*` entries embed the risk the task carried, so a log can be analysed on
   its own without joining it back to the scenario document. `riskLevel` is the
   NR-01 class token (for example `substantial`). `riskSeverity` and

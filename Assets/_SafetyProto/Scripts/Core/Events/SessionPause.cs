@@ -17,6 +17,9 @@ namespace SafetyProto.Core.Events
         /// EventBus pump, this reflects a hold immediately.</summary>
         public static bool IsPaused => Holds.IsPaused;
 
+        /// <summary>Whether <paramref name="source"/> is the one and only hold right now.</summary>
+        public static bool IsHeldOnlyBy(PauseSource source) => Holds.IsHeldOnlyBy(source);
+
         /// <summary>The sources holding the pause right now, for a late observer (a dashboard
         /// that connects mid-pause) that missed the hold events.</summary>
         public static PauseSource[] ActiveSources() => Holds.ActiveSources();

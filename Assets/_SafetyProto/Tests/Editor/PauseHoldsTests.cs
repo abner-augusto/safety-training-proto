@@ -50,6 +50,19 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
+        public void HeldOnlyBy_IsFalseOnceAnotherSourceJoins()
+        {
+            var holds = new PauseHolds();
+            Assert.IsFalse(holds.IsHeldOnlyBy(PauseSource.Practice));
+            holds.Acquire(PauseSource.Practice);
+            Assert.IsTrue(holds.IsHeldOnlyBy(PauseSource.Practice));
+            holds.Acquire(PauseSource.ApplicationFocus);
+            Assert.IsFalse(holds.IsHeldOnlyBy(PauseSource.Practice));
+            holds.Release(PauseSource.ApplicationFocus);
+            Assert.IsTrue(holds.IsHeldOnlyBy(PauseSource.Practice));
+        }
+
+        [Test]
         public void RepeatedHoldFromSameSourceNeedsOneRelease()
         {
             var holds = new PauseHolds();

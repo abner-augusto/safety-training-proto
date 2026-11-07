@@ -56,6 +56,10 @@ namespace SafetyProto.Domain.Dashboard
         public float batteryLevel;
         /// <summary>UnityEngine.BatteryStatus name: Charging, Discharging, NotCharging, Full, Unknown.</summary>
         public string batteryStatus;
+        /// <summary>"push" | "pass_through": whether the physical hands push interactive objects; empty when the scene cannot switch it.</summary>
+        public string handCollision;
+        /// <summary>The participant is in the practice area (session clock held); false once it starts closing.</summary>
+        public bool practice;
         public long timestampMs;
     }
 
@@ -175,6 +179,33 @@ namespace SafetyProto.Domain.Dashboard
         public long timestampMs;
     }
 
+    /// <summary>A guided hint; level 3 raises the stuck alert on the evaluator's tile.</summary>
+    [Serializable]
+    public struct HintDto
+    {
+        public string sessionId;
+        /// <summary>1 = the next object pulses, 2 = the step is said aloud, 3 = the evaluator is alerted.</summary>
+        public int level;
+        public string taskId;
+        public string taskName;
+        public float secondsWithoutProgress;
+        public long timestampMs;
+    }
+
+    /// <summary>PracticeStarted and PracticeEnded: the practice area before the training opened or closed.</summary>
+    [Serializable]
+    public struct PracticeDto
+    {
+        public string sessionId;
+        /// <summary>How it ended: "continue", "timeout" or "evaluator"; empty on start.</summary>
+        public string reason;
+        /// <summary>Seconds spent in the area; 0 on start.</summary>
+        public float seconds;
+        /// <summary>Stable ids of the interactions done there, in the order first done; empty on start.</summary>
+        public string[] tried;
+        public long timestampMs;
+    }
+
     /// <summary>SessionPaused, SessionResumed and PauseHoldChanged. Tokens are PauseSource names.</summary>
     [Serializable]
     public struct PauseDto
@@ -234,6 +265,24 @@ namespace SafetyProto.Domain.Dashboard
         /// <summary>Portuguese, operator-facing: why the command was refused, or an optional result
         /// summary when it was accepted ("3 EPIs devolvidos à mesa").</summary>
         public string reason;
+    }
+
+    /// <summary>One object the evaluator can make pulse with highlight_target.</summary>
+    [Serializable]
+    public struct HighlightTargetDto
+    {
+        public string id;
+        /// <summary>Portuguese label shown in the dashboard's picker.</summary>
+        public string label;
+        /// <summary>Grouping token: ppe, distractor, slot, piece, socket, anchor, lanyard, action, tool.</summary>
+        public string kind;
+    }
+
+    /// <summary>Every attention target of the loaded scene, sent on every RequestSync.</summary>
+    [Serializable]
+    public struct HighlightTargetsDto
+    {
+        public HighlightTargetDto[] targets;
     }
 
     /// <summary>Static scene geometry for the dashboard viewport, sent on every RequestSync.

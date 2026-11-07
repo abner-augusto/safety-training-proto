@@ -40,7 +40,11 @@ namespace SafetyProto.Core
         public PPEType PpeType;
         public bool IsWearing;
 
-        public PPEStateChangedEventArgs(PPEType ppeType, bool isWearing)
+        /// <summary>How the item went on when it was not a hand letting go at the slot, e.g.
+        /// <c>ppe_snap:grip_lost=tracking</c>; null otherwise.</summary>
+        public string? Context;
+
+        public PPEStateChangedEventArgs(PPEType ppeType, bool isWearing, string? context = null)
         {
             SessionId = string.Empty;
             PlayerId = string.Empty;
@@ -48,6 +52,7 @@ namespace SafetyProto.Core
             TimestampMs = 0L;
             PpeType = ppeType;
             IsWearing = isWearing;
+            Context = context;
         }
     }
 
@@ -356,6 +361,8 @@ namespace SafetyProto.Core
         public string Command;
         /// <summary>Portuguese result summary from the handler; empty when it gave none.</summary>
         public string Summary;
+        /// <summary>Id of the object the command acted on ("ppe:Safety_Helmet"); empty for commands without one.</summary>
+        public string Target;
     }
 
     [System.Serializable]
@@ -476,6 +483,9 @@ namespace SafetyProto.Core
         /// <summary>1 for a first attempt, +1 for every interrupted session of the same code it
         /// restarts. 0 when the producer predates the field.</summary>
         public int Attempt;
+        /// <summary>"push" | "pass_through": whether the hands push interactive objects in this
+        /// session; empty when the scene cannot switch it.</summary>
+        public string HandCollision;
     }
     [System.Serializable]
     public struct SessionPausedEventArgs : IEventPayload

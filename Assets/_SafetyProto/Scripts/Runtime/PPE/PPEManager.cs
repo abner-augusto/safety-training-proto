@@ -32,7 +32,9 @@ namespace SafetyProto.Runtime.PPE
             _playerTransform = Camera.main != null ? Camera.main.transform : null;
         }
 
-        public void ReportPPEStateChange(PPEType ppeType, bool isNowInsideZone, GameObject ppeObject)
+        /// <param name="context">Recorded on the event when the equip was inferred rather than a
+        /// hand letting go at the slot.</param>
+        public void ReportPPEStateChange(PPEType ppeType, bool isNowInsideZone, GameObject ppeObject, string context = null)
         {
             bool previouslyWorn = _wornPPE.ContainsKey(ppeType);
             _wornPPE.TryGetValue(ppeType, out GameObject currentWornObject);
@@ -42,7 +44,7 @@ namespace SafetyProto.Runtime.PPE
                 if (!previouslyWorn || currentWornObject != ppeObject)
                 {
                     _wornPPE[ppeType] = ppeObject;
-                    PPEEvents.RaisePpeStateChanged(new PPEStateChangedEventArgs(ppeType, true));
+                    PPEEvents.RaisePpeStateChanged(new PPEStateChangedEventArgs(ppeType, true, context));
                     SafetyLog.Info($"PPEManager: {ppeType} is now WORN (Item: {ppeObject.name}).", this);
                 }
             }

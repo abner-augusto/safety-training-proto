@@ -1,4 +1,3 @@
-using Oculus.Interaction;
 using SafetyProto.Runtime.PPE;
 using SafetyProto.Runtime.Scaffolding;
 using UnityEngine;
@@ -58,40 +57,24 @@ namespace SafetyProto.Runtime.Feedback
             var result = new LooseObjectRecallResult();
             foreach (var home in Object.FindObjectsByType<ReturnObjectHome>())
             {
-                if (home == null || home.IsReturning) continue;
+                if (home == null || home.IsReturning || home.IsSecured) continue;
 
-                if (!IsLoose(home, out var ppe, out var installer)) continue;
-
-                // Read the Grabbable itself: the grab flags kept from pointer events can be stale.
-                var grabbable = home.GetComponent<Grabbable>();
-                if (grabbable != null && grabbable.SelectingPointsCount > 0)
+                if (home.IsHeld)
                 {
                     result.SkippedHeld++;
                     continue;
                 }
                 if (IsAtHome(home)) continue;
 
-                // PPESnapItem disables the component on pickup and only re-enables it on release
-                // paths that may not have run; a disabled ReturnObjectHome never animates.
-                home.enabled = true;
                 home.BeginReturnNow();
 
-                if (installer != null) result.ScaffoldPieces++;
+                var ppe = home.GetComponent<PPEItem>();
+                if (home.GetComponent<ScaffoldPieceInstaller>() != null) result.ScaffoldPieces++;
                 else if (ppe != null && ppe.isDistractor) result.Distractors++;
                 else if (ppe != null) result.Ppe++;
                 else result.Other++;
             }
             return result;
-        }
-
-        private static bool IsLoose(ReturnObjectHome home, out PPEItem ppe, out ScaffoldPieceInstaller installer)
-        {
-            ppe = home.GetComponent<PPEItem>();
-            installer = home.GetComponent<ScaffoldPieceInstaller>();
-            var snap = home.GetComponent<PPESnapItem>();
-            if (snap != null && snap.IsSnapped) return false;
-            if (installer != null && installer.IsInstalled) return false;
-            return true;
         }
 
         private static bool IsAtHome(ReturnObjectHome home)

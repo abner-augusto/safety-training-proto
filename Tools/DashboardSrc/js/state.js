@@ -1,3 +1,5 @@
+    import { createProgress } from './stuck-math.js';
+
     /* ================================================================
      * STATE
      * ============================================================== */
@@ -24,7 +26,11 @@
       connected: false,
       station: null,          // last StationStatus from the headset (null on apps that predate it)
       pauseSources: [],       // PauseSource tokens holding the session right now
+      practice: false,        // the participant is in the practice area (PracticeStarted/Ended, StationStatus.practice)
       lastCriticalAt: 0,      // Date.now() of the last CriticalSafetyFailure
+      progress: createProgress(),   // what the stuck alert reads (stuck-math.js)
+      interventions: [],      // evaluator commands sent in this session (interventions.js)
+      highlightTargets: [],   // what highlight_target can point at (HighlightTargets from the headset)
     };
 
     /* ── Live session timer (driven by session lifecycle events) ── */

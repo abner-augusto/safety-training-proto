@@ -133,6 +133,9 @@ namespace SafetyProto.Runtime.PPE
         private bool _nearAnchor;
         private Coroutine _retractCoroutine;
         private AnchorPoint _lockedAnchor;
+        private AnchorPoint _cuedAnchor;
+        private float _grabbedAt;
+        private bool _heldReported;
 
         private static readonly int TriggerOpenClose  = Animator.StringToHash("Open_Close");
         private static readonly int TriggerCloseOpen  = Animator.StringToHash("Close_Open");
@@ -187,6 +190,7 @@ namespace SafetyProto.Runtime.PPE
 
         private void OnDestroy()
         {
+            SetAnchorCue(null);
             if (grabbable != null)
                 grabbable.WhenPointerEventRaised -= OnPointerEvent;
             if (handGrabInteractable != null)
@@ -251,6 +255,26 @@ namespace SafetyProto.Runtime.PPE
                 OnGrabbed();
             else if (evt.Type == PointerEventType.Unselect || evt.Type == PointerEventType.Cancel)
                 OnReleased();
+            else
+                return;
+            ReportHeld(grabbable != null ? grabbable.SelectingPointsCount > 0 : _isGrabbed);
+        }
+
+        /// <summary>Publishes grab and release on held-state edges only, so a second hand or an SDK
+        /// hand-off does not count as another grab, matching <see cref="ReturnObjectHome"/>.</summary>
+        private void ReportHeld(bool held)
+        {
+            if (held == _heldReported) return;
+            _heldReported = held;
+            if (held)
+            {
+                _grabbedAt = Time.time;
+                InteractionEvents.RaiseObjectGrabbed(name);
+            }
+            else
+            {
+                InteractionEvents.RaiseObjectReleased(name, Time.time - _grabbedAt, IsLocked);
+            }
         }
 
         private void OnGrabStateChanged(InteractableStateChangeArgs args)
@@ -262,6 +286,7 @@ namespace SafetyProto.Runtime.PPE
                 OnGrabbed();
             else if (wasGrabbed && !_isGrabbed)
                 OnReleased();
+            ReportHeld(_isGrabbed);
         }
 
         private void OnGrabbed()
@@ -286,22 +311,17 @@ namespace SafetyProto.Runtime.PPE
         {
             _isGrabbed = false;
 
-            if (state != LanyardState.Pulling) return;
-
-            AnchorPoint anchor = FindNearestAnchor();
-
-            if (anchor != null)
+            if (state == LanyardState.Pulling)
             {
-                EnterLocked(anchor);
-            }
-            else
-            {
-                EnterRetracting();
+                AnchorPoint anchor = FindNearestAnchor();
+                if (anchor != null) EnterLocked(anchor);
+                else EnterRetracting();
             }
         }
 
         private void EnterIdle()
         {
+            SetAnchorCue(null);
             state = LanyardState.Idle;
 
             transform.SetParent(null);
@@ -345,7 +365,9 @@ namespace SafetyProto.Runtime.PPE
             float radius = _nearAnchor
                 ? anchorSearchRadius * anchorReleaseHysteresis
                 : anchorSearchRadius;
-            bool isNear = FindNearestAnchor(radius) != null;
+            var nearest = FindNearestAnchor(radius);
+            bool isNear = nearest != null;
+            SetAnchorCue(nearest);
 
             if (isNear && !_nearAnchor)
                 FireTrigger(TriggerCloseOpen);
@@ -353,6 +375,20 @@ namespace SafetyProto.Runtime.PPE
                 FireTrigger(TriggerOpenClose);
 
             _nearAnchor = isNear;
+        }
+
+        /// <summary>
+        /// Pulses the anchor the carabiner would lock to if released now, like the scaffold
+        /// ghost turning green. Any anchor in reach pulses, correct or not, so the cue says
+        /// "you can connect here" without giving the answer away.
+        /// </summary>
+        private void SetAnchorCue(AnchorPoint anchor)
+        {
+            if (anchor == _cuedAnchor) return;
+            var service = AttentionService.Instance;
+            if (_cuedAnchor != null) service?.Release(_cuedAnchor.gameObject);
+            _cuedAnchor = anchor;
+            if (_cuedAnchor != null) service?.Hold(_cuedAnchor.gameObject);
         }
 
         private void FireTrigger(int hash)
@@ -363,6 +399,7 @@ namespace SafetyProto.Runtime.PPE
 
         private void EnterLocked(AnchorPoint anchor)
         {
+            SetAnchorCue(null);
             state = LanyardState.Locked;
             _lockedAnchor = anchor;
 
@@ -412,6 +449,7 @@ namespace SafetyProto.Runtime.PPE
 
         private void EnterRetracting()
         {
+            SetAnchorCue(null);
             state = LanyardState.Retracting;
 
             _retractCoroutine = StartCoroutine(RetractSequence());
@@ -519,7 +557,8 @@ namespace SafetyProto.Runtime.PPE
             string actionId = string.IsNullOrWhiteSpace(connectActionId) ? string.Empty : connectActionId.Trim();
             if (string.IsNullOrEmpty(actionId))
             {
-                SafetyLog.Warning($"[RetractableLanyardController] Nenhum ActionId configurado em {name}. Conexão sem evento de tarefa.", this);
+                if (!SafetyProto.Runtime.Practice.PracticeProp.IsPractice(this))
+                    SafetyLog.Warning($"[RetractableLanyardController] Nenhum ActionId configurado em {name}. Conexão sem evento de tarefa.", this);
                 return;
             }
 
@@ -556,6 +595,9 @@ namespace SafetyProto.Runtime.PPE
         /// Whether the lanyard is currently locked to an anchor.
         /// </summary>
         public bool IsLocked => state == LanyardState.Locked;
+
+        /// <summary>The action published when the lanyard locks onto an anchor.</summary>
+        public string ConnectActionId => string.IsNullOrWhiteSpace(connectActionId) ? string.Empty : connectActionId.Trim();
 
         /// <summary>
         /// Whether the lanyard is locked to the CORRECT anchor (olhal de ancoragem).

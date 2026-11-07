@@ -127,6 +127,19 @@ namespace SafetyProto.Runtime.PPE
                 Destroy(_highlightMaterial);
         }
 
+        /// <summary>The PPE types this slot takes, as authored in its action mappings; empty when it takes any.</summary>
+        public System.Collections.Generic.IReadOnlyList<PPEType> AcceptedTypes
+        {
+            get
+            {
+                var types = new System.Collections.Generic.List<PPEType>();
+                if (ppeActionMappings != null)
+                    foreach (var mapping in ppeActionMappings)
+                        if (!types.Contains(mapping.ppeType)) types.Add(mapping.ppeType);
+                return types;
+            }
+        }
+
         public bool Accepts(PPEType type)
         {
             if (ppeActionMappings != null && ppeActionMappings.Length > 0)
@@ -180,7 +193,25 @@ namespace SafetyProto.Runtime.PPE
             return false;
         }
 
-        public bool TryAcceptSnap(PPESnapItem item)
+        /// <summary>The action context of an item a hand let go of at the slot.</summary>
+        public const string HandReleaseContext = "ppe_snap";
+
+        /// <summary>
+        /// Whether <see cref="TryAcceptSnap"/> would take the item, without its side effects: a
+        /// decoy or an out-of-order item is refused here with no charge, no note and no popup.
+        /// </summary>
+        public bool CanAccept(PPESnapItem item)
+        {
+            if (item == null) return false;
+            var ppeItem = item.GetComponent<PPEItem>();
+            if (ppeItem != null && ppeItem.isDistractor) return false;
+            if (!Accepts(item.PpeType) || !HasAvailableSpace || ContainsItem(item)) return false;
+            return _taskManager == null || !_taskManager.IsPpeAheadOfCurrentStep(item.PpeType);
+        }
+
+        /// <param name="context">Recorded on the action attempt, so the log tells a hand letting go
+        /// from a grip the headset lost at the slot.</param>
+        public bool TryAcceptSnap(PPESnapItem item, string context = HandReleaseContext)
         {
             if (item == null) return false;
 
@@ -208,7 +239,8 @@ namespace SafetyProto.Runtime.PPE
                 item.gameObject.SetActive(false);
 
             // SetActive(false) fires OnDisable, which unregisters the item; mark worn only after hiding.
-            _ppeManager?.ReportPPEStateChange(item.PpeType, true, item.gameObject);
+            _ppeManager?.ReportPPEStateChange(item.PpeType, true, item.gameObject,
+                context == HandReleaseContext ? null : context);
 
             SafetyLog.Info($"PPESnapSlot [{name}]: accepted {item.PpeType} ({_snappedItems.Count}/{_slotCapacity})", this);
 
@@ -223,7 +255,7 @@ namespace SafetyProto.Runtime.PPE
                         ActionEvents.PublishActionAttempt(
                             actionId,
                             sourceId: name,
-                            context: "ppe_snap",
+                            context: context,
                             position: transform.position);
                         SafetyLog.Info($"PPESnapSlot [{name}]: emitted ActionAttempt '{actionId}' for {item.PpeType}", this);
                         break;

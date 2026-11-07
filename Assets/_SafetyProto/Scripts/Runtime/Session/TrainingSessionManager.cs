@@ -101,7 +101,10 @@ namespace SafetyProto.Runtime.Session
                 TotalTasks = totalTasks,
                 ParticipantSource = ParticipantIdentity.CurrentSource,
                 PreviousSessionId = _previousSessionId,
-                Attempt = _attempt
+                Attempt = _attempt,
+                HandCollision = SafetyProto.Runtime.Interaction.HandObjectCollision.Instance != null
+                    ? SafetyProto.Runtime.Interaction.HandObjectCollision.Token(SafetyProto.Runtime.Interaction.HandObjectCollision.Instance.Current)
+                    : string.Empty
             });
             SafetyLog.Info($"TrainingSessionManager: Session Started event raised (participante {playerId}).", this);
         }

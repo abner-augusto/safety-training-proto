@@ -119,5 +119,75 @@ namespace SafetyProto.Tests.Editor
             _bus.Publish(new SessionEndedEventArgs { SessionId = "S1", TimestampMs = 1L });
             Assert.AreEqual(0, _host.Count("SessionEnded"));
         }
+
+        [Test]
+        public void HintShown_ReachesTheDashboardWithItsLevelAndTask()
+        {
+            _bus.Publish(new HintShownEventArgs
+            {
+                SessionId = "S1", Level = 3, TaskId = "install_guardrail", TaskName = "Instalar Guarda-corpo",
+                SecondsWithoutProgress = 60f, TimestampMs = 9L
+            });
+
+            var dto = _host.Last<HintDto>("HintShown");
+            Assert.AreEqual(3, dto.level);
+            Assert.AreEqual("install_guardrail", dto.taskId);
+            Assert.AreEqual("Instalar Guarda-corpo", dto.taskName);
+            Assert.AreEqual(60f, dto.secondsWithoutProgress);
+        }
+
+        [Test]
+        public void PracticeStarted_ReachesTheDashboardWithoutAnOutcome()
+        {
+            _bus.Publish(new PracticeEventArgs
+            {
+                SessionId = "S1", Phase = PracticePhase.Started, Reason = "", TimestampMs = 11L
+            });
+
+            Assert.AreEqual(0, _host.Count("PracticeEnded"));
+            var dto = _host.Last<PracticeDto>("PracticeStarted");
+            Assert.AreEqual("S1", dto.sessionId);
+            Assert.AreEqual(11L, dto.timestampMs);
+            Assert.AreEqual(string.Empty, dto.reason);
+            Assert.AreEqual(0f, dto.seconds);
+            Assert.IsNotNull(dto.tried, "the wire carries an empty list, not null, when nothing was tried yet");
+            Assert.AreEqual(0, dto.tried.Length);
+        }
+
+        [Test]
+        public void PracticeEnded_ReachesTheDashboardWithHowItEndedAndWhatWasTried()
+        {
+            _bus.Publish(new PracticeEventArgs
+            {
+                SessionId = "S1", Phase = PracticePhase.Ended, Reason = "evaluator", Seconds = 42.5f,
+                Tried = new[] { "equip_head", "two_hand_bar" }, TimestampMs = 12L
+            });
+
+            Assert.AreEqual(0, _host.Count("PracticeStarted"));
+            var dto = _host.Last<PracticeDto>("PracticeEnded");
+            Assert.AreEqual("evaluator", dto.reason);
+            Assert.AreEqual(42.5f, dto.seconds);
+            CollectionAssert.AreEqual(new[] { "equip_head", "two_hand_bar" }, dto.tried);
+            Assert.AreEqual(12L, dto.timestampMs);
+        }
+
+        [Test]
+        public void PracticeEnded_WithoutTriedList_BroadcastsAnEmptyList()
+        {
+            _bus.Publish(new PracticeEventArgs
+            {
+                SessionId = "S1", Phase = PracticePhase.Ended, Reason = "timeout", Seconds = 150f, TimestampMs = 13L
+            });
+
+            Assert.AreEqual(0, _host.Last<PracticeDto>("PracticeEnded").tried.Length);
+        }
+
+        [Test]
+        public void Unsubscribe_StopsPracticeBroadcasts()
+        {
+            _relay.Unsubscribe();
+            _bus.Publish(new PracticeEventArgs { SessionId = "S1", Phase = PracticePhase.Started, TimestampMs = 1L });
+            Assert.AreEqual(0, _host.Count("PracticeStarted"));
+        }
     }
 }

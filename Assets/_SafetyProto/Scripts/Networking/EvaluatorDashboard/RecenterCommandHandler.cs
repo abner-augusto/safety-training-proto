@@ -72,7 +72,12 @@ namespace SafetyProto.Runtime
                 return false;
             }
 
-            var anchor = _anchorProvider?.CurrentAnchor;
+            // In the practice area the participant stands outside every phase; recentering there
+            // keeps them in it instead of dropping them at the training's start with the clock held.
+            var practice = SafetyProto.Runtime.Practice.PracticeArea.Active;
+            var anchor = practice != null && !practice.IsClosing
+                ? practice.PracticeAnchor
+                : _anchorProvider?.CurrentAnchor;
             if (anchor == null)
             {
                 SafetyLog.Warning("[RecenterCommandHandler] CurrentAnchor nulo — recentralização recusada.", this);

@@ -322,7 +322,8 @@ namespace SafetyProto.Networking.Dashboard
                 EventBus.Instance.Publish(new EvaluatorCommandEventArgs
                 {
                     Command = command.command,
-                    Summary = reason ?? string.Empty
+                    Summary = reason ?? string.Empty,
+                    Target = CommandTarget(command)
                 });
             }
 
@@ -335,6 +336,16 @@ namespace SafetyProto.Networking.Dashboard
             };
             _wsServer.SendToClient(client, "CommandAck", ack);
             BroadcastStationStatus();
+        }
+
+        /// <summary>What the command acted on, as a stable token for the log: the attention target
+        /// of highlight_target, the hand mode of set_hand_collision.</summary>
+        private static string CommandTarget(DashboardCommandEnvelope command)
+        {
+            var args = command.args;
+            if (args == null) return string.Empty;
+            if (!string.IsNullOrEmpty(args.targetId)) return args.targetId;
+            return command.command == "set_hand_collision" ? args.mode ?? string.Empty : string.Empty;
         }
 
         private void BroadcastStationStatus()
@@ -374,8 +385,20 @@ namespace SafetyProto.Networking.Dashboard
                 appVersion = Application.version,
                 batteryLevel = SystemInfo.batteryLevel,
                 batteryStatus = SystemInfo.batteryStatus.ToString(),
+                handCollision = SafetyProto.Runtime.Interaction.HandObjectCollision.Instance != null
+                    ? SafetyProto.Runtime.Interaction.HandObjectCollision.Token(SafetyProto.Runtime.Interaction.HandObjectCollision.Instance.Current)
+                    : string.Empty,
+                practice = IsPracticing(),
                 timestampMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
             };
+        }
+
+        // The area stays Active through its fade back, but PracticeEnded has already reached the
+        // dashboard by then; reporting it as open would bring the end button back for a moment.
+        private static bool IsPracticing()
+        {
+            var area = SafetyProto.Runtime.Practice.PracticeArea.Active;
+            return area != null && !area.IsClosing;
         }
 
         private void HandleRequestSync(EvaluatorWebSocketServer.ClientConnection client)
@@ -385,6 +408,10 @@ namespace SafetyProto.Networking.Dashboard
             var sceneLayout = FindAnyObjectByType<DashboardSceneLayout>();
             if (sceneLayout != null)
                 _wsServer.SendToClient(client, "SceneLayout", sceneLayout.Build());
+
+            if (SafetyProto.Runtime.Feedback.AttentionService.Instance != null)
+                _wsServer.SendToClient(client, "HighlightTargets",
+                    DashboardDtoMapper.ToHighlightTargets(SafetyProto.Runtime.Feedback.AttentionService.Instance.Targets));
 
             var sessionId = EventContext.CurrentSessionId;
             if (string.IsNullOrEmpty(sessionId)) return;
