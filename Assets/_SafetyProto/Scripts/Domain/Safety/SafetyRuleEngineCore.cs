@@ -20,7 +20,7 @@ namespace SafetyProto.Domain.Safety
 
         private SessionMode CurrentMode => _modeSource();
 
-        private readonly Dictionary<PPEType, bool> _ppeStates = new Dictionary<PPEType, bool>();
+        private readonly Dictionary<PPEType, bool> _wearingFromEvents = new Dictionary<PPEType, bool>();
         private ITaskGroup? _activeGroup;
         private ISafetyTask? _activeSequentialTask;
         private readonly List<ISafetyTask> _activeFreeOrderTasks = new List<ISafetyTask>();
@@ -155,7 +155,7 @@ namespace SafetyProto.Domain.Safety
 
         private void HandlePpeStateChanged(PPEStateChangedEventArgs args)
         {
-            _ppeStates[args.PpeType] = args.IsWearing;
+            _wearingFromEvents[args.PpeType] = args.IsWearing;
 
             if (!args.IsWearing || _activeGroup == null) return;
 
@@ -314,11 +314,11 @@ namespace SafetyProto.Domain.Safety
         private enum PrerequisitePolicy
         {
             Enforced,
-            Bypassed
+            AllowUnsafeActions
         }
 
         private static PrerequisitePolicy PrerequisitePolicyFor(SessionMode mode) =>
-            mode == SessionMode.Guided ? PrerequisitePolicy.Enforced : PrerequisitePolicy.Bypassed;
+            mode == SessionMode.Guided ? PrerequisitePolicy.Enforced : PrerequisitePolicy.AllowUnsafeActions;
 
         /// <summary>
         /// True when <paramref name="task"/> must be refused because its group names another
@@ -335,7 +335,7 @@ namespace SafetyProto.Domain.Safety
         /// </remarks>
         private bool IsBlockedByPrerequisite(ISafetyTask task, ITaskGroup group)
         {
-            if (PrerequisitePolicyFor(CurrentMode) == PrerequisitePolicy.Bypassed) return false;
+            if (PrerequisitePolicyFor(CurrentMode) == PrerequisitePolicy.AllowUnsafeActions) return false;
 
             var prerequisiteId = group.prerequisiteTaskId;
             if (string.IsNullOrWhiteSpace(prerequisiteId)) return false;
@@ -459,10 +459,10 @@ namespace SafetyProto.Domain.Safety
             if (requiredPpe == null || requiredPpe.Count == 0)
                 return true;
 
-            // Read the event-driven cache: PPEManager is updated by physics callbacks before EventBus dispatches PpeStateChanged.
+            // Physics updates PPEManager before the event bus dispatches PpeStateChanged.
             foreach (var ppe in requiredPpe)
             {
-                if (!_ppeStates.TryGetValue(ppe, out var isWearing) || !isWearing)
+                if (!_wearingFromEvents.TryGetValue(ppe, out var isWearing) || !isWearing)
                     return false;
             }
 

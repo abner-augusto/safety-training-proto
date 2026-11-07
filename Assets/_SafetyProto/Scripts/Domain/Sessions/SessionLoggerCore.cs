@@ -237,9 +237,7 @@ namespace SafetyProto.Domain.Sessions
         private int _attempt;
         private bool _completionWriteStarted;
 
-        // Pause sources are tracked across sessions: a hold taken before SessionStarted (the
-        // pre-session popup still fading out) is still active when the session begins.
-        private PauseSource[] _activeHolds = Array.Empty<PauseSource>();
+        private PauseSource[] _holdsAcrossSessions = Array.Empty<PauseSource>();
         private long _pauseStartMs;
 
         public SessionLoggerCore(IEventBus eventBus, string outputDirectory, Func<SessionLog, string> serialize, Func<SessionMode> modeSource, IHarnessLogger? logger = null, Func<string, string>? actionNameResolver = null, Func<string>? outputDirectoryResolver = null, string? appVersion = null, string? commit = null, Func<string, PerfSummary?>? perfSource = null)
@@ -273,12 +271,12 @@ namespace SafetyProto.Domain.Sessions
                     _sessionId, _playerId, _scenarioId, args.TimestampMs,
                     new LogData { source = _participantSource, previousSessionId = _previousSessionId, attempt = _attempt,
                                   handCollision = args.HandCollision ?? string.Empty });
-                if (_activeHolds.Length > 0)
+                if (_holdsAcrossSessions.Length > 0)
                 {
                     _pauseStartMs = ResolveTimestamp(args.TimestampMs);
-                    LogEvent("SessionPaused", $"Sessão iniciada em pausa: {PauseSourceLabels.Describe(_activeHolds)}",
+                    LogEvent("SessionPaused", $"Sessão iniciada em pausa: {PauseSourceLabels.Describe(_holdsAcrossSessions)}",
                         _sessionId, _playerId, _scenarioId, args.TimestampMs,
-                        new LogData { pauseSource = _activeHolds[0].ToString(), pauseSources = PauseSourceLabels.Tokens(_activeHolds), context = "pre_session" });
+                        new LogData { pauseSource = _holdsAcrossSessions[0].ToString(), pauseSources = PauseSourceLabels.Tokens(_holdsAcrossSessions), context = "pre_session" });
                 }
             };
             _onSessionPaused = args =>
@@ -321,7 +319,7 @@ namespace SafetyProto.Domain.Sessions
                 new LogData { command = args.Command ?? string.Empty, message = args.Summary ?? string.Empty, target = args.Target ?? string.Empty });
             _onPauseHoldChanged = args =>
             {
-                _activeHolds = args.ActiveSources ?? Array.Empty<PauseSource>();
+                _holdsAcrossSessions = args.ActiveSources ?? Array.Empty<PauseSource>();
                 LogEvent("PauseHoldChanged",
                     $"{(args.Held ? "Pausa retida" : "Pausa liberada")}: {PauseSourceLabels.Describe(args.Source)}",
                     args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
