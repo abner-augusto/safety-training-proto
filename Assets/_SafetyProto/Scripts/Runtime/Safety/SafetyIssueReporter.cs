@@ -213,10 +213,8 @@ namespace SafetyProto.Runtime.Safety
 
                 if (!chosenOption.Correct && ResolveTask() is { } task)
                 {
-                    // A task finished through another path will not complete again, so nothing
-                    // would ever release a held charge: settle it now.
-                    if (runtimeTask != null && IsFinished(runtimeTask.State)) ChargeMisclassification(task);
-                    else _misclassification.Hold(task);
+                    if (_misclassification.Hold(task, runtimeTask != null && IsFinished(runtimeTask.State)) is { } due)
+                        ChargeMisclassification(due);
                 }
             }
 

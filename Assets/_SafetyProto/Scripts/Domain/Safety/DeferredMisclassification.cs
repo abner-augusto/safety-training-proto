@@ -22,6 +22,14 @@ namespace SafetyProto.Domain.Safety
         /// <summary>Remembers a wrong choice for <paramref name="task"/>, replacing any earlier one.</summary>
         public void Hold(ISafetyTask task) => _task = task;
 
+        /// <summary>Returns the charge immediately for a finished task; otherwise holds it until completion.</summary>
+        public ISafetyTask? Hold(ISafetyTask task, bool alreadyFinished)
+        {
+            if (alreadyFinished) return task;
+            Hold(task);
+            return null;
+        }
+
         /// <summary>
         /// Returns the task to charge when <paramref name="completed"/> is the held one, and
         /// clears the hold so the charge happens once. Null for any other task.
