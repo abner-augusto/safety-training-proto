@@ -217,12 +217,14 @@ try {
     for ($i = 0; $i -lt $MaxPollAttempts; $i++) {
         Start-Sleep -Seconds $PollIntervalSeconds
         $poll = Invoke-PipelineCommand -Arguments @("build", "status") -IgnoreFailure
-        if (-not $poll.status) {
+        # Strict mode throws on a missing property, and a transient failure reply has no status.
+        $pollStatus = if ($poll -and $poll.PSObject.Properties.Name -contains 'status') { $poll.status } else { $null }
+        if (-not $pollStatus) {
             Write-Host "  (transient poll failure, retrying)"
             continue
         }
-        if ($poll.status -in @("queued", "building")) {
-            Write-Host "  $($poll.status)... ($($i + 1)/$MaxPollAttempts)"
+        if ($pollStatus -in @("queued", "building")) {
+            Write-Host "  $pollStatus... ($($i + 1)/$MaxPollAttempts)"
             continue
         }
         $finalStatus = $poll
