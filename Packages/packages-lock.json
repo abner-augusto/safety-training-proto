@@ -1,11 +1,11 @@
 {
   "dependencies": {
     "com.meta.xr.mrutilitykit": {
-      "version": "205.0.0",
+      "version": "207.0.1",
       "depth": 1,
       "source": "registry",
       "dependencies": {
-        "com.meta.xr.sdk.core": "205.0.0",
+        "com.meta.xr.sdk.core": "207.0.1",
         "com.unity.textmeshpro": "3.0.6",
         "com.unity.ai.navigation": "1.1.4",
         "com.unity.nuget.newtonsoft-json": "3.0.2"
@@ -13,18 +13,18 @@
       "url": "https://packages.unity.com"
     },
     "com.meta.xr.sdk.all": {
-      "version": "205.0.0",
+      "version": "207.0.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.meta.xr.sdk.core": "205.0.0",
+        "com.meta.xr.sdk.core": "207.0.1",
         "com.meta.xr.sdk.audio": "85.0.0",
         "com.meta.xr.sdk.voice": "85.0.1",
-        "com.meta.xr.sdk.haptics": "205.0.0",
-        "com.meta.xr.mrutilitykit": "205.0.0",
-        "com.meta.xr.sdk.platform": "205.0.0",
-        "com.meta.xr.sdk.interaction": "205.0.0",
-        "com.meta.xr.sdk.interaction.ovr": "205.0.0"
+        "com.meta.xr.sdk.haptics": "207.0.1",
+        "com.meta.xr.mrutilitykit": "207.0.1",
+        "com.meta.xr.sdk.platform": "207.0.0",
+        "com.meta.xr.sdk.interaction": "207.0.1",
+        "com.meta.xr.sdk.interaction.ovr": "207.0.1"
       },
       "url": "https://packages.unity.com"
     },
@@ -36,7 +36,7 @@
       "url": "https://packages.unity.com"
     },
     "com.meta.xr.sdk.core": {
-      "version": "205.0.0",
+      "version": "207.0.1",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -51,16 +51,16 @@
       "url": "https://packages.unity.com"
     },
     "com.meta.xr.sdk.haptics": {
-      "version": "205.0.0",
+      "version": "207.0.1",
       "depth": 1,
       "source": "registry",
       "dependencies": {
-        "com.meta.xr.sdk.core": "205.0.0"
+        "com.meta.xr.sdk.core": "207.0.1"
       },
       "url": "https://packages.unity.com"
     },
     "com.meta.xr.sdk.interaction": {
-      "version": "205.0.0",
+      "version": "207.0.1",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -70,17 +70,17 @@
       "url": "https://packages.unity.com"
     },
     "com.meta.xr.sdk.interaction.ovr": {
-      "version": "205.0.0",
+      "version": "207.0.1",
       "depth": 1,
       "source": "registry",
       "dependencies": {
-        "com.meta.xr.sdk.core": "205.0.0",
-        "com.meta.xr.sdk.interaction": "205.0.0"
+        "com.meta.xr.sdk.core": "207.0.1",
+        "com.meta.xr.sdk.interaction": "207.0.1"
       },
       "url": "https://packages.unity.com"
     },
     "com.meta.xr.sdk.platform": {
-      "version": "205.0.0",
+      "version": "207.0.0",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -104,7 +104,7 @@
       "dependencies": {}
     },
     "com.unity.ai.navigation": {
-      "version": "2.0.14",
+      "version": "2.0.16",
       "depth": 2,
       "source": "registry",
       "dependencies": {
@@ -122,14 +122,10 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.burst": {
-      "version": "1.8.30",
+      "version": "2.0.0",
       "depth": 2,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.mathematics": "1.2.1",
-        "com.unity.modules.jsonserialize": "1.0.0"
-      },
-      "url": "https://packages.unity.com"
+      "source": "builtin",
+      "dependencies": {}
     },
     "com.unity.collab-proxy": {
       "version": "2.13.6",
@@ -139,7 +135,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.collections": {
-      "version": "6.5.0",
+      "version": "6.6.0",
       "depth": 1,
       "source": "builtin",
       "dependencies": {
@@ -150,11 +146,10 @@
       }
     },
     "com.unity.editorcoroutines": {
-      "version": "1.1.0",
+      "version": "6.6.0",
       "depth": 1,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://packages.unity.com"
+      "source": "builtin",
+      "dependencies": {}
     },
     "com.unity.ext.nunit": {
       "version": "2.1.0",
@@ -168,20 +163,18 @@
       "source": "builtin",
       "dependencies": {
         "com.unity.ide.visualstudio": "2.0.26",
-        "com.unity.ide.rider": "3.0.39",
-        "com.unity.editorcoroutines": "1.1.0",
-        "com.unity.performance.profile-analyzer": "1.4.0",
-        "com.unity.test-framework": "1.7.0",
+        "com.unity.ide.rider": "3.1.0",
+        "com.unity.editorcoroutines": "6.6.0",
+        "com.unity.performance.profile-analyzer": "1.4.2",
+        "com.unity.test-framework": "1.8.0",
         "com.unity.testtools.codecoverage": "1.3.0"
       }
     },
     "com.unity.ide.rider": {
-      "version": "3.0.39",
+      "version": "3.1.0",
       "depth": 1,
       "source": "registry",
-      "dependencies": {
-        "com.unity.ext.nunit": "1.0.6"
-      },
+      "dependencies": {},
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.visualstudio": {
@@ -194,7 +187,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.inputsystem": {
-      "version": "1.20.0",
+      "version": "1.20.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -209,7 +202,7 @@
       "dependencies": {}
     },
     "com.unity.multiplayer.center": {
-      "version": "1.0.1",
+      "version": "2.1.0",
       "depth": 0,
       "source": "builtin",
       "dependencies": {
@@ -231,14 +224,14 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.performance.profile-analyzer": {
-      "version": "1.4.0",
+      "version": "1.4.2",
       "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
     "com.unity.pipeline": {
-      "version": "0.8.0-exp.1",
+      "version": "0.10.0-exp.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -270,7 +263,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.test-framework": {
-      "version": "1.7.0",
+      "version": "1.8.0",
       "depth": 1,
       "source": "builtin",
       "dependencies": {
@@ -280,14 +273,13 @@
       }
     },
     "com.unity.test-framework.performance": {
-      "version": "3.5.0",
+      "version": "6.6.0",
       "depth": 2,
-      "source": "registry",
+      "source": "builtin",
       "dependencies": {
         "com.unity.test-framework": "1.1.33",
         "com.unity.modules.jsonserialize": "1.0.0"
-      },
-      "url": "https://packages.unity.com"
+      }
     },
     "com.unity.testtools.codecoverage": {
       "version": "1.3.0",
@@ -308,19 +300,18 @@
       }
     },
     "com.unity.timeline": {
-      "version": "1.8.13",
+      "version": "6.6.0",
       "depth": 0,
-      "source": "registry",
+      "source": "builtin",
       "dependencies": {
-        "com.unity.modules.audio": "1.0.0",
         "com.unity.modules.director": "1.0.0",
         "com.unity.modules.animation": "1.0.0",
+        "com.unity.modules.audio": "1.0.0",
         "com.unity.modules.particlesystem": "1.0.0"
-      },
-      "url": "https://packages.unity.com"
+      }
     },
     "com.unity.ugui": {
-      "version": "2.5.0",
+      "version": "2.6.0",
       "depth": 0,
       "source": "builtin",
       "dependencies": {
@@ -351,11 +342,12 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.xr.hands": {
-      "version": "1.8.1",
+      "version": "1.9.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {
         "com.unity.modules.xr": "1.0.0",
+        "com.unity.collections": "2.2.0",
         "com.unity.inputsystem": "1.3.0",
         "com.unity.mathematics": "1.2.6",
         "com.unity.xr.core-utils": "2.2.0",
@@ -373,7 +365,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.xr.management": {
-      "version": "4.6.1",
+      "version": "4.7.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -385,10 +377,11 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.xr.openxr": {
-      "version": "1.17.1",
+      "version": "1.18.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {
+        "com.unity.modules.xr": "1.0.0",
         "com.unity.inputsystem": "1.6.3",
         "com.unity.xr.core-utils": "2.3.0",
         "com.unity.xr.management": "4.4.0",
@@ -540,6 +533,12 @@
         "com.unity.modules.physics": "1.0.0",
         "com.unity.modules.terrain": "1.0.0"
       }
+    },
+    "com.unity.modules.tetgen": {
+      "version": "1.0.0",
+      "depth": 0,
+      "source": "builtin",
+      "dependencies": {}
     },
     "com.unity.modules.tilemap": {
       "version": "1.0.0",
