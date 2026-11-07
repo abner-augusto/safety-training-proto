@@ -246,16 +246,9 @@ namespace SafetyProto.Runtime
             _advanceConsumed = true;
             SetButtonsActive(false);
 
-            RecordOrderDeviations(targetGroupId);
+            ConfirmGroup(targetGroupId, decision == PhaseAdvanceAction.CloseThenAdvance);
 
-            if (decision == PhaseAdvanceAction.CloseThenAdvance)
-            {
-                var notPerformed = taskManager.CloseCurrentGroup();
-                SafetyLog.Info(notPerformed.Count == 0
-                    ? "[PhaseController] Grupo de EPIs fechado."
-                    : $"[PhaseController] Grupo de EPIs fechado com {notPerformed.Count} EPI(s) não equipado(s).", this);
-            }
-            else
+            if (decision != PhaseAdvanceAction.CloseThenAdvance)
             {
                 SafetyLog.Info("[PhaseController] Grupo de EPIs já concluído — avanço apenas confirma e teleporta.", this);
             }
@@ -284,6 +277,17 @@ namespace SafetyProto.Runtime
         /// <summary>True once the group has closed, on its own or through a gate.</summary>
         private bool IsGroupAlreadyClosed(string groupId) => taskManager.IsGroupCompleted(groupId);
 
+        private void ConfirmGroup(string groupId, bool closeGroup)
+        {
+            RecordOrderDeviations(groupId);
+            if (!closeGroup) return;
+
+            var notPerformed = taskManager.CloseCurrentGroup();
+            SafetyLog.Info(notPerformed.Count == 0
+                ? "[PhaseController] Grupo de EPIs fechado."
+                : $"[PhaseController] Grupo de EPIs fechado com {notPerformed.Count} EPI(s) não equipado(s).", this);
+        }
+
         private void RecordOrderDeviations(string groupId)
         {
             var deviations = taskManager.MarkCompletionOrderDeviations(groupId);
@@ -304,9 +308,8 @@ namespace SafetyProto.Runtime
 
             if (_simulationAutoConfirm)
             {
-                // Stands in for the Evaluation advance press, which is where a real run records the order.
                 if (SessionModeState.Current == SessionMode.Evaluation)
-                    RecordOrderDeviations(args.Group.id);
+                    ConfirmGroup(args.Group.id, false);
                 StartTransition();
             }
             else if (SessionModeState.Current == SessionMode.Guided)
