@@ -24,14 +24,11 @@ namespace SafetyProto.Domain.Metrics
         /// <summary>False when the engine reported no frame timing; the main-thread fields are
         /// then omitted.</summary>
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)] public bool frameTimingAvailable;
-        // Newtonsoft writes these; Unity never serializes this type. [NonSerialized] would make Newtonsoft drop them.
-#pragma warning disable UAC1001
-        public double? mainThreadMedianMs;
-        public double? mainThreadP95Ms;
-#pragma warning restore UAC1001
+        public double? mainThreadMedianMs { get; set; }
+        public double? mainThreadP95Ms { get; set; }
         /// <summary>True when the buffer filled before the session ended; later frames are missing.</summary>
-        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)] public bool truncated;
-        public string percentileMethod = PerfStats.PercentileMethod;
+        [JsonProperty(Order = 1, DefaultValueHandling = DefaultValueHandling.Include)] public bool truncated;
+        [JsonProperty(Order = 1)] public string percentileMethod = PerfStats.PercentileMethod;
     }
 
     public static class PerfStats
