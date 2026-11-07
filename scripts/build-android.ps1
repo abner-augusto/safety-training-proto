@@ -98,10 +98,35 @@ function Invoke-UnityCommand {
     return $parsed
 }
 
+# Pipeline >= 0.10 groups its commands ("script eval", "build run") and returns each command's
+# result without the CLI envelope. A failed call carries success=false with either the CLI's
+# errors[] (transport, unknown command) or the command's own error/errorDetails.
+function Invoke-PipelineCommand {
+    param(
+        [Parameter(Mandatory)][string[]]$Arguments,
+        [switch]$IgnoreFailure
+    )
+
+    $raw = & unity --format json command --result-only @Arguments 2>&1 | Out-String
+    try {
+        $parsed = $raw | ConvertFrom-Json
+    } catch {
+        throw "Failed to parse Unity CLI output for '$($Arguments -join ' ')':`n$raw"
+    }
+
+    $failed = $parsed.PSObject.Properties.Name -contains 'success' -and $parsed.success -eq $false
+    if ($failed -and -not $IgnoreFailure) {
+        $msg = if ($parsed.errors) { ($parsed.errors | ForEach-Object { $_.message }) -join "; " }
+               else { "$($parsed.error) $($parsed.errorDetails)" }
+        throw "Unity command '$($Arguments -join ' ')' failed: $msg"
+    }
+
+    return $parsed
+}
+
 function Invoke-UnityEval {
     param([Parameter(Mandatory)][string]$Code)
-    $result = Invoke-UnityCommand -Arguments @("command", "eval", "--code", $Code)
-    return $result.data.result.result
+    return (Invoke-PipelineCommand -Arguments @("script", "eval", "--code", $Code)).result
 }
 
 Push-Location $repoRoot
@@ -173,38 +198,34 @@ try {
     }
     Write-Host "=== Building Android (version $bundleVersion) ===" -ForegroundColor Cyan
 
-    $dryRun = Invoke-UnityCommand -Arguments (@(
-        "command", "build", "--target", "Android",
-        "--outputPath", $relativeApkPath, "--dry_run"
+    $dryRun = Invoke-PipelineCommand -Arguments (@(
+        "build", "run", "--target", "Android",
+        "--output-path", $relativeApkPath, "--dry-run"
     ) + $buildOptionArgs)
-    if (-not $dryRun.data.result.valid) {
-        $errs = ($dryRun.data.result.validationErrors -join "; ")
+    if (-not $dryRun.valid) {
+        $errs = ($dryRun.validationErrors -join "; ")
         throw "Build validation failed: $errs"
     }
 
-    $build = Invoke-UnityCommand -Arguments (@(
-        "command", "build", "--target", "Android",
-        "--outputPath", $relativeApkPath, "--confirm"
+    $build = Invoke-PipelineCommand -Arguments (@(
+        "build", "run", "--target", "Android",
+        "--output-path", $relativeApkPath, "--confirm"
     ) + $buildOptionArgs)
-    $buildId = $build.data.result.buildId
-    Write-Host "  build queued: $buildId"
+    Write-Host "  build queued: $($build.buildId)"
 
     $finalStatus = $null
     for ($i = 0; $i -lt $MaxPollAttempts; $i++) {
         Start-Sleep -Seconds $PollIntervalSeconds
-        $poll = Invoke-UnityCommand -Arguments @("command", "build_status") -IgnoreFailure
-        if (-not $poll.success) {
+        $poll = Invoke-PipelineCommand -Arguments @("build", "status") -IgnoreFailure
+        if (-not $poll.status) {
             Write-Host "  (transient poll failure, retrying)"
             continue
         }
-        # Pipeline < 0.6 returned the status as a JSON string; newer releases return an object.
-        $inner = $poll.data.result
-        if ($inner -is [string]) { $inner = $inner | ConvertFrom-Json }
-        if ($inner.status -eq "building") {
-            Write-Host "  building... ($($i + 1)/$MaxPollAttempts)"
+        if ($poll.status -in @("queued", "building")) {
+            Write-Host "  $($poll.status)... ($($i + 1)/$MaxPollAttempts)"
             continue
         }
-        $finalStatus = $inner
+        $finalStatus = $poll
         break
     }
 
@@ -218,7 +239,7 @@ try {
             ForEach-Object { $_.Groups[1].Value } |
             Where-Object { $_ -match 'error|FAILURE|failed|Exception' } |
             Select-Object -First 5
-        throw "Build finished with result '$($finalStatus.result)' ($($finalStatus.totalErrors) errors). First errors:`n$($errors -join "`n")`nFull report: unity --format json command build_status"
+        throw "Build finished with result '$($finalStatus.result)' ($($finalStatus.totalErrors) errors). First errors:`n$($errors -join "`n")`nFull report: unity --format json command build status"
     }
 
     Write-Host "=== Build succeeded ($($finalStatus.totalErrors) errors, $($finalStatus.totalWarnings) warnings) ===" -ForegroundColor Green

@@ -64,11 +64,11 @@ New-Item -ItemType Directory -Force $OutputDirectory | Out-Null
 $OutputDirectory = (Resolve-Path $OutputDirectory).Path
 
 function Invoke-Eval([string]$Code) {
-    $json = unity --format json command eval --code $Code | ConvertFrom-Json
-    if (-not $json.success -or -not $json.data.result.success) {
+    $json = unity --format json command --result-only script eval --code $Code | ConvertFrom-Json
+    if (-not $json.success) {
         throw "eval failed: $($json | ConvertTo-Json -Depth 8 -Compress)"
     }
-    return $json.data.result.result
+    return $json.result
 }
 
 function Invoke-Analysis {
