@@ -83,7 +83,7 @@ function Invoke-UnityCommand {
         [switch]$IgnoreFailure
     )
 
-    $raw = & unity --format json @Arguments 2>&1 | Out-String
+    $raw = & unity --format json @Arguments 2>&1 | Where-Object { "$_" -notmatch '^<claude-code-hint' } | Out-String
     try {
         $parsed = $raw | ConvertFrom-Json
     } catch {
@@ -107,7 +107,7 @@ function Invoke-PipelineCommand {
         [switch]$IgnoreFailure
     )
 
-    $raw = & unity --format json command --result-only @Arguments 2>&1 | Out-String
+    $raw = & unity --format json command --result-only @Arguments 2>&1 | Where-Object { "$_" -notmatch '^<claude-code-hint' } | Out-String
     try {
         $parsed = $raw | ConvertFrom-Json
     } catch {
