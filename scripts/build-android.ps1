@@ -33,13 +33,14 @@ Options:
   -Development                Build a Development APK (SafetyTraining_dev.apk, debuggable, with the
                               session simulator) for scripts/quest-sim-run.ps1. It is not copied to
                               the output directory. Builds without -flto=thin (Android build type
-                              Development, restored afterwards): the LTO link alone takes ~20 min.
+                              Development, restored afterwards): the LTO link is most of a release build.
   -Lto                        With -Development, keep -flto=thin. Slower to build, but its frame rate
                               matches a release APK: measure performance on this one, never on a
                               plain -Development APK (~5 fps slower on the CPU).
   -PollIntervalSeconds <int>  Seconds between build status polls (default: 15)
   -MaxPollAttempts <int>      Poll attempts before giving up (default: 240, one hour at
-                              the default interval; a release build with LTO takes ~50 min)
+                              the default interval; a release build with LTO takes ~9 min from
+                              an SSD and took ~50 min from an HDD)
   -Help, --help               Show this help and exit
 
 Examples:
