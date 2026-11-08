@@ -1881,10 +1881,10 @@ Mesh:
     m_Data: 
   m_MeshCompression: 0
   m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
+  m_KeepVertices: 0
+  m_KeepIndices: 0
   m_IndexFormat: 0
-  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600
+  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600y
   m_VertexData:
     serializedVersion: 3
     m_VertexCount: 24
@@ -2002,8 +2002,9 @@ Mesh:
   m_LocalAABB:
     m_Center: {x: 2.7523994, y: -0.5, z: 10.515281}
     m_Extent: {x: 11.75, y: 0.25, z: 23.625}
-  m_MeshUsageFlags: 0
   m_CookingOptions: 30
+  m_PreBakeConvexCollisionMesh: 0
+  m_PreBakeTriangleCollisionMesh: 0
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
   'm_MeshMetrics[0]': 1
@@ -3617,10 +3618,10 @@ Mesh:
     m_Data: 
   m_MeshCompression: 0
   m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
+  m_KeepVertices: 0
+  m_KeepIndices: 0
   m_IndexFormat: 0
-  m_IndexBuffer: 000001000200010003000200010004000300040005000300020003000600030007000600030005000700050008000700
+  m_IndexBuffer: 000001000200010003000200010004000300040005000300020003000600030007000600030005000700050008000700y
   m_VertexData:
     serializedVersion: 3
     m_VertexCount: 9
@@ -3738,8 +3739,9 @@ Mesh:
   m_LocalAABB:
     m_Center: {x: -0.9611349, y: 0, z: -0.16100001}
     m_Extent: {x: 3.663865, y: 0, z: 2.589}
-  m_MeshUsageFlags: 0
   m_CookingOptions: 30
+  m_PreBakeConvexCollisionMesh: 0
+  m_PreBakeTriangleCollisionMesh: 0
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
   'm_MeshMetrics[0]': 1
@@ -4289,7 +4291,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4294440434
   m_fontColor: {r: 0.95, g: 0.96, b: 0.97, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -4302,7 +4304,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -4330,7 +4332,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -5503,11 +5505,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3150330688090869672, guid: f7da5913b2c00f045a3051c007e13e8f, type: 3}
       propertyPath: m_text
-      value: "<b><color=#A3D9AE>INSPECIONE</color></b>\nCosturas \xB7 fitas \xB7
-        fivelas \xB7 talabarte \xB7 conectores\n<size=45%> </size>\n<b><color=#A3D9AE>ENCONTROU
-        DEFEITO?</color></b>\nCostura desfiada, fita cortada ou conector deformado:\n<b><color=#FF9E5E>N\xC3O
-        USE.</color></b> Retire de uso e comunique.\n<size=75%><color=#B8C2CF>NR-35,
-        item 35.6.6</color></size>"
+      value: "<b><color=#A3D9AE>INSPECIONE</color></b>\nCosturas \xB7 fitas \xB7 fivelas \xB7 talabarte \xB7 conectores\n<size=45%> </size>\n<b><color=#A3D9AE>ENCONTROU DEFEITO?</color></b>\nCostura desfiada, fita cortada ou conector deformado:\n<b><color=#FF9E5E>N\xC3O USE.</color></b> Retire de uso e comunique.\n<size=75%><color=#B8C2CF>NR-35, item 35.6.6</color></size>"
       objectReference: {fileID: 0}
     - target: {fileID: 3150330688090869672, guid: f7da5913b2c00f045a3051c007e13e8f, type: 3}
       propertyPath: m_TextStyleHashCode
@@ -6983,7 +6981,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -12121,10 +12119,10 @@ Mesh:
     m_Data: 
   m_MeshCompression: 0
   m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
+  m_KeepVertices: 0
+  m_KeepIndices: 0
   m_IndexFormat: 0
-  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600
+  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600y
   m_VertexData:
     serializedVersion: 3
     m_VertexCount: 24
@@ -12242,8 +12240,9 @@ Mesh:
   m_LocalAABB:
     m_Center: {x: 0.79999995, y: 0, z: 0}
     m_Extent: {x: 2.7, y: 1.5, z: 0.1}
-  m_MeshUsageFlags: 0
   m_CookingOptions: 30
+  m_PreBakeConvexCollisionMesh: 0
+  m_PreBakeTriangleCollisionMesh: 0
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
   'm_MeshMetrics[0]': 1
@@ -12428,10 +12427,10 @@ Mesh:
     m_Data: 
   m_MeshCompression: 0
   m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
+  m_KeepVertices: 0
+  m_KeepIndices: 0
   m_IndexFormat: 0
-  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600
+  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600y
   m_VertexData:
     serializedVersion: 3
     m_VertexCount: 24
@@ -12549,8 +12548,9 @@ Mesh:
   m_LocalAABB:
     m_Center: {x: 0.0000000037252903, y: 0, z: -0.04597664}
     m_Extent: {x: 0.125, y: 1.4, z: 11.625}
-  m_MeshUsageFlags: 0
   m_CookingOptions: 30
+  m_PreBakeConvexCollisionMesh: 0
+  m_PreBakeTriangleCollisionMesh: 0
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
   'm_MeshMetrics[0]': 1
@@ -13727,7 +13727,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -13802,12 +13802,12 @@ MonoBehaviour:
   opMode: 1
   resetHmdPoseOnRelease: 1
   resetHmdPoseByMiddleMouseButton: 1
-  activateKeys: 3201000031010000
+  activateKeys: 3201000031010000i
   activateKeyBindings:
   - <Keyboard>/leftCtrl
   - <Keyboard>/rightCtrl
   - <Keyboard>/f1
-  pitchKeys: 3401000033010000
+  pitchKeys: 3401000033010000i
   pitchKeyBindings:
   - <Keyboard>/leftAlt
   - <Keyboard>/rightAlt
@@ -16161,10 +16161,10 @@ Mesh:
     m_Data: 
   m_MeshCompression: 0
   m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
+  m_KeepVertices: 0
+  m_KeepIndices: 0
   m_IndexFormat: 0
-  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600
+  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600y
   m_VertexData:
     serializedVersion: 3
     m_VertexCount: 24
@@ -16282,8 +16282,9 @@ Mesh:
   m_LocalAABB:
     m_Center: {x: -0.000000018626451, y: 0, z: 0.16444588}
     m_Extent: {x: 0.125, y: 1.4, z: 11.5}
-  m_MeshUsageFlags: 0
   m_CookingOptions: 30
+  m_PreBakeConvexCollisionMesh: 0
+  m_PreBakeTriangleCollisionMesh: 0
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
   'm_MeshMetrics[0]': 1
@@ -18403,7 +18404,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -18431,7 +18432,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -19429,7 +19430,7 @@ MonoBehaviour:
   m_Size: {x: 8.25, y: 1.28, z: 6.89}
   m_Center: {x: 0, y: 1, z: 0}
   m_Area: 1
-  m_AffectedAgents: ffffffff
+  m_AffectedAgents: ffffffffi
 --- !u!1 &722979625
 GameObject:
   m_ObjectHideFlags: 0
@@ -25882,6 +25883,8 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: 60
   m_LayoutPriority: 1
+  m_MaxWidth: -1
+  m_MaxHeight: -1
 --- !u!114 &939952671
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -26482,10 +26485,10 @@ Mesh:
     m_Data: 
   m_MeshCompression: 0
   m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
+  m_KeepVertices: 0
+  m_KeepIndices: 0
   m_IndexFormat: 0
-  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600
+  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600y
   m_VertexData:
     serializedVersion: 3
     m_VertexCount: 24
@@ -26603,8 +26606,9 @@ Mesh:
   m_LocalAABB:
     m_Center: {x: -0.27499986, y: 1.25, z: 0}
     m_Extent: {x: 1.375, y: 0.25, z: 0.1}
-  m_MeshUsageFlags: 0
   m_CookingOptions: 30
+  m_PreBakeConvexCollisionMesh: 0
+  m_PreBakeTriangleCollisionMesh: 0
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
   'm_MeshMetrics[0]': 1
@@ -27948,10 +27952,10 @@ Mesh:
     m_Data: 
   m_MeshCompression: 0
   m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
+  m_KeepVertices: 0
+  m_KeepIndices: 0
   m_IndexFormat: 0
-  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600
+  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600y
   m_VertexData:
     serializedVersion: 3
     m_VertexCount: 24
@@ -28069,8 +28073,9 @@ Mesh:
   m_LocalAABB:
     m_Center: {x: 0, y: 0, z: 0}
     m_Extent: {x: 0.1, y: 1.5, z: 2.5}
-  m_MeshUsageFlags: 0
   m_CookingOptions: 30
+  m_PreBakeConvexCollisionMesh: 0
+  m_PreBakeTriangleCollisionMesh: 0
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
   'm_MeshMetrics[0]': 1
@@ -39203,6 +39208,8 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+  m_MaxWidth: -1
+  m_MaxHeight: -1
 --- !u!114 &1157075126
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39825,10 +39832,10 @@ Mesh:
     m_Data: 
   m_MeshCompression: 0
   m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
+  m_KeepVertices: 0
+  m_KeepIndices: 0
   m_IndexFormat: 0
-  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600
+  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600y
   m_VertexData:
     serializedVersion: 3
     m_VertexCount: 24
@@ -39946,8 +39953,9 @@ Mesh:
   m_LocalAABB:
     m_Center: {x: 0, y: 0, z: -0.09939003}
     m_Extent: {x: 3.5, y: 0.1, z: 2.59939}
-  m_MeshUsageFlags: 0
   m_CookingOptions: 30
+  m_PreBakeConvexCollisionMesh: 0
+  m_PreBakeTriangleCollisionMesh: 0
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
   'm_MeshMetrics[0]': 1
@@ -44055,7 +44063,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -44937,10 +44945,10 @@ Mesh:
     m_Data: 
   m_MeshCompression: 0
   m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
+  m_KeepVertices: 0
+  m_KeepIndices: 0
   m_IndexFormat: 0
-  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600
+  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600y
   m_VertexData:
     serializedVersion: 3
     m_VertexCount: 24
@@ -45058,8 +45066,9 @@ Mesh:
   m_LocalAABB:
     m_Center: {x: 0, y: 0, z: -0.09939003}
     m_Extent: {x: 0.1, y: 1.5, z: 2.59939}
-  m_MeshUsageFlags: 0
   m_CookingOptions: 30
+  m_PreBakeConvexCollisionMesh: 0
+  m_PreBakeTriangleCollisionMesh: 0
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
   'm_MeshMetrics[0]': 1
@@ -46569,10 +46578,10 @@ Mesh:
     m_Data: 
   m_MeshCompression: 0
   m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
+  m_KeepVertices: 0
+  m_KeepIndices: 0
   m_IndexFormat: 0
-  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600
+  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600y
   m_VertexData:
     serializedVersion: 3
     m_VertexCount: 24
@@ -46690,8 +46699,9 @@ Mesh:
   m_LocalAABB:
     m_Center: {x: 0, y: 0, z: 7.109604}
     m_Extent: {x: 0.125, y: 1.4, z: 23.5}
-  m_MeshUsageFlags: 0
   m_CookingOptions: 30
+  m_PreBakeConvexCollisionMesh: 0
+  m_PreBakeTriangleCollisionMesh: 0
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
   'm_MeshMetrics[0]': 1
@@ -48154,7 +48164,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -48419,10 +48429,10 @@ Mesh:
     m_Data: 
   m_MeshCompression: 0
   m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
+  m_KeepVertices: 0
+  m_KeepIndices: 0
   m_IndexFormat: 0
-  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600
+  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600y
   m_VertexData:
     serializedVersion: 3
     m_VertexCount: 24
@@ -48540,8 +48550,9 @@ Mesh:
   m_LocalAABB:
     m_Center: {x: -3.525, y: 0, z: 0}
     m_Extent: {x: 0.125, y: 1.5, z: 0.1}
-  m_MeshUsageFlags: 0
   m_CookingOptions: 30
+  m_PreBakeConvexCollisionMesh: 0
+  m_PreBakeTriangleCollisionMesh: 0
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
   'm_MeshMetrics[0]': 1
@@ -49394,8 +49405,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Aqui nada vale ponto. Experimente \xE0 vontade cada intera\xE7\xE3o do
-    treinamento:"
+  m_text: "Aqui nada vale ponto. Experimente \xE0 vontade cada intera\xE7\xE3o do treinamento:"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -49404,7 +49414,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4294440434
   m_fontColor: {r: 0.95, g: 0.96, b: 0.97, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -49417,7 +49427,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -49445,7 +49455,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -50477,10 +50487,10 @@ Mesh:
     m_Data: 
   m_MeshCompression: 0
   m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
+  m_KeepVertices: 0
+  m_KeepIndices: 0
   m_IndexFormat: 0
-  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600
+  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600y
   m_VertexData:
     serializedVersion: 3
     m_VertexCount: 24
@@ -50598,8 +50608,9 @@ Mesh:
   m_LocalAABB:
     m_Center: {x: 2.2999997, y: 0, z: 0}
     m_Extent: {x: 1.2, y: 1.5, z: 0.1}
-  m_MeshUsageFlags: 0
   m_CookingOptions: 30
+  m_PreBakeConvexCollisionMesh: 0
+  m_PreBakeTriangleCollisionMesh: 0
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
   'm_MeshMetrics[0]': 1
@@ -50786,15 +50797,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3150330688090869672, guid: f7da5913b2c00f045a3051c007e13e8f, type: 3}
       propertyPath: m_text
-      value: "<b><color=#A3D9AE>O QUE \xC9</color></b>\nToda atividade acima de <b>2
-        m</b> do n\xEDvel inferior, com risco de queda (NR-35).\n<size=45%> </size>\n<b><color=#A3D9AE>ORDEM
-        DE PREVEN\xC7\xC3O</color></b>\n<color=#A3D9AE><b>1.</b></color> <b>Evitar</b>
-        o trabalho em altura\n<color=#A3D9AE><b>2.</b></color> <b>Eliminar</b> o
-        risco de queda\n<color=#A3D9AE><b>3.</b></color> <b>Minimizar</b> as consequ\xEAncias
-        da queda\n<size=75%><color=#B8C2CF>NR-35, item 35.5.2</color></size>\n<size=45%>
-        </size>\n<b><color=#A3D9AE>COLETIVA ANTES DA INDIVIDUAL</color></b>\nGuarda-corpo,
-        rodap\xE9 e tela v\xEAm primeiro. O cintur\xE3o <b>complementa</b>, n\xE3o
-        substitui."
+      value: "<b><color=#A3D9AE>O QUE \xC9</color></b>\nToda atividade acima de <b>2 m</b> do n\xEDvel inferior, com risco de queda (NR-35).\n<size=45%> </size>\n<b><color=#A3D9AE>ORDEM DE PREVEN\xC7\xC3O</color></b>\n<color=#A3D9AE><b>1.</b></color> <b>Evitar</b> o trabalho em altura\n<color=#A3D9AE><b>2.</b></color> <b>Eliminar</b> o risco de queda\n<color=#A3D9AE><b>3.</b></color> <b>Minimizar</b> as consequ\xEAncias da queda\n<size=75%><color=#B8C2CF>NR-35, item 35.5.2</color></size>\n<size=45%> </size>\n<b><color=#A3D9AE>COLETIVA ANTES DA INDIVIDUAL</color></b>\nGuarda-corpo, rodap\xE9 e tela v\xEAm primeiro. O cintur\xE3o <b>complementa</b>, n\xE3o substitui."
       objectReference: {fileID: 0}
     - target: {fileID: 3150330688090869672, guid: f7da5913b2c00f045a3051c007e13e8f, type: 3}
       propertyPath: m_TextStyleHashCode
@@ -51144,7 +51147,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -51879,7 +51882,7 @@ MonoBehaviour:
   m_Size: {x: 5.9, y: 17.24, z: 2.49}
   m_Center: {x: 0, y: 1, z: 0}
   m_Area: 1
-  m_AffectedAgents: ffffffff
+  m_AffectedAgents: ffffffffi
 --- !u!114 &1595295089 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 594552357310180489, guid: 0a7d2469f24041c4284c66706f84c45e, type: 3}
@@ -52974,10 +52977,10 @@ Mesh:
     m_Data: 
   m_MeshCompression: 0
   m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
+  m_KeepVertices: 0
+  m_KeepIndices: 0
   m_IndexFormat: 0
-  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600
+  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600y
   m_VertexData:
     serializedVersion: 3
     m_VertexCount: 24
@@ -53095,8 +53098,9 @@ Mesh:
   m_LocalAABB:
     m_Center: {x: 0, y: 0, z: 6.976965}
     m_Extent: {x: 0.125, y: 1.4, z: 23.63264}
-  m_MeshUsageFlags: 0
   m_CookingOptions: 30
+  m_PreBakeConvexCollisionMesh: 0
+  m_PreBakeTriangleCollisionMesh: 0
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
   'm_MeshMetrics[0]': 1
@@ -53301,8 +53305,7 @@ MonoBehaviour:
   confirmLabel: Confirmar
   waitForEvaluator: 1
   waitingTitle: Aguardando o pesquisador
-  waitingBody: "O pesquisador vai iniciar o treinamento em instantes. Aguarde nesta
-    posi\xE7\xE3o."
+  waitingBody: "O pesquisador vai iniciar o treinamento em instantes. Aguarde nesta posi\xE7\xE3o."
   keypadFallbackSeconds: 90
   inputMode: 0
   codeTitle: "C\xF3digo do participante"
@@ -53314,8 +53317,7 @@ MonoBehaviour:
   codeNarration: {fileID: 8300000, guid: ed1255a055c13b640bc023f84a3248d7, type: 3}
   narrationVoice: {fileID: 1602798036}
   title: "Antes de come\xE7ar"
-  body: "Digite seu primeiro nome para iniciar o treinamento. Seus dados ser\xE3o
-    anonimizados."
+  body: "Digite seu primeiro nome para iniciar o treinamento. Seus dados ser\xE3o anonimizados."
   onboarding: {fileID: 1708245727}
   modeSelection: {fileID: 1644188875}
   sessionManager: {fileID: 5093628265187112637}
@@ -53339,8 +53341,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: SafetyProto.UI.Unity::SafetyProto.UI.SessionModeSelectionController
   popupService: {fileID: 5455797637335201551}
   title: "Modo da sess\xE3o"
-  body: "Guiado: o painel lista cada tarefa e a atividade s\xF3 finaliza completa.\nAvalia\xE7\xE3o:
-    apenas o objetivo geral \xE9 exibido e \xE9 poss\xEDvel finalizar com omiss\xF5es."
+  body: "Guiado: o painel lista cada tarefa e a atividade s\xF3 finaliza completa.\nAvalia\xE7\xE3o: apenas o objetivo geral \xE9 exibido e \xE9 poss\xEDvel finalizar com omiss\xF5es."
   guidedLabel: Guiado
   evaluationLabel: "Avalia\xE7\xE3o"
 --- !u!1 &1644382068
@@ -53774,7 +53775,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -54904,6 +54905,10 @@ PrefabInstance:
     - target: {fileID: 1993905689117777074, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
       propertyPath: m_Color.r
       value: 0.11
+      objectReference: {fileID: 0}
+    - target: {fileID: 4947892562953344078, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
+      propertyPath: m_AdditionalShaderChannelsFlag
+      value: 25
       objectReference: {fileID: 0}
     - target: {fileID: 6308249081878237579, guid: 6abb8f755a5aa7e48b471fbf1f90c462, type: 3}
       propertyPath: m_Pivot.x
@@ -56075,6 +56080,9 @@ MonoBehaviour:
   onLanyardRetracted:
     m_PersistentCalls:
       m_Calls: []
+  onLanyardUnlocked:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!135 &1698895503
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -56590,9 +56598,7 @@ MonoBehaviour:
   popupService: {fileID: 5455797637335201551}
   steps:
   - title: Bem-vindo ao Treinamento
-    body: "Voc\xEA est\xE1 em um ambiente virtual de treinamento de seguran\xE7a
-      para canteiro de obras. A experi\xEAncia simula situa\xE7\xF5es reais baseadas
-      nas normas NR-18 e NR-35. Siga as instru\xE7\xF5es com aten\xE7\xE3o."
+    body: "Voc\xEA est\xE1 em um ambiente virtual de treinamento de seguran\xE7a para canteiro de obras. A experi\xEAncia simula situa\xE7\xF5es reais baseadas nas normas NR-18 e NR-35. Siga as instru\xE7\xF5es com aten\xE7\xE3o."
     actionButtonLabel: Continuar
     icon: {fileID: 21300000, guid: e700f7a0eba57f64f93a406ee67dff41, type: 3}
     illustrationFrames:
@@ -56616,9 +56622,7 @@ MonoBehaviour:
           m_CallState: 2
     opensPracticeArea: 0
   - title: Sua atividade
-    body: "Voc\xEA atuar\xE1 na inspe\xE7\xE3o de seguran\xE7a de um andaime fachadeiro
-      nesta obra. Antes de acessar a estrutura, sua responsabilidade \xE9 selecionar
-      os equipamentos de prote\xE7\xE3o necess\xE1rios na bancada de apoio."
+    body: "Voc\xEA atuar\xE1 na inspe\xE7\xE3o de seguran\xE7a de um andaime fachadeiro nesta obra. Antes de acessar a estrutura, sua responsabilidade \xE9 selecionar os equipamentos de prote\xE7\xE3o necess\xE1rios na bancada de apoio."
     actionButtonLabel: Continuar
     icon: {fileID: 21300000, guid: 411d27a3e567bfd45a0459692ff62892, type: 3}
     illustrationFrames:
@@ -56630,9 +56634,7 @@ MonoBehaviour:
         m_Calls: []
     opensPracticeArea: 0
   - title: "Intera\xE7\xE3o com as M\xE3os"
-    body: "Este treinamento n\xE3o utiliza controles. Toda a intera\xE7\xE3o \xE9
-      feita com as suas m\xE3os. Apoie os controles e use apenas os movimentos naturais
-      das m\xE3os durante toda a experi\xEAncia."
+    body: "Este treinamento n\xE3o utiliza controles. Toda a intera\xE7\xE3o \xE9 feita com as suas m\xE3os. Apoie os controles e use apenas os movimentos naturais das m\xE3os durante toda a experi\xEAncia."
     actionButtonLabel: Entendi
     icon: {fileID: 21300000, guid: 411d27a3e567bfd45a0459692ff62892, type: 3}
     illustrationFrames:
@@ -56644,10 +56646,7 @@ MonoBehaviour:
         m_Calls: []
     opensPracticeArea: 0
   - title: "Interagindo com os Pain\xE9is"
-    body: "Este painel que voc\xEA est\xE1 lendo agora \xE9 como as instru\xE7\xF5es
-      aparecer\xE3o durante toda a experi\xEAncia. Para confirmar, toque diretamente
-      no bot\xE3o com o dedo indicador ou aponte o raio da m\xE3o e selecione \xE0
-      dist\xE2ncia."
+    body: "Este painel que voc\xEA est\xE1 lendo agora \xE9 como as instru\xE7\xF5es aparecer\xE3o durante toda a experi\xEAncia. Para confirmar, toque diretamente no bot\xE3o com o dedo indicador ou aponte o raio da m\xE3o e selecione \xE0 dist\xE2ncia."
     actionButtonLabel: "Entendi \u2014 funcionou!"
     icon: {fileID: 21300000, guid: 4c73403134d9eb3458d9c495a33c2c13, type: 3}
     illustrationFrames:
@@ -56660,8 +56659,7 @@ MonoBehaviour:
         m_Calls: []
     opensPracticeArea: 0
   - title: Pegando Objetos
-    body: "Para pegar um objeto, aproxime a m\xE3o dele e feche o punho. Para soltar,
-      abra a m\xE3o. Os objetos respondem ao toque das suas m\xE3os."
+    body: "Para pegar um objeto, aproxime a m\xE3o dele e feche o punho. Para soltar, abra a m\xE3o. Os objetos respondem ao toque das suas m\xE3os."
     actionButtonLabel: Entendi
     icon: {fileID: 21300000, guid: 25c0d8702947c8949b6593f764399b5a, type: 3}
     illustrationFrames:
@@ -56675,10 +56673,7 @@ MonoBehaviour:
         m_Calls: []
     opensPracticeArea: 1
   - title: "O que voc\xEA vai fazer"
-    body: "A experi\xEAncia tem dois cen\xE1rios: no primeiro, voc\xEA selecionar\xE1
-      os equipamentos de prote\xE7\xE3o individual corretos. No segundo, inspecionar\xE1
-      um andaime antes de iniciar a atividade em altura. Ao final, voc\xEA receber\xE1
-      seu resultado."
+    body: "A experi\xEAncia tem dois cen\xE1rios: no primeiro, voc\xEA selecionar\xE1 os equipamentos de prote\xE7\xE3o individual corretos. No segundo, inspecionar\xE1 um andaime antes de iniciar a atividade em altura. Ao final, voc\xEA receber\xE1 seu resultado."
     actionButtonLabel: "Come\xE7ar"
     icon: {fileID: 21300000, guid: 2b131a3b7c020d140ad75182bcb4f8de, type: 3}
     illustrationFrames:
@@ -56691,8 +56686,7 @@ MonoBehaviour:
       m_PersistentCalls:
         m_Calls:
         - m_Target: {fileID: 4610155724688692438}
-          m_TargetAssemblyTypeName: SafetyProto.Gameplay.Feedback.AudioFeedbackManager,
-            Assembly-CSharp
+          m_TargetAssemblyTypeName: SafetyProto.Gameplay.Feedback.AudioFeedbackManager, Assembly-CSharp
           m_MethodName: PlaySuccessClip
           m_Mode: 1
           m_Arguments:
@@ -57448,10 +57442,10 @@ Mesh:
     m_Data: 
   m_MeshCompression: 0
   m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
+  m_KeepVertices: 0
+  m_KeepIndices: 0
   m_IndexFormat: 0
-  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600
+  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600y
   m_VertexData:
     serializedVersion: 3
     m_VertexCount: 24
@@ -57569,8 +57563,9 @@ Mesh:
   m_LocalAABB:
     m_Center: {x: -2.65, y: 1.25, z: 0}
     m_Extent: {x: 0.75, y: 0.25, z: 0.1}
-  m_MeshUsageFlags: 0
   m_CookingOptions: 30
+  m_PreBakeConvexCollisionMesh: 0
+  m_PreBakeTriangleCollisionMesh: 0
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
   'm_MeshMetrics[0]': 1
@@ -58627,7 +58622,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4292596167
   m_fontColor: {r: 0.78, g: 0.82, b: 0.86, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -58640,7 +58635,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -58668,7 +58663,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -59143,6 +59138,8 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+  m_MaxWidth: -1
+  m_MaxHeight: -1
 --- !u!1 &1777266151
 GameObject:
   m_ObjectHideFlags: 0
@@ -60329,10 +60326,10 @@ Mesh:
     m_Data: 
   m_MeshCompression: 0
   m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
+  m_KeepVertices: 0
+  m_KeepIndices: 0
   m_IndexFormat: 0
-  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600
+  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600y
   m_VertexData:
     serializedVersion: 3
     m_VertexCount: 24
@@ -60450,8 +60447,9 @@ Mesh:
   m_LocalAABB:
     m_Center: {x: 1.4582698, y: 0, z: 0}
     m_Extent: {x: 0.92499995, y: 1.5, z: 0.1}
-  m_MeshUsageFlags: 0
   m_CookingOptions: 30
+  m_PreBakeConvexCollisionMesh: 0
+  m_PreBakeTriangleCollisionMesh: 0
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
   'm_MeshMetrics[0]': 1
@@ -62679,7 +62677,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4294440434
   m_fontColor: {r: 0.95, g: 0.96, b: 0.97, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -62692,7 +62690,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -62720,7 +62718,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -63018,11 +63016,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3150330688090869672, guid: f7da5913b2c00f045a3051c007e13e8f, type: 3}
       propertyPath: m_text
-      value: "<b><color=#A3D9AE>NA SIMULA\xC7\xC3O</color></b>\nVoc\xEA completa
-        as prote\xE7\xF5es que faltam para praticar a inspe\xE7\xE3o.\n<size=45%>
-        </size>\n<b><color=#A3D9AE>DIANTE DE UMA IRREGULARIDADE</color></b>\n<b><color=#FF9E5E>N\xE3o
-        inicie a atividade.</color></b> Comunique e aguarde a corre\xE7\xE3o por
-        pessoa autorizada."
+      value: "<b><color=#A3D9AE>NA SIMULA\xC7\xC3O</color></b>\nVoc\xEA completa as prote\xE7\xF5es que faltam para praticar a inspe\xE7\xE3o.\n<size=45%> </size>\n<b><color=#A3D9AE>DIANTE DE UMA IRREGULARIDADE</color></b>\n<b><color=#FF9E5E>N\xE3o inicie a atividade.</color></b> Comunique e aguarde a corre\xE7\xE3o por pessoa autorizada."
       objectReference: {fileID: 0}
     - target: {fileID: 3150330688090869672, guid: f7da5913b2c00f045a3051c007e13e8f, type: 3}
       propertyPath: m_TextStyleHashCode
@@ -63363,8 +63357,7 @@ MonoBehaviour:
   anchorProviderBehaviour: {fileID: 4644533603855273151}
   popupFeedbackProvider: {fileID: 5455797637335201551}
   blackoutTitle: "Calibrando\u2026"
-  blackoutBody: "Centro da sala registrado. Voc\xEA est\xE1 sendo posicionado na
-    \xE1rea de treinamento."
+  blackoutBody: "Centro da sala registrado. Voc\xEA est\xE1 sendo posicionado na \xE1rea de treinamento."
   blackoutMessageSeconds: 5
   fadeOutDuration: 0.8
   holdBlackDuration: 1
@@ -63945,8 +63938,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 8476415390556277830}
-        m_TargetAssemblyTypeName: SafetyProto.Runtime.Safety.InspectionGateValidator,
-          SafetyProto.Runtime.Unity
+        m_TargetAssemblyTypeName: SafetyProto.Runtime.Safety.InspectionGateValidator, SafetyProto.Runtime.Unity
         m_MethodName: Validate
         m_Mode: 0
         m_Arguments:
@@ -64478,6 +64470,8 @@ MonoBehaviour:
   curveRadius: 1
   overlapMask: 0
   compositionMode: 1
+  enable3D: 0
+  depthRange: 0.5
   _overlayEnabled: 1
 --- !u!114 &1925657541
 MonoBehaviour:
@@ -66664,10 +66658,10 @@ Mesh:
     m_Data: 
   m_MeshCompression: 0
   m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
+  m_KeepVertices: 0
+  m_KeepIndices: 0
   m_IndexFormat: 0
-  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600
+  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600y
   m_VertexData:
     serializedVersion: 3
     m_VertexCount: 24
@@ -66785,8 +66779,9 @@ Mesh:
   m_LocalAABB:
     m_Center: {x: -0.27499986, y: -1, z: 0}
     m_Extent: {x: 1.375, y: 0.5, z: 0.1}
-  m_MeshUsageFlags: 0
   m_CookingOptions: 30
+  m_PreBakeConvexCollisionMesh: 0
+  m_PreBakeTriangleCollisionMesh: 0
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
   'm_MeshMetrics[0]': 1
@@ -67512,7 +67507,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -72561,6 +72556,9 @@ MonoBehaviour:
   onLanyardRetracted:
     m_PersistentCalls:
       m_Calls: []
+  onLanyardUnlocked:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!33 &1723967762404314542
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -75733,8 +75731,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 4610155724688692438}
-        m_TargetAssemblyTypeName: SafetyProto.Gameplay.Feedback.AudioFeedbackManager,
-          Assembly-CSharp
+        m_TargetAssemblyTypeName: SafetyProto.Gameplay.Feedback.AudioFeedbackManager, Assembly-CSharp
         m_MethodName: PlayFailureClip
         m_Mode: 1
         m_Arguments:
@@ -78752,8 +78749,7 @@ MonoBehaviour:
     consequenceType: 1
     consequenceTarget: {fileID: 0}
     blackoutOnly: 0
-    feedbackMessage: "Voc\xEA caiu porque iniciou a atividade sem conectar o talabarte
-      ao ponto de ancoragem."
+    feedbackMessage: "Voc\xEA caiu porque iniciou a atividade sem conectar o talabarte ao ponto de ancoragem."
     consequenceSound: {fileID: 0}
   audioSource: {fileID: 8476415390556277831}
   warningSound: {fileID: 8300000, guid: 3b25a2e8b139ca140ada64a19a18e163, type: 3}
