@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: M_Practice_Handle
-  m_Shader: {fileID: 4800000, guid: 054fa9bb3b150664c9df19e1c270a779, type: 3}
+  m_Shader: {fileID: 4800000, guid: 4e87a3858e0d0bd48abbd3ba743a3690, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -22,13 +22,24 @@ Material:
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
-    m_TexEnvs: []
+    m_TexEnvs:
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _Ambient: 0.55
     - _CheckerSize: 0
+    - _Glossiness: 0
+    - _Metallic: 0
+    - _Reflections: 0
     m_Colors:
-    - _Color: {r: 0.25, g: 0.27, b: 0.3, a: 1}
+    - _Color: {r: 0.24999994, g: 0.26999992, b: 0.29999995, a: 1}
     - _Color2: {r: 0.62, g: 0.62, b: 0.6, a: 1}
     - _LightDir: {r: 0.35, g: 0.85, b: 0.4, a: 0}
   m_BuildTextureStacks: []

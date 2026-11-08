@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using SafetyProto.Runtime;
+using SafetyProto.Runtime.Practice;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -11,7 +13,9 @@ namespace SafetyProto.Editor
     /// Bakes the active scene twice for <see cref="BakedLightingSwitch"/>: first with its lights
     /// disabled, copying those lightmaps and probes to a <c>LightsOff</c> folder, then with them
     /// enabled, leaving that bake as the scene's own. A plain Generate Lighting only refreshes
-    /// the lights-on set and leaves the off set on a stale layout.
+    /// the lights-on set and leaves the off set on a stale layout. The practice area is saved
+    /// inactive and only shown at runtime, so both bakes switch it on for their duration: the
+    /// lightmapper skips inactive objects and would leave the area unlit.
     /// </summary>
     public static class BakeLightingStates
     {
@@ -19,6 +23,7 @@ namespace SafetyProto.Editor
 
         private static BakedLightingSwitch _switch;
         private static string _layoutAfterOffBake;
+        private static readonly List<GameObject> _shownForBake = new List<GameObject>();
 
         [MenuItem("SafetyProto/Bake Lighting States")]
         public static void Bake()
@@ -36,12 +41,14 @@ namespace SafetyProto.Editor
                 return;
             }
 
+            ShowHiddenAreas();
             SetLightsEnabled(false);
             Lightmapping.bakeCompleted += OnOffBakeCompleted;
             if (!Lightmapping.BakeAsync())
             {
                 Lightmapping.bakeCompleted -= OnOffBakeCompleted;
                 SetLightsEnabled(true);
+                RestoreHiddenAreas();
                 Debug.LogWarning("[BakeLightingStates] Unity refused to start the lights-off bake.");
                 return;
             }
@@ -59,6 +66,7 @@ namespace SafetyProto.Editor
             if (!Lightmapping.BakeAsync())
             {
                 Lightmapping.bakeCompleted -= OnOnBakeCompleted;
+                RestoreHiddenAreas();
                 Debug.LogWarning("[BakeLightingStates] Unity refused to start the lights-on bake.");
                 return;
             }
@@ -74,9 +82,29 @@ namespace SafetyProto.Editor
                 Debug.LogError("[BakeLightingStates] The two bakes packed the lightmaps differently; the " +
                                "lights-off set will not line up. Bake again without editing the scene in between.");
 
+            RestoreHiddenAreas();
             EditorSceneManager.MarkSceneDirty(_switch.gameObject.scene);
             EditorSceneManager.SaveScene(_switch.gameObject.scene);
             Debug.Log("[BakeLightingStates] Done: both lighting states baked and assigned.");
+        }
+
+        private static void ShowHiddenAreas()
+        {
+            _shownForBake.Clear();
+            foreach (var area in Object.FindObjectsByType<PracticeArea>(FindObjectsInactive.Include))
+            foreach (var go in area.ShownWhileOpen)
+            {
+                if (go == null || go.activeSelf) continue;
+                go.SetActive(true);
+                _shownForBake.Add(go);
+            }
+        }
+
+        private static void RestoreHiddenAreas()
+        {
+            foreach (var go in _shownForBake.Where(g => g != null))
+                go.SetActive(false);
+            _shownForBake.Clear();
         }
 
         private static void SetLightsEnabled(bool enabled)
