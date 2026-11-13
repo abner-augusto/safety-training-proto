@@ -8,7 +8,7 @@
 
 **Tech Stack:** Unity 6 C# (NUnit EditMode tests, `JsonUtility`), vanilla ES modules + Three.js (dashboard), `node --test` (Node 26) for the pure JS module.
 
-**Spec:** `docs/superpowers/specs/2026-10-11-dashboard-scene-layout-design.md`
+**Spec:** `docs/archive/superpowers/specs/2026-10-11-dashboard-scene-layout-design.md`
 
 ## Global Constraints
 
