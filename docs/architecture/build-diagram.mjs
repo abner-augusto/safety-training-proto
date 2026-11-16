@@ -159,8 +159,12 @@ svg += wire([[510, 160, Z], [510, 110, Z]], 0.48);
 svg += wire([[80, 206, Z], [80, 300, Z]], 0.48);
 svg += wire([[230, 206, Z], [230, 290, Z]], 0.22);
 svg += wire([[350, 290, Z], [350, 206, Z]], 0.36);
-svg += wire([[510, 206, Z], [510, 300, Z]], 0.48);
+svg += wire([[510, 206, Z], [510, 300, Z]], [0.48, 0.98]);
 svg += wire([[560, 75, Z], [600, 75, Z], [700, 75, 4]], 0.60);
+// The evaluator's command channel: browser → bootstrap → handlers, whose
+// accepted commands reach the bus as EvaluatorCommand for the session log.
+svg += wire([[700, 100, 4], [600, 100, Z], [560, 100, Z]], 0.84);
+svg += wire([[540, 110, Z], [540, 160, Z]], 0.92);
 
 svg += on(TOP(30, 160, Z), `<rect class="halo" filter="url(#bloom)" x="-14" y="-14" width="568" height="74"/>`);
 
@@ -181,8 +185,9 @@ svg += on(FRONT(320, 110, 60), `<rect class="glass" x="12" y="10" width="62" hei
   `<text class="scr" x="43" y="27" font-size="13" text-anchor="middle">00:42</text>` + led(86, 22, 3.2, 0.80));
 
 svg += box(460, 40, Z, 100, 70, 50);
-svg += on(FRONT(460, 110, 60), `${[12, 18, 24, 30].map(v => `<line class="detail" x1="10" y1="${v}" x2="56" y2="${v}"/>`).join('')}` +
-  `<text class="label" x="34" y="44" font-size="10" text-anchor="middle">WS :8080</text>` + led(84, 22, 3.2, 0.48));
+svg += on(FRONT(460, 110, 60), `${[10, 16].map(v => `<line class="detail" x1="10" y1="${v}" x2="56" y2="${v}"/>`).join('')}` +
+  `<text class="label" x="36" y="30" font-size="9" text-anchor="middle">HTTP :8080</text>` +
+  `<text class="label" x="36" y="42" font-size="9" text-anchor="middle">WS :7071</text>` + led(84, 22, 3.2, 0.48));
 svg += on(SIDE(560, 110, 60), `<rect class="face recess" x="30" y="24" width="14" height="10" rx="2"/>`);
 
 // Evaluator browser: base, stand, then the display slab facing the viewer.
@@ -193,7 +198,10 @@ svg += on(FRONT(660, 88, 170), (() => {
   const W = 180, H = 128;
   let s = `<rect class="halo" filter="url(#bloom)" x="8" y="8" width="${W - 16}" height="${H - 16}"/>`;
   s += `<rect class="glass" x="8" y="8" width="${W - 16}" height="${H - 16}" rx="4"/>`;
-  s += `<text class="scr" x="18" y="26" font-size="10">LIVE · P-07</text>`;
+  s += `<text class="scr" x="18" y="26" font-size="10">STATION · 3 HMD</text>`;
+  s += `<rect class="bar-bg" x="112" y="48" width="48" height="18" rx="3"/>`;
+  s += `<rect class="led-on ping" x="112" y="48" width="48" height="18" rx="3" style="${delay(0.84)}"/>`;
+  s += `<text class="scr" x="136" y="60" font-size="8" text-anchor="middle">START</text>`;
   s += `<circle class="led-on blink" cx="${W - 22}" cy="22" r="3.4" filter="url(#glow)"/>`;
   s += `<text class="scr big ping-num" x="18" y="66" font-size="30" style="${delay(0.72)}">92</text>`;
   s += `<text class="scr dim" x="66" y="66" font-size="10">score</text>`;
@@ -212,7 +220,7 @@ svg += on(TOP(30, 160, 26), (() => {
   }
   return s;
 })());
-svg += on(FRONT(30, 206, 26), `<text class="label" x="14" y="12" font-size="9">EVENTBUS · TYPED PAYLOADS · QUEUED · CAUSAL ORDER · ~2 MS/FRAME DRAIN</text>`);
+svg += on(FRONT(30, 206, 26), `<text class="label" x="14" y="12" font-size="9">EVENTBUS · TYPED PAYLOADS · QUEUED · CAUSAL ORDER · 2 MS FRAME BUDGET</text>`);
 svg += wire([[60, 183, 26], [560, 183, 26]], 0.12).replace('class="wire"', 'class="wire faint"');
 
 // Front row: UI consumer, the shared domain assembly, the session logger.
@@ -227,6 +235,7 @@ svg += chip(170, 290, 240, 130, 18, [
   ['TaskManagerCore', 10, 'scr dim'],
   ['SafetyRuleEngineCore', 10, 'scr dim'],
   ['ScoreService · SessionLoggerCore', 10, 'scr dim'],
+  ['DashboardEventRelay', 10, 'scr dim'],
 ], 0.30);
 
 svg += box(460, 300, Z, 100, 90, 36);
@@ -361,8 +370,8 @@ svg += wire([[770, 326, Z], [770, 360, Z]], 0.20);
 svg += wire([[850, 360, Z], [850, 326, Z]], 0.36);
 
 svg += box(680, 210, Z, 100, 50, 38);
-svg += on(FRONT(680, 260, 48), `<rect class="face recess" x="10" y="8" width="58" height="22" rx="2"/>` +
-  `<text class="label" x="16" y="23" font-size="9">steps.json</text>` + led(84, 18, 3, 0.05));
+svg += on(FRONT(680, 260, 48), `<rect class="face recess" x="8" y="8" width="68" height="22" rx="2"/>` +
+  `<text class="label" x="12" y="23" font-size="7.5">default.json</text>` + led(84, 18, 3, 0.05));
 svg += box(840, 205, Z, 100, 57, 62);
 svg += on(FRONT(840, 262, 72), (() => {
   let s = `<rect class="halo" filter="url(#bloom)" x="8" y="7" width="84" height="46"/>`;
@@ -388,7 +397,7 @@ svg += box(1004, 142, 6, 132, 8, 98);
 svg += on(FRONT(1004, 150, 104), (() => {
   let s = `<rect class="halo" filter="url(#bloom)" x="8" y="8" width="116" height="78"/>`;
   s += `<rect class="glass" x="8" y="8" width="116" height="78" rx="3"/>`;
-  [['$ dotnet run', 0.97], ['  scenario.json', 0.97], ['ActionAttempted', 0.05],
+  [['$ dotnet run', 0.97], ['  --mode=avaliacao', 0.97], ['ActionAttempted', 0.05],
     ['TaskCompleted', 0.38], ['score 92 · exit 0', 0.62]].forEach(([t, ph], i) => {
     s += `<text class="scr term ping-line" x="14" y="${22 + i * 13}" font-size="9" style="${delay(ph)}">${esc(t)}</text>`;
   });
@@ -403,13 +412,13 @@ svg += on(TOP(1000, 150, 6), `<rect class="face recess" x="12" y="8" width="116"
 tag([90, 75, 60], 'PPEManager', 'physics → PPE events', { lift: 36 });
 tag([230, 75, 57], 'Scene emitters', 'ActionAttempted', { lift: 38 });
 tag([370, 75, 60], 'SessionManager', 'start · pause · end', { lift: 36 });
-tag([510, 75, 60], 'Dashboard bootstrap', 'HTTP + WebSocket', { lift: 36 });
-tag([750, 81, 170], 'Evaluator browser', 'read-only telemetry', { lift: 24 });
+tag([510, 75, 60], 'Dashboard bootstrap', 'events out · commands in', { lift: 36, dx: -24 });
+tag([750, 81, 170], 'Evaluator station', 'watches headsets · sends commands', { lift: 24, dx: 50 });
 tag([40, 170, 26], 'EventBus', 'every system talks only here', { lift: 92, dx: -40, anchor: 'end' });
 tag([80, 345, 50], 'UI · HUD & popups', null, { lift: 30, dx: -60 });
 tag([290, 420, 10], 'SafetyProto.Shared.dll', 'domain core · zero UnityEngine', { side: 'down', lift: 56 });
 tag([470, 390, 10], 'SessionLogger', 'session log → JSON', { side: 'down', lift: 62, dx: -30, anchor: 'end' });
-tag([730, 235, 48], 'ScriptedActor', 'producer', { lift: 30, dx: -20 });
+tag([730, 235, 48], 'ScriptedActor', 'plays the scenario script', { lift: 30, dx: -20 });
 tag([890, 233, 72], 'TranscriptRecorder', 'observer', { lift: 30, dx: 20 });
 tag([940, 313, 22], 'HarnessEventBus', null, { side: 'down', lift: 30, dx: 46, anchor: 'start' });
 tag([630, 436, Z], 'same compiled assembly', null, { side: 'down', lift: 92, dx: -20, anchor: 'end' });
@@ -436,7 +445,8 @@ const READS = [
   [0.22, 0.36, 'SafetyRuleEngineCore · validate'],
   [0.36, 0.48, 'TaskCompleted → bus'],
   [0.48, 0.72, 'ScoreChanged → UI · log · dashboard'],
-  [0.72, 1.00, 'dashboard · score 92'],
+  [0.72, 0.84, 'dashboard · score 92'],
+  [0.84, 1.00, 'evaluator command → bus · log'],
 ];
 let readCss = '';
 const readout = READS.map(([a, b, t], i) => {
@@ -513,7 +523,7 @@ const filters = glow => glow
 mkdirSync(OUT_DIR, { recursive: true });
 for (const [name, C_] of Object.entries(THEMES)) {
 const out = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${K.W} ${K.H}" width="${Math.round(K.W)}" height="${Math.round(K.H)}" role="img" aria-label="Isometric diagram of the event-driven architecture: Unity producers and consumers communicate only through a typed EventBus, the domain logic is one shared assembly, and a .NET CLI harness runs the same assembly.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${K.W} ${K.H}" width="${Math.round(K.W)}" height="${Math.round(K.H)}" role="img" aria-label="Isometric diagram of the event-driven architecture: Unity producers and consumers communicate only through a typed EventBus, the domain logic is one shared assembly, an evaluator dashboard watches the session and sends commands back, and a .NET CLI harness runs the same assembly.">
 <title>safety-training-proto architecture</title>
 <defs>
 <style>${cssFor(C_)}</style>
