@@ -14,6 +14,55 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'images');
+// Optional: --lang pt (Portuguese labels), --theme light|dark (one theme only),
+// --out <file> (with --theme). With no flags it writes the two README SVGs.
+const argv = process.argv.slice(2);
+const flag = name => { const i = argv.indexOf(`--${name}`); return i >= 0 ? argv[i + 1] : undefined; };
+const LANG = flag('lang') ?? 'en';
+const ONLY_THEME = flag('theme');
+const OUT_FILE = flag('out');
+// --fit crops the frame to the drawing and drops the title, for a slide that
+// already has one; the step readout moves to the top-right corner, which the
+// crop leaves empty.
+const FIT = argv.includes('--fit');
+const STRINGS = {
+  en: {
+    ppeBox: 'PPE', actionsBox: 'ACTIONS', station: 'STATION · 3 HMD', start: 'START', score: 'score',
+    busLine: 'EVENTBUS · TYPED PAYLOADS · QUEUED · CAUSAL ORDER · 2 MS FRAME BUDGET',
+    tPpe: ['PPEManager', 'physics → PPE events'], tScene: ['Scene emitters', 'ActionAttempted'],
+    tSession: ['SessionManager', 'start · pause · end'], tBoot: ['Dashboard bootstrap', 'events out · commands in'],
+    tStation: ['Evaluator station', 'watches headsets · sends commands'], tBus: ['EventBus', 'every system talks only here'],
+    tUi: 'UI · HUD & popups', tShared: ['SafetyProto.Shared.dll', 'domain core · zero UnityEngine'],
+    tLogger: ['SessionLogger', 'session log → JSON'], tActor: ['ScriptedActor', 'plays the scenario script'],
+    tRecorder: ['TranscriptRecorder', 'observer'], tSame: 'same compiled assembly',
+    tQuest: ['Meta Quest 3', 'runs the Unity build'], tDotnet: ['.NET 10 machine', 'runs the harness headless'],
+    title: 'FIG 1 · EVENT-DRIVEN ARCHITECTURE', subtitle: 'one typed event bus · one shared domain assembly · two runtimes',
+    legend: ['typed event in flight', 'domain logic, no UnityEngine reference', 'one source, compiled into both runtimes'],
+    reads: ['ActionAttempted → bus', 'SafetyRuleEngineCore · validate', 'TaskCompleted → bus',
+      'ScoreChanged → UI · log · dashboard', 'dashboard · score 92', 'evaluator command → bus · log'],
+    svgTitle: 'safety-training-proto architecture',
+    aria: 'Isometric diagram of the event-driven architecture: Unity producers and consumers communicate only through a typed EventBus, the domain logic is one shared assembly, an evaluator dashboard watches the session and sends commands back, and a .NET CLI harness runs the same assembly.',
+  },
+  pt: {
+    ppeBox: 'EPI', actionsBox: 'AÇÕES', station: 'ESTAÇÃO · 3 ÓCULOS', start: 'INICIAR', score: 'pontos',
+    busLine: 'EVENTBUS · EVENTOS TIPADOS · FILA · ORDEM CAUSAL · 2 MS POR QUADRO',
+    tPpe: ['PPEManager', 'física → eventos de EPI'], tScene: ['Emissores da cena', 'ActionAttempted'],
+    tSession: ['SessionManager', 'início · pausa · fim'], tBoot: ['Servidor do painel', 'eventos saem · comandos entram'],
+    tStation: ['Estação do avaliador', 'acompanha os óculos · envia comandos'], tBus: ['EventBus', 'todo sistema fala só por aqui'],
+    tUi: 'Interface · HUD e pop-ups', tShared: ['SafetyProto.Shared.dll', 'núcleo de domínio · sem UnityEngine'],
+    tLogger: ['SessionLogger', 'registro da sessão → JSON'], tActor: ['ScriptedActor', 'reproduz o roteiro do cenário'],
+    tRecorder: ['TranscriptRecorder', 'observador'], tSame: 'o mesmo assembly compilado',
+    tQuest: ['Meta Quest 3', 'roda o build do Unity'], tDotnet: ['Máquina com .NET 10', 'roda o harness sem o Unity'],
+    title: 'ARQUITETURA ORIENTADA A EVENTOS', subtitle: 'um barramento de eventos tipado · um núcleo de domínio compartilhado · dois runtimes',
+    legend: ['evento tipado em trânsito', 'lógica de domínio, sem referência ao UnityEngine', 'uma fonte, compilada nos dois runtimes'],
+    reads: ['ActionAttempted → barramento', 'SafetyRuleEngineCore · valida', 'TaskCompleted → barramento',
+      'ScoreChanged → interface · registro · painel', 'painel · pontuação 92', 'comando do avaliador → barramento · registro'],
+    svgTitle: 'Arquitetura do safety-training-proto',
+    aria: 'Diagrama isométrico da arquitetura orientada a eventos: produtores e consumidores do Unity se comunicam só por um EventBus tipado, a lógica de domínio é um assembly compartilhado, o painel do avaliador acompanha a sessão e envia comandos de volta, e um harness .NET de linha de comando roda o mesmo assembly.',
+  },
+};
+const L = STRINGS[LANG];
+if (!L) throw new Error(`unknown --lang ${LANG}`);
 // The evaluator dashboard's two themes (Tools/DashboardSrc/style.css), with
 // translucent borders flattened onto the panel. Only the dark theme keeps
 // iso-glow's bloom; in light mode lit parts read as flat accent.
@@ -92,7 +141,7 @@ const delay = phase => `animation-delay:${f((phase - 1) * T)}s`;
 const K = frame([
   [0, 0, 120], [600, 0, 0], [0, 440, 0], [960, 440, 0], [960, 190, 0], [830, 40, 0], [660, 56, 175],
   [10, 692, 0], [30, 618, 90], [105, 548, 140], [1140, 236, 0], [1140, 142, 104],
-], 0.06, 1.5);
+], FIT ? 0.035 : 0.06, FIT ? 1.85 : 1.5);
 const { P, TOP, FRONT, SIDE, rect, box, path, len } = K;
 
 const on = (t, inner) => `<g transform="${t}">${inner}</g>`;
@@ -171,14 +220,14 @@ svg += on(TOP(30, 160, Z), `<rect class="halo" filter="url(#bloom)" x="-14" y="-
 // Back row: PPE manager, scene emitters, session manager, dashboard bootstrap.
 svg += box(40, 40, Z, 100, 70, 50);
 svg += on(FRONT(40, 110, 60), `<g>${[14, 22, 30, 38, 46, 54].map(u => `<line class="detail" x1="${u}" y1="12" x2="${u}" y2="38"/>`).join('')}</g>` +
-  `<text class="label" x="66" y="28" font-size="11" text-anchor="middle">PPE</text>` + led(86, 40, 3.2, 0.0));
+  `<text class="label" x="66" y="28" font-size="11" text-anchor="middle">${esc(L.ppeBox)}</text>` + led(86, 40, 3.2, 0.0));
 svg += on(TOP(40, 40, 60), `<rect class="detail" x="10" y="10" width="80" height="50" rx="4"/>`);
 
 svg += box(180, 40, Z, 100, 70, 40);
 for (const [i, u] of [200, 228, 256].entries()) {
   svg += `<g class="${i === 0 ? 'cap ping-cap' : 'cap'}" style="${i === 0 ? delay(0.0) : ''}">${box(u, 62, 50, 18, 26, 7)}</g>`;
 }
-svg += on(FRONT(180, 110, 50), `<text class="label" x="50" y="24" font-size="10" text-anchor="middle">ACTIONS</text>` + led(86, 30, 3.2, 0.0));
+svg += on(FRONT(180, 110, 50), `<text class="label" x="50" y="24" font-size="10" text-anchor="middle">${esc(L.actionsBox)}</text>` + led(86, 30, 3.2, 0.0));
 
 svg += box(320, 40, Z, 100, 70, 50);
 svg += on(FRONT(320, 110, 60), `<rect class="glass" x="12" y="10" width="62" height="24" rx="3"/>` +
@@ -198,13 +247,13 @@ svg += on(FRONT(660, 88, 170), (() => {
   const W = 180, H = 128;
   let s = `<rect class="halo" filter="url(#bloom)" x="8" y="8" width="${W - 16}" height="${H - 16}"/>`;
   s += `<rect class="glass" x="8" y="8" width="${W - 16}" height="${H - 16}" rx="4"/>`;
-  s += `<text class="scr" x="18" y="26" font-size="10">STATION · 3 HMD</text>`;
+  s += `<text class="scr" x="18" y="26" font-size="10">${esc(L.station)}</text>`;
   s += `<rect class="bar-bg" x="112" y="48" width="48" height="18" rx="3"/>`;
   s += `<rect class="led-on ping" x="112" y="48" width="48" height="18" rx="3" style="${delay(0.84)}"/>`;
-  s += `<text class="scr" x="136" y="60" font-size="8" text-anchor="middle">START</text>`;
+  s += `<text class="scr" x="136" y="60" font-size="8" text-anchor="middle">${esc(L.start)}</text>`;
   s += `<circle class="led-on blink" cx="${W - 22}" cy="22" r="3.4" filter="url(#glow)"/>`;
   s += `<text class="scr big ping-num" x="18" y="66" font-size="30" style="${delay(0.72)}">92</text>`;
-  s += `<text class="scr dim" x="66" y="66" font-size="10">score</text>`;
+  s += `<text class="scr dim" x="66" y="66" font-size="10">${esc(L.score)}</text>`;
   [0.85, 0.6, 0.3].forEach((k, i) => {
     s += `<rect class="bar-bg" x="18" y="${80 + i * 12}" width="${W - 50}" height="6" rx="2"/>`;
     s += `<rect class="bar ${i === 2 ? 'grow' : ''}" x="18" y="${80 + i * 12}" width="${f((W - 50) * k)}" height="6" rx="2" style="${i === 2 ? delay(0.72) : ''}"/>`;
@@ -220,7 +269,7 @@ svg += on(TOP(30, 160, 26), (() => {
   }
   return s;
 })());
-svg += on(FRONT(30, 206, 26), `<text class="label" x="14" y="12" font-size="9">EVENTBUS · TYPED PAYLOADS · QUEUED · CAUSAL ORDER · 2 MS FRAME BUDGET</text>`);
+svg += on(FRONT(30, 206, 26), `<text class="label" x="14" y="12" font-size="9">${esc(L.busLine)}</text>`);
 svg += wire([[60, 183, 26], [560, 183, 26]], 0.12).replace('class="wire"', 'class="wire faint"');
 
 // Front row: UI consumer, the shared domain assembly, the session logger.
@@ -409,50 +458,45 @@ svg += on(TOP(1000, 150, 6), `<rect class="face recess" x="12" y="8" width="116"
   `<rect class="detail" x="48" y="56" width="44" height="24" rx="3"/>`);
 
 // Labels sit above every shape so no face can hide them.
-tag([90, 75, 60], 'PPEManager', 'physics → PPE events', { lift: 36 });
-tag([230, 75, 57], 'Scene emitters', 'ActionAttempted', { lift: 38 });
-tag([370, 75, 60], 'SessionManager', 'start · pause · end', { lift: 36 });
-tag([510, 75, 60], 'Dashboard bootstrap', 'events out · commands in', { lift: 36, dx: -24 });
-tag([750, 81, 170], 'Evaluator station', 'watches headsets · sends commands', { lift: 24, dx: 50 });
-tag([40, 170, 26], 'EventBus', 'every system talks only here', { lift: 92, dx: -40, anchor: 'end' });
-tag([80, 345, 50], 'UI · HUD & popups', null, { lift: 30, dx: -60 });
-tag([290, 420, 10], 'SafetyProto.Shared.dll', 'domain core · zero UnityEngine', { side: 'down', lift: 56 });
-tag([470, 390, 10], 'SessionLogger', 'session log → JSON', { side: 'down', lift: 62, dx: -30, anchor: 'end' });
-tag([730, 235, 48], 'ScriptedActor', 'plays the scenario script', { lift: 30, dx: -20 });
-tag([890, 233, 72], 'TranscriptRecorder', 'observer', { lift: 30, dx: 20 });
+tag([90, 75, 60], ...L.tPpe, { lift: 36 });
+tag([230, 75, 57], ...L.tScene, { lift: 38 });
+tag([370, 75, 60], ...L.tSession, { lift: 36 });
+tag([510, 75, 60], ...L.tBoot, { lift: 36, dx: -24 });
+tag([750, 81, 170], ...L.tStation, { lift: 24, dx: 50 });
+tag([40, 170, 26], ...L.tBus, { lift: 92, dx: -40, anchor: 'end' });
+tag([80, 345, 50], L.tUi, null, { lift: 30, dx: -60 });
+tag([290, 420, 10], ...L.tShared, { side: 'down', lift: 56 });
+tag([470, 390, 10], ...L.tLogger, { side: 'down', lift: 62, dx: -30, anchor: 'end' });
+tag([730, 235, 48], ...L.tActor, { lift: 30, dx: -20 });
+tag([890, 233, 72], ...L.tRecorder, { lift: 30, dx: 20 });
 tag([940, 313, 22], 'HarnessEventBus', null, { side: 'down', lift: 30, dx: 46, anchor: 'start' });
-tag([630, 436, Z], 'same compiled assembly', null, { side: 'down', lift: 92, dx: -20, anchor: 'end' });
-tag([105, 650, 14], 'Meta Quest 3', 'runs the Unity build', { side: 'down', lift: 64 });
-tag([1070, 236, 0], '.NET 10 machine', 'runs the harness headless', { side: 'down', lift: 70 });
+tag([630, 436, Z], L.tSame, null, { side: 'down', lift: 92, dx: -20, anchor: 'end' });
+tag([105, 650, 14], ...L.tQuest, { side: 'down', lift: 64 });
+tag([1070, 236, 0], ...L.tDotnet, { side: 'down', lift: 70 });
 
 
-const titles = `
-<text class="title" x="40" y="58">FIG 1 · EVENT-DRIVEN ARCHITECTURE</text>
-<text class="sub" x="40" y="86">one typed event bus · one shared domain assembly · two runtimes</text>
+const titles = FIT ? '' : `
+<text class="title" x="40" y="58">${esc(L.title)}</text>
+<text class="sub" x="40" y="86">${esc(L.subtitle)}</text>
 `;
 
 const legend = (() => {
   const x = 34, y = K.H - 84;
   return `<g transform="translate(${x} ${y})">
-  <line class="legend-pulse" x1="0" y1="-4" x2="26" y2="-4" filter="url(#glow)"/><text class="sub" x="38" y="0">typed event in flight</text>
-  <rect class="legend-chip" x="0" y="16" width="26" height="12" rx="2"/><text class="sub" x="38" y="27">domain logic, no UnityEngine reference</text>
-  <line class="link" x1="0" y1="50" x2="26" y2="50"/><text class="sub" x="38" y="54">one source, compiled into both runtimes</text>
+  <line class="legend-pulse" x1="0" y1="-4" x2="26" y2="-4" filter="url(#glow)"/><text class="sub" x="38" y="0">${esc(L.legend[0])}</text>
+  <rect class="legend-chip" x="0" y="16" width="26" height="12" rx="2"/><text class="sub" x="38" y="27">${esc(L.legend[1])}</text>
+  <line class="link" x1="0" y1="50" x2="26" y2="50"/><text class="sub" x="38" y="54">${esc(L.legend[2])}</text>
 </g>`;
 })();
 
 const READS = [
-  [0.00, 0.22, 'ActionAttempted → bus'],
-  [0.22, 0.36, 'SafetyRuleEngineCore · validate'],
-  [0.36, 0.48, 'TaskCompleted → bus'],
-  [0.48, 0.72, 'ScoreChanged → UI · log · dashboard'],
-  [0.72, 0.84, 'dashboard · score 92'],
-  [0.84, 1.00, 'evaluator command → bus · log'],
-];
+  [0.00, 0.22], [0.22, 0.36], [0.36, 0.48], [0.48, 0.72], [0.72, 0.84], [0.84, 1.00],
+].map((span, i) => [...span, L.reads[i]]);
 let readCss = '';
 const readout = READS.map(([a, b, t], i) => {
   const w = f((b - a) * 100 - 0.3);
   readCss += `@keyframes rd${i}{0%,${w}%{opacity:1}${f(w + 0.01)}%,100%{opacity:0}}.rd${i}{animation:rd${i} ${T}s steps(1,end) infinite;${delay(a || 1)}}`;
-  return `<text class="readout rd${i}" x="${f(K.W - 34)}" y="${f(K.H - 34)}" text-anchor="end">${esc(t)}</text>`;
+  return `<text class="readout rd${i}" x="${f(K.W - 34)}" y="${f(FIT ? 44 : K.H - 34)}" text-anchor="end">${esc(t)}</text>`;
 }).join('');
 
 const cssFor = C_ => `
@@ -520,11 +564,13 @@ const filters = glow => glow
   : `<filter id="glow" filterUnits="userSpaceOnUse" x="-2000" y="-2000" width="6000" height="6000"><feMerge><feMergeNode in="SourceGraphic"/></feMerge></filter>
 <filter id="bloom" filterUnits="userSpaceOnUse" x="-2000" y="-2000" width="6000" height="6000"><feFlood flood-opacity="0"/></filter>`;
 
-mkdirSync(OUT_DIR, { recursive: true });
-for (const [name, C_] of Object.entries(THEMES)) {
+if (OUT_FILE && !ONLY_THEME) throw new Error('--out needs --theme');
+const themes = Object.entries(THEMES).filter(([name]) => !ONLY_THEME || name === ONLY_THEME);
+if (!themes.length) throw new Error(`unknown --theme ${ONLY_THEME}`);
+for (const [name, C_] of themes) {
 const out = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${K.W} ${K.H}" width="${Math.round(K.W)}" height="${Math.round(K.H)}" role="img" aria-label="Isometric diagram of the event-driven architecture: Unity producers and consumers communicate only through a typed EventBus, the domain logic is one shared assembly, an evaluator dashboard watches the session and sends commands back, and a .NET CLI harness runs the same assembly.">
-<title>safety-training-proto architecture</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${K.W} ${K.H}" width="${Math.round(K.W)}" height="${Math.round(K.H)}" role="img" aria-label="${esc(L.aria)}">
+<title>${esc(L.svgTitle)}</title>
 <defs>
 <style>${cssFor(C_)}</style>
 ${filters(C_.glow)}
@@ -538,7 +584,8 @@ ${readout}
 </svg>
 `;
 
-const file = join(OUT_DIR, `architecture-${name}.svg`);
+const file = OUT_FILE ?? join(OUT_DIR, `architecture-${name}${LANG === 'en' ? '' : `.${LANG}`}.svg`);
+mkdirSync(dirname(file), { recursive: true });
 writeFileSync(file, out);
 console.log(`wrote ${file} (${(out.length / 1024).toFixed(1)} KiB, ${K.W}×${K.H})`);
 }
