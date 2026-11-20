@@ -49,10 +49,7 @@ compiles.
    (`Core/Interfaces/`); the runtime supplies the implementation. The one
    standing deviation is `ScoreService.Instance`, a static accessor kept because
    ten runtime components read the score and only one score scope exists;
-   revisit it only if a second scope is ever needed (see
-   [ADR 0002](docs/adr/0002-score-service-static-instance.md)).
-
-Deliberate exceptions to these rules are recorded in [docs/adr/](docs/adr/README.md).
+   revisit it only if a second scope is ever needed.
 
 ---
 
@@ -107,8 +104,7 @@ cross. There is no duplication and no port: one set of source files participates
 in two compilations. The Unity runtime and the CLI harness therefore execute
 *identical* orchestration, rule, scoring, and logging code, differing only in the
 adapters wired around it. The same linked-source model feeds the authoring
-applications and the headless test runner (§21). See
-[ADR 0005](docs/adr/0005-one-source-two-compilations.md).
+applications and the headless test runner (§21).
 
 ---
 
@@ -173,8 +169,7 @@ audio timing are not deferred by a frame. This is the one place the "everything
 is queued" rule is broken, and it is intentional and contained: the subscribers
 (`EventGameObjectListener`, the session simulator) are audio/visual only and
 have no ordering dependency on the queued protocol. Keep it that way — do not
-route game-state changes through the synchronous channel (see
-[ADR 0001](docs/adr/0001-synchronous-consequence-channel.md)).
+route game-state changes through the synchronous channel.
 
 ---
 
@@ -228,8 +223,7 @@ The design points worth stating here are these:
   Every change of the hold set is also published as `PauseHoldChanged`, ahead
   of the transition, and the transition events name the source that caused
   them, so the session log can attribute and rebuild overlapping pauses.
-  `IsPaused` reflects the holds immediately; the events arrive on the next pump
-  (see [ADR 0004](docs/adr/0004-session-pause-hold-count.md)).
+  `IsPaused` reflects the holds immediately; the events arrive on the next pump.
 - **The bus reports its own faults through the protocol.** `SafetyError` is how
   a listener exception or a queue overflow reaches the log and the dashboard. The
   bus dispatches it with error-raising disabled so a faulty `SafetyError`
@@ -742,8 +736,7 @@ Constraints worth recording for anyone extending it:
   the pose stream honours; `RecenterService` sets it during a teleport so a
   blocking send cannot drop the participant through a collider. Discrete events
   are never gated. Do not optimise the pose stream further: its cost was
-  measured and closed as negligible (see
-  [ADR 0003](docs/adr/0003-dashboard-gate-process-wide-flag.md)).
+  measured and closed as negligible.
 - **Scene layout.** `DashboardSceneLayout` is a per-scene authoring component
   listing floors and markers; its DTO is sent on `RequestSync` so the browser's
   Three.js viewport can draw the scaffold, and its `TryGetStandPoint` doubles as
