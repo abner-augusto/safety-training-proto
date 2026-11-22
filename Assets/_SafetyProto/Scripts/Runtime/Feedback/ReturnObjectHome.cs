@@ -7,6 +7,16 @@ using UnityEngine;
 namespace SafetyProto.Runtime.Feedback
 {
     /// <summary>
+    /// Takes over a return home that is due, in place of the animated trip back. Lives on the
+    /// same object as its <see cref="ReturnObjectHome"/>.
+    /// </summary>
+    public interface IReturnHomeOverride
+    {
+        /// <returns>True when it handled the return; false lets the object travel home as usual.</returns>
+        bool TryTakeOverReturn();
+    }
+
+    /// <summary>
     /// Brings a loose interactive object back to its home pose when a hand lets go of it away
     /// from any slot, or when it ends up out of place without being held (pushed by the physical
     /// hands, knocked off the table). The state is read from the <see cref="Grabbable"/> and the
@@ -40,6 +50,7 @@ namespace SafetyProto.Runtime.Feedback
         private Grabbable _grabbable;
         private Rigidbody _rb;
         private ISecuredPlacement[] _placements;
+        private IReturnHomeOverride _override;
         private ReturnHomePolicy _policy;
 
         private Vector3 _homePosition;
@@ -79,6 +90,7 @@ namespace SafetyProto.Runtime.Feedback
             _grabbable = GetComponent<Grabbable>();
             _rb = GetComponent<Rigidbody>();
             _placements = GetComponents<ISecuredPlacement>();
+            _override = GetComponent<IReturnHomeOverride>();
             _policy = new ReturnHomePolicy(returnDelay, maxHomeDistance, maxDropBelowHome);
             CacheHomePose();
         }
@@ -111,6 +123,7 @@ namespace SafetyProto.Runtime.Feedback
         {
             if (IsHeld) return;
             _policy?.Reset();
+            if (_override != null && _override.TryTakeOverReturn()) return;
             BeginReturn();
         }
 
@@ -176,7 +189,8 @@ namespace SafetyProto.Runtime.Feedback
                 else RestorePhysics();
             }
 
-            if (_policy.Tick(Time.deltaTime, Observe(held), out _))
+            if (_policy.Tick(Time.deltaTime, Observe(held), out _)
+                && (_override == null || !_override.TryTakeOverReturn()))
                 BeginReturn();
         }
 

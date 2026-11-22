@@ -2396,6 +2396,7 @@ Transform:
   - {fileID: 56696006}
   - {fileID: 1674772950}
   - {fileID: 1349885908}
+  - {fileID: 383928113}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &109422711
@@ -8447,7 +8448,8 @@ Transform:
   m_LocalPosition: {x: 0, y: -0.85, z: 0.079}
   m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
   m_ConstrainProportionsScale: 1
-  m_Children: []
+  m_Children:
+  - {fileID: 1720744272}
   m_Father: {fileID: 1586613345}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &306169571
@@ -10428,6 +10430,77 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 348992906}
   m_Mesh: {fileID: -2160634817504456999, guid: 9b1545b790c85354a9b6449bb3dee586, type: 3}
+--- !u!1 &353505579
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 353505582}
+  - component: {fileID: 353505581}
+  - component: {fileID: 353505580}
+  m_Layer: 8
+  m_Name: PracticeSlot(RightHand)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &353505580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 353505579}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6476873dc86d21419abdaa8fa0ac44c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Practice.PracticeSnapSlot
+  interactionId: equip_hand
+  side: 2
+  locksItem: 0
+  wornPose: {fileID: 0}
+  cueSlot: {fileID: 876599392}
+--- !u!135 &353505581
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 353505579}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.08
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!4 &353505582
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 353505579}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 6.6666665, y: 6.6666665, z: 6.6666665}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 876599389}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &354853273
 GameObject:
   m_ObjectHideFlags: 0
@@ -10611,96 +10684,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 356494601}
   m_Mesh: {fileID: 1976933438195433647, guid: 9b1545b790c85354a9b6449bb3dee586, type: 3}
---- !u!1 &359111080
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 359111081}
-  - component: {fileID: 359111083}
-  - component: {fileID: 359111082}
-  m_Layer: 8
-  m_Name: Ghost
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &359111081
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 359111080}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.22, y: 0.22, z: 0.22}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 929053084}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!23 &359111082
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 359111080}
-  m_Enabled: 1
-  m_CastShadows: 0
-  m_ReceiveShadows: 0
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 0
-  m_ReflectionProbeUsage: 0
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: e8da288761d63e445a31822deb14ae4c, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 1
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &359111083
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 359111080}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &369490719
 GameObject:
   m_ObjectHideFlags: 0
@@ -10979,6 +10962,160 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 374364971}
   m_Mesh: {fileID: 4677276727084016703, guid: 9b1545b790c85354a9b6449bb3dee586, type: 3}
+--- !u!1 &383928112
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 383928113}
+  - component: {fileID: 383928115}
+  - component: {fileID: 383928114}
+  m_Layer: 0
+  m_Name: Pratica_CuboDispenser
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &383928113
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 383928112}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.6, y: 1.02, z: 0.75}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 103338224}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &383928114
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 383928112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24e623db71cad904c8baed627b79a4b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Practice.PracticeCubeDispenser
+  cube: {fileID: 557476246}
+  maxCubes: 5
+  leaveDistance: 0.12
+  spawnDelaySeconds: 0.35
+  materializeSeconds: 0.55
+  dissolveSeconds: 0.3
+  fallSeconds: 2
+  glowColor: {r: 0.8, g: 0.97, b: 1, a: 1}
+  audioSource: {fileID: 383928115}
+  materializeSound: {fileID: 8300000, guid: 67c08011527d8f04b9ea54a561f338f3, type: 3}
+  dissolveSound: {fileID: 8300000, guid: 97e778fb437c3ad4eb92f4c45ee5ef0f, type: 3}
+  audioVolume: 0.6
+--- !u!82 &383928115
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 383928112}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 0.3
+  MaxDistance: 5
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &385969822
 GameObject:
   m_ObjectHideFlags: 0
@@ -11092,6 +11229,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 385969822}
   m_Mesh: {fileID: -2625942474568584591, guid: 9b1545b790c85354a9b6449bb3dee586, type: 3}
+--- !u!1 &399785912
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 399785913}
+  m_Layer: 8
+  m_Name: WornPose
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &399785913
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 399785912}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.02000001, z: -0.13}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 929053084}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &400665576
 GameObject:
   m_ObjectHideFlags: 0
@@ -11577,7 +11745,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.22, y: 0.22, z: 0.22}
+  m_LocalScale: {x: 0.11, y: 0.11, z: 0.11}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 557476241}
@@ -12482,6 +12650,77 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 7738275440832220466, guid: d2ead1554c4725844913b2a91cb2c96e, type: 3}
   m_PrefabInstance: {fileID: 5892826378951346378}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &475115018
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 475115019}
+  - component: {fileID: 475115021}
+  - component: {fileID: 475115020}
+  m_Layer: 8
+  m_Name: PracticeSlot(LeftHand)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &475115019
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 475115018}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 6.6666665, y: 6.6666665, z: 6.6666665}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 917602393}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &475115020
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 475115018}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6476873dc86d21419abdaa8fa0ac44c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Practice.PracticeSnapSlot
+  interactionId: equip_hand
+  side: 1
+  locksItem: 0
+  wornPose: {fileID: 0}
+  cueSlot: {fileID: 917602396}
+--- !u!135 &475115021
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 475115018}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.08
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &477855704 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8656817883223332263, guid: 0a7d2469f24041c4284c66706f84c45e, type: 3}
@@ -13410,7 +13649,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0.15, z: 0.11}
   m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
   m_ConstrainProportionsScale: 1
-  m_Children: []
+  m_Children:
+  - {fileID: 929053084}
   m_Father: {fileID: 1586613345}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &499804246
@@ -15427,7 +15667,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.22, y: 0.22, z: 0.22}
+  m_Size: {x: 0.11, y: 0.11, z: 0.11}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &557518339
 GameObject:
@@ -18090,6 +18330,7 @@ Transform:
   m_Children:
   - {fileID: 1893254375}
   - {fileID: 772725867}
+  - {fileID: 733987337}
   m_Father: {fileID: 1586613345}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &667127734
@@ -19868,6 +20109,77 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -6364610028503448202, guid: 5210f460bf9b3994588ee5fdd0bcc62d, type: 3}
+--- !u!1 &733987336
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 733987337}
+  - component: {fileID: 733987340}
+  - component: {fileID: 733987339}
+  m_Layer: 8
+  m_Name: PracticeSlot(Chest)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &733987337
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 733987336}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 5, y: 5, z: 5}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 667127733}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &733987339
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 733987336}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6476873dc86d21419abdaa8fa0ac44c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Practice.PracticeSnapSlot
+  interactionId: equip_chest
+  side: 0
+  locksItem: 0
+  wornPose: {fileID: 0}
+  cueSlot: {fileID: 667127737}
+--- !u!135 &733987340
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 733987336}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.12
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &739786800
 GameObject:
   m_ObjectHideFlags: 0
@@ -24397,7 +24709,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0.03, z: -0.05}
   m_LocalScale: {x: 0.15, y: 0.15, z: 0.15}
   m_ConstrainProportionsScale: 1
-  m_Children: []
+  m_Children:
+  - {fileID: 353505582}
   m_Father: {fileID: 1194578008}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &876599390
@@ -25309,7 +25622,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0.03, z: -0.05}
   m_LocalScale: {x: 0.15, y: 0.15, z: 0.15}
   m_ConstrainProportionsScale: 1
-  m_Children: []
+  m_Children:
+  - {fileID: 475115019}
   m_Father: {fileID: 826881402}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &917602394
@@ -25675,12 +25989,12 @@ Transform:
   m_GameObject: {fileID: 929053083}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.13, z: -0.02}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 5, y: 5, z: 5}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 359111081}
-  m_Father: {fileID: 1586613345}
+  - {fileID: 399785913}
+  m_Father: {fileID: 499804245}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &929053085
 MonoBehaviour:
@@ -25695,9 +26009,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Practice.PracticeSnapSlot
   interactionId: equip_head
-  ghostRenderer: {fileID: 359111082}
-  idleColor: {r: 1, g: 1, b: 1, a: 0.25}
-  hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.5}
+  side: 0
+  locksItem: 1
+  wornPose: {fileID: 399785913}
+  cueSlot: {fileID: 499804248}
 --- !u!135 &929053086
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -41138,96 +41453,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1209533051}
   m_Mesh: {fileID: 1976933438195433647, guid: 9b1545b790c85354a9b6449bb3dee586, type: 3}
---- !u!1 &1209878296
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1209878299}
-  - component: {fileID: 1209878298}
-  - component: {fileID: 1209878297}
-  m_Layer: 8
-  m_Name: Ghost
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!23 &1209878297
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1209878296}
-  m_Enabled: 1
-  m_CastShadows: 0
-  m_ReceiveShadows: 0
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 0
-  m_ReflectionProbeUsage: 0
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: e8da288761d63e445a31822deb14ae4c, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 1
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &1209878298
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1209878296}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!4 &1209878299
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1209878296}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.22, y: 0.22, z: 0.22}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1720744272}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1211617938
 GameObject:
   m_ObjectHideFlags: 0
@@ -51826,8 +52051,6 @@ Transform:
   - {fileID: 667127733}
   - {fileID: 306169570}
   - {fileID: 964234003}
-  - {fileID: 929053084}
-  - {fileID: 1720744272}
   m_Father: {fileID: 1013343662}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1586613346
@@ -57261,7 +57484,6 @@ GameObject:
   - component: {fileID: 1720744272}
   - component: {fileID: 1720744271}
   - component: {fileID: 1720744270}
-  - component: {fileID: 1720744273}
   m_Layer: 8
   m_Name: PracticeSlot(Foot)
   m_TagString: Untagged
@@ -57282,9 +57504,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Practice.PracticeSnapSlot
   interactionId: equip_foot
-  ghostRenderer: {fileID: 1209878297}
-  idleColor: {r: 1, g: 1, b: 1, a: 0.25}
-  hoverColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.5}
+  side: 0
+  locksItem: 0
+  wornPose: {fileID: 0}
+  cueSlot: {fileID: 306169574}
 --- !u!135 &1720744271
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -57315,26 +57538,12 @@ Transform:
   m_GameObject: {fileID: 1720744268}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.7, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 5, y: 5, z: 5}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1209878299}
-  m_Father: {fileID: 1586613345}
+  m_Children: []
+  m_Father: {fileID: 306169570}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1720744273
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1720744268}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2057eb3a8f3a574386845e39b2a33fc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.PPE.FollowHeadPosition
-  offset: {x: 0, y: -0.7, z: 0}
 --- !u!1 &1722772040
 GameObject:
   m_ObjectHideFlags: 0
@@ -62499,6 +62708,9 @@ MonoBehaviour:
   - {fileID: 929053083}
   - {fileID: 1720744268}
   - {fileID: 1698895494}
+  - {fileID: 733987336}
+  - {fileID: 475115018}
+  - {fileID: 353505579}
   durationSeconds: 150
   interactions:
   - id: equip_head

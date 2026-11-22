@@ -86,6 +86,8 @@ namespace SafetyProto.Runtime.PPE
         private int _slotCapacity;
 
         private readonly Dictionary<PPESnapItem, int> _hoverCounts = new Dictionary<PPESnapItem, int>();
+        private bool _cueHovering;
+        private bool _cueOccupied;
         private float _hoverHoldUntil;
         private bool _hoverVisualActive;
         private Material _highlightMaterial;
@@ -159,6 +161,18 @@ namespace SafetyProto.Runtime.PPE
 
             _hoverCounts.TryGetValue(item, out int count);
             _hoverCounts[item] = count + 1;
+            UpdateHighlight();
+        }
+
+        /// <summary>
+        /// Shows the hover or occupied colour for an item this slot does not hold: the practice
+        /// cube, whose slot sits in this one, so the practice shows the same sphere as the training.
+        /// </summary>
+        public void SetExternalCue(bool hovering, bool occupied)
+        {
+            if (_cueHovering == hovering && _cueOccupied == occupied) return;
+            _cueHovering = hovering;
+            _cueOccupied = occupied;
             UpdateHighlight();
         }
 
@@ -335,7 +349,7 @@ namespace SafetyProto.Runtime.PPE
 
         private void Update()
         {
-            if (_hoverVisualActive && _hoverCounts.Count == 0 && Time.time >= _hoverHoldUntil)
+            if (_hoverVisualActive && _hoverCounts.Count == 0 && !_cueHovering && Time.time >= _hoverHoldUntil)
                 UpdateHighlight();
         }
 
@@ -343,14 +357,14 @@ namespace SafetyProto.Runtime.PPE
         {
             if (_highlightMaterial == null) return;
 
-            if (IsOccupied)
+            if (IsOccupied || _cueOccupied)
             {
                 _hoverVisualActive = false;
                 SetHighlight(occupiedColor);
                 return;
             }
 
-            if (_hoverCounts.Count > 0)
+            if (_hoverCounts.Count > 0 || _cueHovering)
             {
                 _hoverVisualActive = true;
                 _hoverHoldUntil = Time.time + hoverHoldSeconds;
