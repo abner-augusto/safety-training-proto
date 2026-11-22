@@ -197,7 +197,7 @@ namespace SafetyProto.Domain.Dashboard
     public struct PracticeDto
     {
         public string sessionId;
-        /// <summary>How it ended: "continue", "timeout" or "evaluator"; empty on start.</summary>
+        /// <summary>How it ended: "continue", "skipped", "timeout" or "evaluator"; empty on start.</summary>
         public string reason;
         /// <summary>Seconds spent in the area; 0 on start.</summary>
         public float seconds;

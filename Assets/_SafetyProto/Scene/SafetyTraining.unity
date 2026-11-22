@@ -56728,6 +56728,43 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyProto.UI.OnboardingController
   popupService: {fileID: 5455797637335201551}
+  practiceSteps:
+  - title: "Intera\xE7\xE3o com as M\xE3os"
+    body: "Este treinamento n\xE3o utiliza controles. Toda a intera\xE7\xE3o \xE9 feita com as suas m\xE3os. Apoie os controles e use apenas os movimentos naturais das m\xE3os durante toda a experi\xEAncia."
+    actionButtonLabel: Entendi
+    icon: {fileID: 21300000, guid: 411d27a3e567bfd45a0459692ff62892, type: 3}
+    illustrationFrames:
+    - {fileID: 21300000, guid: b88f4f6855a45b941b3e2d3f997d857d, type: 3}
+    narration: {fileID: 8300000, guid: 0d44acf43d81f0a4eae78eefa252fe55, type: 3}
+    highlightTarget: {fileID: 0}
+    onStepConfirmed:
+      m_PersistentCalls:
+        m_Calls: []
+  - title: "Interagindo com os Pain\xE9is"
+    body: "Este painel que voc\xEA est\xE1 lendo agora \xE9 como as instru\xE7\xF5es aparecer\xE3o durante toda a experi\xEAncia. Para confirmar, toque diretamente no bot\xE3o com o dedo indicador ou aponte o raio da m\xE3o e selecione \xE0 dist\xE2ncia."
+    actionButtonLabel: "Entendi \u2014 funcionou!"
+    icon: {fileID: 21300000, guid: 4c73403134d9eb3458d9c495a33c2c13, type: 3}
+    illustrationFrames:
+    - {fileID: 21300000, guid: b7b584bbb7fc9c5488a8c6745c43ef67, type: 3}
+    - {fileID: 21300000, guid: 54a75b728b12c094ab4b83b9b089cf4c, type: 3}
+    narration: {fileID: 8300000, guid: 4edfb48ce0ed086488d607ae404b1c86, type: 3}
+    highlightTarget: {fileID: 0}
+    onStepConfirmed:
+      m_PersistentCalls:
+        m_Calls: []
+  - title: Pegando Objetos
+    body: "Para pegar um objeto, aproxime a m\xE3o dele e feche o punho. Para soltar, abra a m\xE3o. Os objetos respondem ao toque das suas m\xE3os."
+    actionButtonLabel: Entendi
+    icon: {fileID: 21300000, guid: 25c0d8702947c8949b6593f764399b5a, type: 3}
+    illustrationFrames:
+    - {fileID: 21300000, guid: 61277092f6978564eb325ec25789ca0a, type: 3}
+    - {fileID: 21300000, guid: b91014e5e5a1fbe42b117106053b09eb, type: 3}
+    - {fileID: 21300000, guid: e42ea25bb381c024da37a6f291935742, type: 3}
+    narration: {fileID: 8300000, guid: d6cbf41ad90b0b640a24ed866021955b, type: 3}
+    highlightTarget: {fileID: 0}
+    onStepConfirmed:
+      m_PersistentCalls:
+        m_Calls: []
   steps:
   - title: Bem-vindo ao Treinamento
     body: "Voc\xEA est\xE1 em um ambiente virtual de treinamento de seguran\xE7a para canteiro de obras. A experi\xEAncia simula situa\xE7\xF5es reais baseadas nas normas NR-18 e NR-35. Siga as instru\xE7\xF5es com aten\xE7\xE3o."
@@ -56752,7 +56789,6 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
-    opensPracticeArea: 0
   - title: Sua atividade
     body: "Voc\xEA atuar\xE1 na inspe\xE7\xE3o de seguran\xE7a de um andaime fachadeiro nesta obra. Antes de acessar a estrutura, sua responsabilidade \xE9 selecionar os equipamentos de prote\xE7\xE3o necess\xE1rios na bancada de apoio."
     actionButtonLabel: Continuar
@@ -56764,46 +56800,6 @@ MonoBehaviour:
     onStepConfirmed:
       m_PersistentCalls:
         m_Calls: []
-    opensPracticeArea: 0
-  - title: "Intera\xE7\xE3o com as M\xE3os"
-    body: "Este treinamento n\xE3o utiliza controles. Toda a intera\xE7\xE3o \xE9 feita com as suas m\xE3os. Apoie os controles e use apenas os movimentos naturais das m\xE3os durante toda a experi\xEAncia."
-    actionButtonLabel: Entendi
-    icon: {fileID: 21300000, guid: 411d27a3e567bfd45a0459692ff62892, type: 3}
-    illustrationFrames:
-    - {fileID: 21300000, guid: b88f4f6855a45b941b3e2d3f997d857d, type: 3}
-    narration: {fileID: 8300000, guid: 0d44acf43d81f0a4eae78eefa252fe55, type: 3}
-    highlightTarget: {fileID: 0}
-    onStepConfirmed:
-      m_PersistentCalls:
-        m_Calls: []
-    opensPracticeArea: 0
-  - title: "Interagindo com os Pain\xE9is"
-    body: "Este painel que voc\xEA est\xE1 lendo agora \xE9 como as instru\xE7\xF5es aparecer\xE3o durante toda a experi\xEAncia. Para confirmar, toque diretamente no bot\xE3o com o dedo indicador ou aponte o raio da m\xE3o e selecione \xE0 dist\xE2ncia."
-    actionButtonLabel: "Entendi \u2014 funcionou!"
-    icon: {fileID: 21300000, guid: 4c73403134d9eb3458d9c495a33c2c13, type: 3}
-    illustrationFrames:
-    - {fileID: 21300000, guid: b7b584bbb7fc9c5488a8c6745c43ef67, type: 3}
-    - {fileID: 21300000, guid: 54a75b728b12c094ab4b83b9b089cf4c, type: 3}
-    narration: {fileID: 8300000, guid: 4edfb48ce0ed086488d607ae404b1c86, type: 3}
-    highlightTarget: {fileID: 0}
-    onStepConfirmed:
-      m_PersistentCalls:
-        m_Calls: []
-    opensPracticeArea: 0
-  - title: Pegando Objetos
-    body: "Para pegar um objeto, aproxime a m\xE3o dele e feche o punho. Para soltar, abra a m\xE3o. Os objetos respondem ao toque das suas m\xE3os."
-    actionButtonLabel: Entendi
-    icon: {fileID: 21300000, guid: 25c0d8702947c8949b6593f764399b5a, type: 3}
-    illustrationFrames:
-    - {fileID: 21300000, guid: 61277092f6978564eb325ec25789ca0a, type: 3}
-    - {fileID: 21300000, guid: b91014e5e5a1fbe42b117106053b09eb, type: 3}
-    - {fileID: 21300000, guid: e42ea25bb381c024da37a6f291935742, type: 3}
-    narration: {fileID: 8300000, guid: d6cbf41ad90b0b640a24ed866021955b, type: 3}
-    highlightTarget: {fileID: 0}
-    onStepConfirmed:
-      m_PersistentCalls:
-        m_Calls: []
-    opensPracticeArea: 1
   - title: "O que voc\xEA vai fazer"
     body: "A experi\xEAncia tem dois cen\xE1rios: no primeiro, voc\xEA selecionar\xE1 os equipamentos de prote\xE7\xE3o individual corretos. No segundo, inspecionar\xE1 um andaime antes de iniciar a atividade em altura. Ao final, voc\xEA receber\xE1 seu resultado."
     actionButtonLabel: "Come\xE7ar"
@@ -56829,11 +56825,11 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
-    opensPracticeArea: 0
   narrationVoice: {fileID: 1602798036}
   autoStartOnEnable: 0
   startDelayFrames: 10
   practiceArea: {fileID: 1867865746}
+  skipPracticeLabel: "Pular pr\xE1tica"
   onOnboardingFinished:
     m_PersistentCalls:
       m_Calls:

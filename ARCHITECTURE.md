@@ -696,7 +696,8 @@ domain:
   and `set_hand_collision` are `IDashboardCommandWithArgs` handlers that read
   the envelope's `args`, `start_session` ends a running session only when
   `args.replace` says the evaluator armed it over one, and `end_practice`
-  closes the practice area, refused when none is open) and
+  (the dashboard's "Pular prática") closes the practice area, refused when
+  none is open) and
   acknowledged with `CommandAckDto`; an accepted ack may carry a result summary.
   Accepted in-session commands are published as `EvaluatorCommandEventArgs` for
   the session log, with the target id when the command has one.

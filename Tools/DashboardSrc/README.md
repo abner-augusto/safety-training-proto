@@ -67,14 +67,15 @@ iframe, the embedded page sends it over its own WebSocket, and the `CommandAck`
 comes back up as a message. To add an action (for example "Chamar atenção"),
 append an entry to `TILE_ACTIONS`, add its strings to both tables in
 `js/i18n.js` and its label as `command_<wire name>`; the embedded page accepts
-only commands listed there. An action flagged `onlyWhilePracticing` (the "Encerrar
+only commands listed there. An action flagged `onlyWhilePracticing` (the "Pular
 prática" button, command `end_practice`) is drawn only while that headset reports
 `practice: true`; the other actions stay on the tile and are only blocked.
 
-Practice area: the headset opens it between onboarding steps 4 and 5 with the
-session clock held. The page learns of it from `PracticeStarted` /
+Practice area: the session opens in it, with the session clock held, for the
+first part of onboarding and the free practice; the presentation of the training
+follows in the work site. The page learns of it from `PracticeStarted` /
 `PracticeEnded` and from the `practice` flag of `StationStatus`, shows an "Em
-prática" chip, and offers "Encerrar prática" (`end_practice`) in the station
+prática" chip, and offers "Pular prática" (`end_practice`) in the station
 page and on the tile, hidden otherwise.
 
 Intervention history: the station page records every command it sends, from its

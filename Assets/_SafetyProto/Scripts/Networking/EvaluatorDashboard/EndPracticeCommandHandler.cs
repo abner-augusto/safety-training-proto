@@ -6,11 +6,11 @@ using UnityEngine;
 namespace SafetyProto.Runtime
 {
     /// <summary>
-    /// Evaluator dashboard command handler for "end_practice": closes the practice area before the
-    /// countdown runs out, for a participant who has tried enough or is struggling there. The
-    /// area ends exactly as it does on "Continuar" and fades the participant back to the
-    /// training's start point; the reason is recorded as <c>evaluator</c>. Logged as an
-    /// EvaluatorCommand like every in-session command.
+    /// Evaluator dashboard command handler for "end_practice" (the dashboard's "Pular prática"):
+    /// closes the practice area at any point, from its opening steps to the free practice, for a
+    /// participant who has tried enough or is struggling there. The area ends exactly as it does
+    /// on "Continuar" and fades the participant back to the training's start point; the reason is
+    /// recorded as <c>evaluator</c>. Logged as an EvaluatorCommand like every in-session command.
     /// </summary>
     public class EndPracticeCommandHandler : MonoBehaviour, IDashboardCommandHandler
     {
@@ -35,7 +35,7 @@ namespace SafetyProto.Runtime
             }
 
             area.Close("evaluator");
-            reason = "Área de prática encerrada pelo avaliador.";
+            reason = "Prática pulada pelo avaliador.";
             SafetyLog.Info($"[EndPracticeCommandHandler] {reason}", this);
             return true;
         }

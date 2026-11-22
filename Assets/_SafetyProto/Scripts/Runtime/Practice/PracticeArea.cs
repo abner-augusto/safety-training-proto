@@ -12,11 +12,12 @@ using UnityEngine;
 namespace SafetyProto.Runtime.Practice
 {
     /// <summary>
-    /// The practice area between onboarding steps 4 and 5: the participant fades to a neutral
-    /// space and tries each interaction of the training on primitive props, with the session clock
-    /// held. Nothing there scores or advances a task; the props are practice-only components.
-    /// It closes on "Continuar", when the countdown runs out, or on the evaluator's command, and
-    /// fades the participant back to where the training starts.
+    /// The practice area the session opens in: the participant fades to a neutral space, where
+    /// onboarding's first steps teach the interactions, then tries each of them on primitive
+    /// props, with the session clock held. Nothing there scores or advances a task; the props are
+    /// practice-only components. It closes on "Continuar", on "Pular prática", when the countdown
+    /// runs out, or on the evaluator's command, and fades the participant back to where the
+    /// training starts.
     /// </summary>
     public sealed class PracticeArea : MonoBehaviour
     {
@@ -54,6 +55,7 @@ namespace SafetyProto.Runtime.Practice
 
         private readonly List<string> _tried = new List<string>();
         private readonly List<IPracticeResettable> _resettables = new List<IPracticeResettable>();
+        private Action _onOpened;
         private Action _onClosed;
         private float _openedAt;
         private float _counted;
@@ -74,6 +76,9 @@ namespace SafetyProto.Runtime.Practice
 
         public float SecondsLeft => _secondsLeft;
 
+        /// <summary>Raised as the area starts closing, before the fade back.</summary>
+        public event Action ClosingStarted;
+
         /// <summary>Where the participant stands in the area; a recenter while it is open lands here.</summary>
         public Transform PracticeAnchor => practiceAnchor;
 
@@ -91,11 +96,12 @@ namespace SafetyProto.Runtime.Practice
         }
 
         /// <summary>
-        /// Opens the area; <paramref name="onClosed"/> runs once the participant is back at the
-        /// start point. Runs it at once when a scene reference is missing, so onboarding never
-        /// stalls on it. The session simulator starts sessions without onboarding and never gets here.
+        /// Opens the area: <paramref name="onOpened"/> runs once the participant stands in it, and
+        /// <paramref name="onClosed"/> once they are back at the start point. Runs only
+        /// <paramref name="onClosed"/>, at once, when a scene reference is missing, so onboarding
+        /// never stalls on it. The session simulator starts sessions without onboarding and never gets here.
         /// </summary>
-        public void Begin(Action onClosed)
+        public void Begin(Action onOpened, Action onClosed)
         {
             if (IsOpen) return;
             if (recenterService == null || practiceAnchor == null || returnAnchor == null)
@@ -106,6 +112,7 @@ namespace SafetyProto.Runtime.Practice
             }
 
             Active = this;
+            _onOpened = onOpened;
             _onClosed = onClosed;
             _tried.Clear();
             _pendingClose = null;
@@ -122,7 +129,7 @@ namespace SafetyProto.Runtime.Practice
         /// <summary>The panel's "Continuar" button.</summary>
         public void Continue() => Close("continue");
 
-        /// <summary>Ends the practice: <c>continue</c>, <c>timeout</c> or <c>evaluator</c>.</summary>
+        /// <summary>Ends the practice: <c>continue</c>, <c>skipped</c>, <c>timeout</c> or <c>evaluator</c>.</summary>
         public void Close(string reason)
         {
             if (!IsOpen || _closing) return;
@@ -159,13 +166,22 @@ namespace SafetyProto.Runtime.Practice
             _counting = true;
             var pending = _pendingClose;
             _pendingClose = null;
-            if (pending != null) Close(pending);
+            var opened = _onOpened;
+            _onOpened = null;
+            if (pending != null)
+            {
+                Close(pending);
+                yield break;
+            }
+            opened?.Invoke();
         }
 
         private IEnumerator CloseRoutine(string reason)
         {
             _closing = true;
             _counting = false;
+            _onOpened = null;
+            ClosingStarted?.Invoke();
             float seconds = Time.time - _openedAt;
             InteractionEvents.RaisePracticeEnded(reason, seconds, _tried.ToArray());
             SafetyLog.Info($"[PracticeArea] Área de prática encerrada ({reason}) após {seconds:0} s.", this);

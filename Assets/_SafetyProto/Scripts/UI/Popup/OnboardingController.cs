@@ -1,22 +1,36 @@
+using System;
 using System.Collections;
 using SafetyProto.Core.Logging;
+using SafetyProto.Runtime.Feedback;
+using SafetyProto.Runtime.PPE;
 using SafetyProto.Runtime.Practice;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace SafetyProto.UI
 {
+    /// <summary>
+    /// Onboarding in two parts. The session opens in the practice area, where
+    /// <see cref="practiceSteps"/> teach the interactions before the participant tries them on
+    /// the props; once the area closes, <see cref="steps"/> present the training in the work site.
+    /// The PPE bench stays locked until the onboarding ends, so nothing worn before the training can complete a task; anything knocked
+    /// out of place meanwhile goes back to the bench at the end.
+    /// </summary>
     public class OnboardingController : MonoBehaviour
     {
         [SerializeField] private PopupService popupService;
+        [Tooltip("Shown in the practice area as it opens, before the participant tries the props. Each one offers 'Pular prática'.")]
+        [SerializeField] private OnboardingStep[] practiceSteps;
+        [Tooltip("Shown in the work site once the practice area closes: what the training is and what to do.")]
         [SerializeField] private OnboardingStep[] steps;
         [Tooltip("Plays each step's narration clip. Optional.")]
         [SerializeField] private NarrationVoice narrationVoice;
         [SerializeField] private bool autoStartOnEnable = true;
         [Tooltip("Frames to wait before showing the first popup, giving OVR time to initialize stereo matrices.")]
         [SerializeField, Min(0)] private int startDelayFrames = 10;
-        [Tooltip("Opened by the step marked 'opensPracticeArea'. Optional: without it that step just moves on.")]
+        [Tooltip("Where the onboarding starts. Optional: without it the practice steps are left out.")]
         [SerializeField] private PracticeArea practiceArea;
+        [SerializeField] private string skipPracticeLabel = "Pular prática";
 
         [Header("Skip / Completion")]
         [Tooltip("Fired when onboarding finishes — either all steps completed OR skipped. Wire this " +
@@ -28,12 +42,18 @@ namespace SafetyProto.UI
 
         private const string SeenKey = "SafetyProto.OnboardingSeen";
 
+        private readonly PpeBenchLock _benchLock = new PpeBenchLock();
+        private OnboardingStep[] _sequence;
+        private Action _onSequenceDone;
         private int _currentIndex = -1;
         private GameObject _activeHighlight;
+        private bool _inPractice;
         private bool _finished;
 
         private void OnEnable()
         {
+            if (practiceArea != null) practiceArea.ClosingStarted += OnPracticeClosing;
+
             if (rememberSeen && PlayerPrefs.GetInt(SeenKey, 0) == 1)
             {
                 SafetyLog.Info("[OnboardingController] Onboarding já visto — auto-skip.", this);
@@ -44,10 +64,18 @@ namespace SafetyProto.UI
             if (autoStartOnEnable) StartCoroutine(StartDelayed());
         }
 
+        // After every Awake, so each PPE item has its grab components resolved.
+        private void Start()
+        {
+            if (!_finished) _benchLock.Engage();
+        }
+
         private void OnDisable()
         {
+            if (practiceArea != null) practiceArea.ClosingStarted -= OnPracticeClosing;
             StopAllCoroutines();
             EndSequence();
+            _benchLock.Release();
         }
 
         private IEnumerator StartDelayed()
@@ -59,11 +87,20 @@ namespace SafetyProto.UI
             StartSequence();
         }
 
+        /// <summary>Starts the onboarding in the practice area, or at the presentation when there is none.</summary>
         public void StartSequence()
         {
             _finished = false;
-            _currentIndex = -1;
-            ShowNext();
+            _benchLock.Engage();
+
+            if (practiceArea != null)
+            {
+                _inPractice = true;
+                practiceArea.Begin(onOpened: () => Play(practiceSteps, EndSequence), onClosed: OnPracticeClosed);
+                return;
+            }
+
+            Play(steps, FinishOnboarding);
         }
 
         /// <summary>
@@ -74,27 +111,60 @@ namespace SafetyProto.UI
         {
             StopAllCoroutines();
             SafetyLog.Info("[OnboardingController] Onboarding pulado pelo usuário.", this);
+            if (_inPractice && practiceArea != null) practiceArea.Close("skipped");
             FinishOnboarding();
+        }
+
+        /// <summary>Leaves the practice area for the presentation (the practice popups' button).</summary>
+        public void SkipPractice()
+        {
+            if (!_inPractice || practiceArea == null || !practiceArea.IsOpen) return;
+            SafetyLog.Info("[OnboardingController] Prática pulada pelo participante.", this);
+            practiceArea.Close("skipped");
+        }
+
+        // Whoever closes the area (Continuar, the skip button, the countdown, the evaluator), the
+        // practice popup must not linger into the fade.
+        private void OnPracticeClosing()
+        {
+            if (!_inPractice) return;
+            _sequence = null;
+            _onSequenceDone = null;
+            EndSequence();
+        }
+
+        private void OnPracticeClosed()
+        {
+            _inPractice = false;
+            if (_finished) return;
+            Play(steps, FinishOnboarding);
+        }
+
+        private void Play(OnboardingStep[] sequence, Action onDone)
+        {
+            _sequence = sequence ?? Array.Empty<OnboardingStep>();
+            _onSequenceDone = onDone;
+            _currentIndex = -1;
+            ShowNext();
         }
 
         public void ShowNext()
         {
             _currentIndex++;
+            ClearHighlight();
 
-            if (_activeHighlight != null)
+            if (_sequence == null) return;
+            if (_currentIndex >= _sequence.Length)
             {
-                HighlightService.Disable(_activeHighlight);
-                _activeHighlight = null;
-            }
-
-            if (_currentIndex >= steps.Length)
-            {
-                SafetyLog.Info($"[OnboardingController] ShowNext() — index {_currentIndex} out of range ({steps.Length})", this);
-                FinishOnboarding();
+                SafetyLog.Info($"[OnboardingController] ShowNext() — index {_currentIndex} out of range ({_sequence.Length})", this);
+                var done = _onSequenceDone;
+                _sequence = null;
+                _onSequenceDone = null;
+                done?.Invoke();
                 return;
             }
 
-            var step = steps[_currentIndex];
+            var step = _sequence[_currentIndex];
             SafetyLog.Info($"[OnboardingController] ShowNext() — index {_currentIndex}, title: '{step.title}'", this);
 
             if (step.highlightTarget != null)
@@ -117,18 +187,17 @@ namespace SafetyProto.UI
             data.onActionPressed.AddListener(() =>
             {
                 step.onStepConfirmed?.Invoke();
-                if (step.opensPracticeArea && practiceArea != null)
-                {
-                    EndSequence();
-                    practiceArea.Begin(ShowNext);
-                }
-                else
-                {
-                    ShowNext();
-                }
+                ShowNext();
             });
 
-            if (_currentIndex == 0)
+            if (_inPractice)
+            {
+                data.showSkipButton = true;
+                data.skipButtonLabel = skipPracticeLabel;
+                data.onSkipPressed = new UnityEvent();
+                data.onSkipPressed.AddListener(SkipPractice);
+            }
+            else if (_currentIndex == 0)
             {
                 data.showSkipButton = true;
                 data.skipButtonLabel = "Pular";
@@ -149,14 +218,15 @@ namespace SafetyProto.UI
         public void EndSequence()
         {
             if (narrationVoice != null) narrationVoice.Stop();
-
-            if (_activeHighlight != null)
-            {
-                HighlightService.Disable(_activeHighlight);
-                _activeHighlight = null;
-            }
-
+            ClearHighlight();
             popupService?.Hide();
+        }
+
+        private void ClearHighlight()
+        {
+            if (_activeHighlight == null) return;
+            HighlightService.Disable(_activeHighlight);
+            _activeHighlight = null;
         }
 
         private void FinishOnboarding()
@@ -164,7 +234,11 @@ namespace SafetyProto.UI
             if (_finished) return;
             _finished = true;
 
+            _sequence = null;
+            _onSequenceDone = null;
             EndSequence();
+            _benchLock.Release();
+            SafetyLog.Info($"[OnboardingController] Bancada liberada. {LooseObjectRecall.RecallAll().Describe()}", this);
 
             if (rememberSeen)
             {

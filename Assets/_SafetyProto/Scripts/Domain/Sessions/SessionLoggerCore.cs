@@ -406,7 +406,7 @@ namespace SafetyProto.Domain.Sessions
                 "return_all_ppe" => "recolher objetos soltos",
                 "highlight_target" => "chamar atenção",
                 "set_hand_collision" => "colisão das mãos",
-                "end_practice" => "encerrar prática",
+                "end_practice" => "pular prática",
                 _ => args.Command ?? string.Empty
             };
             return string.IsNullOrWhiteSpace(args.Summary)
@@ -417,6 +417,7 @@ namespace SafetyProto.Domain.Sessions
         private static string DescribePracticeEnd(string? reason) => reason switch
         {
             "continue" => "participante tocou em Continuar",
+            "skipped" => "participante tocou em Pular prática",
             "timeout" => "tempo esgotado",
             "evaluator" => "pelo avaliador",
             _ => reason ?? string.Empty
