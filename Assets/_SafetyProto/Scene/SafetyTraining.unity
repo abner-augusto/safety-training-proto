@@ -39897,8 +39897,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1141625916}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0.632, z: -0.85}
+  m_LocalRotation: {x: -0.0000014403424, y: 0.70710677, z: 0.7071068, w: -0.0000014424938}
+  m_LocalPosition: {x: -0.0000038146973, y: 0.64352596, z: -0.8496475}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -39908,7 +39908,7 @@ Transform:
   - {fileID: 2058683801}
   - {fileID: 69204429}
   m_Father: {fileID: 103338224}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -90, y: 0, z: 180}
 --- !u!54 &1141625918
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -40153,12 +40153,12 @@ MonoBehaviour:
   pieceAnchorB: {fileID: 1290325199}
   targetSocketA: {fileID: 750565376}
   targetSocketB: {fileID: 1079492720}
-  allowAnySlotDirection: 0
-  allow180Rotation: 0
+  allowAnySlotDirection: 1
+  allow180Rotation: 1
   allowUpsideDown: 0
-  positionTolerance: 0.23
-  yawTolerance: 17.25
-  tiltTolerance: 40.25
+  positionTolerance: 0.4
+  yawTolerance: 30
+  tiltTolerance: 50
   snapOnRelease: 1
   lockAfterInstalled: 1
   disableGrabAfterInstalled: 1
