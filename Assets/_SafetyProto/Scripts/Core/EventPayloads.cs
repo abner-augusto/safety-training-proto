@@ -486,6 +486,9 @@ namespace SafetyProto.Core
         /// <summary>"push" | "pass_through": whether the hands push interactive objects in this
         /// session; empty when the scene cannot switch it.</summary>
         public string HandCollision;
+        /// <summary>The evaluator started an experienced participant, so the practice area never
+        /// opens and onboarding goes straight to the presentation.</summary>
+        public bool PracticeSkipped;
     }
     [System.Serializable]
     public struct SessionPausedEventArgs : IEventPayload

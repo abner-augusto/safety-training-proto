@@ -16,9 +16,10 @@ namespace SafetyProto.Runtime.Session
 
         /// <summary>
         /// Starts the session now with an evaluator-set participant id and mode, closing any
-        /// identification popup still open. False plus a Portuguese reason when the session has
-        /// already started.
+        /// identification popup still open; <paramref name="skipPractice"/> sends an experienced
+        /// participant straight to the presentation. False plus a Portuguese reason when the
+        /// session has already started.
         /// </summary>
-        bool TryStartFromEvaluator(string participantId, SessionMode mode, out string reason);
+        bool TryStartFromEvaluator(string participantId, SessionMode mode, bool skipPractice, out string reason);
     }
 }

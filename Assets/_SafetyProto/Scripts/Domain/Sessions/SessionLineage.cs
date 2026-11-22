@@ -3,17 +3,19 @@ using SafetyProto.Core;
 
 namespace SafetyProto.Domain.Sessions
 {
-    /// <summary>A session waiting to start: who, in which mode, and which session it replaces.</summary>
+    /// <summary>A session waiting to start: who, in which mode, whether it skips the practice
+    /// area, and which session it replaces.</summary>
     public sealed class SessionStartRequest
     {
         public SessionStartRequest(string participantId, string source, SessionMode mode,
-                                   string previousSessionId = "", int attempt = 1)
+                                   string previousSessionId = "", int attempt = 1, bool skipPractice = false)
         {
             ParticipantId = participantId ?? string.Empty;
             Source = source ?? string.Empty;
             Mode = mode;
             PreviousSessionId = previousSessionId ?? string.Empty;
             Attempt = attempt < 1 ? 1 : attempt;
+            SkipPractice = skipPractice;
         }
 
         public string ParticipantId { get; }
@@ -23,11 +25,15 @@ namespace SafetyProto.Domain.Sessions
         public string PreviousSessionId { get; }
         /// <summary>1 for a first attempt, +1 for every interrupted session of the same code it restarts.</summary>
         public int Attempt { get; }
+        /// <summary>The evaluator started an experienced participant, who goes straight to the
+        /// presentation without the practice area.</summary>
+        public bool SkipPractice { get; }
 
         public SessionStartRequest ChainedTo(string previousSessionId, int attempt) =>
-            new SessionStartRequest(ParticipantId, Source, Mode, previousSessionId, attempt);
+            new SessionStartRequest(ParticipantId, Source, Mode, previousSessionId, attempt, SkipPractice);
 
-        public SessionStartRequest Unchained() => new SessionStartRequest(ParticipantId, Source, Mode);
+        public SessionStartRequest Unchained() =>
+            new SessionStartRequest(ParticipantId, Source, Mode, skipPractice: SkipPractice);
     }
 
     /// <summary>The session being torn down by a reset, as the reset sees it.</summary>
@@ -40,11 +46,12 @@ namespace SafetyProto.Domain.Sessions
         public string Source = string.Empty;
         public SessionMode Mode;
         public int Attempt;
+        public bool SkipPractice;
     }
 
     /// <summary>
     /// Decides what the next scene starts with after a reset. An interrupted session restarts
-    /// with the same participant and mode — or the identity the evaluator just set — and is
+    /// with the same participant, mode and practice choice — or the identity the evaluator just set — and is
     /// linked to the session it replaces; attempts count the tries under the same code, so the
     /// analysis can count them. A completed session hands over to the next participant: only an
     /// explicit request starts anything.
@@ -66,7 +73,8 @@ namespace SafetyProto.Domain.Sessions
             if (!restartable) return requested?.Unchained();
 
             var identity = requested
-                ?? new SessionStartRequest(current.ParticipantId, current.Source, current.Mode);
+                ?? new SessionStartRequest(current.ParticipantId, current.Source, current.Mode,
+                                           skipPractice: current.SkipPractice);
 
             // The replaced session is always linked; attempts count only the same code's tries, so
             // switching to another participant (or correcting a mistyped code) starts at 1.

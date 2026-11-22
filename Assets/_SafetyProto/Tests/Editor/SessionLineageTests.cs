@@ -76,6 +76,21 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
+        public void ExperiencedParticipant_KeepsSkippingThePracticeAcrossRestartsAndCorrections()
+        {
+            var interrupted = Interrupted("S6", "P-07", attempt: 1);
+            interrupted.SkipPractice = true;
+            Assert.IsTrue(SessionLineage.Next(interrupted, requested: null)!.SkipPractice);
+
+            var corrected = new SessionStartRequest("P-08", ParticipantSources.Dashboard, SessionMode.Guided,
+                                                    skipPractice: true);
+            Assert.IsTrue(SessionLineage.Next(Interrupted("S7", "P-07", attempt: 1), corrected)!.SkipPractice);
+
+            var pendingRestart = new SessionStartRequest("P-07", ParticipantSources.Dashboard, SessionMode.Guided, "S8", 2);
+            Assert.IsTrue(SessionLineage.Supersede(pendingRestart, corrected).SkipPractice);
+        }
+
+        [Test]
         public void CompletedSession_WaitsForTheNextParticipant()
         {
             var completed = Interrupted("S3", "P-07", attempt: 1);

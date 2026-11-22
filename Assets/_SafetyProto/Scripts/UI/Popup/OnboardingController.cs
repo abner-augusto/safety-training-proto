@@ -14,7 +14,8 @@ namespace SafetyProto.UI
     /// Onboarding in two parts. The session opens in the practice area, where
     /// <see cref="practiceSteps"/> teach the interactions before the participant tries them on
     /// the props; once the area closes, <see cref="steps"/> present the training in the work site.
-    /// The PPE bench stays locked until the onboarding ends, so nothing worn before the training can complete a task; anything knocked
+    /// An experienced participant skips the first part. The PPE bench stays locked until the
+    /// onboarding ends, so nothing worn before the training can complete a task; anything knocked
     /// out of place meanwhile goes back to the bench at the end.
     /// </summary>
     public class OnboardingController : MonoBehaviour
@@ -89,20 +90,27 @@ namespace SafetyProto.UI
             StartSequence();
         }
 
-        /// <summary>Starts the onboarding in the practice area, or at the presentation when there is none.</summary>
-        public void StartSequence()
+        public void StartSequence() => StartSequence(skipPractice: false);
+
+        /// <summary>
+        /// Starts the onboarding in the practice area, or, for an experienced participant
+        /// (<paramref name="skipPractice"/>), straight at the presentation in the work site.
+        /// </summary>
+        public void StartSequence(bool skipPractice)
         {
             _finished = false;
             _startedAt = Time.time;
             _benchLock.Engage();
 
-            if (practiceArea != null)
+            if (!skipPractice && practiceArea != null)
             {
                 _inPractice = true;
                 practiceArea.Begin(onOpened: () => Play(practiceSteps, StartFreePractice), onClosed: OnPracticeClosed);
                 return;
             }
 
+            if (skipPractice)
+                SafetyLog.Info("[OnboardingController] Prática pulada: participante experiente.", this);
             Play(steps, () => FinishOnboarding("completed"));
         }
 

@@ -529,6 +529,8 @@
 
     .start-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
     .start-form.disabled { opacity: 0.55; pointer-events: none; }
+    .check-field { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); cursor: pointer; }
+    .check-field input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
     .seg {
       display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
       border: 1px solid var(--border-strong); border-radius: var(--radius); overflow: hidden;

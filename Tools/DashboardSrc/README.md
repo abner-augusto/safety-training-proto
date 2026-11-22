@@ -76,7 +76,10 @@ first part of onboarding and the free practice; the presentation of the training
 follows in the work site. The page learns of it from `PracticeStarted` /
 `PracticeEnded` and from the `practice` flag of `StationStatus`, shows an "Em
 prática" chip, and offers "Pular prática" (`end_practice`) in the station
-page and on the tile, hidden otherwise.
+page and on the tile, hidden otherwise. The start form's "Participante
+experiente (pular prática)" box sends `skipPractice: true` with
+`start_session`, so the headset goes straight to the presentation; it clears
+after each start.
 
 Intervention history: the station page records every command it sends, from its
 own buttons or the shell's tiles, in `state.interventions` (time, command label,

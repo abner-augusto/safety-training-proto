@@ -10,8 +10,8 @@ namespace SafetyProto.Networking.Dashboard
 {
     /// <summary>
     /// Evaluator dashboard command handler for "start_session" with args
-    /// <c>{ participantCode, mode }</c>: the evaluator, not the participant, decides who trains
-    /// and in which mode. On the waiting screen it starts the session at once. Over a live or
+    /// <c>{ participantCode, mode, replace, skipPractice }</c>: the evaluator, not the participant,
+    /// decides who trains, in which mode, and whether an experienced participant skips the practice area. On the waiting screen it starts the session at once. Over a live or
     /// finished session it files the new identity in <see cref="SessionHandoff"/> and runs the
     /// same reset as "reset_session", so the reloaded scene starts straight away with it.
     /// </summary>
@@ -63,7 +63,9 @@ namespace SafetyProto.Networking.Dashboard
                 return false;
             }
 
-            string label = $"{participantId} · {(mode == SessionMode.Evaluation ? "Avaliação" : "Guiado")}";
+            bool skipPractice = args?.skipPractice ?? false;
+            string label = $"{participantId} · {(mode == SessionMode.Evaluation ? "Avaliação" : "Guiado")}" +
+                           (skipPractice ? " · sem prática" : string.Empty);
 
             var action = StartSessionPolicy.Decide(sessionManager.IsSessionStarted, args?.replace ?? false);
             if (action == StartSessionAction.RefuseLive)
@@ -81,7 +83,7 @@ namespace SafetyProto.Networking.Dashboard
                     reason = "Fluxo de início não configurado.";
                     return false;
                 }
-                if (!starter.TryStartFromEvaluator(participantId, mode, out reason))
+                if (!starter.TryStartFromEvaluator(participantId, mode, skipPractice, out reason))
                     return false;
                 reason = $"Sessão iniciada: {label}.";
                 return true;
@@ -96,7 +98,8 @@ namespace SafetyProto.Networking.Dashboard
                 return false;
             }
 
-            SessionHandoff.Request(new SessionStartRequest(participantId, ParticipantSources.Dashboard, mode));
+            SessionHandoff.Request(new SessionStartRequest(participantId, ParticipantSources.Dashboard, mode,
+                                                           skipPractice: skipPractice));
             _restartRequested = true;
             sceneLoader.ResetSession();
             reason = $"Sessão anterior encerrada; iniciando {label}.";

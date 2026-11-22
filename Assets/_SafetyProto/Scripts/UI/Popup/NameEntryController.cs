@@ -133,7 +133,7 @@ namespace SafetyProto.UI
             if (SessionHandoff.TryConsume(out var restart))
             {
                 SafetyLog.Info($"[NameEntryController] Reinício: {restart.ParticipantId}, tentativa {restart.Attempt}.", this);
-                StartSession(restart.ParticipantId, restart.Source, restart.Mode, restart.PreviousSessionId, restart.Attempt);
+                StartSession(restart);
                 return;
             }
 
@@ -247,7 +247,7 @@ namespace SafetyProto.UI
             ShowIdentificationPopup(allowSkip: false);
         }
 
-        public bool TryStartFromEvaluator(string participantId, SessionMode mode, out string reason)
+        public bool TryStartFromEvaluator(string participantId, SessionMode mode, bool skipPractice, out string reason)
         {
             if (_sessionStarting)
             {
@@ -256,17 +256,18 @@ namespace SafetyProto.UI
             }
             // Landing before Begin, this start replaces the restart a reset left for this scene
             // and must keep its link to the interrupted session.
-            var start = new SessionStartRequest(participantId, ParticipantSources.Dashboard, mode);
+            var start = new SessionStartRequest(participantId, ParticipantSources.Dashboard, mode,
+                                                skipPractice: skipPractice);
             if (SessionHandoff.TryConsume(out var pending))
                 start = SessionLineage.Supersede(pending, start);
-            StartSession(start.ParticipantId, start.Source, start.Mode, start.PreviousSessionId, start.Attempt);
+            StartSession(start);
             reason = string.Empty;
             return true;
         }
 
         /// <summary>Starts with an identity decided outside the popup (evaluator or restart),
         /// in the same order as <see cref="Finish"/>; closes whatever popup is open.</summary>
-        private void StartSession(string participantId, string source, SessionMode mode, string previousSessionId, int attempt)
+        private void StartSession(SessionStartRequest start)
         {
             _resolved = true;
             _active = false;
@@ -275,12 +276,12 @@ namespace SafetyProto.UI
             StopAllCoroutines();
             _keyboardOpenCoroutine = null;
 
-            ParticipantIdentity.SetParticipantCode(participantId, source);
-            SessionModeState.Current = mode;
+            ParticipantIdentity.SetParticipantCode(start.ParticipantId, start.Source);
+            SessionModeState.Current = start.Mode;
             if (narrationVoice != null) narrationVoice.Stop();
             popupService?.Hide();
 
-            StartSessionAndOnboarding(previousSessionId, attempt);
+            StartSessionAndOnboarding(start.PreviousSessionId, start.Attempt, start.SkipPractice);
         }
 
         private IEnumerator OpenKeyboardAfterPopup()
@@ -332,25 +333,25 @@ namespace SafetyProto.UI
 
             if (modeSelection != null)
             {
-                modeSelection.Begin(() => StartSessionAndOnboarding(string.Empty, 1));
+                modeSelection.Begin(() => StartSessionAndOnboarding(string.Empty, 1, skipPractice: false));
             }
             else
             {
                 SessionModeState.Current = SessionMode.Guided;
-                StartSessionAndOnboarding(string.Empty, 1);
+                StartSessionAndOnboarding(string.Empty, 1, skipPractice: false);
             }
         }
 
-        private void StartSessionAndOnboarding(string previousSessionId, int attempt)
+        private void StartSessionAndOnboarding(string previousSessionId, int attempt, bool skipPractice)
         {
             // The evaluator can start the session while the mode picker is still open.
             if (_sessionStarting) return;
             _sessionStarting = true;
 
-            if (sessionManager != null) sessionManager.BeginSession(previousSessionId, attempt);
+            if (sessionManager != null) sessionManager.BeginSession(previousSessionId, attempt, skipPractice);
             else SafetyLog.Warning("[NameEntryController] sessionManager não atribuído — sessão não iniciada.", this);
 
-            if (onboarding != null) onboarding.StartSequence();
+            if (onboarding != null) onboarding.StartSequence(skipPractice);
 
             onNameEntryFinished?.Invoke();
             SafetyLog.Info("[NameEntryController] Identificação concluída — sessão e onboarding iniciados.", this);

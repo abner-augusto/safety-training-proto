@@ -83,6 +83,7 @@ namespace SafetyProto.Domain.Sessions
             public string previousSessionId;
             public int attempt;
             public string[]? tried;
+            public bool practiceSkipped;
             public float freePracticeSeconds;
             public string stage;
             public int step;
@@ -134,6 +135,9 @@ namespace SafetyProto.Domain.Sessions
             /// <summary>1 for a first attempt, +1 per interrupted session restarted for the same person.
             /// 0 in logs from earlier builds.</summary>
             public int attempt;
+            /// <summary>The evaluator started an experienced participant, so the practice area never
+            /// opened (no PracticeStarted/PracticeEnded). False in logs from earlier builds.</summary>
+            public bool practiceSkipped;
             public float totalElapsedTime;
             public int totalScore;
             public int tasksCompleted;
@@ -239,6 +243,7 @@ namespace SafetyProto.Domain.Sessions
         private string _participantSource = string.Empty;
         private string _previousSessionId = string.Empty;
         private int _attempt;
+        private bool _practiceSkipped;
         private bool _completionWriteStarted;
 
         private PauseSource[] _holdsAcrossSessions = Array.Empty<PauseSource>();
@@ -270,11 +275,12 @@ namespace SafetyProto.Domain.Sessions
                 _participantSource = args.ParticipantSource ?? string.Empty;
                 _previousSessionId = args.PreviousSessionId ?? string.Empty;
                 _attempt = args.Attempt;
+                _practiceSkipped = args.PracticeSkipped;
                 _completionWriteStarted = false;
                 LogEvent("SessionStarted", DescribeSessionStart(),
                     _sessionId, _playerId, _scenarioId, args.TimestampMs,
                     new LogData { source = _participantSource, previousSessionId = _previousSessionId, attempt = _attempt,
-                                  handCollision = args.HandCollision ?? string.Empty });
+                                  handCollision = args.HandCollision ?? string.Empty, practiceSkipped = _practiceSkipped });
                 if (_holdsAcrossSessions.Length > 0)
                 {
                     _pauseStartMs = ResolveTimestamp(args.TimestampMs);
@@ -407,9 +413,10 @@ namespace SafetyProto.Domain.Sessions
             string who = _participantSource == ParticipantSources.Dashboard
                 ? $"{_playerId}, código definido pelo avaliador"
                 : _playerId;
-            return string.IsNullOrEmpty(_previousSessionId)
+            string start = string.IsNullOrEmpty(_previousSessionId)
                 ? $"Participante {who}"
                 : $"Participante {who}; tentativa {_attempt}, reinício da sessão {_previousSessionId}";
+            return _practiceSkipped ? $"{start}; prática pulada (participante experiente)" : start;
         }
 
         private static string DescribeEvaluatorCommand(EvaluatorCommandEventArgs args)
@@ -526,6 +533,7 @@ namespace SafetyProto.Domain.Sessions
                 participantSource = _participantSource,
                 previousSessionId = _previousSessionId,
                 attempt = _attempt,
+                practiceSkipped = _practiceSkipped,
                 totalElapsedTime = args.totalElapsedTime,
                 totalScore = args.totalScore,
                 tasksCompleted = args.tasksCompleted,
@@ -608,6 +616,7 @@ namespace SafetyProto.Domain.Sessions
             _participantSource = string.Empty;
             _previousSessionId = string.Empty;
             _attempt = 0;
+            _practiceSkipped = false;
             _pauseStartMs = 0;
         }
 
@@ -621,6 +630,7 @@ namespace SafetyProto.Domain.Sessions
             participantSource = _participantSource,
             previousSessionId = _previousSessionId,
             attempt = _attempt,
+            practiceSkipped = _practiceSkipped,
             totalScore = _lastTotalScore,
             tasksCompleted = _tasksCompletedCount,
             totalTasks = _totalTasks,

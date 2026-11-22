@@ -30,6 +30,7 @@ namespace SafetyProto.Runtime.Session
         private bool _sessionEnded;
         private bool _sessionCompleted;
         private int _attempt;
+        private bool _practiceSkipped;
         private string _previousSessionId = string.Empty;
 
         public bool IsSessionStarted => _sessionStarted;
@@ -70,11 +71,12 @@ namespace SafetyProto.Runtime.Session
         /// participant id (from <see cref="ParticipantIdentity"/>, falling back to "Player1"), and
         /// raises SessionStarted. Idempotent — safe to call once after the participant id is set.
         /// </summary>
-        public void BeginSession() => BeginSession(string.Empty, 1);
+        public void BeginSession() => BeginSession(string.Empty, 1, false);
 
         /// <summary>Starts a session that restarts <paramref name="previousSessionId"/> (empty for a
-        /// first attempt); <paramref name="attempt"/> counts the tries of the same participant.</summary>
-        public void BeginSession(string previousSessionId, int attempt)
+        /// first attempt); <paramref name="attempt"/> counts the tries of the same participant, and
+        /// <paramref name="practiceSkipped"/> records an experienced participant who skips the practice area.</summary>
+        public void BeginSession(string previousSessionId, int attempt, bool practiceSkipped)
         {
             if (_sessionStarted)
             {
@@ -83,6 +85,7 @@ namespace SafetyProto.Runtime.Session
             _sessionStarted = true;
             _previousSessionId = previousSessionId ?? string.Empty;
             _attempt = attempt < 1 ? 1 : attempt;
+            _practiceSkipped = practiceSkipped;
 
             ScoreService.Instance.ResetSession();
 
@@ -102,6 +105,7 @@ namespace SafetyProto.Runtime.Session
                 ParticipantSource = ParticipantIdentity.CurrentSource,
                 PreviousSessionId = _previousSessionId,
                 Attempt = _attempt,
+                PracticeSkipped = _practiceSkipped,
                 HandCollision = SafetyProto.Runtime.Interaction.HandObjectCollision.Instance != null
                     ? SafetyProto.Runtime.Interaction.HandObjectCollision.Token(SafetyProto.Runtime.Interaction.HandObjectCollision.Instance.Current)
                     : string.Empty
@@ -189,7 +193,8 @@ namespace SafetyProto.Runtime.Session
                 ParticipantId = EventContext.CurrentPlayerId ?? string.Empty,
                 Source = ParticipantIdentity.CurrentSource,
                 Mode = SessionModeState.Current,
-                Attempt = _attempt
+                Attempt = _attempt,
+                SkipPractice = _practiceSkipped
             };
             if (!SessionHandoff.HandOver(snapshot))
                 ParticipantIdentity.Clear();

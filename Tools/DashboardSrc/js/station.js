@@ -268,6 +268,8 @@
         startControl.disarm();
         renderStartWarning();
       };
+      const skipPractice = document.getElementById('skip-practice');
+      if (skipPractice) skipPractice.onchange = () => startControl.disarm();
 
       const offline = () => stationPhase() === 'offline';
       const startControl = createCommandControl({
@@ -281,7 +283,7 @@
           // the evaluator saw one, so a stale tab or a retried start cannot end it.
           const phase = stationPhase();
           const replace = phase === 'active' || phase === 'completed';
-          return { args: { participantCode: code.id, mode: selectedMode, replace } };
+          return { args: { participantCode: code.id, mode: selectedMode, replace, skipPractice: !!skipPractice?.checked } };
         },
         buttonLabel: () => {
           const phase = stationPhase();
@@ -291,7 +293,7 @@
         },
         confirmLabel: () => {
           const code = normalizeCode(codeKind, input ? input.value : '');
-          const vars = { code: code.id, mode: modeName(selectedMode) };
+          const vars = { code: code.id, mode: modeName(selectedMode) + (skipPractice?.checked ? ` · ${t('noPracticeTag')}` : '') };
           return stationPhase() === 'active' ? tf('startReplaceConfirm', vars) : tf('startConfirm', vars);
         },
         isBlocked: offline,
@@ -363,9 +365,12 @@
       renderStation();
     }
 
-    /** Clears the code after a start so the next participant cannot inherit it by accident. */
+    /** Clears the code and the practice skip after a start so the next participant cannot
+        inherit them by accident. */
     export function clearStartCode() {
       const input = document.getElementById('code-number');
       if (input) input.value = '';
+      const skipPractice = document.getElementById('skip-practice');
+      if (skipPractice) skipPractice.checked = false;
       renderStartWarning();
     }
