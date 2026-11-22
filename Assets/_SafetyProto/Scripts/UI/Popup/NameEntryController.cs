@@ -6,18 +6,10 @@ using SafetyProto.Runtime.Session;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 namespace SafetyProto.UI
 {
-    /// <summary>How the pre-session popup collects the participant's identification.</summary>
-    public enum ParticipantInputMode
-    {
-        /// <summary>In-panel numeric keypad (poke + ray) for the study's participant code.</summary>
-        NumericKeypad,
-        /// <summary>Horizon OS system keyboard for a free-text first name.</summary>
-        SystemKeyboard
-    }
-
     /// <summary>
     /// Pre-session flow. In the study configuration (<c>waitForEvaluator</c>) the headset shows
     /// a "waiting for the researcher" screen and the evaluator starts the session from the
@@ -26,16 +18,16 @@ namespace SafetyProto.UI
     /// with the same code and mode (<see cref="SessionHandoff"/>).
     ///
     /// With <c>waitForEvaluator</c> off — development outside the study — it shows the
-    /// identification popup: a numeric keypad for the participant code (7 → P-07), or the
-    /// Horizon OS system keyboard for a first name, where a name or a skip gets a random
-    /// anonymized id; then the mode picker. Either way it then starts the session and onboarding.
+    /// identification popup: a numeric keypad for the participant code (7 → P-07, normalized by
+    /// <see cref="ParticipantCode"/> like the dashboard's), where "Pular" gets a random id; then
+    /// the mode picker. Either way it then starts the session and onboarding.
     /// </summary>
     public class NameEntryController : MonoBehaviour, IEvaluatorSessionStarter
     {
         [Header("UI")]
         [SerializeField] private PopupService popupService;
-        [Tooltip("Display field for the typed value. Mirrored from the system keyboard on device, or filled by the keypad.")]
-        [SerializeField] private TMP_InputField nameField;
+        [Tooltip("Shows the digits typed on the keypad.")]
+        [SerializeField, FormerlySerializedAs("nameField")] private TMP_InputField codeField;
         [SerializeField] private string confirmLabel = "Confirmar";
 
         [Header("Evaluator Start")]
@@ -51,31 +43,14 @@ namespace SafetyProto.UI
                  "button). The dashboard can still start the session later. 0 = never.")]
         [SerializeField, Min(0f)] private float keypadFallbackSeconds = 90f;
 
-        [Header("Input Mode")]
-        [Tooltip("NumericKeypad: numeric keypad on the panel for the participant code (study " +
-                 "data collection). SystemKeyboard: Meta system keyboard for the first name " +
-                 "(testing outside the study).")]
-        [SerializeField] private ParticipantInputMode inputMode = ParticipantInputMode.NumericKeypad;
-
         [Header("Numeric Keypad (participant code)")]
         [SerializeField] private string codeTitle = "Código do participante";
         [SerializeField, TextArea(2, 4)]
         private string codeBody = "Digite o número de participante informado pelo pesquisador.";
         [SerializeField] private string codePlaceholder = "Número";
-        [Tooltip("Participant id prefix, joined to the number with a hyphen (7 → P-07). The resulting id " +
-                 "identifies the session in the logs, the dashboard and the menu.")]
-        [SerializeField] private string codePrefix = "P";
-        [SerializeField, Min(1)] private int codeMaxDigits = 3;
-        [Tooltip("Left-pads with zeros up to this number of digits (2: 7 → 07).")]
-        [SerializeField, Min(1)] private int codeMinDigits = 2;
         [Tooltip("Narration played when the numeric keypad opens. Optional.")]
         [SerializeField] private AudioClip codeNarration;
         [SerializeField] private NarrationVoice narrationVoice;
-
-        [Header("System Keyboard (first name)")]
-        [SerializeField] private string title = "Antes de começar";
-        [SerializeField, TextArea(2, 4)]
-        private string body = "Digite seu primeiro nome para iniciar o treinamento. Seus dados serão anonimizados.";
 
         [Header("Flow")]
         [Tooltip("Onboarding started after the name is submitted or skipped.")]
@@ -87,15 +62,11 @@ namespace SafetyProto.UI
         [Tooltip("Frames to wait before opening, letting OVR settle (mirrors OnboardingController).")]
         [SerializeField, Min(0)] private int startDelayFrames = 10;
         [SerializeField] private bool autoStartOnEnable = true;
-        [SerializeField] private int characterLimit = 40;
 
         /// <summary>Fired once the name flow resolves (after session + onboarding start).</summary>
         public UnityEvent onNameEntryFinished;
 
-        private Coroutine _keyboardOpenCoroutine;
-        private string _namePlaceholder;
         private bool _resolved;
-        private bool _active;
         private bool _awaitingEvaluator;
         private bool _sessionStarting;
         private bool _keypadFallbackOpen;
@@ -104,14 +75,6 @@ namespace SafetyProto.UI
 
         /// <summary>No dashboard showed up in time, so the participant may type the code.</summary>
         public bool IsParticipantKeypadOpen => _keypadFallbackOpen && !_sessionStarting;
-
-        private void Awake()
-        {
-            if (nameField != null)
-            {
-                nameField.characterLimit = characterLimit;
-            }
-        }
 
         private void OnEnable()
         {
@@ -146,46 +109,30 @@ namespace SafetyProto.UI
             ShowIdentificationPopup(allowSkip: true);
         }
 
-        /// <summary>The participant identifies themself: keypad code or system-keyboard name.
-        /// Without the skip button, only a typed code can start the session.</summary>
+        /// <summary>The participant types their code on the keypad. Without the skip button, only
+        /// a typed code can start the session.</summary>
         private void ShowIdentificationPopup(bool allowSkip)
         {
             _resolved = false;
-            _active = true;
-            bool useKeypad = inputMode == ParticipantInputMode.NumericKeypad;
 
-            if (nameField != null)
+            if (codeField != null)
             {
-                nameField.text = string.Empty;
-                if (nameField.placeholder is TMP_Text placeholder)
-                {
-                    _namePlaceholder ??= placeholder.text;
-                    placeholder.text = useKeypad ? codePlaceholder : _namePlaceholder;
-                }
-            }
-
-            if (nameField != null && !useKeypad)
-            {
-                // Meta's system keyboard attaches only to a focused, editable field.
-                nameField.readOnly = false;
-                SafetyLog.Info(
-                    $"[NameEntryController] Campo preparado — plataforma {Application.platform}, " +
-                    $"teclado suportado: {TouchScreenKeyboard.isSupported}.",
-                    this);
+                codeField.text = string.Empty;
+                if (codeField.placeholder is TMP_Text placeholder) placeholder.text = codePlaceholder;
             }
 
             var data = new PopupData
             {
                 type = PopupType.Interactive,
-                title = useKeypad ? codeTitle : title,
-                body = useKeypad ? codeBody : body,
+                title = codeTitle,
+                body = codeBody,
                 actionButtonLabel = confirmLabel,
                 onActionPressed = new UnityEvent(),
                 showInputField = true,
                 requireInputForAction = true,
-                showNumericKeypad = useKeypad,
-                hideIcon = useKeypad,
-                keypadMaxDigits = codeMaxDigits,
+                showNumericKeypad = true,
+                hideIcon = true,
+                keypadMaxDigits = ParticipantCode.MaxDigits,
                 showSkipButton = allowSkip,
                 skipButtonLabel = "Pular",
                 onSkipPressed = new UnityEvent()
@@ -196,11 +143,7 @@ namespace SafetyProto.UI
             if (popupService != null)
             {
                 popupService.Show(data);
-                if (useKeypad && narrationVoice != null) narrationVoice.Play(codeNarration);
-                if (_keyboardOpenCoroutine != null)
-                    StopCoroutine(_keyboardOpenCoroutine);
-                if (!useKeypad)
-                    _keyboardOpenCoroutine = StartCoroutine(OpenKeyboardAfterPopup());
+                if (narrationVoice != null) narrationVoice.Play(codeNarration);
             }
             else
                 SafetyLog.Warning("[NameEntryController] popupService não atribuído no Inspector.", this);
@@ -270,11 +213,9 @@ namespace SafetyProto.UI
         private void StartSession(SessionStartRequest start)
         {
             _resolved = true;
-            _active = false;
             _awaitingEvaluator = false;
             _keypadFallbackOpen = false;
             StopAllCoroutines();
-            _keyboardOpenCoroutine = null;
 
             ParticipantIdentity.SetParticipantCode(start.ParticipantId, start.Source);
             SessionModeState.Current = start.Mode;
@@ -284,47 +225,23 @@ namespace SafetyProto.UI
             StartSessionAndOnboarding(start.PreviousSessionId, start.Attempt, start.SkipPractice);
         }
 
-        private IEnumerator OpenKeyboardAfterPopup()
-        {
-            // Wait a frame: the popup fade must make the field selectable before the OS keyboard asks for focus.
-            yield return null;
-            _keyboardOpenCoroutine = null;
-
-            if (!_active || nameField == null) yield break;
-
-            nameField.Select();
-            nameField.ActivateInputField();
-            SafetyLog.Info(
-                $"[NameEntryController] Campo focado — ativo: {nameField.isActiveAndEnabled}, " +
-                $"interagível: {nameField.interactable}, somente leitura: {nameField.readOnly}.",
-                this);
-        }
-
         public void Confirm()
         {
-            string name = nameField != null ? nameField.text : string.Empty;
-            if (string.IsNullOrWhiteSpace(name)) return;
-            if (inputMode == ParticipantInputMode.NumericKeypad)
-                Finish(() => ParticipantIdentity.SetParticipantCode(FormatCode(name.Trim())));
-            else
-                Finish(() => ParticipantIdentity.SetParticipant(name));
+            string digits = codeField != null ? codeField.text : string.Empty;
+            if (!ParticipantCode.TryNormalize(digits, out var code, out var error))
+            {
+                SafetyLog.Info($"[NameEntryController] Código recusado: {error}", this);
+                return;
+            }
+            Finish(() => ParticipantIdentity.SetParticipantCode(code));
         }
 
-        private string FormatCode(string digits) => $"{codePrefix}-{digits.PadLeft(codeMinDigits, '0')}";
-
-        public void Skip() => Finish(() => ParticipantIdentity.SetParticipant(string.Empty));
+        public void Skip() => Finish(() => ParticipantIdentity.SetAnonymousParticipant());
 
         private void Finish(System.Action assignIdentity)
         {
             if (_resolved) return;
             _resolved = true;
-            _active = false;
-
-            if (_keyboardOpenCoroutine != null)
-            {
-                StopCoroutine(_keyboardOpenCoroutine);
-                _keyboardOpenCoroutine = null;
-            }
 
             assignIdentity();
             if (narrationVoice != null) narrationVoice.Stop();

@@ -128,7 +128,8 @@ namespace SafetyProto.Domain.Sessions
             /// data can be split by mode. Empty in logs from earlier builds.</summary>
             public string mode = string.Empty;
             /// <summary>Who set <see cref="participantId"/>: "dashboard" (the evaluator), "keypad",
-            /// "system_keyboard", "skipped" (random id) or "simulator". Empty in logs from earlier builds.</summary>
+            /// "skipped" (random id) or "simulator"; "system_keyboard" (a typed first name) only in
+            /// logs up to 1.3.2. Empty in logs from earlier builds.</summary>
             public string participantSource = string.Empty;
             /// <summary>The interrupted session this one restarted, when it is a restart.</summary>
             public string previousSessionId = string.Empty;

@@ -8,10 +8,9 @@ using UnityEngine;
 namespace SafetyProto.UI
 {
     /// <summary>
-    /// Shows the current participant identifier (e.g. "Participante: P-7F3A") on an on-device UI
-    /// such as the connection/restart menu. Because this label lives only in the headset (not the
-    /// LAN dashboard), it may optionally include the private first name to help the operator.
-    /// Refreshes on enable and whenever a session starts (when the id is assigned).
+    /// Shows the current participant identifier (e.g. "Participante: P-07") on an on-device UI
+    /// such as the connection/restart menu. Refreshes on enable and whenever a session starts
+    /// (when the id is assigned).
     /// </summary>
     [DisallowMultipleComponent]
     public class ParticipantIdDisplay : MonoBehaviour
@@ -19,8 +18,6 @@ namespace SafetyProto.UI
         [Tooltip("Label to write into. Defaults to a TextMeshProUGUI on this object.")]
         [SerializeField] private TextMeshProUGUI targetLabel;
         [SerializeField] private string prefix = "Participante: ";
-        [Tooltip("Append the private first name (on-device only — never sent to the dashboard).")]
-        [SerializeField] private bool includeName = true;
         [SerializeField] private string emptyText = "Participante: —";
 
         private bool _subscribed;
@@ -62,11 +59,7 @@ namespace SafetyProto.UI
                 return;
             }
 
-            string text = $"{prefix}{id}";
-            if (includeName && !string.IsNullOrEmpty(ParticipantIdentity.CurrentName))
-                text += $" — {ParticipantIdentity.CurrentName}";
-
-            targetLabel.text = text;
+            targetLabel.text = $"{prefix}{id}";
         }
     }
 }

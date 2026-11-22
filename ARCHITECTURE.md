@@ -479,13 +479,11 @@ identity the evaluator just set), linked through `previousSessionId`, with
 `attempt` counting the tries under one code; a completed one goes back to the
 waiting screen for the next participant.
 
-Outside the study (`waitForEvaluator` off) the older popup remains: a keypad
-code, or a first name from which an anonymized `P-XXXX` id is derived, with the
-name-to-id map kept private in `persistentDataPath/participants_private.json`,
-separate from the session artifacts, so a log or a dashboard screenshot never
-carries a real name. Simulated sessions (§15) use a `SIM-` id and write their
-artifacts under a separate `simulations/` directory so they can never be
-mistaken for human data.
+Outside the study (`waitForEvaluator` off) the older popup remains: the same
+keypad, with "Pular" giving a random hexadecimal `P-XXXX` id that cannot be
+taken for a study code. The app asks for no name and stores none. Simulated
+sessions (§15) use a `SIM-` id and write their artifacts under a separate
+`simulations/` directory so they can never be mistaken for human data.
 
 ---
 

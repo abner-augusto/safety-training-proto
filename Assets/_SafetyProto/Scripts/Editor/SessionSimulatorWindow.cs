@@ -29,7 +29,7 @@ namespace SafetyProto.Editor
         {
             EditorGUILayout.LabelField("Simulador de Sessão", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "Apenas no Editor. Identidades SIM- não entram no mapa privado de participantes.",
+                "Apenas no Editor. Identidades SIM- ficam fora dos dados de participantes.",
                 MessageType.Info);
 
             using (new EditorGUI.DisabledScope(!EditorApplication.isPlaying))

@@ -17,7 +17,7 @@ who did:
 | --- | --- |
 | `dashboard` | the evaluator, through `start_session` |
 | `keypad` | typed in VR — the fallback when no dashboard connected, or the development popup |
-| `system_keyboard` | a first name typed in VR (development popup); the id is random |
+| `system_keyboard` | a first name typed in VR (development popup, up to 1.3.2); the id is random |
 | `skipped` | "Pular" in the development popup; the id is random |
 | `simulator` | the session simulator (`SIM-` ids) |
 

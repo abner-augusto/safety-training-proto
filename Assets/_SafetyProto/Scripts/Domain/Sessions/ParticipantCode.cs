@@ -60,7 +60,6 @@ namespace SafetyProto.Domain.Sessions
     {
         public const string Dashboard = "dashboard";
         public const string Keypad = "keypad";
-        public const string SystemKeyboard = "system_keyboard";
         public const string Skipped = "skipped";
         public const string Simulator = "simulator";
     }
