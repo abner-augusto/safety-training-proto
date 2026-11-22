@@ -37,7 +37,7 @@ namespace SafetyProto.Tests.Editor
                 new SafetyViolationEventArgs(), new CriticalSafetyFailureEventArgs(), new SafetyErrorEventArgs(),
                 new PlayspaceNoticeEventArgs(), new PauseHoldChangedEventArgs(), new EvaluatorCommandEventArgs(),
                 new ObjectGrabbedEventArgs(), new ObjectReleasedEventArgs(), new HintShownEventArgs(),
-                new PracticeEventArgs()
+                new PracticeEventArgs(), new OnboardingEventArgs()
             };
 
             foreach (var payload in payloads)

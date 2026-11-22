@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using SafetyProto.Core.Events;
 using SafetyProto.Core.Logging;
 using SafetyProto.Runtime.Feedback;
 using SafetyProto.Runtime.PPE;
@@ -49,6 +50,7 @@ namespace SafetyProto.UI
         private GameObject _activeHighlight;
         private bool _inPractice;
         private bool _finished;
+        private float _startedAt;
 
         private void OnEnable()
         {
@@ -57,7 +59,7 @@ namespace SafetyProto.UI
             if (rememberSeen && PlayerPrefs.GetInt(SeenKey, 0) == 1)
             {
                 SafetyLog.Info("[OnboardingController] Onboarding já visto — auto-skip.", this);
-                FinishOnboarding();
+                FinishOnboarding("skipped");
                 return;
             }
 
@@ -91,16 +93,23 @@ namespace SafetyProto.UI
         public void StartSequence()
         {
             _finished = false;
+            _startedAt = Time.time;
             _benchLock.Engage();
 
             if (practiceArea != null)
             {
                 _inPractice = true;
-                practiceArea.Begin(onOpened: () => Play(practiceSteps, EndSequence), onClosed: OnPracticeClosed);
+                practiceArea.Begin(onOpened: () => Play(practiceSteps, StartFreePractice), onClosed: OnPracticeClosed);
                 return;
             }
 
-            Play(steps, FinishOnboarding);
+            Play(steps, () => FinishOnboarding("completed"));
+        }
+
+        private void StartFreePractice()
+        {
+            EndSequence();
+            if (practiceArea != null) practiceArea.StartFreePractice();
         }
 
         /// <summary>
@@ -112,7 +121,7 @@ namespace SafetyProto.UI
             StopAllCoroutines();
             SafetyLog.Info("[OnboardingController] Onboarding pulado pelo usuário.", this);
             if (_inPractice && practiceArea != null) practiceArea.Close("skipped");
-            FinishOnboarding();
+            FinishOnboarding("skipped");
         }
 
         /// <summary>Leaves the practice area for the presentation (the practice popups' button).</summary>
@@ -137,7 +146,7 @@ namespace SafetyProto.UI
         {
             _inPractice = false;
             if (_finished) return;
-            Play(steps, FinishOnboarding);
+            Play(steps, () => FinishOnboarding("completed"));
         }
 
         private void Play(OnboardingStep[] sequence, Action onDone)
@@ -166,6 +175,7 @@ namespace SafetyProto.UI
 
             var step = _sequence[_currentIndex];
             SafetyLog.Info($"[OnboardingController] ShowNext() — index {_currentIndex}, title: '{step.title}'", this);
+            InteractionEvents.RaiseOnboardingStep(_inPractice ? "practice" : "presentation", _currentIndex + 1, step.title);
 
             if (step.highlightTarget != null)
             {
@@ -229,10 +239,12 @@ namespace SafetyProto.UI
             _activeHighlight = null;
         }
 
-        private void FinishOnboarding()
+        /// <param name="reason"><c>completed</c> or <c>skipped</c>, for the log.</param>
+        private void FinishOnboarding(string reason)
         {
             if (_finished) return;
             _finished = true;
+            InteractionEvents.RaiseOnboardingFinished(reason, Time.time - _startedAt);
 
             _sequence = null;
             _onSequenceDone = null;

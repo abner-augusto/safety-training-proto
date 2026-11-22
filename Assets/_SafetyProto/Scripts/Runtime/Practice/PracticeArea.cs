@@ -58,6 +58,7 @@ namespace SafetyProto.Runtime.Practice
         private Action _onOpened;
         private Action _onClosed;
         private float _openedAt;
+        private float _freeSince = -1f;
         private float _counted;
         private float _secondsLeft;
         private bool _counting;
@@ -115,6 +116,7 @@ namespace SafetyProto.Runtime.Practice
             _onOpened = onOpened;
             _onClosed = onClosed;
             _tried.Clear();
+            _freeSince = -1f;
             _pendingClose = null;
             _closing = false;
             _secondsLeft = durationSeconds;
@@ -124,6 +126,16 @@ namespace SafetyProto.Runtime.Practice
             SessionPause.Hold(PauseSource.Practice);
             InteractionEvents.RaisePracticeStarted();
             StartCoroutine(OpenRoutine());
+        }
+
+        /// <summary>
+        /// The onboarding steps shown in the area are over and the participant is on their own:
+        /// the free practice the log reports apart from the area's whole stay.
+        /// </summary>
+        public void StartFreePractice()
+        {
+            if (!IsOpen || IsClosing || _freeSince >= 0f) return;
+            _freeSince = Time.time;
         }
 
         /// <summary>The panel's "Continuar" button.</summary>
@@ -173,7 +185,8 @@ namespace SafetyProto.Runtime.Practice
                 Close(pending);
                 yield break;
             }
-            opened?.Invoke();
+            if (opened != null) opened();
+            else StartFreePractice();
         }
 
         private IEnumerator CloseRoutine(string reason)
@@ -183,8 +196,9 @@ namespace SafetyProto.Runtime.Practice
             _onOpened = null;
             ClosingStarted?.Invoke();
             float seconds = Time.time - _openedAt;
-            InteractionEvents.RaisePracticeEnded(reason, seconds, _tried.ToArray());
-            SafetyLog.Info($"[PracticeArea] Área de prática encerrada ({reason}) após {seconds:0} s.", this);
+            float freeSeconds = _freeSince >= 0f ? Time.time - _freeSince : 0f;
+            InteractionEvents.RaisePracticeEnded(reason, seconds, freeSeconds, _tried.ToArray());
+            SafetyLog.Info($"[PracticeArea] Área de prática encerrada ({reason}) após {seconds:0} s, {freeSeconds:0} s de prática livre.", this);
 
             while (recenterService.IsBusy) yield return null;
             yield return recenterService.RecenterTo(returnAnchor, Fade(() =>

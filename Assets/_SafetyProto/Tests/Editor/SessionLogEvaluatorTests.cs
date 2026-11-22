@@ -144,6 +144,34 @@ namespace SafetyProto.Tests.Editor
         }
 
         [Test]
+        public void Onboarding_LogsEachStepByStage_TheFreePractice_AndHowItEnded()
+        {
+            _bus.Publish(new SessionStartedEventArgs { SessionId = "S1", TotalTasks = 9, TimestampMs = 1000L, Attempt = 1 });
+            _bus.Publish(new PracticeEventArgs { SessionId = "S1", Phase = PracticePhase.Started, Reason = string.Empty, TimestampMs = 2000L });
+            _bus.Publish(new OnboardingEventArgs { SessionId = "S1", Phase = OnboardingPhase.StepShown, Stage = "practice", Step = 1, Title = "Interação com as Mãos", TimestampMs = 3000L });
+            _bus.Publish(new PracticeEventArgs
+            {
+                SessionId = "S1", Phase = PracticePhase.Ended, Reason = "skipped", Seconds = 60f, FreeSeconds = 40f,
+                Tried = new[] { "equip_head" }, TimestampMs = 62000L
+            });
+            _bus.Publish(new OnboardingEventArgs { SessionId = "S1", Phase = OnboardingPhase.StepShown, Stage = "presentation", Step = 1, Title = "Bem-vindo ao Treinamento", TimestampMs = 64000L });
+            _bus.Publish(new OnboardingEventArgs { SessionId = "S1", Phase = OnboardingPhase.Finished, Reason = "completed", Seconds = 90f, TimestampMs = 91000L });
+
+            var entries = (JArray)WriteLog()["entries"]!;
+            var steps = entries.Where(e => (string?)e["eventName"] == "OnboardingStep").ToList();
+            Assert.AreEqual(new[] { "practice", "presentation" }, steps.Select(s => (string?)s["data"]!["stage"]).ToArray());
+            Assert.AreEqual(1, (int?)steps[0]["data"]!["step"]);
+            Assert.AreEqual("Interação com as Mãos", (string?)steps[0]["data"]!["message"]);
+            var ended = entries.Single(e => (string?)e["eventName"] == "PracticeEnded");
+            Assert.AreEqual(60f, (float?)ended["data"]!["durationSeconds"]);
+            Assert.AreEqual(40f, (float?)ended["data"]!["freePracticeSeconds"]);
+            StringAssert.Contains("Pular prática", (string?)ended["details"]);
+            var finished = entries.Single(e => (string?)e["eventName"] == "OnboardingFinished");
+            Assert.AreEqual("completed", (string?)finished["data"]!["reason"]);
+            Assert.AreEqual(90f, (float?)finished["data"]!["durationSeconds"]);
+        }
+
+        [Test]
         public void HintShown_IsLoggedWithLevelTaskAndWaitingTime()
         {
             _bus.Publish(new SessionStartedEventArgs { SessionId = "S1", TotalTasks = 9, TimestampMs = 1000L, Attempt = 1 });

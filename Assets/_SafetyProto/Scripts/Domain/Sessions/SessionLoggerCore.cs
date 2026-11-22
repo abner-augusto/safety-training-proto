@@ -83,6 +83,9 @@ namespace SafetyProto.Domain.Sessions
             public string previousSessionId;
             public int attempt;
             public string[]? tried;
+            public float freePracticeSeconds;
+            public string stage;
+            public int step;
         }
 
         [Serializable]
@@ -219,6 +222,7 @@ namespace SafetyProto.Domain.Sessions
         private readonly Action<ObjectReleasedEventArgs>          _onObjectReleased;
         private readonly Action<HintShownEventArgs>               _onHintShown;
         private readonly Action<PracticeEventArgs>                _onPractice;
+        private readonly Action<OnboardingEventArgs>              _onOnboarding;
 
         private bool _subscribed;
         private bool _disposed;
@@ -311,9 +315,20 @@ namespace SafetyProto.Domain.Sessions
                 args.Phase == PracticePhase.Started ? "PracticeStarted" : "PracticeEnded",
                 args.Phase == PracticePhase.Started
                     ? "Área de prática aberta"
-                    : $"Área de prática encerrada ({DescribePracticeEnd(args.Reason)}) após {args.Seconds.ToString("0", CultureInfo.InvariantCulture)} s",
+                    : $"Área de prática encerrada ({DescribePracticeEnd(args.Reason)}) após {args.Seconds.ToString("0", CultureInfo.InvariantCulture)} s, " +
+                      $"{args.FreeSeconds.ToString("0", CultureInfo.InvariantCulture)} s de prática livre",
                 args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
-                new LogData { reason = args.Reason ?? string.Empty, durationSeconds = args.Seconds, tried = args.Tried });
+                new LogData { reason = args.Reason ?? string.Empty, durationSeconds = args.Seconds,
+                              freePracticeSeconds = args.FreeSeconds, tried = args.Tried });
+            _onOnboarding = args => LogEvent(
+                args.Phase == OnboardingPhase.StepShown ? "OnboardingStep" : "OnboardingFinished",
+                args.Phase == OnboardingPhase.StepShown
+                    ? $"Onboarding ({(args.Stage == "practice" ? "prática" : "apresentação")}), passo {args.Step}: {args.Title}"
+                    : $"Onboarding {(args.Reason == "skipped" ? "pulado" : "concluído")} após {args.Seconds.ToString("0", CultureInfo.InvariantCulture)} s",
+                args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
+                args.Phase == OnboardingPhase.StepShown
+                    ? new LogData { stage = args.Stage ?? string.Empty, step = args.Step, message = args.Title ?? string.Empty }
+                    : new LogData { reason = args.Reason ?? string.Empty, durationSeconds = args.Seconds });
             _onEvaluatorCommand = args => LogEvent("EvaluatorCommand", DescribeEvaluatorCommand(args),
                 args.SessionId, args.PlayerId, args.ScenarioId, args.TimestampMs,
                 new LogData { command = args.Command ?? string.Empty, message = args.Summary ?? string.Empty, target = args.Target ?? string.Empty });
@@ -454,6 +469,7 @@ namespace SafetyProto.Domain.Sessions
             _eventBus.Subscribe(_onObjectReleased);
             _eventBus.Subscribe(_onHintShown);
             _eventBus.Subscribe(_onPractice);
+            _eventBus.Subscribe(_onOnboarding);
             _subscribed = true;
         }
 
@@ -479,6 +495,7 @@ namespace SafetyProto.Domain.Sessions
             _eventBus.Unsubscribe(_onObjectReleased);
             _eventBus.Unsubscribe(_onHintShown);
             _eventBus.Unsubscribe(_onPractice);
+            _eventBus.Unsubscribe(_onOnboarding);
             _subscribed = false;
         }
 

@@ -19,14 +19,39 @@ namespace SafetyProto.Core.Events
             EventBus.Instance?.Publish(new PracticeEventArgs { Phase = PracticePhase.Started, Reason = string.Empty });
         }
 
-        public static void RaisePracticeEnded(string reason, float seconds, string[] tried)
+        public static void RaisePracticeEnded(string reason, float seconds, float freeSeconds, string[] tried)
         {
             EventBus.Instance?.Publish(new PracticeEventArgs
             {
                 Phase = PracticePhase.Ended,
                 Reason = reason ?? string.Empty,
                 Seconds = seconds,
+                FreeSeconds = freeSeconds,
                 Tried = tried
+            });
+        }
+
+        public static void RaiseOnboardingStep(string stage, int step, string title)
+        {
+            EventBus.Instance?.Publish(new OnboardingEventArgs
+            {
+                Phase = OnboardingPhase.StepShown,
+                Stage = stage ?? string.Empty,
+                Step = step,
+                Title = title ?? string.Empty,
+                Reason = string.Empty
+            });
+        }
+
+        public static void RaiseOnboardingFinished(string reason, float seconds)
+        {
+            EventBus.Instance?.Publish(new OnboardingEventArgs
+            {
+                Phase = OnboardingPhase.Finished,
+                Stage = string.Empty,
+                Title = string.Empty,
+                Reason = reason ?? string.Empty,
+                Seconds = seconds
             });
         }
 
