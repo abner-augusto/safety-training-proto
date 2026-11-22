@@ -54,6 +54,8 @@ namespace SafetyProto.Runtime.Scaffolding
         [SerializeField] private bool allowAnySlotDirection = false;
         [Tooltip("When enabled, the piece can be installed even if rotated 180 degrees around the anchor's Y axis. Useful for symmetric pieces like planks or rails.")]
         [SerializeField] private bool allow180Rotation = false;
+        [Tooltip("When enabled, the piece also installs upside down (turned 180 degrees about a horizontal axis). For pieces whose faces look alike, such as the plain practice bars, where nothing shows which side is up.")]
+        [SerializeField] private bool allowUpsideDown = false;
 
         [Header("Tolerances")]
         [SerializeField] private float positionTolerance = 0.12f;
@@ -538,20 +540,48 @@ namespace SafetyProto.Runtime.Scaffolding
             return true;
         }
 
+        /// <summary>
+        /// Half turns applied to the socket rotation: none, about the vertical (yaw), and the two
+        /// about the horizontal axes, which put the top face down. A box looks the same in all four.
+        /// </summary>
+        private static readonly Quaternion[] SocketFlips =
+        {
+            Quaternion.identity,
+            new Quaternion(0f, 1f, 0f, 0f),
+            new Quaternion(0f, 0f, 1f, 0f),
+            new Quaternion(1f, 0f, 0f, 0f),
+        };
+
+        private bool AcceptsFlip(int index) =>
+            index == 0 || (index == 1 ? allow180Rotation : allowUpsideDown);
+
         private bool IsAnchorAligned(Transform pieceAnchor, Transform socket)
         {
             if (!IsAnchorNear(pieceAnchor, socket))
                 return false;
 
-            if (IsRotationAligned(pieceAnchor.rotation, socket.rotation)) return true;
-
-            if (allow180Rotation)
-            {
-                Quaternion flippedRotation = socket.rotation * Quaternion.Euler(0, 180, 0);
-                if (IsRotationAligned(pieceAnchor.rotation, flippedRotation)) return true;
-            }
+            for (int i = 0; i < SocketFlips.Length; i++)
+                if (AcceptsFlip(i) && IsRotationAligned(pieceAnchor.rotation, socket.rotation * SocketFlips[i]))
+                    return true;
 
             return false;
+        }
+
+        /// <summary>The accepted socket rotation closest to the anchor, so the snap turns the piece the least.</summary>
+        private Quaternion ClosestAcceptedRotation(Quaternion anchorRotation, Quaternion socketRotation)
+        {
+            Quaternion best = socketRotation;
+            float bestAngle = Quaternion.Angle(anchorRotation, socketRotation);
+            for (int i = 1; i < SocketFlips.Length; i++)
+            {
+                if (!AcceptsFlip(i)) continue;
+                Quaternion candidate = socketRotation * SocketFlips[i];
+                float angle = Quaternion.Angle(anchorRotation, candidate);
+                if (angle >= bestAngle) continue;
+                best = candidate;
+                bestAngle = angle;
+            }
+            return best;
         }
 
         private bool IsRotationAligned(Quaternion pieceRot, Quaternion socketRot)
@@ -574,8 +604,7 @@ namespace SafetyProto.Runtime.Scaffolding
                 transform,
                 _activeAnchor,
                 _activeSocket.position,
-                _activeSocket.rotation,
-                allow180Rotation,
+                ClosestAcceptedRotation(_activeAnchor.rotation, _activeSocket.rotation),
                 out var targetRootPos,
                 out var targetRootRot);
 
