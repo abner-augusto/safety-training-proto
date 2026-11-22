@@ -245,6 +245,7 @@ GameObject:
   - component: {fileID: 61129249893678211}
   - component: {fileID: 4782799892279696617}
   - component: {fileID: 3758374222100583495}
+  - component: {fileID: 7225266234794532359}
   m_Layer: 14
   m_Name: ToeboardPiece
   m_TagString: Untagged
@@ -265,8 +266,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1761113822719304293}
-  - {fileID: 2111519777752143801}
   - {fileID: 9213376185501107496}
   - {fileID: 8016332332146117634}
   - {fileID: 1470983125098433702}
@@ -402,6 +401,7 @@ MonoBehaviour:
   targetSocketB: {fileID: 0}
   allowAnySlotDirection: 0
   allow180Rotation: 0
+  allowUpsideDown: 0
   positionTolerance: 0.23
   yawTolerance: 17.25
   tiltTolerance: 40.25
@@ -422,12 +422,20 @@ MonoBehaviour:
   hideTargetPreviewAfterInstalled: 1
   idleColor: {r: 1, g: 1, b: 1, a: 0.12}
   validColor: {r: 0.2, g: 0.85, b: 0.35, a: 0.45}
+  nearMissColor: {r: 1, g: 0.85, b: 0.1, a: 0.4}
   invalidColor: {r: 1, g: 0.45, b: 0.2, a: 0.35}
+  invalidReleaseFlashSeconds: 1
   audioSource: {fileID: 0}
   installSound: {fileID: 0}
   validPoseSound: {fileID: 0}
+  nearMissSound: {fileID: 0}
   invalidReleaseSound: {fileID: 0}
   installVolume: 1
+  validPoseVolume: 0.9
+  nearMissVolume: 0.6
+  invalidReleaseVolume: 0.8
+  validPoseRepeatSeconds: 1
+  nearMissRepeatSeconds: 0.6
   onEnteredValidPose:
     m_PersistentCalls:
       m_Calls: []
@@ -458,8 +466,8 @@ MonoBehaviour:
   _transferOnSecondSelection: 0
   _addNewPointsToFront: 0
   _forwardElement: {fileID: 0}
-  _oneGrabTransformer: {fileID: 8934155295741839030}
-  _twoGrabTransformer: {fileID: 3917399952086111464}
+  _oneGrabTransformer: {fileID: 7225266234794532359}
+  _twoGrabTransformer: {fileID: 7225266234794532359}
   _targetTransform: {fileID: 9037536387948676839}
   _maxGrabPoints: 2
   _rigidbody: {fileID: 6612635174247580399}
@@ -480,6 +488,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Feedback.ReturnObjectHome
   homeOverride: {fileID: 0}
   maxHomeDistance: 3
+  maxDropBelowHome: 0.3
+  homeZone: {fileID: 0}
   returnDelay: 5
   returnDuration: 0.4
   returnCurve:
@@ -526,196 +536,30 @@ MonoBehaviour:
   viewHalfAngle: 35
   maxViewDistance: 5
   fadeDuration: 0.25
---- !u!1 &1469211817988118093
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1761113822719304293}
-  - component: {fileID: 8934155295741839030}
-  m_Layer: 14
-  m_Name: OneGrabTransformer
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1761113822719304293
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1469211817988118093}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 9037536387948676839}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8934155295741839030
+--- !u!114 &7225266234794532359
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1469211817988118093}
+  m_GameObject: {fileID: 972425556055995357}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bbb7085c111fcb44493d57d4e336d3fd, type: 3}
+  m_Script: {fileID: 11500000, guid: 4cef97ca9c9fb594f9ee00a02c40aead, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Oculus.Interaction::Oculus.Interaction.GrabFreeTransformer
-  _positionConstraints:
-    ConstraintsAreRelative: 1
-    XAxis:
-      ConstrainAxis: 0
-      AxisRange:
-        Min: 0
-        Max: 0
-    YAxis:
-      ConstrainAxis: 0
-      AxisRange:
-        Min: 0
-        Max: 0
-    ZAxis:
-      ConstrainAxis: 0
-      AxisRange:
-        Min: 0
-        Max: 0
-  _rotationConstraints:
-    XAxis:
-      ConstrainAxis: 0
-      AxisRange:
-        Min: 0
-        Max: 0
-    YAxis:
-      ConstrainAxis: 1
-      AxisRange:
-        Min: 0
-        Max: 0
-    ZAxis:
-      ConstrainAxis: 0
-      AxisRange:
-        Min: 0
-        Max: 0
-  _scaleConstraints:
-    ConstraintsAreRelative: 1
-    XAxis:
-      ConstrainAxis: 1
-      AxisRange:
-        Min: 1
-        Max: 1
-    YAxis:
-      ConstrainAxis: 1
-      AxisRange:
-        Min: 1
-        Max: 1
-    ZAxis:
-      ConstrainAxis: 1
-      AxisRange:
-        Min: 1
-        Max: 1
-  _resetScaleResponsivenessOnConstraintOvershoot: 0
---- !u!1 &2291765965713712009
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2111519777752143801}
-  - component: {fileID: 3917399952086111464}
-  m_Layer: 14
-  m_Name: TwoGrabFreeTransformer
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2111519777752143801
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2291765965713712009}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 9037536387948676839}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3917399952086111464
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2291765965713712009}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bbb7085c111fcb44493d57d4e336d3fd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Oculus.Interaction::Oculus.Interaction.GrabFreeTransformer
-  _positionConstraints:
-    ConstraintsAreRelative: 0
-    XAxis:
-      ConstrainAxis: 0
-      AxisRange:
-        Min: 0
-        Max: 0
-    YAxis:
-      ConstrainAxis: 0
-      AxisRange:
-        Min: 0
-        Max: 0
-    ZAxis:
-      ConstrainAxis: 0
-      AxisRange:
-        Min: 0
-        Max: 0
-  _rotationConstraints:
-    XAxis:
-      ConstrainAxis: 1
-      AxisRange:
-        Min: 0
-        Max: 0
-    YAxis:
-      ConstrainAxis: 0
-      AxisRange:
-        Min: 0
-        Max: 0
-    ZAxis:
-      ConstrainAxis: 1
-      AxisRange:
-        Min: 0
-        Max: 0
-  _scaleConstraints:
-    ConstraintsAreRelative: 1
-    XAxis:
-      ConstrainAxis: 1
-      AxisRange:
-        Min: 1
-        Max: 1
-    YAxis:
-      ConstrainAxis: 1
-      AxisRange:
-        Min: 1
-        Max: 1
-    ZAxis:
-      ConstrainAxis: 1
-      AxisRange:
-        Min: 1
-        Max: 1
-  _resetScaleResponsivenessOnConstraintOvershoot: 0
+  m_EditorClassIdentifier: SafetyProto.Runtime.Unity::SafetyProto.Runtime.Interaction.HeavyPieceTransformer
+  longAxis: {x: 1, y: 0, z: 0}
+  upAxis: {x: 0, y: 1, z: 0}
+  tuning:
+    maxSagDegrees: 70
+    sagSeconds: 0.45
+    yawSeconds: 0.35
+    wristYawShare: 0.6
+    hangSeconds: 0.25
+  floorLayers:
+    serializedVersion: 2
+    m_Bits: 1
+  floorSearchDepth: 6
 --- !u!1 &3786975203377625912
 GameObject:
   m_ObjectHideFlags: 0

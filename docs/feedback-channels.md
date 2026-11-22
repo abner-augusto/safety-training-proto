@@ -15,7 +15,7 @@ Popups play no opening sound; the voice line is what makes a popup audible to a 
 | PPE out of order | popup "Ordem Incorreta" (+ task hint) | `ordem_incorreta` | — | popup; item returns home | stays until the next action |
 | Task refused, lanyard not anchored | popup "Conecte-se Primeiro" | `conecte_se_primeiro` | — | popup; the scaffold piece returns when the popup closes, or after 10 s | stays until the next action |
 | Task completed without its PPE | popup "EPI Incorreto" (`ppeAdvice`) | `ppe_advice:<taskId>` | unsafe-success sound | popup | stays until the next action |
-| Two-hand piece held with one hand | — | first time in the session | short cue (cooldown 8 s) | second grab spot pulses | no text: the cue is about the hands, not the task |
+| Two-hand piece held with one hand | — | first time in the session | short cue (cooldown 8 s) | second grab spot pulses; the free end sags onto whatever is below and drags behind the hand (`HeavyPieceTransformer`) | no text: the cue is about the hands, not the task |
 
 "Stays until the next action": the popup holds the session clock for its reading time (6 s, longer when the narration runs longer), exactly like the self-closing popup it replaced, then stays visible without holding the clock until the participant grabs an object, attempts an action, changes PPE, or a task advances, with a 30 s ceiling (`PopupService.ShowFeedbackWarning`, `StickyPopupPolicy`).
 
